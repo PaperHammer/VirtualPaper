@@ -71,7 +71,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
-                GlobalMessageUtil.ShowError($"Failed to open file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedOpenFile"), filePath, ex.Message));
             }
         }
 
@@ -162,8 +162,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             // 文件加载/重载失败时禁止保存，避免覆盖可能可恢复的原始数据
             if (file.IsLoadFailed) {
                 GlobalMessageUtil.ShowError(
-                    $"Cannot save file: {file.FilePath}\n" +
-                    "The file failed to load and may be corrupted. Please close and reopen it.",
+                    string.Format(LanguageUtil.GetI18n("WebBackdrop_CannotSaveLoadFailed"), file.FilePath),
                     key: "FileLoadFailed");
                 return false;
             }
@@ -188,7 +187,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
-                GlobalMessageUtil.ShowError($"Failed to save file: {file.FilePath}\n{ex.Message}");
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedSaveFile"), file.FilePath, ex.Message));
                 return false;
             }
         }
@@ -203,8 +202,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             if (file.IsLoadFailed) {
                 GlobalMessageUtil.ShowError(
-                    $"Cannot save file: {file.FilePath}\n" +
-                    "The file failed to load and may be corrupted. Please close and reopen it.",
+                    string.Format(LanguageUtil.GetI18n("WebBackdrop_CannotSaveLoadFailed"), file.FilePath),
                     key: "FileLoadFailed");
                 return false;
             }
@@ -224,7 +222,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
-                GlobalMessageUtil.ShowError($"Failed to save file: {newPath}\n{ex.Message}");
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedSaveFile"), newPath, ex.Message));
                 return false;
             }
         }
@@ -265,14 +263,14 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private async Task DebugProjectAsync(CancellationToken cancellationToken) {
             cancellationToken.ThrowIfCancellationRequested();
             if (!await SaveAllAsync()) {
-                GlobalMessageUtil.ShowError("Failed to save all files. Please check for errors and try again.");
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n("WebBackdrop_FailedSaveAll"));
                 ArcLog.GetLogger<WebEditorViewModel>().Error("Debug: failed to save project files");
                 return;
             }
 
             var projectDir = Session.DesignFileUtil.ProjectFolder;
             if (string.IsNullOrEmpty(projectDir) || !Directory.Exists(projectDir)) {
-                GlobalMessageUtil.ShowError("Project folder not found. Please check your project settings.");
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n("WebBackdrop_ProjectFolderNotFound"));
                 ArcLog.GetLogger<WebEditorViewModel>().Warn("Debug: project folder not found");
                 return;
             }

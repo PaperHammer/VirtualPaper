@@ -6,21 +6,22 @@
     xmlns:local="using:Workloads.Creation.WebBackdrop.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <ScrollViewer Padding="12 8" VerticalScrollBarVisibility="Auto">
         <StackPanel Spacing="12">
             <!-- Title -->
             <StackPanel Spacing="4">
-                <TextBlock FontSize="11" Opacity="0.6" Text="Title"/>
-                <TextBox x:Name="titleBox" PlaceholderText="Wallpaper title" Text="{x:Bind _viewModel.Title, Mode=TwoWay}" />
+                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Title}"/>
+                <TextBox x:Name="titleBox" PlaceholderText="{markup:I18n Key=WebBackdrop_WallpaperTitle}" Text="{x:Bind _viewModel.Title, Mode=TwoWay}" />
             </StackPanel>
 
             <!-- Description -->
             <StackPanel Spacing="4">
-                <TextBlock FontSize="11" Opacity="0.6" Text="Description"/>
+                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Description}"/>
                 <TextBox x:Name="descBox"
-                    PlaceholderText="Short description"
+                    PlaceholderText="{markup:I18n Key=WebBackdrop_ShortDescription}"
                     AcceptsReturn="True"
                     TextWrapping="Wrap"
                     Height="72"
@@ -29,26 +30,26 @@
 
             <!-- Author -->
             <StackPanel Spacing="4">
-                <TextBlock FontSize="11" Opacity="0.6" Text="Author"/>
-                <TextBox x:Name="authorBox" PlaceholderText="Author name" Text="{x:Bind _viewModel.Authors, Mode=TwoWay}"/>
+                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Author}"/>
+                <TextBox x:Name="authorBox" PlaceholderText="{markup:I18n Key=WebBackdrop_AuthorName}" Text="{x:Bind _viewModel.Authors, Mode=TwoWay}"/>
             </StackPanel>
 
             <!-- Tags -->
             <StackPanel Spacing="4">
-                <TextBlock FontSize="11" Opacity="0.6" Text="Tags (semicolon separated)"/>
+                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Tags}"/>
                 <TextBox x:Name="tagsBox" PlaceholderText="tag1; tag2" Text="{x:Bind _viewModel.Tags, Mode=TwoWay}"/>
             </StackPanel>
 
             <!-- Entry file -->
             <StackPanel Spacing="4">
-                <TextBlock FontSize="11" Opacity="0.6" Text="Entry file"/>
+                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_EntryFile}"/>
                 <TextBox x:Name="entryFileBox" PlaceholderText="index.html" Text="{x:Bind _viewModel.File, Mode=TwoWay}"/>
             </StackPanel>
 
             <!-- Save button -->
             <Button
                 HorizontalAlignment="Stretch"
-                Content="Save project.json"
+                Content="{markup:I18n Key=WebBackdrop_SaveProjectJson}"
                 Command="{x:Bind _viewModel.SaveCommand}"/>
         </StackPanel>
     </ScrollViewer>

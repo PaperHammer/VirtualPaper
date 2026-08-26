@@ -47,8 +47,8 @@
                     <MenuFlyoutItem x:Name="ExportBmpMenuItem" Text="BMP" Tag="Bmp" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportJpegMenuItem" Text="JPEG" Tag="Jpeg" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportJpegXrMenuItem" Text="JPEG XR" Tag="JpegXR" Click="OnExportMenuItemClick"/>
-                    <MenuFlyoutItem x:Name="ExportFullZipMenuItem" Text="Full Project Archive (.zip)" Tag="FullZip" Click="OnExportMenuItemClick"/>
-                    <MenuFlyoutItem x:Name="ExportZipMenuItem" Text="Web Wallpaper Package (.zip)" Tag="Zip" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportFullZipMenuItem" Text="{markup:I18n Key=WebBackdrop_FullProjectArchive}" Tag="FullZip" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportZipMenuItem" Text="{markup:I18n Key=WebBackdrop_WebWallpaperPackage}" Tag="Zip" Click="OnExportMenuItemClick"/>
                 </MenuFlyoutSubItem>
                 <MenuFlyoutItem Text="{markup:I18n Key=Text_ImportLib}" Click="OnAddToLibraryMenuItemClick"/>
                 <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Exit}" Click="MFI_Exit_Clicked">
@@ -64,69 +64,71 @@
                     <KeyboardAccelerator Modifiers="Menu" Key="E"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Undo}" Command="{x:Bind _viewModel.MFI_UndoCommand}">
+                <MenuFlyoutItem x:Name="UndoMenuItem" Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Undo}"
+                    Tag="Undo" Click="UndoRedoMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Redo}" Command="{x:Bind _viewModel.MFI_RedoCommand}">
+                <MenuFlyoutItem x:Name="RedoMenuItem" Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Redo}"
+                    Tag="Redo" Click="UndoRedoMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control, Shift" Key="Z"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
 
                 <MenuFlyoutSeparator x:Name="WebEditFileSeparator" Visibility="Collapsed"/>
-                <MenuFlyoutItem x:Name="WebCutMenuItem" Text="Cut" Tag="Cut" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebCutMenuItem" Text="{markup:I18n Key=WebBackdrop_Cut}" Tag="Cut" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Ctrl+X" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="X"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebCopyMenuItem" Text="Copy" Tag="Copy" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebCopyMenuItem" Text="{markup:I18n Key=WebBackdrop_Copy}" Tag="Copy" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Ctrl+C" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="C"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebPasteMenuItem" Text="Paste" Tag="Paste" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebPasteMenuItem" Text="{markup:I18n Key=WebBackdrop_Paste}" Tag="Paste" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Ctrl+V" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="V"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebCopyPathMenuItem" Text="Copy Path" Tag="CopyPath" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebCopyPathMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyPath}" Tag="CopyPath" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Shift+Alt+C" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu, Shift" Key="C"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebCopyRelativePathMenuItem" Text="Copy Relative Path" Tag="CopyRelativePath" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebCopyRelativePathMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyRelativePath}" Tag="CopyRelativePath" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control, Shift" Key="C"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator x:Name="WebEditModifySeparator" Visibility="Collapsed"/>
-                <MenuFlyoutItem x:Name="WebRenameMenuItem" Text="Rename..." Tag="Rename" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebRenameMenuItem" Text="{markup:I18n Key=WebBackdrop_Rename}" Tag="Rename" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="F2" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="F2"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebDeleteMenuItem" Text="Delete" Tag="Delete" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebDeleteMenuItem" Text="{markup:I18n Key=WebBackdrop_Delete}" Tag="Delete" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Del" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="Delete"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator x:Name="WebEditFindSeparator" Visibility="Collapsed"/>
-                <MenuFlyoutItem x:Name="WebFindMenuItem" Text="Find" Tag="Find" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebFindMenuItem" Text="{markup:I18n Key=WebBackdrop_Find}" Tag="Find" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Ctrl+P" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="P"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebFindInFilesMenuItem" Text="Find in Files" Tag="FindInFiles" Visibility="Collapsed"
+                <MenuFlyoutItem x:Name="WebFindInFilesMenuItem" Text="{markup:I18n Key=WebBackdrop_FindInFiles}" Tag="FindInFiles" Visibility="Collapsed"
                     KeyboardAcceleratorTextOverride="Ctrl+Shift+F" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control, Shift" Key="F"/>
@@ -134,44 +136,44 @@
                 </MenuFlyoutItem>
             </MenuBarItem>
 
-            <MenuBarItem x:Name="WebSelectionMenuBarItem" Title="Selection" Visibility="Collapsed"
+            <MenuBarItem x:Name="WebSelectionMenuBarItem" Title="{markup:I18n Key=WebBackdrop_Selection}" Visibility="Collapsed"
                 KeyboardAcceleratorPlacementMode="Hidden" PointerEntered="EditMenuBarItem_PointerEntered">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="S"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem x:Name="WebNavigateBackMenuItem" Text="Go Back" Tag="NavigateBack"
+                <MenuFlyoutItem x:Name="WebNavigateBackMenuItem" Text="{markup:I18n Key=WebBackdrop_GoBack}" Tag="NavigateBack"
                     KeyboardAcceleratorTextOverride="Alt+Left" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="Left"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebNavigateForwardMenuItem" Text="Go Forward" Tag="NavigateForward"
+                <MenuFlyoutItem x:Name="WebNavigateForwardMenuItem" Text="{markup:I18n Key=WebBackdrop_GoForward}" Tag="NavigateForward"
                     KeyboardAcceleratorTextOverride="Alt+Right" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="Right"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator/>
-                <MenuFlyoutItem x:Name="WebCopyLineUpMenuItem" Text="Copy Line Up" Tag="CopyLineUp"
+                <MenuFlyoutItem x:Name="WebCopyLineUpMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyLineUp}" Tag="CopyLineUp"
                     KeyboardAcceleratorTextOverride="Shift+Alt+Up" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu, Shift" Key="Up"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebCopyLineDownMenuItem" Text="Copy Line Down" Tag="CopyLineDown"
+                <MenuFlyoutItem x:Name="WebCopyLineDownMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyLineDown}" Tag="CopyLineDown"
                     KeyboardAcceleratorTextOverride="Shift+Alt+Down" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu, Shift" Key="Down"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebMoveLineUpMenuItem" Text="Move Line Up" Tag="MoveLineUp"
+                <MenuFlyoutItem x:Name="WebMoveLineUpMenuItem" Text="{markup:I18n Key=WebBackdrop_MoveLineUp}" Tag="MoveLineUp"
                     KeyboardAcceleratorTextOverride="Alt+Up" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="Up"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="WebMoveLineDownMenuItem" Text="Move Line Down" Tag="MoveLineDown"
+                <MenuFlyoutItem x:Name="WebMoveLineDownMenuItem" Text="{markup:I18n Key=WebBackdrop_MoveLineDown}" Tag="MoveLineDown"
                     KeyboardAcceleratorTextOverride="Alt+Down" Click="WebEditMenuItem_Click">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Menu" Key="Down"/>
@@ -186,17 +188,9 @@
                     <KeyboardAccelerator Modifiers="Menu" Key="H"/>
                 </MenuBarItem.KeyboardAccelerators>
 
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Manual}" Command="{x:Bind _viewModel.MFI_ManualCommand}">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="None" Key="M"/>
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Manual}" Command="{x:Bind _viewModel.MFI_ManualCommand}"/>
 
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_About}" Command="{x:Bind _viewModel.MFI_AboutCommand}">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Modifiers="None" Key="A"/>
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_About}" Command="{x:Bind _viewModel.MFI_AboutCommand}"/>
             </MenuBarItem>
         </cmd:KeepToRight>
     </Page.Resources>

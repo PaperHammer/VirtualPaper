@@ -217,6 +217,14 @@ namespace VirtualPaper.DraftPanel.Views {
 
         private void UpdateWebEditMenuEnabledState() {
             var provider = GetSelectedRuntime() as IRuntimeEditCommandProvider;
+            if (provider != null) {
+                UndoMenuItem.IsEnabled = provider.CanExecuteEditCommand(RuntimeEditCommand.Undo);
+                RedoMenuItem.IsEnabled = provider.CanExecuteEditCommand(RuntimeEditCommand.Redo);
+            }
+            else {
+                UndoMenuItem.ClearValue(Control.IsEnabledProperty);
+                RedoMenuItem.ClearValue(Control.IsEnabledProperty);
+            }
             WebCutMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Cut) == true;
             WebCopyMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Copy) == true;
             WebPasteMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Paste) == true;
@@ -243,6 +251,29 @@ namespace VirtualPaper.DraftPanel.Views {
             }
 
             await provider.ExecuteEditCommandAsync(command);
+        }
+
+        private async void UndoRedoMenuItem_Click(object sender, RoutedEventArgs e) {
+            if (sender is not FrameworkElement { Tag: string commandName }
+                || !Enum.TryParse(commandName, out RuntimeEditCommand command)
+                || command is not (RuntimeEditCommand.Undo or RuntimeEditCommand.Redo)
+                || GetSelectedRuntime() is not { } runtime) {
+                return;
+            }
+
+            if (runtime is IRuntimeEditCommandProvider provider) {
+                if (provider.CanExecuteEditCommand(command)) {
+                    await provider.ExecuteEditCommandAsync(command);
+                }
+                return;
+            }
+
+            if (command == RuntimeEditCommand.Undo) {
+                await runtime.UndoAsync();
+            }
+            else {
+                await runtime.RedoAsync();
+            }
         }
 
         private IRuntime? GetSelectedRuntime() {

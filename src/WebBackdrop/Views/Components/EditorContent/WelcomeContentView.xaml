@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -20,11 +21,11 @@
                 HorizontalAlignment="Center"
                 FontSize="18"
                 FontWeight="SemiBold"
-                Text="Select a file to start"/>
+                Text="{markup:I18n Key=WebBackdrop_SelectFileToStart}"/>
             <TextBlock
                 HorizontalAlignment="Center"
                 Opacity="0.6"
-                Text="Open a file from the explorer to edit and preview."/>
+                Text="{markup:I18n Key=WebBackdrop_OpenFileHint}"/>
         </StackPanel>
     </Grid>
 </UserControl>

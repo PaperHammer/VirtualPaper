@@ -3,6 +3,7 @@ using System.IO;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Mvvm;
 using Microsoft.UI.Xaml;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Models;
 using Workloads.Creation.WebBackdrop.Models.SerializableData;
@@ -100,13 +101,13 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             var info = new FileInfo(file.FilePath);
             FileNameText = file.FileName;
-            TypeLabelText = file.CanOpenAsText ? "Language" : "Type";
+            TypeLabelText = I18n(file.CanOpenAsText ? "WebBackdrop_Language" : "WebBackdrop_Type");
             TypeText = file.Kind switch {
-                WebEditorFileKind.Image => "Image",
-                WebEditorFileKind.Unsupported => "Unsupported",
+                WebEditorFileKind.Image => I18n("WebBackdrop_Image"),
+                WebEditorFileKind.Unsupported => I18n("WebBackdrop_Unsupported"),
                 _ => language,
             };
-            StatusText = file.IsSaved ? "Saved" : "Unsaved";
+            StatusText = I18n(file.IsSaved ? "WebBackdrop_Saved" : "WebBackdrop_Unsaved");
             SizeText = info.Exists ? FileUtil.SizeSuffix(info.Length) : "-";
             LineCountText = file.CanOpenAsText ? WebEditorFileUtil.CountLines(file.Content).ToString() : "-";
             ModifiedText = info.Exists ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
@@ -122,8 +123,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public void LoadFolder(string folderPath) {
             var info = new DirectoryInfo(folderPath);
             FileNameText = info.Exists ? info.Name : Path.GetFileName(folderPath);
-            TypeLabelText = "Type";
-            TypeText = "Folder";
+            TypeLabelText = I18n("WebBackdrop_Type");
+            TypeText = I18n("WebBackdrop_Folder");
             ModifiedText = info.Exists ? info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") : "-";
             RelativePathText = FileUtil.GetRelativePath(_projectFolder, folderPath);
 
@@ -149,7 +150,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private string _projectTitleText = "-";
         private string _projectEntryText = "-";
         private string _fileNameText = string.Empty;
-        private string _typeLabelText = "Type";
+        private string _typeLabelText = I18n("WebBackdrop_Type");
         private string _typeText = string.Empty;
         private string _statusText = string.Empty;
         private string _sizeText = string.Empty;
@@ -161,5 +162,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private Visibility _statusVisibility = Visibility.Visible;
         private Visibility _sizeVisibility = Visibility.Visible;
         private Visibility _lineCountVisibility = Visibility.Visible;
+        private static string I18n(string key) => LanguageUtil.GetI18n(key);
     }
 }

@@ -9,6 +9,7 @@
     xmlns:tools="using:Workloads.Creation.WebBackdrop.Views.Tools"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:utils="using:VirtualPaper.UIComponent.Utils"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"  
@@ -112,7 +113,7 @@
                     <Grid>
                         <SelectorBar x:Name="bottomPanelSelectorBar"
                             SelectionChanged="BottomPanelSelectorBar_SelectionChanged">
-                            <SelectorBarItem Text="PROBLEMS" Padding="12 6" Tag="{x:Bind local:WebEditorBottomPanel.Problems, Mode=OneTime}" IsSelected="True"/>
+                            <SelectorBarItem Text="{markup:I18n Key=WebBackdrop_Problems}" Padding="12 6" Tag="{x:Bind local:WebEditorBottomPanel.Problems, Mode=OneTime}" IsSelected="True"/>
                             <!--<SelectorBarItem Text="OUTPUT" Padding="8" Tag="{x:Bind local:WebEditorBottomPanel.Output, Mode=OneTime}"/>-->
                         </SelectorBar>
                         <Button

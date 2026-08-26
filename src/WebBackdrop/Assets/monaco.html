@@ -168,6 +168,8 @@
                     type: 'editorStateChanged',
                     filePath: getCurrentFilePath(),
                     isSaved: isSaved,
+                    canUndo: model.canUndo(),
+                    canRedo: model.canRedo(),
                     lineEnding: getLineEndingText(model),
                     encoding: window.encodingByUri.get(modelKey) || 'UTF-8',
                     indent: getIndentText(model)
@@ -573,11 +575,21 @@
             };
 
             window.undo = function () {
-                editor.trigger('host', 'undo', null);
+                var model = editor.getModel();
+                if (!model || !model.canUndo()) {
+                    return false;
+                }
+                model.undo();
+                return true;
             };
 
             window.redo = function () {
-                editor.trigger('host', 'redo', null);
+                var model = editor.getModel();
+                if (!model || !model.canRedo()) {
+                    return false;
+                }
+                model.redo();
+                return true;
             };
 
             window.copyLineUp = function () {
@@ -617,6 +629,8 @@
                 return JSON.stringify({
                     filePath: getCurrentFilePath(),
                     isSaved: savedVersionId === undefined || alternativeVersionId === savedVersionId,
+                    canUndo: model.canUndo(),
+                    canRedo: model.canRedo(),
                     lineEnding: getLineEndingText(model),
                     encoding: window.encodingByUri.get(modelKey) || 'UTF-8',
                     indent: getIndentText(model)

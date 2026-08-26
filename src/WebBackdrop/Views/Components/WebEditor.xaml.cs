@@ -509,7 +509,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             catch (Exception ex) {
                 openFile.SetLoadFailed();
                 ArcLog.GetLogger<WebEditor>().Error($"Failed to reload file: {filePath}", ex);
-                GlobalMessageUtil.ShowError($"Failed to reload file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedReloadFile"), filePath, ex.Message));
             }
         }
 
@@ -538,10 +538,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             // 磁盘被外部修改且编辑器有未保存更改：让用户选择加载磁盘版本或保留编辑
             var result = await GlobalDialogUtils.ShowDialogAsync(
-                $"The file \"{Path.GetFileName(filePath)}\" was modified on disk while it has unsaved changes.\n\nReload the disk version and discard your editor changes?",
-                "File Conflict",
-                "Reload from Disk",
-                "Keep My Changes",
+                string.Format(LanguageUtil.GetI18n("WebBackdrop_FileConflictMessage"), Path.GetFileName(filePath)),
+                LanguageUtil.GetI18n("WebBackdrop_FileConflictTitle"),
+                LanguageUtil.GetI18n("WebBackdrop_ReloadFromDisk"),
+                LanguageUtil.GetI18n("WebBackdrop_KeepMyChanges"),
                 isDefaultPrimary: false);
 
             if (result == DialogResult.Primary) {
@@ -556,7 +556,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 catch (Exception ex) {
                     openFile.SetLoadFailed();
                     ArcLog.GetLogger<WebEditor>().Error($"Failed to reload conflicted file: {filePath}", ex);
-                    GlobalMessageUtil.ShowError($"Failed to reload file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
+                    GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedReloadFile"), filePath, ex.Message));
                 }
             }
             else {
@@ -566,6 +566,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void UpdateStatusBar() {
+            UpdateUndoRedoState(false, false);
             var activeFile = ViewModel?.ActiveFile;
             if (activeFile != null) {
                 var filePath = activeFile.FilePath;
@@ -646,6 +647,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     StringComparison.OrdinalIgnoreCase);
             if (isActiveModelState == false) return;
 
+            UpdateUndoRedoState(state.CanUndo, state.CanRedo);
+
             activeFile.SetLineEnding(state.LineEnding);
             activeFile.SetEncoding(state.Encoding);
             IndentText = state.Indent;
@@ -665,6 +668,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
+        private void UpdateUndoRedoState(bool canUndo, bool canRedo) {
+            if (_canUndo == canUndo && _canRedo == canRedo) return;
+            _canUndo = canUndo;
+            _canRedo = canRedo;
+            EditCommandStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
         private void SyncFileSavedState(WebEditorFile file) {
             leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
             // 同步到文档跟踪器：外部修改时才能区分“直接重载”与“冲突需用户确认”
@@ -672,18 +682,24 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
         }
 
-        public Task UndoAsync() {
-            return editorContentView.UndoAsync();
+        public async Task UndoAsync() {
+            await editorContentView.UndoAsync();
+            await RestoreEditorFocusAsync();
         }
 
-        public Task RedoAsync() {
-            return editorContentView.RedoAsync();
+        public async Task RedoAsync() {
+            await editorContentView.RedoAsync();
+            await RestoreEditorFocusAsync();
         }
 
         public Task ExecuteEditCommandAsync(RuntimeEditCommand command) {
             if (!CanExecuteEditCommand(command)) return Task.CompletedTask;
 
             switch (command) {
+                case RuntimeEditCommand.Undo:
+                    return UndoAsync();
+                case RuntimeEditCommand.Redo:
+                    return RedoAsync();
                 case RuntimeEditCommand.Cut:
                     return leftFileTreeControl.CutCommandAsync();
                 case RuntimeEditCommand.Copy:
@@ -728,6 +744,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public bool CanExecuteEditCommand(RuntimeEditCommand command) {
             return command switch {
+                RuntimeEditCommand.Undo => ViewModel?.ActiveFile?.CanOpenAsText == true && _canUndo,
+                RuntimeEditCommand.Redo => ViewModel?.ActiveFile?.CanOpenAsText == true && _canRedo,
                 RuntimeEditCommand.Cut or
                 RuntimeEditCommand.Copy or
                 RuntimeEditCommand.Paste or
@@ -1432,7 +1450,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             try {
                 // 入库前先保存所有未保存的编辑，保证包内文件为最新内容
                 if (!await SaveAllAsync()) {
-                    GlobalMessageUtil.ShowError("Failed to save project files. Import aborted.");
+                    GlobalMessageUtil.ShowError(LanguageUtil.GetI18n("WebBackdrop_ImportSaveFailed"));
                     return false;
                 }
 
@@ -1449,7 +1467,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     tempZipPath);
 
                 if (!found) {
-                    GlobalMessageUtil.ShowError("Wallpaper library panel is not available.");
+                    GlobalMessageUtil.ShowError(LanguageUtil.GetI18n("WebBackdrop_LibraryUnavailable"));
                     return false;
                 }
 
@@ -1661,6 +1679,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Dictionary<string, WebEditorCommand> _monacoCommands = null!;
         private SemaphoreSlim _saveLock = new(1, 1);
         private readonly SemaphoreSlim _openFileLock = new(1, 1);
+        private bool _canUndo;
+        private bool _canRedo;
         private CancellationTokenSource? _openFileCancellation;
         private DispatcherQueueTimer? _backupTimer;
         private DispatcherQueueTimer? _navigationRecordTimer;

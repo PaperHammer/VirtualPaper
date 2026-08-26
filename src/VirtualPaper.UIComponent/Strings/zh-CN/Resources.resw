@@ -1670,4 +1670,87 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Text_NoPreview" xml:space="preserve">
     <value>暂无预览</value>
   </data>
+  <data name="WebBackdrop_NewFile" xml:space="preserve"><value>新建文件</value></data>
+  <data name="WebBackdrop_NewFolder" xml:space="preserve"><value>新建文件夹</value></data>
+  <data name="WebBackdrop_AddItems" xml:space="preserve"><value>添加项目</value></data>
+  <data name="WebBackdrop_Cut" xml:space="preserve"><value>剪切</value></data>
+  <data name="WebBackdrop_Copy" xml:space="preserve"><value>复制</value></data>
+  <data name="WebBackdrop_Paste" xml:space="preserve"><value>粘贴</value></data>
+  <data name="WebBackdrop_CopyPath" xml:space="preserve"><value>复制路径</value></data>
+  <data name="WebBackdrop_CopyRelativePath" xml:space="preserve"><value>复制相对路径</value></data>
+  <data name="WebBackdrop_Rename" xml:space="preserve"><value>重命名...</value></data>
+  <data name="WebBackdrop_Delete" xml:space="preserve"><value>删除</value></data>
+  <data name="WebBackdrop_RevealInExplorer" xml:space="preserve"><value>在资源管理器中显示</value></data>
+  <data name="WebBackdrop_Save" xml:space="preserve"><value>保存</value></data>
+  <data name="WebBackdrop_SaveAs" xml:space="preserve"><value>另存为...</value></data>
+  <data name="WebBackdrop_SearchInFiles" xml:space="preserve"><value>在文件中搜索</value></data>
+  <data name="WebBackdrop_MatchCase" xml:space="preserve"><value>区分大小写</value></data>
+  <data name="WebBackdrop_MatchWholeWord" xml:space="preserve"><value>全字匹配</value></data>
+  <data name="WebBackdrop_SearchFilesByName" xml:space="preserve"><value>按名称搜索文件</value></data>
+  <data name="WebBackdrop_QuickOpenPlaceholder" xml:space="preserve"><value>按名称搜索文件 (Ctrl+P)</value></data>
+  <data name="WebBackdrop_ProjectInspector" xml:space="preserve"><value>项目检查器</value></data>
+  <data name="WebBackdrop_Wallpaper" xml:space="preserve"><value>壁纸</value></data>
+  <data name="WebBackdrop_Title" xml:space="preserve"><value>标题</value></data>
+  <data name="WebBackdrop_Entry" xml:space="preserve"><value>入口</value></data>
+  <data name="WebBackdrop_Current" xml:space="preserve"><value>当前项</value></data>
+  <data name="WebBackdrop_NoItemSelected" xml:space="preserve"><value>未选择任何项目。</value></data>
+  <data name="WebBackdrop_Name" xml:space="preserve"><value>名称</value></data>
+  <data name="WebBackdrop_Language" xml:space="preserve"><value>语言</value></data>
+  <data name="WebBackdrop_Type" xml:space="preserve"><value>类型</value></data>
+  <data name="WebBackdrop_Status" xml:space="preserve"><value>状态</value></data>
+  <data name="WebBackdrop_Size" xml:space="preserve"><value>大小</value></data>
+  <data name="WebBackdrop_Lines" xml:space="preserve"><value>行数</value></data>
+  <data name="WebBackdrop_Modified" xml:space="preserve"><value>修改时间</value></data>
+  <data name="WebBackdrop_RelativePath" xml:space="preserve"><value>相对路径</value></data>
+  <data name="WebBackdrop_Image" xml:space="preserve"><value>图片</value></data>
+  <data name="WebBackdrop_Unsupported" xml:space="preserve"><value>不支持</value></data>
+  <data name="WebBackdrop_Saved" xml:space="preserve"><value>已保存</value></data>
+  <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>未保存</value></data>
+  <data name="WebBackdrop_Folder" xml:space="preserve"><value>文件夹</value></data>
+  <data name="WebBackdrop_Problems" xml:space="preserve"><value>问题</value></data>
+  <data name="WebBackdrop_PreviewUnavailable" xml:space="preserve"><value>无法预览</value></data>
+  <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>无法直接打开此文件类型。</value></data>
+  <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>选择一个文件以开始</value></data>
+  <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>从文件资源管理器中打开文件以编辑和预览。</value></data>
+  <data name="WebBackdrop_WallpaperTitle" xml:space="preserve"><value>壁纸标题</value></data>
+  <data name="WebBackdrop_Description" xml:space="preserve"><value>描述</value></data>
+  <data name="WebBackdrop_ShortDescription" xml:space="preserve"><value>简短描述</value></data>
+  <data name="WebBackdrop_Author" xml:space="preserve"><value>作者</value></data>
+  <data name="WebBackdrop_AuthorName" xml:space="preserve"><value>作者名称</value></data>
+  <data name="WebBackdrop_Tags" xml:space="preserve"><value>标签（使用分号分隔）</value></data>
+  <data name="WebBackdrop_EntryFile" xml:space="preserve"><value>入口文件</value></data>
+  <data name="WebBackdrop_SaveProjectJson" xml:space="preserve"><value>保存 project.json</value></data>
+  <data name="WebBackdrop_Tabs2" xml:space="preserve"><value>制表符: 2</value></data>
+  <data name="WebBackdrop_Tabs4" xml:space="preserve"><value>制表符: 4</value></data>
+  <data name="WebBackdrop_Spaces2" xml:space="preserve"><value>空格: 2</value></data>
+  <data name="WebBackdrop_Spaces4" xml:space="preserve"><value>空格: 4</value></data>
+  <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>空格: 8</value></data>
+  <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>行 {0}，列 {1}</value></data>
+  <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>行 {0}，列 {1}（已选择 {2}{3} 个字符）</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>无法打开文件：{0}&#x0A;文件可能已损坏或无法读取。&#x0A;{1}</value></data>
+  <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>无法保存文件：{0}&#x0A;文件加载失败且可能已损坏，请关闭后重新打开。</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>无法保存文件：{0}&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>无法保存所有文件，请检查错误后重试。</value></data>
+  <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>找不到项目文件夹，请检查项目设置。</value></data>
+  <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>文件“{0}”在存在未保存更改时被磁盘上的其他程序修改。&#x0A;&#x0A;是否重新加载磁盘版本并放弃编辑器中的更改？</value></data>
+  <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>文件冲突</value></data>
+  <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>从磁盘重新加载</value></data>
+  <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>保留我的更改</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>无法重新加载文件：{0}&#x0A;文件可能已损坏或无法读取。&#x0A;{1}</value></data>
+  <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>无法保存项目文件，导入已中止。</value></data>
+  <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>无法保存项目文件，导出已中止。</value></data>
+  <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>壁纸库面板不可用。</value></data>
+  <data name="WebBackdrop_FailedParseProjectFile" xml:space="preserve"><value>无法解析项目文件：{0}&#x0A;{1}</value></data>
+  <data name="WebBackdrop_CannotSaveCorruptProject" xml:space="preserve"><value>无法保存项目文件：{0}&#x0A;文件已损坏，请修复或恢复后再进行更改。</value></data>
+  <data name="WebBackdrop_FullProjectArchive" xml:space="preserve"><value>完整项目存档 (.zip)</value></data>
+  <data name="WebBackdrop_WebWallpaperPackage" xml:space="preserve"><value>网页壁纸包 (.zip)</value></data>
+  <data name="WebBackdrop_Find" xml:space="preserve"><value>查找</value></data>
+  <data name="WebBackdrop_FindInFiles" xml:space="preserve"><value>在文件中查找</value></data>
+  <data name="WebBackdrop_Selection" xml:space="preserve"><value>选择(S)</value></data>
+  <data name="WebBackdrop_GoBack" xml:space="preserve"><value>后退</value></data>
+  <data name="WebBackdrop_GoForward" xml:space="preserve"><value>前进</value></data>
+  <data name="WebBackdrop_CopyLineUp" xml:space="preserve"><value>向上复制行</value></data>
+  <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>向下复制行</value></data>
+  <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>向上移动行</value></data>
+  <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>向下移动行</value></data>
 </root>

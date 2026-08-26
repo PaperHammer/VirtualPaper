@@ -1670,4 +1670,87 @@ The following words cannot be used as usernames:
   <data name="Text_NoPreview" xml:space="preserve">
     <value>No preview</value>
   </data>
+  <data name="WebBackdrop_NewFile" xml:space="preserve"><value>New File</value></data>
+  <data name="WebBackdrop_NewFolder" xml:space="preserve"><value>New Folder</value></data>
+  <data name="WebBackdrop_AddItems" xml:space="preserve"><value>Add Items</value></data>
+  <data name="WebBackdrop_Cut" xml:space="preserve"><value>Cut</value></data>
+  <data name="WebBackdrop_Copy" xml:space="preserve"><value>Copy</value></data>
+  <data name="WebBackdrop_Paste" xml:space="preserve"><value>Paste</value></data>
+  <data name="WebBackdrop_CopyPath" xml:space="preserve"><value>Copy Path</value></data>
+  <data name="WebBackdrop_CopyRelativePath" xml:space="preserve"><value>Copy Relative Path</value></data>
+  <data name="WebBackdrop_Rename" xml:space="preserve"><value>Rename...</value></data>
+  <data name="WebBackdrop_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="WebBackdrop_RevealInExplorer" xml:space="preserve"><value>Reveal in Explorer</value></data>
+  <data name="WebBackdrop_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="WebBackdrop_SaveAs" xml:space="preserve"><value>Save As...</value></data>
+  <data name="WebBackdrop_SearchInFiles" xml:space="preserve"><value>Search in files</value></data>
+  <data name="WebBackdrop_MatchCase" xml:space="preserve"><value>Match Case</value></data>
+  <data name="WebBackdrop_MatchWholeWord" xml:space="preserve"><value>Match Whole Word</value></data>
+  <data name="WebBackdrop_SearchFilesByName" xml:space="preserve"><value>Search files by name</value></data>
+  <data name="WebBackdrop_QuickOpenPlaceholder" xml:space="preserve"><value>Search files by name (Ctrl+P)</value></data>
+  <data name="WebBackdrop_ProjectInspector" xml:space="preserve"><value>Project Inspector</value></data>
+  <data name="WebBackdrop_Wallpaper" xml:space="preserve"><value>Wallpaper</value></data>
+  <data name="WebBackdrop_Title" xml:space="preserve"><value>Title</value></data>
+  <data name="WebBackdrop_Entry" xml:space="preserve"><value>Entry</value></data>
+  <data name="WebBackdrop_Current" xml:space="preserve"><value>Current</value></data>
+  <data name="WebBackdrop_NoItemSelected" xml:space="preserve"><value>No item selected.</value></data>
+  <data name="WebBackdrop_Name" xml:space="preserve"><value>Name</value></data>
+  <data name="WebBackdrop_Language" xml:space="preserve"><value>Language</value></data>
+  <data name="WebBackdrop_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="WebBackdrop_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="WebBackdrop_Size" xml:space="preserve"><value>Size</value></data>
+  <data name="WebBackdrop_Lines" xml:space="preserve"><value>Lines</value></data>
+  <data name="WebBackdrop_Modified" xml:space="preserve"><value>Modified</value></data>
+  <data name="WebBackdrop_RelativePath" xml:space="preserve"><value>Relative Path</value></data>
+  <data name="WebBackdrop_Image" xml:space="preserve"><value>Image</value></data>
+  <data name="WebBackdrop_Unsupported" xml:space="preserve"><value>Unsupported</value></data>
+  <data name="WebBackdrop_Saved" xml:space="preserve"><value>Saved</value></data>
+  <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>Unsaved</value></data>
+  <data name="WebBackdrop_Folder" xml:space="preserve"><value>Folder</value></data>
+  <data name="WebBackdrop_Problems" xml:space="preserve"><value>PROBLEMS</value></data>
+  <data name="WebBackdrop_PreviewUnavailable" xml:space="preserve"><value>Preview unavailable</value></data>
+  <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>This file type cannot be opened directly.</value></data>
+  <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>Select a file to start</value></data>
+  <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>Open a file from the explorer to edit and preview.</value></data>
+  <data name="WebBackdrop_WallpaperTitle" xml:space="preserve"><value>Wallpaper title</value></data>
+  <data name="WebBackdrop_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="WebBackdrop_ShortDescription" xml:space="preserve"><value>Short description</value></data>
+  <data name="WebBackdrop_Author" xml:space="preserve"><value>Author</value></data>
+  <data name="WebBackdrop_AuthorName" xml:space="preserve"><value>Author name</value></data>
+  <data name="WebBackdrop_Tags" xml:space="preserve"><value>Tags (semicolon separated)</value></data>
+  <data name="WebBackdrop_EntryFile" xml:space="preserve"><value>Entry file</value></data>
+  <data name="WebBackdrop_SaveProjectJson" xml:space="preserve"><value>Save project.json</value></data>
+  <data name="WebBackdrop_Tabs2" xml:space="preserve"><value>Tabs: 2</value></data>
+  <data name="WebBackdrop_Tabs4" xml:space="preserve"><value>Tabs: 4</value></data>
+  <data name="WebBackdrop_Spaces2" xml:space="preserve"><value>Spaces: 2</value></data>
+  <data name="WebBackdrop_Spaces4" xml:space="preserve"><value>Spaces: 4</value></data>
+  <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Spaces: 8</value></data>
+  <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Ln {0}, Col {1}</value></data>
+  <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Ln {0}, Col {1} ({2}{3} selected)</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Failed to open file: {0}&#x0A;The file may be corrupted or unreadable.&#x0A;{1}</value></data>
+  <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>Cannot save file: {0}&#x0A;The file failed to load and may be corrupted. Please close and reopen it.</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Failed to save file: {0}&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>Failed to save all files. Please check for errors and try again.</value></data>
+  <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>Project folder not found. Please check your project settings.</value></data>
+  <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>The file &quot;{0}&quot; was modified on disk while it has unsaved changes.&#x0A;&#x0A;Reload the disk version and discard your editor changes?</value></data>
+  <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>File Conflict</value></data>
+  <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Reload from Disk</value></data>
+  <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Keep My Changes</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Failed to reload file: {0}&#x0A;The file may be corrupted or unreadable.&#x0A;{1}</value></data>
+  <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>Failed to save project files. Import aborted.</value></data>
+  <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>Failed to save project files. Export aborted.</value></data>
+  <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>Wallpaper library panel is not available.</value></data>
+  <data name="WebBackdrop_FailedParseProjectFile" xml:space="preserve"><value>Failed to parse project file: {0}&#x0A;{1}</value></data>
+  <data name="WebBackdrop_CannotSaveCorruptProject" xml:space="preserve"><value>Cannot save project file: {0}&#x0A;The file is corrupted. Please fix or restore it before making changes.</value></data>
+  <data name="WebBackdrop_FullProjectArchive" xml:space="preserve"><value>Full Project Archive (.zip)</value></data>
+  <data name="WebBackdrop_WebWallpaperPackage" xml:space="preserve"><value>Web Wallpaper Package (.zip)</value></data>
+  <data name="WebBackdrop_Find" xml:space="preserve"><value>Find</value></data>
+  <data name="WebBackdrop_FindInFiles" xml:space="preserve"><value>Find in Files</value></data>
+  <data name="WebBackdrop_Selection" xml:space="preserve"><value>Selection(S)</value></data>
+  <data name="WebBackdrop_GoBack" xml:space="preserve"><value>Go Back</value></data>
+  <data name="WebBackdrop_GoForward" xml:space="preserve"><value>Go Forward</value></data>
+  <data name="WebBackdrop_CopyLineUp" xml:space="preserve"><value>Copy Line Up</value></data>
+  <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>Copy Line Down</value></data>
+  <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>Move Line Up</value></data>
+  <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>Move Line Down</value></data>
 </root>

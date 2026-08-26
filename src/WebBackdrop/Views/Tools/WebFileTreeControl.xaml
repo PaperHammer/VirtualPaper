@@ -56,20 +56,20 @@
                 Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout Opening="FolderMenuFlyout_Opening" Closed="ContextMenuFlyout_Closed">
-                        <MenuFlyoutItem x:Name="folderNewFileMenuItem" Text="New File" Tag="{x:Bind}" Click="NewFileMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderNewFolderMenuItem" Text="New Folder" Tag="{x:Bind}" Click="NewFolderMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderAddItemsMenuItem" Text="Add Items" Tag="{x:Bind}" Click="AddItemsMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderNewFileMenuItem" Text="{markup:I18n Key=WebBackdrop_NewFile}" Tag="{x:Bind}" Click="NewFileMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderNewFolderMenuItem" Text="{markup:I18n Key=WebBackdrop_NewFolder}" Tag="{x:Bind}" Click="NewFolderMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderAddItemsMenuItem" Text="{markup:I18n Key=WebBackdrop_AddItems}" Tag="{x:Bind}" Click="AddItemsMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="folderEditSeparator1"/>
-                        <MenuFlyoutItem x:Name="folderCutMenuItem" Text="Cut" KeyboardAcceleratorTextOverride="Ctrl+X" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderCopyMenuItem" Text="Copy" KeyboardAcceleratorTextOverride="Ctrl+C" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="pasteMenuItem" Text="Paste" KeyboardAcceleratorTextOverride="Ctrl+V" Tag="{x:Bind}" Click="PasteMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderCopyPathMenuItem" Text="Copy Path" KeyboardAcceleratorTextOverride="Shift+Alt+C" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderCopyRelativePathMenuItem" Text="Copy Relative Path" KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCutMenuItem" Text="{markup:I18n Key=WebBackdrop_Cut}" KeyboardAcceleratorTextOverride="Ctrl+X" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyMenuItem" Text="{markup:I18n Key=WebBackdrop_Copy}" KeyboardAcceleratorTextOverride="Ctrl+C" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="pasteMenuItem" Text="{markup:I18n Key=WebBackdrop_Paste}" KeyboardAcceleratorTextOverride="Ctrl+V" Tag="{x:Bind}" Click="PasteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyPathMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyPath}" KeyboardAcceleratorTextOverride="Shift+Alt+C" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderCopyRelativePathMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyRelativePath}" KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="folderEditSeparator2"/>
-                        <MenuFlyoutItem x:Name="folderRenameMenuItem" Text="Rename..." KeyboardAcceleratorTextOverride="F2" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderDeleteMenuItem" Text="Delete" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderRenameMenuItem" Text="{markup:I18n Key=WebBackdrop_Rename}" KeyboardAcceleratorTextOverride="F2" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderDeleteMenuItem" Text="{markup:I18n Key=WebBackdrop_Delete}" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="folderExplorerSeparator"/>
-                        <MenuFlyoutItem x:Name="folderRevealMenuItem" Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderRevealMenuItem" Text="{markup:I18n Key=WebBackdrop_RevealInExplorer}" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
                 <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
@@ -150,18 +150,18 @@
                 Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout Opening="FileMenuFlyout_Opening" Closed="ContextMenuFlyout_Closed">
-                        <MenuFlyoutItem x:Name="fileSaveMenuItem" Text="Save" Tag="{x:Bind}" Click="SaveMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileSaveAsMenuItem" Text="Save As..." Tag="{x:Bind}" Click="SaveAsMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileSaveMenuItem" Text="{markup:I18n Key=WebBackdrop_Save}" Tag="{x:Bind}" Click="SaveMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileSaveAsMenuItem" Text="{markup:I18n Key=WebBackdrop_SaveAs}" Tag="{x:Bind}" Click="SaveAsMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileSaveSeparator"/>
-                        <MenuFlyoutItem x:Name="fileCutMenuItem" Text="Cut" KeyboardAcceleratorTextOverride="Ctrl+X" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileCopyMenuItem" Text="Copy" KeyboardAcceleratorTextOverride="Ctrl+C" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileCopyPathMenuItem" Text="Copy Path" KeyboardAcceleratorTextOverride="Shift+Alt+C" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileCopyRelativePathMenuItem" Text="Copy Relative Path" KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCutMenuItem" Text="{markup:I18n Key=WebBackdrop_Cut}" KeyboardAcceleratorTextOverride="Ctrl+X" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyMenuItem" Text="{markup:I18n Key=WebBackdrop_Copy}" KeyboardAcceleratorTextOverride="Ctrl+C" Tag="{x:Bind}" Click="CopyMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyPathMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyPath}" KeyboardAcceleratorTextOverride="Shift+Alt+C" Tag="{x:Bind}" Click="CopyPathMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileCopyRelativePathMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyRelativePath}" KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileEditSeparator"/>
-                        <MenuFlyoutItem x:Name="fileRenameMenuItem" Text="Rename..." KeyboardAcceleratorTextOverride="F2" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileDeleteMenuItem" Text="Delete" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileRenameMenuItem" Text="{markup:I18n Key=WebBackdrop_Rename}" KeyboardAcceleratorTextOverride="F2" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileDeleteMenuItem" Text="{markup:I18n Key=WebBackdrop_Delete}" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileExplorerSeparator"/>
-                        <MenuFlyoutItem x:Name="fileRevealMenuItem" Text="Reveal in Explorer" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileRevealMenuItem" Text="{markup:I18n Key=WebBackdrop_RevealInExplorer}" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
                 </collection:ArcTreeViewItem.ContextFlyout>
                 <Grid>
@@ -332,8 +332,8 @@
         <Grid Margin="8 6 8 4">
             <TextBox x:Name="contentSearchBox"
                 Style="{StaticResource WebBackdropSearchTextBoxStyle}"
-                AutomationProperties.Name="Search in files"
-                PlaceholderText="Search in files"
+                AutomationProperties.Name="{markup:I18n Key=WebBackdrop_SearchInFiles}"
+                PlaceholderText="{markup:I18n Key=WebBackdrop_SearchInFiles}"
                 KeyDown="ContentSearchBox_KeyDown"
                 Text="{x:Bind _viewModel.FilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
             <StackPanel
@@ -352,7 +352,7 @@
                     Background="Transparent"
                     IsChecked="{x:Bind _viewModel.IsCaseSensitive, Mode=TwoWay}">
                     <ToolTipService.ToolTip>
-                        <ToolTip Content="Match Case"/>
+                        <ToolTip Content="{markup:I18n Key=WebBackdrop_MatchCase}"/>
                     </ToolTipService.ToolTip>
                 </ToggleButton>
                 <ToggleButton
@@ -365,7 +365,7 @@
                     Background="Transparent"
                     IsChecked="{x:Bind _viewModel.IsWholeWord, Mode=TwoWay}">
                     <ToolTipService.ToolTip>
-                        <ToolTip Content="Match Whole Word"/>
+                        <ToolTip Content="{markup:I18n Key=WebBackdrop_MatchWholeWord}"/>
                     </ToolTipService.ToolTip>
                 </ToggleButton>
             </StackPanel>

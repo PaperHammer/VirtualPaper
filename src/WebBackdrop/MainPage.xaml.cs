@@ -158,7 +158,7 @@ namespace Workloads.Creation.WebBackdrop {
 
                 // 导出前先保存所有未保存的编辑，保证包内文件为最新内容
                 if (!await webEditor.SaveAllAsync()) {
-                    GlobalMessageUtil.ShowError("Failed to save project files. Export aborted.");
+                    GlobalMessageUtil.ShowError(LanguageUtil.GetI18n("WebBackdrop_ExportSaveFailed"));
                     return null;
                 }
 

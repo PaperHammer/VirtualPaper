@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:converters="using:VirtualPaper.UIComponent.Converters"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -150,11 +151,11 @@
             <Button Padding="8 0" Style="{StaticResource StatusBarButtonStyle}" VerticalAlignment="Stretch" Visibility="{x:Bind IsTextFile, Converter={StaticResource VisibilityConverter}}" Click="Indent_Click">
                 <Button.Flyout>
                     <MenuFlyout>
-                        <MenuFlyoutItem x:Name="indentTab2" Text="Tabs: 2" Click="IndentOption_Click" Tag="2,tabs"/>
-                        <MenuFlyoutItem x:Name="indentTab4" Text="Tabs: 4" Click="IndentOption_Click" Tag="4,tabs"/>
-                        <MenuFlyoutItem x:Name="indentSpace2" Text="Spaces: 2" Click="IndentOption_Click" Tag="2,spaces"/>
-                        <MenuFlyoutItem x:Name="indentSpace4" Text="Spaces: 4" Click="IndentOption_Click" Tag="4,spaces"/>
-                        <MenuFlyoutItem x:Name="indentSpace8" Text="Spaces: 8" Click="IndentOption_Click" Tag="8,spaces"/>
+                        <MenuFlyoutItem x:Name="indentTab2" Text="{markup:I18n Key=WebBackdrop_Tabs2}" Click="IndentOption_Click" Tag="2,tabs"/>
+                        <MenuFlyoutItem x:Name="indentTab4" Text="{markup:I18n Key=WebBackdrop_Tabs4}" Click="IndentOption_Click" Tag="4,tabs"/>
+                        <MenuFlyoutItem x:Name="indentSpace2" Text="{markup:I18n Key=WebBackdrop_Spaces2}" Click="IndentOption_Click" Tag="2,spaces"/>
+                        <MenuFlyoutItem x:Name="indentSpace4" Text="{markup:I18n Key=WebBackdrop_Spaces4}" Click="IndentOption_Click" Tag="4,spaces"/>
+                        <MenuFlyoutItem x:Name="indentSpace8" Text="{markup:I18n Key=WebBackdrop_Spaces8}" Click="IndentOption_Click" Tag="8,spaces"/>
                     </MenuFlyout>
                 </Button.Flyout>
                 <TextBlock FontSize="11" Foreground="{ThemeResource WebBackdropStatusBarForegroundBrush}" VerticalAlignment="Center" Text="{x:Bind IndentText, Mode=OneWay}"/>

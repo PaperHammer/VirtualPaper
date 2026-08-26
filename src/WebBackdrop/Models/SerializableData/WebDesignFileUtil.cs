@@ -297,7 +297,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
                 catch (Exception ex) {
                     _parseFailed = true;
                     GlobalMessageUtil.ShowError(
-                        $"Failed to parse project file: {ProjectFilePath}\n{ex.Message}",
+                        string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedParseProjectFile"), ProjectFilePath, ex.Message),
                         key: nameof(ProjectFilePath));
                 }
             }
@@ -328,8 +328,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             // 解析失败时禁止保存，避免覆盖可能被恢复的数据
             if (_parseFailed) {
                 GlobalMessageUtil.ShowError(
-                    $"Cannot save project file: {ProjectFilePath}\n" +
-                    "The file is corrupted. Please fix or restore it before making changes.",
+                    string.Format(LanguageUtil.GetI18n("WebBackdrop_CannotSaveCorruptProject"), ProjectFilePath),
                     key: "VpwSaveBlocked");
                 return;
             }

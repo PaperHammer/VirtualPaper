@@ -4,7 +4,6 @@ using NLog;
 using Windows.ApplicationModel.Core;
 
 /*
- * rweb-workload
  * 
  * 分组循环播放
  * AI 生成壁纸	接入 Stable Diffusion / ComfyUI，本地生成动态壁纸

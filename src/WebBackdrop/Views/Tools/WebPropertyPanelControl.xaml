@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -21,38 +22,38 @@
                 <TextBlock
                     FontSize="14"
                     FontWeight="SemiBold"
-                    Text="Project Inspector"/>
+                    Text="{markup:I18n Key=WebBackdrop_ProjectInspector}"/>
 
                 <Expander x:Name="projExpander"
-                    Header="Wallpaper" 
+                    Header="{markup:I18n Key=WebBackdrop_Wallpaper}"
                     IsExpanded="True"
                     HorizontalAlignment="Stretch" 
                     HorizontalContentAlignment="Stretch">
                     <StackPanel Spacing="8">
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.6" Text="Title"/>
+                            <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Title}"/>
                             <TextBlock Text="{x:Bind _viewModel.ProjectTitleText, Mode=OneWay}" TextWrapping="Wrap"/>
                         </StackPanel>
                         <StackPanel Spacing="2">
-                            <TextBlock FontSize="11" Opacity="0.6" Text="Entry"/>
+                            <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Entry}"/>
                             <TextBlock Text="{x:Bind _viewModel.ProjectEntryText, Mode=OneWay}" TextWrapping="Wrap"/>
                         </StackPanel>
                     </StackPanel>
                 </Expander>
 
                 <Expander x:Name="currentItemExpander"
-                    Header="Current" 
+                    Header="{markup:I18n Key=WebBackdrop_Current}"
                     IsExpanded="True" 
                     HorizontalAlignment="Stretch" 
                     HorizontalContentAlignment="Stretch">
                     <StackPanel Spacing="10">
                         <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.NoItemVisibility, Mode=OneWay}">
-                            <TextBlock Opacity="0.65" Text="No item selected."/>
+                            <TextBlock Opacity="0.65" Text="{markup:I18n Key=WebBackdrop_NoItemSelected}"/>
                         </StackPanel>
 
                         <StackPanel Spacing="8" Visibility="{x:Bind _viewModel.ItemInfoVisibility, Mode=OneWay}">
                             <StackPanel Spacing="2">
-                                <TextBlock FontSize="11" Opacity="0.6" Text="Name"/>
+                                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Name}"/>
                                 <TextBlock Text="{x:Bind _viewModel.FileNameText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Spacing="2">
@@ -60,23 +61,23 @@
                                 <TextBlock Text="{x:Bind _viewModel.TypeText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.StatusVisibility, Mode=OneWay}">
-                                <TextBlock FontSize="11" Opacity="0.6" Text="Status"/>
+                                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Status}"/>
                                 <TextBlock Text="{x:Bind _viewModel.StatusText, Mode=OneWay}"/>
                             </StackPanel>
                             <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.SizeVisibility, Mode=OneWay}">
-                                <TextBlock FontSize="11" Opacity="0.6" Text="Size"/>
+                                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Size}"/>
                                 <TextBlock Text="{x:Bind _viewModel.SizeText, Mode=OneWay}"/>
                             </StackPanel>
                             <StackPanel Spacing="2" Visibility="{x:Bind _viewModel.LineCountVisibility, Mode=OneWay}">
-                                <TextBlock FontSize="11" Opacity="0.6" Text="Lines"/>
+                                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Lines}"/>
                                 <TextBlock Text="{x:Bind _viewModel.LineCountText, Mode=OneWay}"/>
                             </StackPanel>
                             <StackPanel Spacing="2">
-                                <TextBlock FontSize="11" Opacity="0.6" Text="Modified"/>
+                                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_Modified}"/>
                                 <TextBlock Text="{x:Bind _viewModel.ModifiedText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
                             <StackPanel Spacing="2">
-                                <TextBlock FontSize="11" Opacity="0.6" Text="Relative Path"/>
+                                <TextBlock FontSize="11" Opacity="0.6" Text="{markup:I18n Key=WebBackdrop_RelativePath}"/>
                                 <TextBlock Text="{x:Bind _viewModel.RelativePathText, Mode=OneWay}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </StackPanel>

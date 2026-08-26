@@ -213,7 +213,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             var filePath = rootElement.TryGetProperty("filePath", out var filePathElement)
                 ? filePathElement.GetString()
                 : null;
-            EditorStateChanged?.Invoke(this, new MonacoEditorState(isSaved, lineEnding, encoding, indent, filePath));
+            var canUndo = rootElement.TryGetProperty("canUndo", out var canUndoElement) && canUndoElement.GetBoolean();
+            var canRedo = rootElement.TryGetProperty("canRedo", out var canRedoElement) && canRedoElement.GetBoolean();
+            EditorStateChanged?.Invoke(this, new MonacoEditorState(
+                isSaved, lineEnding, encoding, indent, filePath, canUndo, canRedo));
             return Task.CompletedTask;
         }
 
@@ -551,7 +554,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         bool IsSelectedCharacterCountOverflow,
         string? FilePath = null);
 
-    public sealed record MonacoEditorState(bool IsSaved, string LineEnding, string Encoding, string Indent, string? FilePath = null);
+    public sealed record MonacoEditorState(
+        bool IsSaved,
+        string LineEnding,
+        string Encoding,
+        string Indent,
+        string? FilePath = null,
+        bool CanUndo = false,
+        bool CanRedo = false);
 
     public sealed class MonacoMarker {
         public int Severity { get; set; }

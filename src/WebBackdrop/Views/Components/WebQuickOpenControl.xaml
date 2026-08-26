@@ -4,6 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:models="using:Workloads.Creation.WebBackdrop.Models"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     Height="32"
     VerticalAlignment="Center">
 
@@ -39,8 +40,8 @@
             HorizontalAlignment="Stretch"
             VerticalAlignment="Center"
             TextBoxStyle="{StaticResource WebBackdropQuickOpenInnerTextBoxStyle}"
-            AutomationProperties.Name="Search files by name"
-            PlaceholderText="Search files by name (Ctrl+P)"
+            AutomationProperties.Name="{markup:I18n Key=WebBackdrop_SearchFilesByName}"
+            PlaceholderText="{markup:I18n Key=WebBackdrop_QuickOpenPlaceholder}"
             TextMemberPath="FileName">
             <AutoSuggestBox.ItemTemplate>
                 <DataTemplate x:DataType="models:WebQuickOpenItem">

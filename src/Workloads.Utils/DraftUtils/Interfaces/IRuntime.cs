@@ -7,6 +7,8 @@ using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Utils.DraftUtils.Interfaces {
     public enum RuntimeEditCommand {
+        Undo,
+        Redo,
         Cut,
         Copy,
         Paste,

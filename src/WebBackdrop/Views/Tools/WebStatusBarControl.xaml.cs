@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Utils;
 using Workloads.Creation.WebBackdrop.Views.Components;
 
@@ -141,8 +142,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             DependencyProperty.Register(nameof(LineEndingText), typeof(string), typeof(WebStatusBarControl), new PropertyMetadata(string.Empty));
 
         public string CursorPositionText => SelectedCharacterCount > 0
-            ? $"Ln {LineNumber}, Col {Column} ({SelectedCharacterCount}{(IsSelectedCharacterCountOverflow ? "+" : string.Empty)} selected)"
-            : $"Ln {LineNumber}, Col {Column}";
+            ? string.Format(
+                LanguageUtil.GetI18n("WebBackdrop_CursorPositionSelected"),
+                LineNumber,
+                Column,
+                SelectedCharacterCount,
+                IsSelectedCharacterCountOverflow ? "+" : string.Empty)
+            : string.Format(LanguageUtil.GetI18n("WebBackdrop_CursorPosition"), LineNumber, Column);
         public string ProblemErrorText => ProblemErrorCount.ToString();
         public string ProblemWarningText => ProblemWarningCount.ToString();
         public Visibility ProblemErrorActiveVisibility => ProblemErrorCount > 0 ? Visibility.Visible : Visibility.Collapsed;

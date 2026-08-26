@@ -60,14 +60,30 @@ namespace Workloads.Creation.WebBackdrop {
             Session.IsSavedChanged += Session_IsSavedChanged;
         }
 
-        private void Page_Loaded(object sender, RoutedEventArgs e) {
+        private async void Page_Loaded(object sender, RoutedEventArgs e) {
+            IsEnabled = false;
             try {
-                webEditor.Payload = Payload;
-                IsEnabled = true;
+                var loadingCtx = ArcContext.LoadingContext;
+                if (loadingCtx == null) {
+                    webEditor.Payload = Payload;
+                    await webEditor.InitializeAsync();
+                    return;
+                }
+
+                await loadingCtx.RunAsync(async _ => {
+                    // Give WinUI a chance to render this page's loading overlay
+                    // before the editor builds its project UI.
+                    await Task.Yield();
+                    webEditor.Payload = Payload;
+                    await webEditor.InitializeAsync();
+                });
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
+            }
+            finally {
+                IsEnabled = true;
             }
         }
 

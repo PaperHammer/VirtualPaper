@@ -216,7 +216,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             QuickOpenBox.IsSuggestionListOpen = false;
         }
 
-        private void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
+        private async void ArcUserControl_Loaded(object sender, RoutedEventArgs e) {
+            await InitializeAsync();
+        }
+
+        public async Task InitializeAsync() {
             if (_isLoaded || Payload == null) return;
 
             Payload.TryGet(NaviPayloadKey.WebProjectSession, out _session);
@@ -224,6 +228,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (_session == null) return;
 
             _isLoaded = true;
+            await Task.Yield();
             ViewModel = new WebEditorViewModel(_session, contextKey);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             ViewModel.DebugSessionEnded += OnDebugSessionEnded;

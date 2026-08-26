@@ -68,23 +68,25 @@ namespace Workloads.Creation.StaticImg {
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
+            try {
+                // ArcContext belongs to this page instance. Do not resolve it again
+                // from the manager: opened projects share the same page type.
+                var loadingCtx = ArcContext.LoadingContext;
+                if (loadingCtx == null) return;
 
-            var ctx = ArcPageContextManager.GetContext(ContextKey);
-            var loadingCtx = ctx?.LoadingContext;
-            if (loadingCtx == null)
-                return;
+                await loadingCtx.RunAsync(
+                    operation: async token => {
+                        await Task.WhenAll(
+                            ShaderLoader.LoadAllShadersAsync(),
+                            inkCanvas.IsInited.Task
+                        );
+                    });
 
-            await loadingCtx.RunAsync(
-                operation: async token => {
-                    await Task.WhenAll(
-                        ShaderLoader.LoadAllShadersAsync(),
-                        inkCanvas.IsInited.Task
-                    );
-                });
-
-            StartFrameTimeMonitor();
-
-            this.IsEnabled = true;
+                StartFrameTimeMonitor();
+            }
+            finally {
+                this.IsEnabled = true;
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {

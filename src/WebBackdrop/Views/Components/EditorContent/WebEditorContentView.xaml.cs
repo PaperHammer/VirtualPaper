@@ -8,8 +8,6 @@ using Workloads.Creation.WebBackdrop.Models;
 
 namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
     public sealed partial class WebEditorContentView : UserControl {
-        // [已废弃，暂注释] 上游 MonacoEditor.ContentChanged 从未触发
-        // public event EventHandler<string>? ContentChanged;
         public event EventHandler? ContentModified;
         public event EventHandler<MonacoCursorPosition>? CursorPositionChanged;
         public event EventHandler<IReadOnlyList<MonacoMarker>>? MarkersChanged;

@@ -42,8 +42,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             ResetLayout();
             // 关联文件 URI，使状态上报携带路径，保存状态（含 undo/redo）才能正确匹配
             monacoEditor.FilePath = filePath;
-            monacoEditor.EditorContent = _content;
             monacoEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
+            monacoEditor.EditorContent = _content;
             LoadPreviewDocument(_content);
         }
 
@@ -87,8 +87,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             return monacoEditor.GetContentAsync();
         }
 
-        public Task<(string Content, int VersionId)> GetContentWithVersionAsync() {
+        public Task<(string Content, int VersionId, string? FilePath)> GetContentWithVersionAsync() {
             return monacoEditor.GetContentWithVersionAsync();
+        }
+
+        public Task WaitForContentUpdateAsync() {
+            return monacoEditor.WaitForContentUpdateAsync();
+        }
+
+        public void PrepareEncoding(string encoding) {
+            monacoEditor.PrepareEncoding(encoding);
         }
 
         public Task<MonacoEditorState> GetEditorStateAsync() {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -20,21 +21,31 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         public void Load(string filePath) {
             previewOverlay.Visibility = Visibility.Visible;
             _zoomScale = 1;
+            filePath = Path.GetFullPath(filePath);
+            _currentFilePath = filePath;
 
             // 按路径缓存 BitmapImage，避免每次切换文件都重新解码大图
             if (!_imageCache.TryGetValue(filePath, out var bitmap)) {
                 bitmap = new BitmapImage(new Uri(filePath));
-                _imageCache[filePath] = bitmap;
             }
             imagePreview.Source = bitmap;
             UpdateImageSize();
+
+            // 已解码的缓存图片重新赋值时不保证再次触发 ImageOpened。
+            if (bitmap.PixelWidth > 0 && bitmap.PixelHeight > 0) {
+                CacheDecodedImage(filePath, bitmap);
+                previewOverlay.Visibility = Visibility.Collapsed;
+                PreviewReady?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <summary>
         /// 文件被外部修改后重新加载预览：丢弃缓存并重新解码。
         /// </summary>
         public void Reload(string filePath) {
+            filePath = Path.GetFullPath(filePath);
             _imageCache.Remove(filePath);
+            _imageCacheOrder.Remove(filePath);
             Load(filePath);
         }
 
@@ -48,6 +59,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
 
         private void ImagePreview_ImageOpened(object sender, RoutedEventArgs e) {
             UpdateImageSize();
+            if (_currentFilePath != null && imagePreview.Source is BitmapImage bitmap) {
+                CacheDecodedImage(_currentFilePath, bitmap);
+            }
             previewOverlay.Visibility = Visibility.Collapsed;
             PreviewReady?.Invoke(this, EventArgs.Empty);
         }
@@ -114,6 +128,43 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         private double _zoomScale = 1;
+        private string? _currentFilePath;
         private static readonly Dictionary<string, BitmapImage> _imageCache = new(StringComparer.OrdinalIgnoreCase);
+        private static readonly LinkedList<string> _imageCacheOrder = [];
+        private const int MaxCachedImageCount = 16;
+        private const long MaxCachedImageBytes = 128L * 1024 * 1024;
+
+        private static void TouchCacheEntry(string filePath) {
+            _imageCacheOrder.Remove(filePath);
+            _imageCacheOrder.AddLast(filePath);
+        }
+
+        private static void CacheDecodedImage(string filePath, BitmapImage image) {
+            _imageCache[filePath] = image;
+            TouchCacheEntry(filePath);
+            TrimImageCache(filePath);
+        }
+
+        private static void TrimImageCache(string? activeFilePath) {
+            long estimatedBytes = 0;
+            foreach (var image in _imageCache.Values) {
+                estimatedBytes += (long)image.PixelWidth * image.PixelHeight * 4;
+            }
+
+            while (_imageCache.Count > MaxCachedImageCount || estimatedBytes > MaxCachedImageBytes) {
+                var candidate = _imageCacheOrder.First;
+                while (candidate != null
+                    && string.Equals(candidate.Value, activeFilePath, StringComparison.OrdinalIgnoreCase)) {
+                    candidate = candidate.Next;
+                }
+                if (candidate == null) return;
+
+                var path = candidate.Value;
+                _imageCacheOrder.Remove(candidate);
+                if (_imageCache.Remove(path, out var image)) {
+                    estimatedBytes -= (long)image.PixelWidth * image.PixelHeight * 4;
+                }
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -42,7 +43,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
                 // 内容未变化时 DP 值不变、回调不会触发，这里补一次推送完成模型切换。
                 if (!contentChanged) {
-                    _ = SetContentAsync(value, FilePath);
+                    QueueContentUpdate(value, FilePath);
                 }
             }
         }
@@ -52,7 +53,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private static void OnEditorContentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is MonacoEditor editor && e.NewValue is string newContent) {
-                _ = editor.SetContentAsync(newContent, editor.FilePath);
+                editor.QueueContentUpdate(newContent, editor.FilePath);
             }
         }
 
@@ -68,7 +69,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private static void OnEditorLanguagePropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
             if (d is MonacoEditor editor && e.NewValue is string lang) {
                 editor._pendingLanguage = lang;
-                _ = editor.SetLanguageAsync(lang);
+                _ = editor.SetLanguageAsync(lang, editor.FilePath);
             }
         }
 
@@ -168,11 +169,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (_isEditorReady) return Task.CompletedTask;
             _isEditorReady = true;
             if (_pendingContent != null) {
-                _ = SetContentAsync(_pendingContent, FilePath);
+                QueueContentUpdate(_pendingContent, FilePath);
                 _pendingContent = null;
             }
             if (_pendingLanguage != null) {
-                _ = SetLanguageAsync(_pendingLanguage);
+                _ = SetLanguageAsync(_pendingLanguage, FilePath);
                 _pendingLanguage = null;
             }
             if (_pendingEncoding != null) {
@@ -217,6 +218,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private Task HandleCursorPositionChangeAsync(JsonElement rootElement) {
+            var filePath = rootElement.TryGetProperty("filePath", out var filePathElement)
+                ? filePathElement.GetString()
+                : null;
             var lineNumber = rootElement.GetProperty("lineNumber").GetInt32();
             var column = rootElement.GetProperty("column").GetInt32();
             var selectedCharacterCount = 0;
@@ -228,11 +232,18 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     ? MaxSelectedCharacterCount
                     : (int)count;
             }
-            CursorPositionChanged?.Invoke(this, new MonacoCursorPosition(lineNumber, column, selectedCharacterCount, isSelectedCharacterCountOverflow));
+            CursorPositionChanged?.Invoke(this, new MonacoCursorPosition(
+                lineNumber, column, selectedCharacterCount, isSelectedCharacterCountOverflow, filePath));
             return Task.CompletedTask;
         }
 
         private Task HandleMarkersChangedAsync(JsonElement rootElement) {
+            var filePath = rootElement.TryGetProperty("filePath", out var filePathElement)
+                ? filePathElement.GetString()
+                : null;
+            if (!string.IsNullOrEmpty(filePath) && !IsSameFilePath(filePath, FilePath)) {
+                return Task.CompletedTask;
+            }
             var markers = JsonSerializer.Deserialize<List<MonacoMarker>>(rootElement.GetProperty("markers").GetRawText(), _jsonSerializerOptions) ?? [];
             MarkersChanged?.Invoke(this, markers);
             return Task.CompletedTask;
@@ -332,9 +343,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         /// 一次性获取编辑器内容与模型版本号，供保存时精确标记“已保存版本”，
         /// 避免保存与继续输入交错时把尚未落盘的内容误标为已保存。
         /// </summary>
-        public async Task<(string Content, int VersionId)> GetContentWithVersionAsync() {
+        public async Task<(string Content, int VersionId, string? FilePath)> GetContentWithVersionAsync() {
             if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
-                return (_content ?? string.Empty, 0);
+                return (_content ?? string.Empty, 0, _contentFilePath);
             }
 
             try {
@@ -343,11 +354,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 // JavaScript 字符串编码为 JSON，因此需要先解出内层 JSON，再解析对象。
                 var json = JsonSerializer.Deserialize<string>(result) ?? string.Empty;
                 var payload = JsonSerializer.Deserialize<ContentVersionPayload>(json, _jsonSerializerOptions);
-                return (payload?.Content ?? string.Empty, payload?.Version ?? 0);
+                return (payload?.Content ?? string.Empty, payload?.Version ?? 0, payload?.FilePath);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
-                return (_content ?? string.Empty, 0);
+                return (_content ?? string.Empty, 0, _contentFilePath);
             }
         }
 
@@ -367,7 +378,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             try {
                 var serialized = JsonSerializer.Serialize(encoding);
-                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setEncoding({serialized})");
+                var serializedFilePath = JsonSerializer.Serialize(FilePath);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync(
+                    $"window.setEncoding({serialized}, {serializedFilePath})");
                 _pendingEncoding = null;
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
@@ -424,25 +437,56 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
             try {
                 var serialized = JsonSerializer.Serialize(content);
+                var serializedLanguage = JsonSerializer.Serialize(EditorLanguage);
+                var serializedEncoding = JsonSerializer.Serialize(_pendingEncoding ?? "UTF-8");
+                var updateVersion = Interlocked.Increment(ref _contentUpdateVersion);
                 if (!string.IsNullOrEmpty(filePath)) {
                     var filePathSerialized = JsonSerializer.Serialize(filePath);
-                    await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setValue({serialized}, {filePathSerialized})");
+                    await monacoWebView.CoreWebView2.ExecuteScriptAsync(
+                        $"window.setValue({serialized}, {filePathSerialized}, {serializedLanguage}, {serializedEncoding}, {updateVersion})");
                 } else {
-                    await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setValue({serialized})");
+                    await monacoWebView.CoreWebView2.ExecuteScriptAsync(
+                        $"window.setValue({serialized}, null, {serializedLanguage}, {serializedEncoding}, {updateVersion})");
                 }
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
         }
 
-        private async Task SetLanguageAsync(string language) {
+        private void QueueContentUpdate(string content, string filePath) {
+            _contentUpdateTask = SetContentAsync(content, filePath);
+        }
+
+        public async Task WaitForContentUpdateAsync() {
+            while (true) {
+                var task = _contentUpdateTask;
+                await task;
+                if (ReferenceEquals(task, _contentUpdateTask)) return;
+            }
+        }
+
+        public void PrepareEncoding(string encoding) {
+            _pendingEncoding = encoding;
+        }
+
+        private static bool IsSameFilePath(string? first, string? second) {
+            if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(second)) return false;
+            return string.Equals(
+                Path.GetFullPath(first).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                Path.GetFullPath(second).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        private async Task SetLanguageAsync(string language, string filePath) {
             if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
                 _pendingLanguage = language;
                 return;
             }
             try {
                 var serializedLanguage = JsonSerializer.Serialize(language);
-                await monacoWebView.CoreWebView2.ExecuteScriptAsync($"window.setLanguage({serializedLanguage})");
+                var serializedFilePath = JsonSerializer.Serialize(filePath);
+                await monacoWebView.CoreWebView2.ExecuteScriptAsync(
+                    $"window.setLanguage({serializedLanguage}, {serializedFilePath})");
             } catch (Exception ex) {
                 ArcLog.GetLogger<MonacoEditor>().Error(ex);
             }
@@ -465,6 +509,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private string _content = string.Empty;
+        private long _contentUpdateVersion;
+        private Task _contentUpdateTask = Task.CompletedTask;
         // 记录 _content 所属文件路径：内容相同但文件不同时必须重新推送 setValue 切换模型
         private string _contentFilePath = string.Empty;
         private string? _pendingContent;
@@ -474,6 +520,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         /// window.getValueWithVersion() 的返回结构：{ content, version }。
         /// </summary>
         private sealed class ContentVersionPayload {
+            public string? FilePath { get; set; }
             public string Content { get; set; } = string.Empty;
             public int Version { get; set; }
         }
@@ -497,7 +544,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
     }
 
-    public readonly record struct MonacoCursorPosition(int LineNumber, int Column, int SelectedCharacterCount, bool IsSelectedCharacterCountOverflow);
+    public readonly record struct MonacoCursorPosition(
+        int LineNumber,
+        int Column,
+        int SelectedCharacterCount,
+        bool IsSelectedCharacterCountOverflow,
+        string? FilePath = null);
 
     public sealed record MonacoEditorState(bool IsSaved, string LineEnding, string Encoding, string Indent, string? FilePath = null);
 

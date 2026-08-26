@@ -227,6 +227,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ViewModel = new WebEditorViewModel(_session, contextKey);
             ViewModel.PropertyChanged += ViewModel_PropertyChanged;
             ViewModel.DebugSessionEnded += OnDebugSessionEnded;
+            ViewModel.FileCacheEvicted += ViewModel_FileCacheEvicted;
 
             _session.FileManager.Changed += FileManager_Changed;
 
@@ -264,7 +265,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             if (ViewModel != null) {
                 ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
                 ViewModel.DebugSessionEnded -= OnDebugSessionEnded;
+                ViewModel.FileCacheEvicted -= ViewModel_FileCacheEvicted;
             }
+            _openFileCancellation?.Cancel();
+            _openFileCancellation?.Dispose();
+            _openFileCancellation = null;
 
             editorContentView.TextEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
             editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
@@ -301,23 +306,33 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private async Task OpenFileAsync(string filePath, bool recordCurrentPosition = true) {
             if (ViewModel == null) return;
 
-            // 快速连续切换文件时串行化“同步旧文件 → 打开新文件”整段流程，
-            // 避免两次切换交错：前一次的同步任务完成时 ActiveFile/_currentKind
-            // 已被后一次切换改变，从而把新文件（或 null）内容写进旧文件缓存。
-            await _openFileLock.WaitAsync();
+            var cancellation = new CancellationTokenSource();
+            var previous = Interlocked.Exchange(ref _openFileCancellation, cancellation);
+            previous?.Cancel();
+            var lockTaken = false;
             try {
+                await _openFileLock.WaitAsync(cancellation.Token);
+                lockTaken = true;
                 if (recordCurrentPosition && !string.Equals(
                     ViewModel.ActiveFile?.FilePath,
                     filePath,
                     StringComparison.OrdinalIgnoreCase)) {
                     RecordCurrentNavigationPosition();
                 }
-                await SyncActiveEditorContentAsync();
-                await ViewModel.OpenFileAsync(filePath);
+                if (await SyncActiveEditorContentAsync() == null) return;
+                cancellation.Token.ThrowIfCancellationRequested();
+                await ViewModel.OpenFileAsync(filePath, cancellation.Token);
             }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
             finally {
-                _openFileLock.Release();
+                if (lockTaken) _openFileLock.Release();
+                Interlocked.CompareExchange(ref _openFileCancellation, null, cancellation);
+                cancellation.Dispose();
             }
+        }
+
+        private void ViewModel_FileCacheEvicted(string filePath) {
+            _ = editorContentView.DisposeModelAsync(filePath);
         }
 
         #region crash recovery
@@ -348,12 +363,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             try {
                 // 活动文件的最新编辑可能尚未同步进内存，先拉取一次
                 if (ViewModel.ActiveFile is { CanOpenAsText: true } && !ViewModel.ActiveFile.IsSaved) {
-                    await SyncActiveEditorContentAsync();
+                    if (await SyncActiveEditorContentAsync() == null) return;
                 }
 
                 if (ViewModel == null || _session == null) return;
                 var projectFolder = _session.DesignFileUtil.ProjectFolder;
-                foreach (var file in ViewModel.OpenFiles) {
+                foreach (var file in ViewModel.CachedFiles) {
                     if (!file.IsSaved && file.CanOpenAsText) {
                         await WebBackdropRecoveryStore.WriteBackupAsync(
                             projectFolder, file.FilePath, file.Content, file.EncodingText);
@@ -558,10 +573,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ActiveFileLanguage = WebEditorFileUtil.GetLanguageFromExtension(activeFile.FileExtension);
                 EncodingText = activeFile.EncodingText;
                 ActiveFileIsText = activeFile.CanOpenAsText;
+                editorContentView.PrepareEncoding(activeFile.Kind, activeFile.EncodingText);
                 editorContentView.LoadFile(activeFile, ActiveFileLanguage);
                 leftFileTreeControl.SelectFile(filePath);
-
-                SyncEncodingToMonaco(activeFile.EncodingText);
             }
             else {
                 leftFileTreeControl.ClearActiveFileSelection();
@@ -738,11 +752,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (ViewModel == null) return false;
 
                 var activeVersionId = await SyncActiveEditorContentAsync();
+                if (activeVersionId == null) return false;
                 var activeFile = ViewModel.ActiveFile;
                 var result = await ViewModel.SaveAllAsync();
                 if (result && activeFile != null) {
                     await editorContentView.MarkSavedAsync(activeVersionId);
-                    foreach (var file in ViewModel.OpenFiles) {
+                    foreach (var file in ViewModel.CachedFiles) {
                         leftFileTreeControl.SetFileSaved(file.FilePath, file.IsSaved);
                         // 保存成功：清理对应备份，避免下次启动误判为未保存编辑
                         if (_session != null) {
@@ -750,7 +765,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                         }
                     }
                     // 若保存了项目文件 (.vpw)，增量同步文件树
-                    if (ViewModel.OpenFiles.Any(f => _session?.DesignFileUtil.IsProjectFile(f.FilePath) == true)) {
+                    if (ViewModel.CachedFiles.Any(f => _session?.DesignFileUtil.IsProjectFile(f.FilePath) == true)) {
                         leftFileTreeControl.SyncManifest(_session!.DesignFileUtil);
                     }
                     _session?.RaiseIsSavedChanged(ViewModel.IsAllSaved);
@@ -770,6 +785,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 if (ViewModel == null) return false;
 
                 var activeVersionId = await SyncActiveEditorContentAsync();
+                if (activeVersionId == null) return false;
                 var activeFile = ViewModel.ActiveFile;
                 var result = await ViewModel.SaveActiveFileAsync();
                 if (result && activeFile != null) {
@@ -795,11 +811,19 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private async Task<int> SyncActiveEditorContentAsync() {
+        private async Task<int?> SyncActiveEditorContentAsync() {
             var activeFile = ViewModel?.ActiveFile;
             if (activeFile?.CanOpenAsText != true) return 0;
 
-            var (content, versionId) = await editorContentView.GetContentWithVersionAsync();
+            await editorContentView.WaitForContentUpdateAsync();
+            if (!ReferenceEquals(activeFile, ViewModel?.ActiveFile)) return null;
+
+            var (content, versionId, modelFilePath) = await editorContentView.GetContentWithVersionAsync();
+            if (!IsSameFilePath(modelFilePath, activeFile.FilePath)) {
+                ArcLog.GetLogger<WebEditor>().Warn(
+                    $"Skipped stale Monaco content. Active file: {activeFile.FilePath}, model: {modelFilePath}");
+                return null;
+            }
             if (activeFile.Content != content) {
                 activeFile.Content = content ?? string.Empty;
                 QueuePropertyPanelRefresh(activeFile, ActiveFileLanguage);
@@ -807,8 +831,18 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             return versionId;
         }
 
+        private static bool IsSameFilePath(string? first, string? second) {
+            if (string.IsNullOrWhiteSpace(first) || string.IsNullOrWhiteSpace(second)) return false;
+            return string.Equals(
+                Path.GetFullPath(first).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                Path.GetFullPath(second).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar),
+                StringComparison.OrdinalIgnoreCase);
+        }
+
         private void EditorContentView_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
             if (!ReferenceEquals(sender, editorContentView.ActiveMonacoEditor)) return;
+            if (!string.IsNullOrEmpty(position.FilePath)
+                && !IsSameFilePath(position.FilePath, ViewModel?.ActiveFile?.FilePath)) return;
 
             CursorLineNumber = position.LineNumber;
             CursorColumn = position.Column;
@@ -1080,9 +1114,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
 
             // 若正是当前编辑中的文件，先把编辑器内容同步进内存，并记录当前模型版本
-            var versionId = 0;
+            int? versionId = 0;
             if (ViewModel.ActiveFile?.Equals(openFile) == true) {
                 versionId = await SyncActiveEditorContentAsync();
+                if (versionId == null) return;
             }
 
             if (await ViewModel.SaveFileAsync(openFile)) {
@@ -1113,7 +1148,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
 
             if (ViewModel.ActiveFile?.Equals(openFile) == true) {
-                await SyncActiveEditorContentAsync();
+                if (await SyncActiveEditorContentAsync() == null) return;
             }
 
             var ext = openFile.FileExtension;
@@ -1626,6 +1661,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private Dictionary<string, WebEditorCommand> _monacoCommands = null!;
         private SemaphoreSlim _saveLock = new(1, 1);
         private readonly SemaphoreSlim _openFileLock = new(1, 1);
+        private CancellationTokenSource? _openFileCancellation;
         private DispatcherQueueTimer? _backupTimer;
         private DispatcherQueueTimer? _navigationRecordTimer;
         private readonly List<EditorNavigationEntry> _navigationHistory = [];

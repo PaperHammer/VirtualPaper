@@ -28,6 +28,22 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         public void LoadFile(WebEditorFile? file, string language) {
+            if (file != null && file.Kind == _currentKind) {
+                switch (file.Kind) {
+                    case WebEditorFileKind.Text:
+                        textEditor.FilePath = file.FilePath;
+                        textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
+                        textEditor.EditorContent = file.Content;
+                        return;
+                    case WebEditorFileKind.Markdown:
+                        markdownEditor.Load(file.FilePath, file.Content, language);
+                        return;
+                    case WebEditorFileKind.Image:
+                        imagePreview.Load(file.FilePath);
+                        return;
+                }
+            }
+
             ShowContentOverlay();
             var previousKind = _currentKind;
             _currentKind = file?.Kind;
@@ -55,8 +71,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                     break;
                 case WebEditorFileKind.Text:
                     textEditor.FilePath = file.FilePath;
-                    textEditor.EditorContent = file.Content;
                     textEditor.EditorLanguage = WebEditorFileUtil.GetEditorLanguage(language);
+                    textEditor.EditorContent = file.Content;
                     textEditor.Visibility = Visibility.Visible;
                     CompleteContentSwitch(previousKind);
                     break;
@@ -147,10 +163,25 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                 : textEditor.GetContentAsync();
         }
 
-        public Task<(string Content, int VersionId)> GetContentWithVersionAsync() {
+        public Task<(string Content, int VersionId, string? FilePath)> GetContentWithVersionAsync() {
             return _currentKind == WebEditorFileKind.Markdown
                 ? markdownEditor.GetContentWithVersionAsync()
                 : textEditor.GetContentWithVersionAsync();
+        }
+
+        public Task WaitForContentUpdateAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.WaitForContentUpdateAsync()
+                : textEditor.WaitForContentUpdateAsync();
+        }
+
+        public void PrepareEncoding(WebEditorFileKind kind, string encoding) {
+            if (kind == WebEditorFileKind.Markdown) {
+                markdownEditor.PrepareEncoding(encoding);
+            }
+            else if (kind == WebEditorFileKind.Text) {
+                textEditor.PrepareEncoding(encoding);
+            }
         }
 
         public Task<MonacoEditorState> GetEditorStateAsync() {
@@ -239,6 +270,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         private void Preview_PreviewReady(object? sender, EventArgs e) {
+            if ((ReferenceEquals(sender, markdownEditor) && _currentKind != WebEditorFileKind.Markdown)
+                || (ReferenceEquals(sender, imagePreview) && _currentKind != WebEditorFileKind.Image)) {
+                return;
+            }
             CompleteContentSwitch(_previousKind);
         }
 

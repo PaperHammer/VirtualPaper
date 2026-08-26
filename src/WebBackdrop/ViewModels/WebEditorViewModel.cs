@@ -23,8 +23,9 @@ using Workloads.Creation.WebBackdrop.Models;
 namespace Workloads.Creation.WebBackdrop.ViewModels {
     public partial class WebEditorViewModel : ObservableObject {
         public event Action? DebugSessionEnded;
+        public event Action<string>? FileCacheEvicted;
 
-        public IReadOnlyList<WebEditorFile> OpenFiles => _openFiles;
+        public IReadOnlyList<WebEditorFile> CachedFiles => _cahcedFiles;
 
         public WebEditorFile? ActiveFile {
             get => _activeFile;
@@ -35,24 +36,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
         }
 
-        // [已废弃，暂注释] 只写不读（绑定回写后无消费方）
-        /*
-        private WebFileItem? _selectedFileItem;
-        public WebFileItem? SelectedFileItem {
-            get { return _selectedFileItem; }
-            set { if (_selectedFileItem == value) return; _selectedFileItem = value; OnPropertyChanged(); }
-        }
-        */
-
         public WebProjectSession Session { get; }
-
-        // [已废弃，暂注释] WebToolListControl 未被任何视图使用
-        /*
-        public readonly List<WebToolItem> ToolItems = [
-            new() { Type = WebToolType.FileTree,    ToolName = "Project_WebBackdrop_ToolName_FileTree",    Glyph = "\uE8B7" },
-            new() { Type = WebToolType.ProjectInfo, ToolName = "Project_WebBackdrop_ToolName_ProjectInfo", Glyph = "\uE946" },
-        ];
-        */
 
         public WebEditorViewModel(WebProjectSession session, ArcPageContextKey contextKey) {
             _contextKey = contextKey;
@@ -61,8 +45,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _wpControlClient = AppServiceLocator.Services.GetRequiredService<IWallpaperControlClient>();
         }
 
-        public async Task OpenFileAsync(string filePath) {
-            if (_openFileMap.TryGetValue(filePath, out var existing)) {
+        public async Task OpenFileAsync(string filePath, CancellationToken cancellationToken = default) {
+            if (_cachedFileMap.TryGetValue(filePath, out var existing)) {
+                TouchCachedFile(existing);
                 ActiveFile = existing;
                 if (existing.CanOpenAsText) {
                     Session.FileManager.UpdateSnapshot(filePath);
@@ -71,18 +56,47 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
 
             try {
-                var file = await WebEditorFile.LoadAsync(filePath);
-                _openFiles.Add(file);
-                _openFileMap[filePath] = file;
+                var file = await WebEditorFile.LoadAsync(filePath, cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                _cahcedFiles.Add(file);
+                _cachedFileMap[filePath] = file;
+                TouchCachedFile(file);
                 ActiveFile = file;
                 // 非文本文件（如图片）不建立文档跟踪，避免把二进制读进 Document.Text
                 if (file.CanOpenAsText) {
                     Session.FileManager.UpdateSnapshot(filePath);
                 }
+                TrimFileCache();
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
                 GlobalMessageUtil.ShowError($"Failed to open file: {filePath}\nThe file may be corrupted or unreadable.\n{ex.Message}");
+            }
+        }
+
+        private void TouchCachedFile(WebEditorFile file) {
+            if (_fileCacheNodes.Remove(file)) { }
+            _fileCacheNodes.AddLast(file);
+        }
+
+        private void TrimFileCache() {
+            long cachedTextBytes = _cahcedFiles.Sum(file => (long)file.Content.Length * sizeof(char));
+            while (_cahcedFiles.Count > MaxCachedFileCount || cachedTextBytes > MaxCachedTextBytes) {
+                var candidate = _fileCacheNodes.First;
+                while (candidate != null
+                    && (!candidate.Value.IsSaved || ReferenceEquals(candidate.Value, ActiveFile))) {
+                    candidate = candidate.Next;
+                }
+                if (candidate == null) return;
+
+                var file = candidate.Value;
+                _fileCacheNodes.Remove(candidate);
+                _cahcedFiles.Remove(file);
+                _cachedFileMap.Remove(file.FilePath);
+                cachedTextBytes -= (long)file.Content.Length * sizeof(char);
+                Session.FileManager.CloseDocument(file.FilePath);
+                FileCacheEvicted?.Invoke(file.FilePath);
             }
         }
 
@@ -91,18 +105,18 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             return await SaveFileAsync(ActiveFile);
         }
 
-        public bool IsAllSaved => _openFiles.TrueForAll(file => file.IsSaved);
+        public bool IsAllSaved => _cahcedFiles.TrueForAll(file => file.IsSaved);
 
         public WebEditorFile? GetOpenFile(string filePath) {
-            return _openFileMap.TryGetValue(filePath, out var file) ? file : null;
+            return _cachedFileMap.TryGetValue(filePath, out var file) ? file : null;
         }
 
         /// <summary>文件移动后保留已打开实例、内存内容和活动状态，仅重绑定路径。</summary>
         public WebEditorFile? RebindOpenFilePath(string oldPath, string newPath) {
-            if (!_openFileMap.Remove(oldPath, out var file)) return null;
+            if (!_cachedFileMap.Remove(oldPath, out var file)) return null;
 
             file.RebindPath(newPath);
-            _openFileMap[newPath] = file;
+            _cachedFileMap[newPath] = file;
 
             Session.FileManager.CloseDocument(oldPath);
             if (file.CanOpenAsText) {
@@ -122,10 +136,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         /// 用于文件被删除等场景，避免一次会话中打开过的文件永久驻留内存。
         /// </summary>
         public void CloseOpenFile(string filePath) {
-            if (!_openFileMap.TryGetValue(filePath, out var file)) return;
+            if (!_cachedFileMap.TryGetValue(filePath, out var file)) return;
 
-            _openFileMap.Remove(filePath);
-            _openFiles.Remove(file);
+            _cachedFileMap.Remove(filePath);
+            _cahcedFiles.Remove(file);
+            _fileCacheNodes.Remove(file);
             if (_activeFile == file) {
                 ActiveFile = null;
             }
@@ -133,7 +148,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         public async Task<bool> SaveAllAsync() {
-            var tasks = _openFiles
+            var tasks = _cahcedFiles
                 .Where(file => !file.IsSaved)
                 .Select(SaveFileAsync);
             var results = await Task.WhenAll(tasks);
@@ -345,8 +360,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         #endregion
 
         private WebEditorFile? _activeFile;
-        private readonly List<WebEditorFile> _openFiles = [];
-        private readonly Dictionary<string, WebEditorFile> _openFileMap = new(StringComparer.OrdinalIgnoreCase);
+        private readonly List<WebEditorFile> _cahcedFiles = [];
+        private readonly Dictionary<string, WebEditorFile> _cachedFileMap = new(StringComparer.OrdinalIgnoreCase);
+        private readonly LinkedList<WebEditorFile> _fileCacheNodes = [];
+        private const int MaxCachedFileCount = 32;
+        private const long MaxCachedTextBytes = 64L * 1024 * 1024;
         private readonly IUserSettingsClient _userSettings;
         private readonly IWallpaperControlClient _wpControlClient;
         private string? _debugJsonString;

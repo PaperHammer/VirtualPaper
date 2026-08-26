@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Models.Mvvm;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -69,7 +70,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
         public string Content {
             get => _content;
             set {
-                // 防止上游把 null 写进来：_openFileMap 缓存的是同一个实例引用，
+                // 防止上游把 null 写进来：_cachedFileMap 缓存的是同一个实例引用，
                 // 一旦 Content 被置 null，再次切回该文件时编辑器就无内容可显示。
                 value ??= string.Empty;
                 if (_content == value) return;
@@ -115,12 +116,13 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
         */
 
-        public static async Task<WebEditorFile> LoadAsync(string filePath) {
+        public static async Task<WebEditorFile> LoadAsync(string filePath, CancellationToken cancellationToken = default) {
+            cancellationToken.ThrowIfCancellationRequested();
             if (!File.Exists(filePath) || !WebEditorFileUtil.IsTextExtension(Path.GetExtension(filePath))) {
                 return new WebEditorFile(filePath, string.Empty, "UTF-8");
             }
 
-            var (content, encodingText) = await ReadAllTextAndEncodingAsync(filePath);
+            var (content, encodingText) = await ReadAllTextAndEncodingAsync(filePath, cancellationToken);
             return new WebEditorFile(filePath, content, encodingText);
         }
 
@@ -258,16 +260,18 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
         */
 
-        private static async Task<(string Content, string EncodingText)> ReadAllTextAndEncodingAsync(string path) {
+        private static async Task<(string Content, string EncodingText)> ReadAllTextAndEncodingAsync(
+            string path,
+            CancellationToken cancellationToken = default) {
             return await RetryReadAsync(async () => {
                 await using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 4096, useAsync: true);
                 var prefix = new byte[3];
-                var prefixLength = await fs.ReadAsync(prefix);
+                var prefixLength = await fs.ReadAsync(prefix, cancellationToken);
                 var encoding = GetEncodingFromText(GetEncodingText(prefix.AsSpan(0, prefixLength)));
                 fs.Position = 0;
                 using var sr = new StreamReader(fs, encoding, detectEncodingFromByteOrderMarks: true);
-                return (await sr.ReadToEndAsync(), GetEncodingText(prefix.AsSpan(0, prefixLength)));
-            });
+                return (await sr.ReadToEndAsync(cancellationToken), GetEncodingText(prefix.AsSpan(0, prefixLength)));
+            }, cancellationToken);
         }
 
         private static string GetEncodingText(ReadOnlySpan<byte> bytes) {
@@ -304,16 +308,17 @@ namespace Workloads.Creation.WebBackdrop.Models {
         }
         */
 
-        private static async Task<T> RetryReadAsync<T>(Func<Task<T>> read) {
+        private static async Task<T> RetryReadAsync<T>(Func<Task<T>> read, CancellationToken cancellationToken = default) {
             for (var attempt = 0; ; attempt++) {
+                cancellationToken.ThrowIfCancellationRequested();
                 try {
                     return await read();
                 }
                 catch (IOException) when (attempt < 3) {
-                    await Task.Delay(50 * (attempt + 1));
+                    await Task.Delay(50 * (attempt + 1), cancellationToken);
                 }
                 catch (UnauthorizedAccessException) when (attempt < 3) {
-                    await Task.Delay(50 * (attempt + 1));
+                    await Task.Delay(50 * (attempt + 1), cancellationToken);
                 }
             }
         }

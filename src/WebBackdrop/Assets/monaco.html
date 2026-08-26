@@ -127,8 +127,14 @@
             // first setValue() call, which can incorrectly mark non-text files
             // (e.g. the first opened image) as unsaved.
             var initialModel = editor.getModel();
+            window.savedVersionByUri = new Map();
+            window.encodingByUri = new Map();
             if (initialModel) {
-                window.savedAlternativeVersionId = initialModel.getAlternativeVersionId();
+                window.savedVersionByUri.set(initialModel.uri.toString(), initialModel.getAlternativeVersionId());
+            }
+
+            function getModelKey(model) {
+                return model && model.uri ? model.uri.toString() : '';
             }
 
             function getLineEndingText(model) {
@@ -153,16 +159,17 @@
                 }
 
                 var alternativeVersionId = model.getAlternativeVersionId();
+                var modelKey = getModelKey(model);
+                var savedVersionId = window.savedVersionByUri.get(modelKey);
                 // 尚未通过 setValue/markSaved 初始化 savedAlternativeVersionId 时视为已保存，
                 // 避免把“模型初始状态/上一个文件的状态”误报为当前文件未保存。
-                var isSaved = window.savedAlternativeVersionId === undefined
-                    || alternativeVersionId === window.savedAlternativeVersionId;
+                var isSaved = savedVersionId === undefined || alternativeVersionId === savedVersionId;
                 window.chrome.webview.postMessage(JSON.stringify({
                     type: 'editorStateChanged',
                     filePath: getCurrentFilePath(),
                     isSaved: isSaved,
                     lineEnding: getLineEndingText(model),
-                    encoding: window.editorEncoding || 'UTF-8',
+                    encoding: window.encodingByUri.get(modelKey) || 'UTF-8',
                     indent: getIndentText(model)
                 }));
             }
@@ -202,6 +209,7 @@
                 var selectedCharacterCount = selection ? model.getValueInRange(selection).length : 0;
                 var payload = {
                     type: 'cursorPositionChange',
+                    filePath: getCurrentFilePath(),
                     lineNumber: currentPosition.lineNumber,
                     column: currentPosition.column,
                     selectedCharacterCount: selectedCharacterCount
@@ -239,6 +247,7 @@
 
                 window.chrome.webview.postMessage(JSON.stringify({
                     type: 'markersChanged',
+                    filePath: getCurrentFilePath(),
                     markers: monaco.editor.getModelMarkers({ resource: model.uri }).map(function (marker) {
                         return {
                             severity: marker.severity,
@@ -403,6 +412,16 @@
                     }));
                 }
                 e.event.preventDefault();
+                e.event.stopPropagation();
+            });
+
+            // Monaco 在 model 切换时会主动取消仍在进行的链接、定义和 hover 计算。
+            // 这是正常控制流，但部分内部 Promise 会以未处理 rejection 的形式写入控制台。
+            window.addEventListener('unhandledrejection', function (event) {
+                var reason = event.reason;
+                if (reason && (reason.name === 'Canceled' || reason.message === 'Canceled')) {
+                    event.preventDefault();
+                }
             });
 
             // Find a file path inside quotes at the given column
@@ -433,7 +452,45 @@
                 });
             }
 
-            window.setValue = function (value, filePath) {
+            window.contentUpdateVersion = 0;
+            window.modelLastUsed = new Map();
+            var maxCachedModelCount = 24;
+            var maxCachedModelCharacters = 16 * 1024 * 1024;
+
+            function trimModelCache(activeModel) {
+                var fileModels = monaco.editor.getModels().filter(function (model) {
+                    return model.uri && model.uri.scheme === 'file';
+                });
+                var totalCharacters = fileModels.reduce(function (total, model) {
+                    return total + model.getValueLength();
+                }, 0);
+                if (fileModels.length <= maxCachedModelCount && totalCharacters <= maxCachedModelCharacters) return;
+
+                fileModels.sort(function (left, right) {
+                    return (window.modelLastUsed.get(getModelKey(left)) || 0)
+                        - (window.modelLastUsed.get(getModelKey(right)) || 0);
+                });
+                for (var i = 0; i < fileModels.length; i++) {
+                    if (fileModels.length <= maxCachedModelCount && totalCharacters <= maxCachedModelCharacters) break;
+                    var candidate = fileModels[i];
+                    if (candidate === activeModel) continue;
+                    var key = getModelKey(candidate);
+                    var savedVersion = window.savedVersionByUri.get(key);
+                    if (savedVersion !== undefined && candidate.getAlternativeVersionId() !== savedVersion) continue;
+                    totalCharacters -= candidate.getValueLength();
+                    candidate.dispose();
+                    window.savedVersionByUri.delete(key);
+                    window.encodingByUri.delete(key);
+                    window.modelLastUsed.delete(key);
+                    fileModels.splice(i--, 1);
+                }
+            }
+
+            window.setValue = function (value, filePath, language, encoding, updateVersion) {
+                if (typeof updateVersion === 'number') {
+                    if (updateVersion < window.contentUpdateVersion) return;
+                    window.contentUpdateVersion = updateVersion;
+                }
                 updateLargeFileOptions(value.length);
 
                 // 以“模型归属（URI）”而不是“文本内容”决定是否切换模型：
@@ -444,15 +501,30 @@
                         var normalizedPath = filePath.replace(/\\/g, '/');
                         var uri = monaco.Uri.parse('file:///' + normalizedPath);
                         var model = monaco.editor.getModel(uri);
+                        var shouldResetSavedVersion = false;
                         if (!model) {
                             model = monaco.editor.createModel(value, undefined, uri);
+                            shouldResetSavedVersion = true;
                         } else if (model.getValue() !== value) {
                             model.setValue(value);
+                            shouldResetSavedVersion = true;
                         }
 
                         if (editor.getModel() !== model) {
                             editor.setModel(model);
                         }
+                        if (language) {
+                            monaco.editor.setModelLanguage(model, language);
+                        }
+                        var modelKey = getModelKey(model);
+                        window.modelLastUsed.set(modelKey, Date.now());
+                        if (encoding) {
+                            window.encodingByUri.set(modelKey, encoding);
+                        }
+                        if (shouldResetSavedVersion || !window.savedVersionByUri.has(modelKey)) {
+                            window.savedVersionByUri.set(modelKey, model.getAlternativeVersionId());
+                        }
+                        trimModelCache(model);
                     } else {
                         var model = editor.getModel();
                         if (!model || model.uri.scheme !== 'inmemory') {
@@ -466,11 +538,6 @@
                     window.isSettingValue = false;
                 }
 
-                var model = editor.getModel();
-                if (model) {
-                    window.savedAlternativeVersionId = model.getAlternativeVersionId();
-                }
-
                 postEditorState();
             };
 
@@ -480,9 +547,9 @@
                     return;
                 }
 
-                window.savedAlternativeVersionId = typeof alternativeVersionId === 'number'
+                window.savedVersionByUri.set(getModelKey(model), typeof alternativeVersionId === 'number'
                     ? alternativeVersionId
-                    : model.getAlternativeVersionId();
+                    : model.getAlternativeVersionId());
                 postEditorState();
             };
 
@@ -499,6 +566,9 @@
                         editor.setModel(null);
                     }
                     model.dispose();
+                    window.savedVersionByUri.delete(uri.toString());
+                    window.encodingByUri.delete(uri.toString());
+                    window.modelLastUsed.delete(uri.toString());
                 }
             };
 
@@ -542,12 +612,13 @@
                 }
 
                 var alternativeVersionId = model.getAlternativeVersionId();
+                var modelKey = getModelKey(model);
+                var savedVersionId = window.savedVersionByUri.get(modelKey);
                 return JSON.stringify({
                     filePath: getCurrentFilePath(),
-                    isSaved: window.savedAlternativeVersionId === undefined
-                        || alternativeVersionId === window.savedAlternativeVersionId,
+                    isSaved: savedVersionId === undefined || alternativeVersionId === savedVersionId,
                     lineEnding: getLineEndingText(model),
-                    encoding: window.editorEncoding || 'UTF-8',
+                    encoding: window.encodingByUri.get(modelKey) || 'UTF-8',
                     indent: getIndentText(model)
                 });
             };
@@ -562,6 +633,7 @@
                     return JSON.stringify({ content: '', version: 0 });
                 }
                 return JSON.stringify({
+                    filePath: getCurrentFilePath(),
                     content: model.getValue(),
                     version: model.getAlternativeVersionId()
                 });
@@ -579,9 +651,14 @@
                 document.body.style.background = theme === 'vs' ? '#ffffff' : '#1e1e1e';
             };
 
-            window.setLanguage = function (language) {
+            window.setLanguage = function (language, filePath) {
                 var model = editor.getModel();
                 if (model) {
+                    if (filePath) {
+                        var normalizedPath = filePath.replace(/\\/g, '/');
+                        var requestedUri = monaco.Uri.parse('file:///' + normalizedPath);
+                        if (model.uri.toString() !== requestedUri.toString()) return;
+                    }
                     monaco.editor.setModelLanguage(model, language);
                 }
             };
@@ -664,8 +741,15 @@
                 window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
             }
 
-            window.setEncoding = function (encoding) {
-                window.editorEncoding = encoding || 'UTF-8';
+            window.setEncoding = function (encoding, filePath) {
+                var model = editor.getModel();
+                if (!model) return;
+                if (filePath) {
+                    var normalizedPath = filePath.replace(/\\/g, '/');
+                    var requestedUri = monaco.Uri.parse('file:///' + normalizedPath);
+                    if (model.uri.toString() !== requestedUri.toString()) return;
+                }
+                window.encodingByUri.set(getModelKey(model), encoding || 'UTF-8');
                 postEditorState();
             };
 

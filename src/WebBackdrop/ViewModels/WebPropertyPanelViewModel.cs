@@ -101,7 +101,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             var info = new FileInfo(file.FilePath);
             FileNameText = file.FileName;
             TypeLabelText = file.CanOpenAsText ? "Language" : "Type";
-            TypeText = file.Kind == WebEditorFileKind.Unsupported ? "Unsupported" : language;
+            TypeText = file.Kind switch {
+                WebEditorFileKind.Image => "Image",
+                WebEditorFileKind.Unsupported => "Unsupported",
+                _ => language,
+            };
             StatusText = file.IsSaved ? "Saved" : "Unsaved";
             SizeText = info.Exists ? FileUtil.SizeSuffix(info.Length) : "-";
             LineCountText = file.CanOpenAsText ? WebEditorFileUtil.CountLines(file.Content).ToString() : "-";

@@ -133,6 +133,51 @@
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
             </MenuBarItem>
+
+            <MenuBarItem x:Name="WebSelectionMenuBarItem" Title="Selection" Visibility="Collapsed"
+                KeyboardAcceleratorPlacementMode="Hidden" PointerEntered="EditMenuBarItem_PointerEntered">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Modifiers="Menu" Key="S"/>
+                </MenuBarItem.KeyboardAccelerators>
+
+                <MenuFlyoutItem x:Name="WebNavigateBackMenuItem" Text="Go Back" Tag="NavigateBack"
+                    KeyboardAcceleratorTextOverride="Alt+Left" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="Left"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebNavigateForwardMenuItem" Text="Go Forward" Tag="NavigateForward"
+                    KeyboardAcceleratorTextOverride="Alt+Right" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="Right"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator/>
+                <MenuFlyoutItem x:Name="WebCopyLineUpMenuItem" Text="Copy Line Up" Tag="CopyLineUp"
+                    KeyboardAcceleratorTextOverride="Shift+Alt+Up" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu, Shift" Key="Up"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebCopyLineDownMenuItem" Text="Copy Line Down" Tag="CopyLineDown"
+                    KeyboardAcceleratorTextOverride="Shift+Alt+Down" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu, Shift" Key="Down"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebMoveLineUpMenuItem" Text="Move Line Up" Tag="MoveLineUp"
+                    KeyboardAcceleratorTextOverride="Alt+Up" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="Up"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Name="WebMoveLineDownMenuItem" Text="Move Line Down" Tag="MoveLineDown"
+                    KeyboardAcceleratorTextOverride="Alt+Down" Click="WebEditMenuItem_Click">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Menu" Key="Down"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+            </MenuBarItem>
         </cmd:KeepToLeft>
 
         <cmd:KeepToRight x:Key="RightMenuItems">

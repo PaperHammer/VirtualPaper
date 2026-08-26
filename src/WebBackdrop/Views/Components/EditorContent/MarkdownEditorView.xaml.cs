@@ -59,6 +59,26 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             return monacoEditor.RedoAsync();
         }
 
+        public Task CopyLineUpAsync() {
+            return monacoEditor.CopyLineUpAsync();
+        }
+
+        public Task CopyLineDownAsync() {
+            return monacoEditor.CopyLineDownAsync();
+        }
+
+        public Task MoveLineUpAsync() {
+            return monacoEditor.MoveLineUpAsync();
+        }
+
+        public Task MoveLineDownAsync() {
+            return monacoEditor.MoveLineDownAsync();
+        }
+
+        public Task FocusEditorAsync() {
+            return monacoEditor.FocusEditorAsync();
+        }
+
         public Task MarkSavedAsync(int? versionId = null) {
             return monacoEditor.MarkSavedAsync(versionId);
         }
@@ -220,7 +240,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         private void MonacoEditor_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
-            CursorPositionChanged?.Invoke(this, position);
+            CursorPositionChanged?.Invoke(sender ?? this, position);
         }
 
         private void MonacoEditor_MarkersChanged(object? sender, IReadOnlyList<MonacoMarker> markers) {

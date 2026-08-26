@@ -107,6 +107,36 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
                 : textEditor.RedoAsync();
         }
 
+        public Task CopyLineUpAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.CopyLineUpAsync()
+                : textEditor.CopyLineUpAsync();
+        }
+
+        public Task CopyLineDownAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.CopyLineDownAsync()
+                : textEditor.CopyLineDownAsync();
+        }
+
+        public Task MoveLineUpAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.MoveLineUpAsync()
+                : textEditor.MoveLineUpAsync();
+        }
+
+        public Task MoveLineDownAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.MoveLineDownAsync()
+                : textEditor.MoveLineDownAsync();
+        }
+
+        public Task FocusEditorAsync() {
+            return _currentKind == WebEditorFileKind.Markdown
+                ? markdownEditor.FocusEditorAsync()
+                : textEditor.FocusEditorAsync();
+        }
+
         public Task MarkSavedAsync(int? versionId = null) {
             return _currentKind == WebEditorFileKind.Markdown
                 ? markdownEditor.MarkSavedAsync(versionId)
@@ -195,7 +225,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         }
 
         private void Editor_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
-            CursorPositionChanged?.Invoke(this, position);
+            CursorPositionChanged?.Invoke(sender ?? this, position);
         }
 
         private void Editor_MarkersChanged(object? sender, IReadOnlyList<MonacoMarker> markers) {

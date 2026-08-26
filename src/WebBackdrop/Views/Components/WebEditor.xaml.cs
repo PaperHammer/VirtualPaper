@@ -143,7 +143,14 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             ToggleRightSideBar,
             Save,
             SaveAll,
+            NavigateBack,
+            NavigateForward,
         }
+
+        private readonly record struct EditorNavigationEntry(
+            string FilePath,
+            int LineNumber,
+            int ColumnNumber);
 
         private sealed class PanelLayoutState {
             public PanelLayoutState(
@@ -232,9 +239,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
             editorContentView.TextEditor.FileOpenRequested += OnMonacoFileOpenRequested;
-            editorContentView.TextEditor.NavigationRequested += OnMonacoNavigationRequested;
             editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested += OnMonacoFileOpenRequested;
-            editorContentView.MarkdownEditor.MonacoEditor.NavigationRequested += OnMonacoNavigationRequested;
 
             UpdateStatusBar();
 
@@ -262,9 +267,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
 
             editorContentView.TextEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
-            editorContentView.TextEditor.NavigationRequested -= OnMonacoNavigationRequested;
             editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested -= OnMonacoFileOpenRequested;
-            editorContentView.MarkdownEditor.MonacoEditor.NavigationRequested -= OnMonacoNavigationRequested;
+
+            StopNavigationRecordTimer();
+            _navigationHistory.Clear();
+            _navigationIndex = -1;
+            _suppressNavigationRecordingUntil = default;
 
             StopBackupTimer();
 
@@ -290,7 +298,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
         */
 
-        private async Task OpenFileAsync(string filePath) {
+        private async Task OpenFileAsync(string filePath, bool recordCurrentPosition = true) {
             if (ViewModel == null) return;
 
             // 快速连续切换文件时串行化“同步旧文件 → 打开新文件”整段流程，
@@ -298,6 +306,12 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             // 已被后一次切换改变，从而把新文件（或 null）内容写进旧文件缓存。
             await _openFileLock.WaitAsync();
             try {
+                if (recordCurrentPosition && !string.Equals(
+                    ViewModel.ActiveFile?.FilePath,
+                    filePath,
+                    StringComparison.OrdinalIgnoreCase)) {
+                    RecordCurrentNavigationPosition();
+                }
                 await SyncActiveEditorContentAsync();
                 await ViewModel.OpenFileAsync(filePath);
             }
@@ -408,16 +422,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 leftFileTreeControl.SelectFile(filePath);
             }
         }
-        private async void OnMonacoNavigationRequested(object? sender, string filePath) {
-            // Handle Go Back / Go Forward cross-file navigation.
-            // JS has already stored the target line/column in _pendingNavigation;
-            // we just need to open the file, and setValue() will apply the position.
-            if (ViewModel != null && File.Exists(filePath)) {
-                await OpenFileAsync(filePath);
-                leftFileTreeControl.SelectFile(filePath);
-            }
-        }
-
         private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e) {
             if (e.PropertyName == nameof(WebEditorViewModel.ActiveFile)) {
                 CheckAndRefreshActiveFile();
@@ -692,6 +696,18 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     SetPanelVisibility(EditorPanelSlot.Left, true);
                     DispatcherQueue.TryEnqueue(leftFileTreeControl.FocusContentSearch);
                     break;
+                case RuntimeEditCommand.NavigateBack:
+                    return NavigateHistoryAsync(-1);
+                case RuntimeEditCommand.NavigateForward:
+                    return NavigateHistoryAsync(1);
+                case RuntimeEditCommand.CopyLineUp:
+                    return editorContentView.CopyLineUpAsync();
+                case RuntimeEditCommand.CopyLineDown:
+                    return editorContentView.CopyLineDownAsync();
+                case RuntimeEditCommand.MoveLineUp:
+                    return editorContentView.MoveLineUpAsync();
+                case RuntimeEditCommand.MoveLineDown:
+                    return editorContentView.MoveLineDownAsync();
             }
             return Task.CompletedTask;
         }
@@ -706,6 +722,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 RuntimeEditCommand.Rename or
                 RuntimeEditCommand.Delete => leftFileTreeControl.CanExecuteCommand(command),
                 RuntimeEditCommand.Find or RuntimeEditCommand.FindInFiles => true,
+                RuntimeEditCommand.NavigateBack => _navigationIndex > 0,
+                RuntimeEditCommand.NavigateForward => _navigationIndex >= 0 && _navigationIndex < _navigationHistory.Count - 1,
+                RuntimeEditCommand.CopyLineUp or RuntimeEditCommand.CopyLineDown or
+                RuntimeEditCommand.MoveLineUp or RuntimeEditCommand.MoveLineDown =>
+                    ViewModel?.ActiveFile?.CanOpenAsText == true,
                 _ => false,
             };
         }
@@ -787,10 +808,124 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private void EditorContentView_CursorPositionChanged(object? sender, MonacoCursorPosition position) {
+            if (!ReferenceEquals(sender, editorContentView.ActiveMonacoEditor)) return;
+
             CursorLineNumber = position.LineNumber;
             CursorColumn = position.Column;
             SelectedCharacterCount = position.SelectedCharacterCount;
             IsSelectedCharacterCountOverflow = position.IsSelectedCharacterCountOverflow;
+
+            if (DateTime.UtcNow < _suppressNavigationRecordingUntil
+                || ViewModel?.ActiveFile is not { CanOpenAsText: true } activeFile) {
+                return;
+            }
+
+            QueueNavigationPosition(new EditorNavigationEntry(
+                activeFile.FilePath,
+                position.LineNumber,
+                position.Column));
+        }
+
+        private void QueueNavigationPosition(EditorNavigationEntry entry) {
+            _pendingNavigationEntry = entry;
+            if (_navigationRecordTimer == null) {
+                _navigationRecordTimer = DispatcherQueue.CreateTimer();
+                _navigationRecordTimer.Interval = TimeSpan.FromMilliseconds(NavigationRecordDelayMilliseconds);
+                _navigationRecordTimer.Tick += NavigationRecordTimer_Tick;
+            }
+
+            _navigationRecordTimer.Stop();
+            _navigationRecordTimer.Start();
+        }
+
+        private void NavigationRecordTimer_Tick(DispatcherQueueTimer sender, object args) {
+            sender.Stop();
+            if (_pendingNavigationEntry is not { } entry) return;
+            _pendingNavigationEntry = null;
+            RecordNavigationPosition(entry);
+        }
+
+        private void RecordCurrentNavigationPosition() {
+            if (ViewModel?.ActiveFile is not { CanOpenAsText: true } activeFile) return;
+
+            _navigationRecordTimer?.Stop();
+            _pendingNavigationEntry = null;
+            RecordNavigationPosition(new EditorNavigationEntry(
+                activeFile.FilePath,
+                CursorLineNumber,
+                CursorColumn));
+        }
+
+        private void RecordNavigationPosition(EditorNavigationEntry entry) {
+            if (_navigationIndex >= 0 && _navigationIndex < _navigationHistory.Count) {
+                var current = _navigationHistory[_navigationIndex];
+                if (string.Equals(current.FilePath, entry.FilePath, StringComparison.OrdinalIgnoreCase)
+                    && Math.Abs(current.LineNumber - entry.LineNumber) < NavigationRecordMinLineDelta) {
+                    return;
+                }
+            }
+
+            if (_navigationIndex < _navigationHistory.Count - 1) {
+                _navigationHistory.RemoveRange(
+                    _navigationIndex + 1,
+                    _navigationHistory.Count - _navigationIndex - 1);
+            }
+
+            _navigationHistory.Add(entry);
+            if (_navigationHistory.Count > MaxNavigationHistory) {
+                _navigationHistory.RemoveAt(0);
+            }
+            _navigationIndex = _navigationHistory.Count - 1;
+            EditCommandStateChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        private async Task NavigateHistoryAsync(int offset) {
+            if (_navigationIndex == _navigationHistory.Count - 1) {
+                RecordCurrentNavigationPosition();
+            }
+
+            var targetIndex = _navigationIndex + offset;
+            if (targetIndex < 0 || targetIndex >= _navigationHistory.Count) {
+                await RestoreEditorFocusAsync();
+                return;
+            }
+
+            var target = _navigationHistory[targetIndex];
+            if (!File.Exists(target.FilePath)) {
+                await RestoreEditorFocusAsync();
+                return;
+            }
+
+            _navigationRecordTimer?.Stop();
+            _pendingNavigationEntry = null;
+            _navigationIndex = targetIndex;
+            _suppressNavigationRecordingUntil = DateTime.UtcNow.AddMilliseconds(NavigationRecordSuppressionMilliseconds);
+            EditCommandStateChanged?.Invoke(this, EventArgs.Empty);
+
+            if (!string.Equals(
+                ViewModel?.ActiveFile?.FilePath,
+                target.FilePath,
+                StringComparison.OrdinalIgnoreCase)) {
+                await OpenFileAsync(target.FilePath, recordCurrentPosition: false);
+            }
+
+            leftFileTreeControl.SelectFile(target.FilePath);
+            await editorContentView.RevealPositionAsync(target.LineNumber, target.ColumnNumber);
+            _suppressNavigationRecordingUntil = DateTime.UtcNow.AddMilliseconds(NavigationRecordSuppressionMilliseconds);
+        }
+
+        private async Task RestoreEditorFocusAsync() {
+            // 等 Alt 导航键对应的菜单焦点处理结束，再把插入光标交还给 Monaco。
+            await Task.Yield();
+            await editorContentView.FocusEditorAsync();
+        }
+
+        private void StopNavigationRecordTimer() {
+            if (_navigationRecordTimer == null) return;
+            _navigationRecordTimer.Stop();
+            _navigationRecordTimer.Tick -= NavigationRecordTimer_Tick;
+            _navigationRecordTimer = null;
+            _pendingNavigationEntry = null;
         }
 
         private void EditorContentView_MarkersChanged(object? sender, IReadOnlyList<MonacoMarker> markers) {
@@ -1029,6 +1164,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 [WebEditorCommand.ToggleRightSideBar] = () => TogglePanel(EditorPanelSlot.Right),
                 [WebEditorCommand.Save] = () => SaveRequested?.Invoke(this, EventArgs.Empty),
                 [WebEditorCommand.SaveAll] = () => SaveAllRequested?.Invoke(this, EventArgs.Empty),
+                [WebEditorCommand.NavigateBack] = () => _ = NavigateHistoryAsync(-1),
+                [WebEditorCommand.NavigateForward] = () => _ = NavigateHistoryAsync(1),
             };
 
             _keyboardCommands = new Dictionary<(VirtualKey Key, VirtualKeyModifiers Modifiers), WebEditorCommand>(KeyboardCommandMap);
@@ -1053,6 +1190,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 ["toggleRightSideBar"] = WebEditorCommand.ToggleRightSideBar,
                 ["save"] = WebEditorCommand.Save,
                 ["saveAll"] = WebEditorCommand.SaveAll,
+                ["navigateBack"] = WebEditorCommand.NavigateBack,
+                ["navigateForward"] = WebEditorCommand.NavigateForward,
             };
 
         private void ToggleBottomPanel() {
@@ -1468,6 +1607,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private readonly WebQuickOpenControl _quickOpenControl;
         private IReadOnlyList<WebQuickOpenItem> _quickOpenFiles = [];
         private const int MaxQuickOpenIndexedFiles = 50000;
+        private const int MaxNavigationHistory = 50;
+        private const int NavigationRecordDelayMilliseconds = 300;
+        private const int NavigationRecordMinLineDelta = 3;
+        private const int NavigationRecordSuppressionMilliseconds = 500;
         private bool _isLoaded;
         private bool _isQuickOpenActive;
         private bool _isQuickOpenIndexDirty = true;
@@ -1484,6 +1627,11 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private SemaphoreSlim _saveLock = new(1, 1);
         private readonly SemaphoreSlim _openFileLock = new(1, 1);
         private DispatcherQueueTimer? _backupTimer;
+        private DispatcherQueueTimer? _navigationRecordTimer;
+        private readonly List<EditorNavigationEntry> _navigationHistory = [];
+        private EditorNavigationEntry? _pendingNavigationEntry;
+        private int _navigationIndex = -1;
+        private DateTime _suppressNavigationRecordingUntil;
         private EditorPanelSlot? _activeResizeSlot;
         private Pointer? _resizePointer;
         private double _resizeStartPointerPosition;

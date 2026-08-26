@@ -16,6 +16,12 @@ namespace Workloads.Utils.DraftUtils.Interfaces {
         Delete,
         Find,
         FindInFiles,
+        NavigateBack,
+        NavigateForward,
+        CopyLineUp,
+        CopyLineDown,
+        MoveLineUp,
+        MoveLineDown,
     }
 
     /// <summary>

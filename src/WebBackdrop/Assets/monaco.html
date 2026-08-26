@@ -214,21 +214,11 @@
 
             editor.onDidChangeCursorPosition(function (e) {
                 postCursorPosition(e.position);
-                scheduleNavRecord();
             });
 
             editor.onDidChangeCursorSelection(function (e) {
                 postCursorPosition(e.position || editor.getPosition());
             });
-
-            // ======== Navigation History (Go Back / Go Forward) ========
-            var navigationHistory = [];
-            var navigationIndex = -1;
-            var MAX_NAVIGATION_HISTORY = 50;
-            var _navRecordTimer = null;
-            var _lastNavRecorded = null;
-            var NAV_RECORD_DELAY_MS = 300;
-            var NAV_RECORD_MIN_LINE_DELTA = 3;
 
             function getCurrentFilePath() {
                 var model = editor.getModel();
@@ -240,148 +230,6 @@
                 }
                 return path;
             }
-
-            function pushNavigationPosition(filePath, lineNumber, column) {
-                if (!filePath) return;
-                var entry = { filePath: filePath, lineNumber: lineNumber, column: column };
-
-                // Skip duplicate adjacent entries
-                if (navigationIndex >= 0 && navigationIndex < navigationHistory.length) {
-                    var current = navigationHistory[navigationIndex];
-                    if (current.filePath === entry.filePath &&
-                        current.lineNumber === entry.lineNumber) {
-                        return;
-                    }
-                }
-
-                // Truncate forward history when pushing after a back-navigation
-                if (navigationIndex < navigationHistory.length - 1) {
-                    navigationHistory = navigationHistory.slice(0, navigationIndex + 1);
-                }
-
-                navigationHistory.push(entry);
-                if (navigationHistory.length > MAX_NAVIGATION_HISTORY) {
-                    navigationHistory.shift();
-                } else {
-                    navigationIndex = navigationHistory.length - 1;
-                }
-            }
-
-            function goBack() {
-                if (navigationIndex <= 0) return;
-
-                // Push current position at tip so we can come back via "goForward"
-                var pos = editor.getPosition();
-                var curPath = getCurrentFilePath();
-                if (pos && curPath && navigationIndex === navigationHistory.length - 1) {
-                    pushNavigationPosition(curPath, pos.lineNumber, pos.column);
-                    // After push, index points to the just-added entry.
-                    // Fall through to the decrement below.
-                }
-
-                // One step back: from mid-history, or from just-pushed tip entry
-                navigationIndex = Math.max(0, navigationIndex - 1);
-
-                var target = navigationHistory[navigationIndex];
-                if (target) navigateToHistoryEntry(target);
-            }
-
-            function goForward() {
-                if (navigationIndex >= navigationHistory.length - 1) return;
-
-                navigationIndex++;
-                var target = navigationHistory[navigationIndex];
-                if (target) navigateToHistoryEntry(target);
-            }
-
-            function navigateToHistoryEntry(entry) {
-                var currentPath = getCurrentFilePath();
-
-                if (currentPath === entry.filePath) {
-                    // Same file — navigate directly in editor
-                    editor.setPosition({ lineNumber: entry.lineNumber, column: entry.column });
-                    editor.revealPositionInCenter({ lineNumber: entry.lineNumber, column: entry.column });
-                    editor.focus();
-                } else {
-                    // Try switching to an already-loaded Monaco model first (avoids C# roundtrip + flicker)
-                    var normalizedPath = entry.filePath.replace(/\\/g, '/');
-                    var targetUri = monaco.Uri.parse('file:///' + normalizedPath);
-                    var existingModel = monaco.editor.getModel(targetUri);
-
-                    if (existingModel) {
-                        // Model cached — switch instantly in JS, no C# needed
-                        editor.setModel(existingModel);
-                        // 切换到缓存模型后同步版本基线，避免 postEditorState 误报未保存
-                        window.savedAlternativeVersionId = existingModel.getAlternativeVersionId();
-                        editor.setPosition({ lineNumber: entry.lineNumber, column: entry.column });
-                        editor.revealPositionInCenter({ lineNumber: entry.lineNumber, column: entry.column });
-                        editor.focus();
-                        // Notify C# to sync UI (file tree, tab, etc.)
-                        if (window.chrome && window.chrome.webview) {
-                            window.chrome.webview.postMessage(JSON.stringify({
-                                type: 'navigateBackForward',
-                                filePath: entry.filePath
-                            }));
-                        }
-                    } else {
-                        // Model not yet loaded — let C# load the file;
-                        // setValue() will apply the position after the new model is ready.
-                        window._pendingNavigation = { lineNumber: entry.lineNumber, column: entry.column };
-                        if (window.chrome && window.chrome.webview) {
-                            window.chrome.webview.postMessage(JSON.stringify({
-                                type: 'navigateBackForward',
-                                filePath: entry.filePath
-                            }));
-                        }
-                    }
-                }
-            }
-
-            // Timeout-based cursor position recording:
-            // Record the position after the cursor has been still for NAV_RECORD_DELAY_MS,
-            // but only if it's sufficiently far from the last recorded position.
-            function scheduleNavRecord() {
-                if (_navRecordTimer) clearTimeout(_navRecordTimer);
-                _navRecordTimer = setTimeout(function () {
-                    _navRecordTimer = null;
-                    var pos = editor.getPosition();
-                    var filePath = getCurrentFilePath();
-                    if (!pos || !filePath) return;
-
-                    // Skip if too close to the last recorded position in the same file
-                    if (_lastNavRecorded &&
-                        _lastNavRecorded.filePath === filePath &&
-                        Math.abs(pos.lineNumber - _lastNavRecorded.lineNumber) < NAV_RECORD_MIN_LINE_DELTA) {
-                        return;
-                    }
-
-                    pushNavigationPosition(filePath, pos.lineNumber, pos.column);
-                    _lastNavRecorded = { filePath: filePath, lineNumber: pos.lineNumber, column: pos.column };
-                }, NAV_RECORD_DELAY_MS);
-            }
-
-            // Also record on mouse click (explicit navigation intent)
-            editor.onMouseDown(function (e) {
-                if (e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT ||
-                    e.target.type === monaco.editor.MouseTargetType.GUTTER_LINE_NUMBERS) {
-                    // Cancel pending timer and record the position BEFORE the click moves the cursor
-                    if (_navRecordTimer) clearTimeout(_navRecordTimer);
-                    _navRecordTimer = null;
-                    // Schedule a fresh record for the new position after the click takes effect
-                    setTimeout(function () {
-                        var pos = editor.getPosition();
-                        var filePath = getCurrentFilePath();
-                        if (pos && filePath) {
-                            if (!_lastNavRecorded ||
-                                _lastNavRecorded.filePath !== filePath ||
-                                Math.abs(pos.lineNumber - _lastNavRecorded.lineNumber) >= NAV_RECORD_MIN_LINE_DELTA) {
-                                pushNavigationPosition(filePath, pos.lineNumber, pos.column);
-                                _lastNavRecorded = { filePath: filePath, lineNumber: pos.lineNumber, column: pos.column };
-                            }
-                        }
-                    }, 50);
-                }
-            });
 
             function postCurrentMarkers() {
                 var model = editor.getModel();
@@ -466,13 +314,28 @@
                 if (ctrl && !shift && key === 72) { e.preventDefault(); e.stopPropagation(); return; }
                 // Ctrl+G / Ctrl+Shift+G (Find Next/Prev in browser — Monaco has own)
                 if (ctrl && (key === 71)) { e.preventDefault(); e.stopPropagation(); return; }
-                // Alt+Left / Alt+Right (Go Back / Go Forward — VS Code style)
-                if (alt && !ctrl && !shift && key === 37) { e.preventDefault(); e.stopPropagation(); goBack(); return; }
-                if (alt && !ctrl && !shift && key === 39) { e.preventDefault(); e.stopPropagation(); goForward(); return; }
-                // Ctrl+Alt+- (Go Back)
-                if (ctrl && alt && !shift && key === 189) { e.preventDefault(); e.stopPropagation(); goBack(); return; }
-                // Ctrl+Shift+- (Go Forward)
-                if (ctrl && !alt && shift && key === 189) { e.preventDefault(); e.stopPropagation(); goForward(); return; }
+                // Navigation history is owned by the host so text and Markdown editors share it.
+                if (alt && !ctrl && !shift && key === 37) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateBack' }));
+                    return;
+                }
+                if (alt && !ctrl && !shift && key === 39) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateForward' }));
+                    return;
+                }
+                // Preserve the existing secondary navigation shortcuts.
+                if (ctrl && alt && !shift && key === 189) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateBack' }));
+                    return;
+                }
+                if (ctrl && !alt && shift && key === 189) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateForward' }));
+                    return;
+                }
                 // Ctrl+D (Bookmark)
                 if (ctrl && key === 68) { e.preventDefault(); e.stopPropagation(); return; }
             }, true);
@@ -481,8 +344,16 @@
             window.addEventListener('mouseup', function (e) {
                 // XButton1 (browser back)  → Go Back
                 // XButton2 (browser forward) → Go Forward
-                if (e.button === 3) { e.preventDefault(); e.stopPropagation(); goBack(); return; }
-                if (e.button === 4) { e.preventDefault(); e.stopPropagation(); goForward(); return; }
+                if (e.button === 3) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateBack' }));
+                    return;
+                }
+                if (e.button === 4) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateForward' }));
+                    return;
+                }
             }, true);
 
             // ---- Ctrl+Click file navigation ----
@@ -525,12 +396,6 @@
                     path = path.substring(1);
                 }
 
-                // Push current position to history before navigating away
-                var curPos = editor.getPosition();
-                if (curPos) {
-                    pushNavigationPosition(getCurrentFilePath(), curPos.lineNumber, curPos.column);
-                }
-
                 if (window.chrome && window.chrome.webview) {
                     window.chrome.webview.postMessage(JSON.stringify({
                         type: 'openFile',
@@ -571,10 +436,6 @@
             window.setValue = function (value, filePath) {
                 updateLargeFileOptions(value.length);
 
-                var currentPath = getCurrentFilePath();
-                var currentPos = editor.getPosition();
-                var isModelSwitch = false;
-
                 // 以“模型归属（URI）”而不是“文本内容”决定是否切换模型：
                 // 内容相同的两个文件也必须切换到各自的模型，否则切文件后仍显示旧文件。
                 window.isSettingValue = true;
@@ -590,13 +451,11 @@
                         }
 
                         if (editor.getModel() !== model) {
-                            isModelSwitch = true;
                             editor.setModel(model);
                         }
                     } else {
                         var model = editor.getModel();
                         if (!model || model.uri.scheme !== 'inmemory') {
-                            isModelSwitch = true;
                             editor.setModel(monaco.editor.createModel('', undefined, monaco.Uri.parse('inmemory://model')));
                         }
                         if (editor.getValue() !== value) {
@@ -607,23 +466,9 @@
                     window.isSettingValue = false;
                 }
 
-                // Record current position after switching away from a different file
-                if (isModelSwitch && filePath && currentPath && currentPath !== filePath && currentPos) {
-                    pushNavigationPosition(currentPath, currentPos.lineNumber, currentPos.column);
-                }
-
                 var model = editor.getModel();
                 if (model) {
                     window.savedAlternativeVersionId = model.getAlternativeVersionId();
-                }
-
-                // Apply pending navigation position (from goBack/goForward cross-file)
-                if (window._pendingNavigation) {
-                    var nav = window._pendingNavigation;
-                    window._pendingNavigation = null;
-                    editor.setPosition({ lineNumber: nav.lineNumber, column: nav.column });
-                    editor.revealPositionInCenter({ lineNumber: nav.lineNumber, column: nav.column });
-                    editor.focus();
                 }
 
                 postEditorState();
@@ -663,6 +508,26 @@
 
             window.redo = function () {
                 editor.trigger('host', 'redo', null);
+            };
+
+            window.copyLineUp = function () {
+                editor.trigger('host', 'editor.action.copyLinesUpAction', null);
+            };
+
+            window.copyLineDown = function () {
+                editor.trigger('host', 'editor.action.copyLinesDownAction', null);
+            };
+
+            window.moveLineUp = function () {
+                editor.trigger('host', 'editor.action.moveLinesUpAction', null);
+            };
+
+            window.moveLineDown = function () {
+                editor.trigger('host', 'editor.action.moveLinesDownAction', null);
+            };
+
+            window.focusEditor = function () {
+                editor.focus();
             };
 
             window.getEditorState = function () {

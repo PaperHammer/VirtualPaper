@@ -22,7 +22,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         public event EventHandler<string>? ShortcutRequested;
         public event EventHandler<MonacoEditorState>? EditorStateChanged;
         public event EventHandler<string>? FileOpenRequested;
-        public event EventHandler<string>? NavigationRequested;
 
         public string EditorContent {
             get => _content;
@@ -158,7 +157,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     "cursorPositionChange" => HandleCursorPositionChangeAsync(json.RootElement),
                     "markersChanged" => HandleMarkersChangedAsync(json.RootElement),
                     "openFile" => HandleOpenFileAsync(json.RootElement),
-                    "navigateBackForward" => HandleNavigateBackForwardAsync(json.RootElement),
                     _ => Task.CompletedTask
                 });
             } catch (Exception ex) {
@@ -248,14 +246,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             return Task.CompletedTask;
         }
 
-        private Task HandleNavigateBackForwardAsync(JsonElement rootElement) {
-            var filePath = rootElement.GetProperty("filePath").GetString();
-            if (!string.IsNullOrEmpty(filePath)) {
-                NavigationRequested?.Invoke(this, filePath);
-            }
-            return Task.CompletedTask;
-        }
-
         public async Task RevealPositionAsync(int lineNumber, int column) {
             if (monacoWebView.CoreWebView2 == null || !_isEditorReady) {
                 return;
@@ -280,6 +270,26 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         public Task RedoAsync() {
             return ExecuteEditorCommandAsync("window.redo()");
+        }
+
+        public Task CopyLineUpAsync() {
+            return ExecuteEditorCommandAsync("window.copyLineUp()");
+        }
+
+        public Task CopyLineDownAsync() {
+            return ExecuteEditorCommandAsync("window.copyLineDown()");
+        }
+
+        public Task MoveLineUpAsync() {
+            return ExecuteEditorCommandAsync("window.moveLineUp()");
+        }
+
+        public Task MoveLineDownAsync() {
+            return ExecuteEditorCommandAsync("window.moveLineDown()");
+        }
+
+        public Task FocusEditorAsync() {
+            return ExecuteEditorCommandAsync("window.focusEditor()");
         }
 
         public Task MarkSavedAsync(int? versionId = null) {

@@ -200,6 +200,7 @@ namespace VirtualPaper.DraftPanel.Views {
             WebEditFindSeparator.Visibility = webEditVisibility;
             WebFindMenuItem.Visibility = webEditVisibility;
             WebFindInFilesMenuItem.Visibility = webEditVisibility;
+            WebSelectionMenuBarItem.Visibility = webEditVisibility;
             UpdateWebEditMenuEnabledState();
         }
 
@@ -222,6 +223,12 @@ namespace VirtualPaper.DraftPanel.Views {
             WebDeleteMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Delete) == true;
             WebFindMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Find) == true;
             WebFindInFilesMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.FindInFiles) == true;
+            WebNavigateBackMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.NavigateBack) == true;
+            WebNavigateForwardMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.NavigateForward) == true;
+            WebCopyLineUpMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyLineUp) == true;
+            WebCopyLineDownMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyLineDown) == true;
+            WebMoveLineUpMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.MoveLineUp) == true;
+            WebMoveLineDownMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.MoveLineDown) == true;
         }
 
         private async void WebEditMenuItem_Click(object sender, RoutedEventArgs e) {

@@ -28,6 +28,7 @@ namespace Workloads.Creation.StaticImg {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
         public string FileName => Session.DesignFileUtil.FileName;
         public string FileNameWithoutEx => Session.DesignFileUtil.FileNameWithoutEx;
+        public string ProjectFilePath => Session.DesignFileUtil.FilePath;
         public string Id => Session.SessionId;
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;

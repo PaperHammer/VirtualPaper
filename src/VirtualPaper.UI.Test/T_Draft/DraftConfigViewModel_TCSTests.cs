@@ -12,7 +12,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _vm = new DraftConfigViewModel();
             _vm.ProjectName = "MyProject";
             _vm.SelectedTemplate = new ProjectTemplate { Name = "Template1" };
-            _vm.IsFromWorkSpace_AddProj = true;
+            _vm.IsFromWorkSpaceForAddProj = true;
         }
 
         [TestMethod]
@@ -29,14 +29,13 @@ namespace VirtualPaper.UI.Test.T_Draft {
         }
 
         [TestMethod]
-        public async Task OnPreviousStepClickedAsync_WorkSpaceMode_TCSSetWithNull() {
+        public async Task OnPreviousStepClickedAsync_WorkSpaceMode_DoesNotCloseAddProjectFlow() {
             var tcs = new TaskCompletionSource<PreProjectData[]?>();
             _vm.DraftConfigTCS = tcs;
 
             await _vm.OnPreviousStepClickedAsync();
 
-            Assert.IsTrue(tcs.Task.IsCompleted);
-            Assert.IsNull(await tcs.Task);
+            Assert.IsFalse(tcs.Task.IsCompleted);
         }
     }
 }

@@ -45,6 +45,7 @@ namespace Workloads.Utils.DraftUtils.Interfaces {
         event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
         string FileName { get; }
         string FileNameWithoutEx { get; }
+        string ProjectFilePath { get; }
         string Id { get; }
         bool IsSavedFromInit { get; }
 

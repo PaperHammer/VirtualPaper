@@ -24,6 +24,7 @@ namespace Workloads.Creation.WebBackdrop {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
         public string FileName => Session.DesignFileUtil.ProjectFilePath;
         public string FileNameWithoutEx => Session.DesignFileUtil.ProjectName;
+        public string ProjectFilePath => Session.DesignFileUtil.ProjectFilePath;
         public string Id => Session.SessionId;
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;

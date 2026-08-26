@@ -47,6 +47,7 @@
                     <input:ArcButton
                         Content="{x:Bind _viewModel.NextStepBtnText, Mode=OneWay}"
                         IsEnabled="{x:Bind _viewModel.IsNextEnable, Mode=OneWay}"
+                        Visibility="{x:Bind _viewModel.IsNextStepVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
                         Width="100"
                         Command="{x:Bind _viewModel.NextStepCommand}"
                         FontSize="12"

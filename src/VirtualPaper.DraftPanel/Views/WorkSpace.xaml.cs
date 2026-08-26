@@ -21,6 +21,7 @@ using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
+using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -37,9 +38,11 @@ namespace VirtualPaper.DraftPanel.Views {
             this.InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<WorkSpaceViewModel>();
             this.DataContext = _viewModel;
+            AddHandler(UIElement.PreviewKeyDownEvent, new KeyEventHandler(WorkSpace_PreviewKeyDown), true);
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _addProjectTcs?.TrySetResult(null);
             _viewModel.TabViewItems.CollectionChanged -= TabViewItems_CollectionChanged;
             _activeTopBarContentProvider?.SetTopBarContentActive(false);
             _activeTopBarContentProvider = null;
@@ -272,26 +275,42 @@ namespace VirtualPaper.DraftPanel.Views {
         }
 
         private void MaskGrid_Tapped(object sender, TappedRoutedEventArgs e) {
-            HideOverlayPage();
+            if (_addProjectTcs?.TrySetResult(null) != true) {
+                HideOverlayPage();
+            }
         }
 
         private void OverlayFrame_Tapped(object sender, TappedRoutedEventArgs e) {
             e.Handled = true;
         }
+
+        private void WorkSpace_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
+            if (e.Key != VirtualKey.Escape
+                || maskGrid.Visibility != Visibility.Visible
+                || _addProjectTcs == null) {
+                return;
+            }
+
+            e.Handled = true;
+            _addProjectTcs.TrySetResult(null);
+        }
         #endregion
 
         #region create new
         private async void TabViewControl_AddTabButtonClick(TabView sender, object args) {
-            await GoToCreateNewAsync();
+            await ShowAddProjectPanelAsync();
         }
 
-        private async Task GoToCreateNewAsync() {
-            Payload?.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.DraftConfig);
-            Payload?.Set(NaviPayloadKey.IsFromWorkSpace_AddProj, true);
+        private async Task ShowAddProjectPanelAsync() {
+            if (_addProjectTcs != null) return;
 
-            var tcs = new TaskCompletionSource<PreProjectData[]?>();
-            Payload?.Set(NaviPayloadKey.DraftConfigTCS, tcs);
-            ShowOverlayPage(typeof(ConfigSpace), Payload);
+            var tcs = new TaskCompletionSource<PreProjectData[]?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _addProjectTcs = tcs;
+            var overlayPayload = new FrameworkPayload().Merge(Payload);
+            overlayPayload.Set(NaviPayloadKey.TargetDraftPanelState, DraftPanelState.GetStart);
+            overlayPayload.Set(NaviPayloadKey.IsFromWorkSpaceForAddProj, true);
+            overlayPayload.Set(NaviPayloadKey.DraftConfigTCS, tcs);
+            ShowOverlayPage(typeof(ConfigSpace), overlayPayload);
 
             try {
                 var result = await tcs.Task;
@@ -302,14 +321,12 @@ namespace VirtualPaper.DraftPanel.Views {
                 HideOverlayPage();
                 ArcLog.GetLogger<WorkSpace>().Error(ex);
             } finally {
-                // 避免干扰
-                Payload?.Remove(NaviPayloadKey.DraftConfigTCS);
-                Payload?.Remove(NaviPayloadKey.IsFromWorkSpace_AddProj);
+                _addProjectTcs = null;
             }
         }
 
         private async void MFI_CreateNew_Clicked(object sender, RoutedEventArgs e) {
-            await GoToCreateNewAsync();
+            await ShowAddProjectPanelAsync();
         }
         #endregion
 
@@ -391,6 +408,7 @@ namespace VirtualPaper.DraftPanel.Views {
         private Draft? _draftPage;
         private readonly WorkSpaceViewModel _viewModel;
         private PreProjectData[]? _preProjectDatas;
+        private TaskCompletionSource<PreProjectData[]?>? _addProjectTcs;
         private readonly Dictionary<IArcTabViewItem, ContentControl> _tabToHost = [];
     }
 }

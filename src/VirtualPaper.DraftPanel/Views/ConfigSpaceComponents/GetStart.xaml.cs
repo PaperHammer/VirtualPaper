@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -28,7 +29,14 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
     public sealed partial class GetStart : Page, ICardComponent {
-        public Action? CardUIStateChanged { get; set; }
+        public string PreviousStepBtnText => _viewModel.PreviousStepBtnText;
+        public bool BtnVisible => _viewModel.BtnVisible;
+        public bool IsNextStepVisible => false;
+        public Action? CardUIStateChanged {
+            get => _viewModel.CardUIStateChanged;
+            set => _viewModel.CardUIStateChanged = value;
+        }
+        public Func<object?, Task>? PreviousStepAction => async (_) => await _viewModel.OnPreviousStepClickedAsync();
 
         public GetStart() {
             this.InitializeComponent();
@@ -41,6 +49,8 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
             if (e.Parameter is FrameworkPayload payload) {
                 payload.TryGet(NaviPayloadKey.INavigateComponent, out _navigateComponent);
+                _viewModel.DraftConfigTCS = payload.Get<TaskCompletionSource<PreProjectData[]?>>(NaviPayloadKey.DraftConfigTCS);
+                _viewModel.IsFromWorkSpaceForAddProj = payload.Get<bool>(NaviPayloadKey.IsFromWorkSpaceForAddProj);
             }
         }
 
@@ -66,7 +76,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                     return;
                 }
 
-                NavigateToWorkSpace([new(ru.FilePath, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting)]);
+                OpenProjects([new(ru.FilePath, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting)]);
             }
         }
 
@@ -91,7 +101,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
                 datas[i] = new PreProjectData(items[i].Path, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting);
             }
 
-            NavigateToWorkSpace(datas);
+            OpenProjects(datas);
         }
 
         private async void GridDrop_Drop(object sender, DragEventArgs e) {
@@ -123,9 +133,15 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
         }
 
         public void UpdateCardComponentUI() {
+            _viewModel.UpdateCardComponentUI();
         }
 
-        private void NavigateToWorkSpace(PreProjectData[] datas) {
+        private void OpenProjects(PreProjectData[] datas) {
+            if (_viewModel.IsFromWorkSpaceForAddProj) {
+                _viewModel.DraftConfigTCS?.TrySetResult(datas);
+                return;
+            }
+
             _navigateComponent.GetPaylaod()?.Set(NaviPayloadKey.Project, datas);
             _navigateComponent.NavigateByState(DraftPanelState.WorkSpace);
         }

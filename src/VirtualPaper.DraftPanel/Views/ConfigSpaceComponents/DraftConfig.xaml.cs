@@ -36,7 +36,7 @@ namespace VirtualPaper.DraftPanel.Views.ConfigSpaceComponents {
 
             if (e.Parameter is FrameworkPayload payload) {
                 if (payload.TryGet(NaviPayloadKey.INavigateComponent, out _viewModel._navigateComponent)) {
-                    _viewModel.IsFromWorkSpace_AddProj = payload.Get<bool>(NaviPayloadKey.IsFromWorkSpace_AddProj);
+                    _viewModel.IsFromWorkSpaceForAddProj = payload.Get<bool>(NaviPayloadKey.IsFromWorkSpaceForAddProj);
                     _viewModel.DraftConfigTCS = payload.Get<TaskCompletionSource<PreProjectData[]?>>(NaviPayloadKey.DraftConfigTCS);
                     await _viewModel.InitContentAsync();
                 }

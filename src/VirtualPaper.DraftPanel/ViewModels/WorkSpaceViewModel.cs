@@ -213,12 +213,17 @@ namespace VirtualPaper.DraftPanel.ViewModels {
 
         #region project
         private async Task InternalSaveAsync(IRuntime runtime) {
-            await runtime.SaveAsync();
+            if (await runtime.SaveAsync() && !string.IsNullOrWhiteSpace(runtime.ProjectFilePath)) {
+                _runtimeProjectPaths[runtime] = runtime.ProjectFilePath;
+            }
             RefreshHeaderAsync(runtime);
         }
 
         private async Task InternalSaveAsAsync(IRuntime runtime) {
-            await runtime.SaveAsAsync();
+            var savedPath = await runtime.SaveAsAsync();
+            if (!string.IsNullOrWhiteSpace(savedPath)) {
+                _runtimeProjectPaths[runtime] = savedPath;
+            }
             RefreshHeaderAsync(runtime);
         }
 
@@ -260,12 +265,51 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 return false;
             }
 
+            if (TryActivateOpenProject(filePath)) {
+                AddRecentUsed(filePath);
+                return true;
+            }
+
             var result = await _fileLoaderRegistry.LoadAsync(filePath);
             if (result == null) return false;
+
+            if (TryActivateOpenProject(result.FilePath)) {
+                AddRecentUsed(filePath);
+                return true;
+            }
 
             AddToWorkSpace(result.FilePath, result.FileType);
             AddRecentUsed(filePath);
             return true;
+        }
+
+        private bool TryActivateOpenProject(string filePath) {
+            for (var index = 0; index < TabViewItems.Count; index++) {
+                if (TabViewItems[index].Tag is not IRuntime runtime
+                    || !_runtimeProjectPaths.TryGetValue(runtime, out var openProjectPath)
+                    || !AreSameProjectPath(openProjectPath, filePath)) {
+                    continue;
+                }
+
+                SelectedTabIndex = index;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool AreSameProjectPath(string left, string right) {
+            if (string.IsNullOrWhiteSpace(left) || string.IsNullOrWhiteSpace(right)) return false;
+
+            try {
+                return string.Equals(
+                    Path.TrimEndingDirectorySeparator(Path.GetFullPath(left)),
+                    Path.TrimEndingDirectorySeparator(Path.GetFullPath(right)),
+                    StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) {
+                return false;
+            }
         }
 
         private bool InitRuntimeWithIdentify(string identity, ProjectType type) {
@@ -276,10 +320,13 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             };
             if (fileType == null) return false;
 
-            AddToWorkSpace(identity, fileType.Value);
+            var projectPath = fileType == FileType.FWebDesign
+                ? GetWebProjectFilePath(identity)
+                : identity;
+            AddToWorkSpace(identity, fileType.Value, projectPath);
 
             if (fileType == FileType.FWebDesign) {
-                AddRecentUsed(GetWebProjectFilePath(identity));
+                AddRecentUsed(projectPath);
             }
 
             return true;
@@ -297,7 +344,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             return Path.Combine(normalizedFolder, projectName + FileExtension.FE_WebDesign);
         }
 
-        private void AddToWorkSpace(string file, FileType fileType) {
+        private void AddToWorkSpace(string file, FileType fileType, string? projectPath = null) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 var runtime = _runtimeFactory.Create(file, fileType);
                 runtime.IsSavedChanged += Runtime_IsSavedChanged;
@@ -317,6 +364,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 };
                 TabViewItems.Add(tabItem);
                 _runtimeToArcTab[runtime] = (header, tabItem);
+                _runtimeProjectPaths[runtime] = projectPath ?? file;
+                SelectedTabIndex = TabViewItems.Count - 1;
             });
         }
 
@@ -334,6 +383,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             if (!_isDisposed) {
                 if (disposing) {
                     _runtimeToArcTab.Clear();
+                    _runtimeProjectPaths.Clear();
                     TabViewItems.Clear();
                     _middleMenuItems.Clear();
                     _tempRecentUsed.Clear();
@@ -400,6 +450,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private void CloseWorkSpaceTab(IRuntime runtime, IArcTabViewItem item) {
             runtime.IsSavedChanged -= Runtime_IsSavedChanged;
             _runtimeToArcTab.Remove(runtime);
+            _runtimeProjectPaths.Remove(runtime);
             TabViewItems.Remove(item);
         }
 
@@ -416,5 +467,6 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private readonly ProjectFileLoaderRegistry _fileLoaderRegistry;
         private readonly ConcurrentBag<string> _tempRecentUsed = [];
         private readonly Dictionary<IRuntime, (IArcTabViewItemHeader Header, IArcTabViewItem Item)> _runtimeToArcTab = [];
+        private readonly Dictionary<IRuntime, string> _runtimeProjectPaths = [];
     }
 }

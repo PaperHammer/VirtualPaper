@@ -3,20 +3,29 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
+using VirtualPaper.Common;
+using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent.Utils;
 using Windows.ApplicationModel.DataTransfer;
 using UAC = UACHelper.UACHelper;
 
 namespace VirtualPaper.DraftPanel.ViewModels {
     public partial class GetStartViewModel {
+        public Action? CardUIStateChanged { get; set; }
         public ObservableCollection<IRecentUsed> RecentUseds { get; private set; } = [];
         public ICommand? RemoveFromListCommand { get; private set; }
         public ICommand? CopyPathCommand { get; private set; }
         public ICommand? ShowOnDiskCommand { get; private set; }
         public bool IsElevated { get; }
+        public bool BtnVisible { get; private set; } = false;
+        public string PreviousStepBtnText { get; private set; } = string.Empty;
+        public TaskCompletionSource<PreProjectData[]?>? DraftConfigTCS { get; set; }
+        public bool IsFromWorkSpaceForAddProj { get; set; }
 
         public GetStartViewModel(IUserSettingsClient userSettingsClient) {
             IsElevated = UAC.IsElevated;
@@ -53,6 +62,22 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             RecentUseds.Clear();
             RecentUseds.AddRange(_userSettingsClient.RecentUseds);
             _recentUseds = [.. RecentUseds];
+        }
+
+        internal void UpdateCardComponentUI() {
+            BtnVisible = IsFromWorkSpaceForAddProj;
+            PreviousStepBtnText = BtnVisible
+                ? LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))
+                : string.Empty;
+            CardUIStateChanged?.Invoke();
+        }
+
+        public Task OnPreviousStepClickedAsync() {
+            if (IsFromWorkSpaceForAddProj) {
+                DraftConfigTCS?.TrySetResult(null);
+            }
+
+            return Task.CompletedTask;
         }
 
         #region filter

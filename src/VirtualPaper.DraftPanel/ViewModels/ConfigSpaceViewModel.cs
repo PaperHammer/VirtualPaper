@@ -17,6 +17,9 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         private bool _btnVisible;
         public bool BtnVisible { get => _btnVisible; set { _btnVisible = value; OnPropertyChanged(); } }
 
+        private bool _isNextStepVisible = true;
+        public bool IsNextStepVisible { get => _isNextStepVisible; set { _isNextStepVisible = value; OnPropertyChanged(); } }
+
         public ICommand? PreviousStepCommand { get; private set; }
         public ICommand? NextStepCommand { get; private set; }
 
@@ -44,6 +47,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
             NextStepBtnText = _cardComponent.NextStepBtnText;
             IsNextEnable = _cardComponent.IsNextEnable;
             BtnVisible = _cardComponent.BtnVisible;
+            IsNextStepVisible = _cardComponent.IsNextStepVisible;
         }
 
         #region dispose

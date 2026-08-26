@@ -1,5 +1,6 @@
 using Moq;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.DraftPanel.Model;
 using VirtualPaper.DraftPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -135,6 +136,18 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _vm.ApplyFilter("Cherry");
 
             Assert.HasCount(1, _vm.RecentUseds);
+        }
+
+        [TestMethod]
+        public async Task OnPreviousStepClickedAsync_WorkSpaceMode_ClosesAddProjectFlow() {
+            var tcs = new TaskCompletionSource<PreProjectData[]?>();
+            _vm.IsFromWorkSpaceForAddProj = true;
+            _vm.DraftConfigTCS = tcs;
+
+            await _vm.OnPreviousStepClickedAsync();
+
+            Assert.IsTrue(tcs.Task.IsCompleted);
+            Assert.IsNull(await tcs.Task);
         }
 
         // ── RemoveFromListCommand ─────────────────────────────────────

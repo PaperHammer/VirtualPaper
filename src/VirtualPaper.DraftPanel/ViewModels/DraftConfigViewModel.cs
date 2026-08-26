@@ -98,7 +98,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         public string PreviousStepBtnText { get; private set; } = string.Empty;
         public string NextStepBtnText { get; private set; } = string.Empty;
         public bool BtnVisible { get; private set; } = false;
-        public bool IsFromWorkSpace_AddProj { get; set; }
+        public bool IsFromWorkSpaceForAddProj { get; set; }
         public TaskCompletionSource<PreProjectData[]?>? DraftConfigTCS { get; set; }
 
         internal async Task InitContentAsync() {
@@ -130,14 +130,8 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         public void UpdateCardComponentUI() {
-            if (IsFromWorkSpace_AddProj) {
-                PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel));
-                NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
-            }
-            else {
-                PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
-                NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
-            }
+            PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
+            NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
             BtnVisible = true;
             CardUIStateChanged?.Invoke();
         }
@@ -173,12 +167,11 @@ namespace VirtualPaper.DraftPanel.ViewModels {
                 : ProjectOpenIntent.CreateFromName;
             var preData = new PreProjectData[] { new(identity, SelectedTemplate!.Type, intent) };
 
-            _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
-
-            if (IsFromWorkSpace_AddProj) {
+            if (IsFromWorkSpaceForAddProj) {
                 DraftConfigTCS?.TrySetResult(preData);
             }
             else {
+                _navigateComponent?.GetPaylaod()?.Set(NaviPayloadKey.Project, preData);
                 _navigateComponent?.NavigateByState(DraftPanelState.WorkSpace);
             }
 
@@ -186,12 +179,7 @@ namespace VirtualPaper.DraftPanel.ViewModels {
         }
 
         public Task OnPreviousStepClickedAsync() {
-            if (IsFromWorkSpace_AddProj) {
-                DraftConfigTCS?.TrySetResult(null);
-            }
-            else {
-                _navigateComponent?.NavigateByState(DraftPanelState.GetStart);
-            }
+            _navigateComponent?.NavigateByState(DraftPanelState.GetStart);
 
             return Task.CompletedTask;
         }

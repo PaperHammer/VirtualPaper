@@ -15,7 +15,12 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
         Task CloseAllWallpapersAsync();
         Task CloseWallpaperAsync(IMonitor monitor);
         Task<Grpc_WpMetaData> GetWallpaperAsync(string folderPath, string monitorContent, string rtype);
-        Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, string? depthFilePath, CancellationToken token);
+        Task<string> GetPlayerStartArgsAsync(
+            IWpBasicData data,
+            RuntimeType rtype,
+            string? depthFilePath,
+            CancellationToken token,
+            string? wpBasicDataFilePath = null);
         Task<string> GetPlayerStartArgsByMonitorIdAsync(string monitorId, CancellationToken token);
         Task<Grpc_RestartWallpaperResponse> RestartAllWallpapersAsync();
         Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IMonitor monitor, IWpBasicData metaData, RuntimeType rtype, bool isFromPreview, string? depthFilePath, string? wpEffectFilePathUsing, string? wpEffectFilePathTemplate, string? wpEffectFilePathTemporary, CancellationToken token);

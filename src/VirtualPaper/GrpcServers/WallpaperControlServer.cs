@@ -44,7 +44,12 @@ namespace VirtualPaper.GrpcServers {
 
         public override async Task<Grpc_GetPlayerStartArgsResponse> GetPlayerStartArgs(Grpc_GetPlayerStartArgsRequest request, ServerCallContext context) {
             var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
-            var data = _wpControl.GetPlayerStartArgs(playingData, context.CancellationToken);
+            var data = _wpControl.GetPlayerStartArgs(
+                playingData,
+                string.IsNullOrWhiteSpace(request.WpBasicDataFilePath)
+                    ? null
+                    : request.WpBasicDataFilePath,
+                context.CancellationToken);
             Grpc_GetPlayerStartArgsResponse response = new() {
                 Data = data,
             };

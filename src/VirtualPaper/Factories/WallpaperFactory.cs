@@ -107,9 +107,13 @@ namespace VirtualPaper.Factories {
             throw new PluginNotFoundException("Wallpaper player not found.");
         }
 
-        public string? CreatePlayerStartArgs(IWpPlayerData data, bool isPreview) {
+        public string? CreatePlayerStartArgs(
+            IWpPlayerData data,
+            bool isPreview,
+            string? wpBasicDataFilePath = null) {
             return data.RType switch {
-                RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb => new PlayerWebSrartArgs(data, isPreview).ToJson(),
+                RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb =>
+                    new PlayerWebSrartArgs(data, isPreview, wpBasicDataFilePath).ToJson(),
                 _ => null
             };
         }

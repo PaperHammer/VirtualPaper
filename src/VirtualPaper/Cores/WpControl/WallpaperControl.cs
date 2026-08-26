@@ -154,11 +154,14 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public string? GetPlayerStartArgs(IWpPlayerData data, CancellationToken token = default) {
+        public string? GetPlayerStartArgs(
+            IWpPlayerData data,
+            string? wpBasicDataFilePath = null,
+            CancellationToken token = default) {
             var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, true, _userSettings.Settings.SelectedMonitor.Content);
             DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
-            var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true);
+            var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true, wpBasicDataFilePath);
 
             return startArgs;
         }

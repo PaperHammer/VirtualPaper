@@ -5,13 +5,19 @@ using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Cores.Players.Web {
-    record PlayerWebSrartArgs(IWpPlayerData Data, bool IsPreview, Dictionary<string, object>? extraFields = null) {
+    record PlayerWebSrartArgs(
+        IWpPlayerData Data,
+        bool IsPreview,
+        string? WpBasicDataFilePath = null,
+        Dictionary<string, object>? ExtraFields = null) {
         public string ToJson() {
             var args = new StartArgsWeb() {
                 IsPreview = this.IsPreview,
 
                 FilePath = Data.FilePath,
-                WpBasicDataFilePath = Path.Combine(Data.FolderPath, Constants.Field.WpBasicDataFileName),
+                WpBasicDataFilePath = string.IsNullOrWhiteSpace(WpBasicDataFilePath)
+                    ? Path.Combine(Data.FolderPath, Constants.Field.WpBasicDataFileName)
+                    : WpBasicDataFilePath,
 
                 DepthFilePath = Data.RType == RuntimeType.RImage3D
                     ? Data.DepthFilePath
@@ -27,7 +33,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 ApplicationTheme = App.UserSettings.Settings.ApplicationTheme,
                 Language = App.UserSettings.Settings.Language,
 
-                Extra = JsonSerializer.Serialize(extraFields),
+                Extra = JsonSerializer.Serialize(ExtraFields),
                 IsDebug = false,
             };
 

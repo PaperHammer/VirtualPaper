@@ -235,11 +235,15 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 }
             }
             catch (OperationCanceledException) {
-                Session.PreviewServer.Stop();
+                CleanupSessions();
+                DebugSessionEnded?.Invoke();
                 ArcLog.GetLogger<WebEditorViewModel>().Info("Debug cancelled");
             }
             catch (Exception ex) {
+                CleanupSessions();
+                DebugSessionEnded?.Invoke();
                 ArcLog.GetLogger<WebEditorViewModel>().Error($"Debug failed: {ex.Message}");
+                GlobalMessageUtil.ShowException(ex);
             }
         }
 
@@ -273,11 +277,29 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     FolderName = Path.GetFileName(projectDir),
                     FType = FileType.FWebZip,
                 };
-                // 注意：不需要把 wp_metadata_basic.json 写入项目目录。
-                // GetPlayerStartArgsAsync 只序列化内存中的 basicData 生成启动参数；
-                // 预览的运行态数据（effect 文件、runtime 元数据）由核心写入 TempDir。
+                // PlayerWeb 会从磁盘读取调试元数据。每个调试会话使用独立的系统临时目录，
+                // 避免污染项目文件、触发项目监听或进入 manifest/搜索/导出流程。
+                _debugSessionDirectory = Path.Combine(
+                    Path.GetTempPath(),
+                    "VirtualPaper",
+                    "WebBackdrop",
+                    "Debug",
+                    Guid.NewGuid().ToString("N"));
+                var basicDataPath = Path.Combine(
+                    _debugSessionDirectory,
+                    Constants.Field.WpBasicDataFileName);
+                await JsonSaver.SaveAsync(
+                    basicDataPath,
+                    basicData,
+                    WpBasicDataContext.Default);
+
+                cancellationToken.ThrowIfCancellationRequested();
                 _debugJsonString = await _wpControlClient.GetPlayerStartArgsAsync(
-                    basicData, RuntimeType.RWeb, null, cancellationToken);
+                    basicData,
+                    RuntimeType.RWeb,
+                    null,
+                    cancellationToken,
+                    basicDataPath);
 
                 cancellationToken.ThrowIfCancellationRequested();
                 OpenPreviewWindow();
@@ -304,10 +326,13 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _debugJsonString = null;
             _previewUrl = null;
 
-            // 清理调试时写入项目目录的临时元数据（不纳入项目管理）
-            var basicDataPath = Path.Combine(Session.DesignFileUtil.ProjectFolder, "wp_metadata_basic.json");
+            var debugSessionDirectory = _debugSessionDirectory;
+            _debugSessionDirectory = null;
             try {
-                if (File.Exists(basicDataPath)) File.Delete(basicDataPath);
+                if (!string.IsNullOrWhiteSpace(debugSessionDirectory)
+                    && Directory.Exists(debugSessionDirectory)) {
+                    Directory.Delete(debugSessionDirectory, recursive: true);
+                }
             }
             catch { /* 忽略清理失败 */ }
         }
@@ -326,6 +351,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         private readonly IWallpaperControlClient _wpControlClient;
         private string? _debugJsonString;
         private string? _previewUrl;
+        private string? _debugSessionDirectory;
         private PreviewWithWeb? _previewWindow;
         private readonly ArcPageContextKey _contextKey;
     }

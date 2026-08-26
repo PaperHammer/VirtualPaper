@@ -63,13 +63,19 @@ namespace VirtualPaper.Grpc.Client {
             return grpc_data;
         }
 
-        public async Task<string> GetPlayerStartArgsAsync(IWpBasicData data, RuntimeType rtype, string? depthFilePath, CancellationToken token) {
+        public async Task<string> GetPlayerStartArgsAsync(
+            IWpBasicData data,
+            RuntimeType rtype,
+            string? depthFilePath,
+            CancellationToken token,
+            string? wpBasicDataFilePath = null) {
             Grpc_WpPlayerData wpPlayerdata = DataAssist.MetadataToGrpcPlayingData(data, rtype);
             wpPlayerdata.DepthFilePath = depthFilePath ?? string.Empty;
 
             var response = await _client.GetPlayerStartArgsAsync(
                 new Grpc_GetPlayerStartArgsRequest() {
-                    WpPlayerData = wpPlayerdata
+                    WpPlayerData = wpPlayerdata,
+                    WpBasicDataFilePath = wpBasicDataFilePath ?? string.Empty,
                 },
                 cancellationToken: token);
 

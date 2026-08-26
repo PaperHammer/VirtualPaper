@@ -4,6 +4,7 @@ import "google/protobuf/timestamp.proto";
 
 message Grpc_GetPlayerStartArgsRequest {
 	Grpc_WpPlayerData wp_player_data = 1;
+	string wp_basic_data_file_path = 2;
 }
 
 message Grpc_GetPlayerStartArgsResponse {

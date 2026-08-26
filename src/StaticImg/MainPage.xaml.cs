@@ -219,7 +219,7 @@ namespace Workloads.Creation.StaticImg {
 
         /// <summary>
         /// 一键入库：渲染为临时 PNG → 通知库 Panel（WpSettings）导入 → 清理临时文件。
-        /// 与导出交互一致，由 DraftPanel 的“文件 → 入库”菜单触发。
+        /// 与导出交互一致，由 EditPanel 的“文件 → 入库”菜单触发。
         /// </summary>
         public async Task<bool> AddToLibraryAsync() {
             var tempPngPath = string.Empty;

@@ -1,5 +1,5 @@
 using Moq;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 
@@ -13,7 +13,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             _vm = new WorkSpaceViewModel(
                 Mock.Of<IUserSettingsClient>(),
                 Mock.Of<Workloads.Entry.Interfaces.IRuntimeFactory>(),
-                Mock.Of<VirtualPaper.DraftPanel.Services.IWorkspaceSaveCoordinator>(),
+                Mock.Of<VirtualPaper.EditPanel.Services.IWorkspaceSaveCoordinator>(),
                 new Mock<Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry>(
                     new Workloads.Entry.FileLoaders.IProjectFileLoader[] { }).Object);
         }

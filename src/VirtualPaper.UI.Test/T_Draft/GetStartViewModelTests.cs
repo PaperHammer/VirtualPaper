@@ -1,7 +1,7 @@
 using Moq;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel.Model;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.EditPanel.Model;
+using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Test.Utils;
@@ -142,7 +142,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
         public async Task OnPreviousStepClickedAsync_WorkSpaceMode_ClosesAddProjectFlow() {
             var tcs = new TaskCompletionSource<PreProjectData[]?>();
             _vm.IsFromWorkSpaceForAddProj = true;
-            _vm.DraftConfigTCS = tcs;
+            _vm.EditConfigTCS = tcs;
 
             await _vm.OnPreviousStepClickedAsync();
 

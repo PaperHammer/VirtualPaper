@@ -5,7 +5,7 @@ using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.DraftPanel;
+using VirtualPaper.Models.EditPanel;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 

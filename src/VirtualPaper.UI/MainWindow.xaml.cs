@@ -9,7 +9,7 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel;
+using VirtualPaper.EditPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.TwoWay;
 using VirtualPaper.IntelligentPanel;
@@ -147,7 +147,7 @@ namespace VirtualPaper.UI {
             try {
                 Type pageType = args.SelectedItemContainer.Name switch {
                     "Nav_WpSettings" => typeof(WpSettings),
-                    "Nav_Draft" => typeof(Draft),
+                    "Nav_Edit" => typeof(Edit),
                     "Nav_AppSettings" => typeof(AppSettings),
                     "Nav_Intelligent" => typeof(Intelligent),
                     _ => throw new NotImplementedException(),

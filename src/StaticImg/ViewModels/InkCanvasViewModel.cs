@@ -100,7 +100,7 @@ namespace Workloads.Creation.StaticImg.ViewModels {
         internal readonly List<ToolItem> _toolItems = [
             new() { Type = ToolType.Selection, ToolName = "Project_StaticImg_ToolName_Selection", Glyph = "\uE8B0", },
             new() { Type = ToolType.PaintBrush, ToolName = "Project_StaticImg_ToolName_PaintBrush", Glyph = "\uEE56", },
-            new() { Type = ToolType.Fill, ToolName = "Project_StaticImg_ToolName_Fill", ImageSourceKey = "DraftPanel_FuncBar_ColorFill", },
+            new() { Type = ToolType.Fill, ToolName = "Project_StaticImg_ToolName_Fill", ImageSourceKey = "EditPanel_FuncBar_ColorFill", },
             new() { Type = ToolType.Eraser, ToolName = "Project_StaticImg_ToolName_Eraser", Glyph = "\uE75C", },
             new() { Type = ToolType.Crop, ToolName = "Project_StaticImg_ToolName_Crop", Glyph = "\uE7A8", },
             new() { Type = ToolType.CanvasEffect, ToolName = "Project_StaticImg_ToolName_CanvasEffect", Glyph = "\uF4A5", },

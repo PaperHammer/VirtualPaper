@@ -52,7 +52,7 @@ namespace VirtualPaper.ReleaseBuildData.Test {
         [TestCategory("ReleaseBuild")]
         [DataRow("VirtualPaper.AppSettingsPanel.dll")]
         [DataRow("VirtualPaper.WpSettingsPanel.dll")]
-        [DataRow("VirtualPaper.DraftPanel.dll")]
+        [DataRow("VirtualPaper.EditPanel.dll")]
         [DataRow("VirtualPaper.IntelligentPanel.dll")]
         public void Plugin_UI_PanelDll_Exists(string dllName) {
             ReleaseBuildSanityTests.AssertFileExists(

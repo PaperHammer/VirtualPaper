@@ -1,0 +1,118 @@
+using System;
+using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.EditPanel.ViewModels;
+using VirtualPaper.EditPanel.Views.ConfigSpaceComponents;
+using VirtualPaper.UIComponent.Data;
+using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace VirtualPaper.EditPanel.Views {
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    public sealed partial class ConfigSpace : ArcPage, INavigateComponent {
+        public override Type ArcType => typeof(ConfigSpace);
+
+        public ConfigSpace() {
+            this.InitializeComponent();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<ConfigSpaceViewModel>();
+            this.DataContext = _viewModel;
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _viewModel.Dispose();
+        }
+
+        #region nav
+        protected override void OnNavigatedTo(NavigationEventArgs e) {
+            base.OnNavigatedTo(e);
+
+            if (e.Parameter is FrameworkPayload payload) {
+                payload.TryGet(NaviPayloadKey.EditPage, out _editPage);
+                payload.TryGet(NaviPayloadKey.TargetEditPanelState, out _targetEditPanelState);
+                Payload = Payload.Merge(payload);
+                Payload?.Set(NaviPayloadKey.INavigateComponent, this);
+                Payload?.Set(NaviPayloadKey.ConfigSpacePage, this);
+            }
+        }
+
+        private void FrameComp_Loaded(object sender, RoutedEventArgs e) {
+            NavigateByState(_targetEditPanelState);
+            Payload?.Set(NaviPayloadKey.TargetEditPanelState, EditPanelState.GetStart);
+        }
+
+        public void NavigateByState(EditPanelState nextState, params NaviPayloadData[] naviPayloadDatas) {
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                Type targetPageType;
+                switch (nextState) {
+                    case EditPanelState.GetStart:
+                        targetPageType = typeof(GetStart);
+                        break;
+                    case EditPanelState.EditConfig:
+                        targetPageType = typeof(EditConfig);
+                        break;
+                    default:
+                        _editPage?.NavigateByState(nextState, Payload?.ToArray() ?? []);
+                        FrameComp.BackStack.Clear();
+                        FrameComp.ForwardStack.Clear();
+                        return;
+                }
+
+                if (targetPageType != null) {
+                    Payload?.AddRange(naviPayloadDatas);
+                    if (IsNextPageTarget(targetPageType)) {
+                        FrameComp.GoForward();
+                    }
+                    else if (IsPreviousPageTarget(targetPageType)) {
+                        FrameComp.GoBack();
+                    }
+                    else {
+                        FrameComp.Navigate(targetPageType, Payload);
+                    }
+
+                    if (FrameComp.Content is ICardComponent cardComponent) {
+                        cardComponent.CardUIStateChanged = () => {
+                            _viewModel.RefreshCardComponentData();
+                        };
+                        _viewModel._cardComponent = cardComponent;
+                        cardComponent.UpdateCardComponentUI();
+                    }
+                }
+            });
+        }
+
+        public FrameworkPayload? GetPaylaod() {
+            return Payload;
+        }
+
+        private bool IsNextPageTarget(Type targetPageType) {
+            if (FrameComp.ForwardStack.Count > 0) {
+                var nextPage = FrameComp.ForwardStack.First();
+                return nextPage.SourcePageType == targetPageType;
+            }
+            return false;
+        }
+
+        private bool IsPreviousPageTarget(Type targetPageType) {
+            if (FrameComp.BackStack.Count > 0) {
+                var previousPage = FrameComp.BackStack.Last();
+                return previousPage.SourcePageType == targetPageType;
+            }
+            return false;
+        }
+        #endregion
+
+        private readonly ConfigSpaceViewModel _viewModel;
+        private Edit? _editPage;
+        private EditPanelState _targetEditPanelState;
+    }
+}

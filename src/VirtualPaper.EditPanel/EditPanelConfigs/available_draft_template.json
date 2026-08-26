@@ -1,0 +1,19 @@
+{
+  "DefaultProjectName": "New_Project",
+  "Templates": [
+    {
+      "ItemImageKey": "EditPanel_Create_StaticImge",
+      "DescImageKey": "EditPanel_Create_StaticImge_Desc",
+      "Name": "Draft_Template_StaticImage_Name",
+      "Desc": "Draft_Template_StaticImage_Desc",
+      "Type": "P_StaticImage"
+    },
+    {
+      "ItemImageKey": "EditPanel_Create_WebBackdrop",
+      "DescImageKey": "EditPanel_Create_WebBackdrop_Desc",
+      "Name": "Draft_Template_WebBackdrop_Name",
+      "Desc": "Draft_Template_WebBackdrop_Desc",
+      "Type": "P_WebBackdrop"
+    }
+  ]
+}

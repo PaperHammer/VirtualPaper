@@ -15,8 +15,8 @@ using VirtualPaper.Common.Utils.Pipe;
 using VirtualPaper.Common.Utils.Pipe.Interfaces;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel.Services;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.EditPanel.Services;
+using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
@@ -112,10 +112,10 @@ namespace VirtualPaper.UI {
                 .AddSingleton<LibraryContentsViewModel>()
                 .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
-                .AddTransient<DraftPanel.ViewModels.ConfigSpaceViewModel>()
+                .AddTransient<EditPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
-                .AddTransient<DraftConfigViewModel>()
+                .AddTransient<EditConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
                 .AddTransient<IntelligentViewModel>()
                 .AddTransient<StyleTransferAddTaskViewModel>()

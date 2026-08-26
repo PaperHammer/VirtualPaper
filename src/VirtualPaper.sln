@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtualPaper.UIComponent", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Players", "Players", "{D252A1EE-5244-47E0-AE85-94E193E177E2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtualPaper.DraftPanel", "VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj", "{6A5B60E1-1138-4285-8E19-8003F6990E94}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "VirtualPaper.EditPanel", "VirtualPaper.EditPanel\VirtualPaper.EditPanel.csproj", "{6A5B60E1-1138-4285-8E19-8003F6990E94}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.AppSettingsPanel", "VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj", "{30D5E7C1-8BF0-46C3-8839-40305B4132F8}"
 EndProject

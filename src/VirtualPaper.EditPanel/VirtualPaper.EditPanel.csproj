@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+		<RootNamespace>VirtualPaper.EditPanel</RootNamespace>
+		<WinUISDKReferences>false</WinUISDKReferences>
+		<UseWinUI>true</UseWinUI>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Remove="Edit.xaml" />
+		<None Remove="Views\ConfigSpace.xaml" />
+		<None Remove="Views\EditConfig.xaml" />
+		<None Remove="Views\GetStart.xaml" />
+		<None Remove="Views\ProjectConfig.xaml" />
+		<None Remove="Views\WorkSpace.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Views\WorkSpace.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Views\GetStart.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Edit.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<CustomAdditionalCompileInputs Remove="Views\EditConfig.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Resource Remove="Views\EditConfig.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Views\ProjectConfig.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>VirtualPaper.UI.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Workloads.Entry\Workloads.Entry.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="EditPanelConfigs\available_draft_template.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Page Update="Views\ConfigSpace.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+</Project>

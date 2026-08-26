@@ -1,0 +1,445 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
+using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.EditPanel.Model;
+using VirtualPaper.EditPanel.ViewModels;
+using VirtualPaper.UIComponent.Attributes;
+using VirtualPaper.UIComponent.Navigation;
+using VirtualPaper.UIComponent.Navigation.Interfaces;
+using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
+using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
+using Workloads.Utils.DraftUtils.Interfaces;
+using Workloads.Utils.DraftUtils.Models;
+using Windows.System;
+
+// To learn more about WinUI, the WinUI project structure,
+// and more about our project templates, see: http://aka.ms/winui-project-info.
+
+namespace VirtualPaper.EditPanel.Views {
+    /// <summary>
+    /// An empty page that can be used on its own or navigated to within a Frame.
+    /// </summary>
+    [KeepAlive]
+    public sealed partial class WorkSpace : ArcPage, IConfirmClose {
+        public override Type ArcType => typeof(WorkSpace);
+
+        public WorkSpace() {
+            this.InitializeComponent();
+            _viewModel = AppServiceLocator.Services.GetRequiredService<WorkSpaceViewModel>();
+            this.DataContext = _viewModel;
+            AddHandler(UIElement.PreviewKeyDownEvent, new KeyEventHandler(WorkSpace_PreviewKeyDown), true);
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _addProjectTcs?.TrySetResult(null);
+            _viewModel.TabViewItems.CollectionChanged -= TabViewItems_CollectionChanged;
+            _activeTopBarContentProvider?.SetTopBarContentActive(false);
+            _activeTopBarContentProvider = null;
+            if (_activeEditCommandProvider != null) {
+                _activeEditCommandProvider.EditCommandStateChanged -= ActiveEditCommandProvider_StateChanged;
+                _activeEditCommandProvider = null;
+            }
+            runtimeTopBarContent.Content = null;
+            _preProjectDatas = null;
+            _tabToHost.Clear();
+            _viewModel.Dispose();
+        }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e) {
+            base.OnNavigatedTo(e);
+
+            _viewModel.TabViewItems.CollectionChanged += TabViewItems_CollectionChanged;
+            if (e.Parameter is FrameworkPayload payload) {
+                payload.TryGet(NaviPayloadKey.EditPage, out _editPage);
+                payload.TryGet(NaviPayloadKey.Project.ToString(), out _preProjectDatas);
+                Payload = Payload.Merge(payload);
+            }
+        }
+
+        public async Task<bool> CanCloseAsync() {
+            return await _viewModel.CheckAllSaveStatusAsync();
+        }
+
+        #region add and selection
+        private async void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
+            if (_preProjectDatas == null) return;
+
+            var ctx = ArcPageContextManager.GetContext<Edit>();
+            var loadingCtx = ctx?.LoadingContext;
+            var hasLoadedItem = false;
+            if (loadingCtx == null) {
+                hasLoadedItem = await _viewModel.AddNewItemsAsync(_preProjectDatas);
+            }
+            else {
+                await loadingCtx.RunAsync(async (_) => {
+                    hasLoadedItem = await _viewModel.AddNewItemsAsync(_preProjectDatas);
+                });
+            }
+
+            if (!hasLoadedItem && _viewModel.TabViewItems.Count == 0) {
+                _editPage?.NavigateByState(EditPanelState.ConfigSpace);
+            }
+        }
+
+        private void TabViewItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+            SyncWorkspaceUI();
+        }
+
+        private void TabViewControl_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            SyncWorkspaceUI();
+        }
+
+        private void TabViewControl_TabItemsChanged(TabView sender, Windows.Foundation.Collections.IVectorChangedEventArgs args) {
+            _viewModel.OnTabItemsChanged(sender, args);
+        }
+
+        // 这里使用 ContentControl 承载已经创建好的 runtime 页面，而不是 Frame。
+        // Frame 是导航容器，适合通过 Navigate(typeof(Page), parameter) 创建和管理 Page；
+        // 直接把已有 Page 实例塞进 Frame.Content 会绕过导航生命周期，
+        // 对 Win2D/CanvasControl 等依赖 XAML 树和加载顺序的控件容易触发底层异常。
+        // 当前场景只是 Tab 与已创建 runtime 页面之间的显示/隐藏，ContentControl 更合适。
+        private void SyncWorkspaceUI() {
+            // 找出集合中有，但 UI 字典里没有的，创建内容宿主。
+            foreach (var item in _viewModel.TabViewItems) {
+                if (!_tabToHost.ContainsKey(item) && item.Tag is IRuntime runtime) {
+                    if (runtime is FrameworkElement element) {
+                        element.HorizontalAlignment = HorizontalAlignment.Stretch;
+                        element.VerticalAlignment = VerticalAlignment.Stretch;
+                    }
+                    var host = new ContentControl {
+                        Content = runtime,
+                        Visibility = Visibility.Collapsed,
+                        HorizontalAlignment = HorizontalAlignment.Stretch,
+                        VerticalAlignment = VerticalAlignment.Stretch,
+                        HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                        VerticalContentAlignment = VerticalAlignment.Stretch
+                    };
+                    _tabToHost[item] = host;
+                    workspaceContentPool.Children.Add(host);
+                }
+            }
+
+            // 找出 UI 字典里有，但集合里已经不存在的，彻底销毁内容宿主。
+            var itemsToRemove = _tabToHost.Keys.Where(k => !_viewModel.TabViewItems.Contains(k)).ToList();
+            foreach (var item in itemsToRemove) {
+                if (_tabToHost.TryGetValue(item, out var host)) {
+                    workspaceContentPool.Children.Remove(host);
+                    _tabToHost.Remove(item);
+                    host.Content = null;
+                }
+            }
+
+            // 根据当前的选中项，控制可见性。
+            var selectedItem = TabViewControl.SelectedItem as ArcTabViewItem;
+            foreach (var kvp in _tabToHost) {
+                kvp.Value.Visibility = (kvp.Key as ArcTabViewItem == selectedItem) ? Visibility.Visible : Visibility.Collapsed;
+            }
+
+            UpdateMenuForActiveRuntime();
+        }
+
+        /// <summary>
+        /// 根据当前选中 Tab 的项目类型调整共享菜单：
+        /// Web 项目仅可导出 zip 包、且隐藏“另存为”（改用文件树右键菜单的按文件保存/另存为）；
+        /// StaticImg 项目仅可导出图片格式。
+        /// </summary>
+        private void UpdateMenuForActiveRuntime() {
+            var runtime = GetSelectedRuntime();
+            var isWebProject = runtime?.RuntimeFileType == FileType.FWebDesign;
+            var topBarContentProvider = runtime as IRuntimeTopBarContentProvider;
+            var editCommandProvider = runtime as IRuntimeEditCommandProvider;
+
+            if (!ReferenceEquals(_activeTopBarContentProvider, topBarContentProvider)) {
+                _activeTopBarContentProvider?.SetTopBarContentActive(false);
+                runtimeTopBarContent.Content = null;
+                _activeTopBarContentProvider = topBarContentProvider;
+            }
+            if (topBarContentProvider != null && runtimeTopBarContent.Content == null) {
+                runtimeTopBarContent.Content = topBarContentProvider.TopBarContent;
+                topBarContentProvider.SetTopBarContentActive(true);
+            }
+
+            if (!ReferenceEquals(_activeEditCommandProvider, editCommandProvider)) {
+                if (_activeEditCommandProvider != null) {
+                    _activeEditCommandProvider.EditCommandStateChanged -= ActiveEditCommandProvider_StateChanged;
+                }
+                _activeEditCommandProvider = editCommandProvider;
+                if (_activeEditCommandProvider != null) {
+                    _activeEditCommandProvider.EditCommandStateChanged += ActiveEditCommandProvider_StateChanged;
+                }
+            }
+
+            ExportPngMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportBmpMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportJpegMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportJpegXrMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            ExportFullZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
+            ExportZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
+            saveAsMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+
+            var webEditVisibility = runtime is IRuntimeEditCommandProvider
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            WebEditFileSeparator.Visibility = webEditVisibility;
+            WebCutMenuItem.Visibility = webEditVisibility;
+            WebCopyMenuItem.Visibility = webEditVisibility;
+            WebPasteMenuItem.Visibility = webEditVisibility;
+            WebCopyPathMenuItem.Visibility = webEditVisibility;
+            WebCopyRelativePathMenuItem.Visibility = webEditVisibility;
+            WebEditModifySeparator.Visibility = webEditVisibility;
+            WebRenameMenuItem.Visibility = webEditVisibility;
+            WebDeleteMenuItem.Visibility = webEditVisibility;
+            WebEditFindSeparator.Visibility = webEditVisibility;
+            WebFindMenuItem.Visibility = webEditVisibility;
+            WebFindInFilesMenuItem.Visibility = webEditVisibility;
+            WebSelectionMenuBarItem.Visibility = webEditVisibility;
+            UpdateWebEditMenuEnabledState();
+        }
+
+        private void EditMenuBarItem_PointerEntered(object sender, PointerRoutedEventArgs e) {
+            UpdateWebEditMenuEnabledState();
+        }
+
+        private void ActiveEditCommandProvider_StateChanged(object? sender, EventArgs e) {
+            UpdateWebEditMenuEnabledState();
+        }
+
+        private void UpdateWebEditMenuEnabledState() {
+            var provider = GetSelectedRuntime() as IRuntimeEditCommandProvider;
+            if (provider != null) {
+                UndoMenuItem.IsEnabled = provider.CanExecuteEditCommand(RuntimeEditCommand.Undo);
+                RedoMenuItem.IsEnabled = provider.CanExecuteEditCommand(RuntimeEditCommand.Redo);
+            }
+            else {
+                UndoMenuItem.ClearValue(Control.IsEnabledProperty);
+                RedoMenuItem.ClearValue(Control.IsEnabledProperty);
+            }
+            WebCutMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Cut) == true;
+            WebCopyMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Copy) == true;
+            WebPasteMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Paste) == true;
+            WebCopyPathMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyPath) == true;
+            WebCopyRelativePathMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyRelativePath) == true;
+            WebRenameMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Rename) == true;
+            WebDeleteMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Delete) == true;
+            WebFindMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.Find) == true;
+            WebFindInFilesMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.FindInFiles) == true;
+            WebNavigateBackMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.NavigateBack) == true;
+            WebNavigateForwardMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.NavigateForward) == true;
+            WebCopyLineUpMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyLineUp) == true;
+            WebCopyLineDownMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.CopyLineDown) == true;
+            WebMoveLineUpMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.MoveLineUp) == true;
+            WebMoveLineDownMenuItem.IsEnabled = provider?.CanExecuteEditCommand(RuntimeEditCommand.MoveLineDown) == true;
+        }
+
+        private async void WebEditMenuItem_Click(object sender, RoutedEventArgs e) {
+            if (sender is not FrameworkElement { Tag: string commandName }
+                || !Enum.TryParse(commandName, out RuntimeEditCommand command)
+                || GetSelectedRuntime() is not IRuntimeEditCommandProvider provider
+                || !provider.CanExecuteEditCommand(command)) {
+                return;
+            }
+
+            await provider.ExecuteEditCommandAsync(command);
+        }
+
+        private async void UndoRedoMenuItem_Click(object sender, RoutedEventArgs e) {
+            if (sender is not FrameworkElement { Tag: string commandName }
+                || !Enum.TryParse(commandName, out RuntimeEditCommand command)
+                || command is not (RuntimeEditCommand.Undo or RuntimeEditCommand.Redo)
+                || GetSelectedRuntime() is not { } runtime) {
+                return;
+            }
+
+            if (runtime is IRuntimeEditCommandProvider provider) {
+                if (provider.CanExecuteEditCommand(command)) {
+                    await provider.ExecuteEditCommandAsync(command);
+                }
+                return;
+            }
+
+            if (command == RuntimeEditCommand.Undo) {
+                await runtime.UndoAsync();
+            }
+            else {
+                await runtime.RedoAsync();
+            }
+        }
+
+        private IRuntime? GetSelectedRuntime() {
+            var index = TabViewControl.SelectedIndex;
+            if (index < 0 || index >= _viewModel.TabViewItems.Count) return null;
+            return _viewModel.TabViewItems[index].Tag as IRuntime;
+        }
+
+        private IRuntimeTopBarContentProvider? _activeTopBarContentProvider;
+        private IRuntimeEditCommandProvider? _activeEditCommandProvider;
+        #endregion
+
+        #region overlay page
+        public void ShowOverlayPage(Type pageType, object? parameter) {
+            maskGrid.Visibility = Visibility.Visible;
+            overlayFrame.Navigate(pageType, parameter);
+        }
+
+        public void HideOverlayPage() {
+            if (overlayFrame.Content is FrameworkElement element) {
+                element.DataContext = null;
+            }
+
+            overlayFrame.Content = null;
+            overlayFrame.DataContext = null;
+            overlayFrame.BackStack.Clear();
+            overlayFrame.ForwardStack.Clear();
+
+            maskGrid.Visibility = Visibility.Collapsed;
+        }
+
+        private void MaskGrid_Tapped(object sender, TappedRoutedEventArgs e) {
+            if (_addProjectTcs?.TrySetResult(null) != true) {
+                HideOverlayPage();
+            }
+        }
+
+        private void OverlayFrame_Tapped(object sender, TappedRoutedEventArgs e) {
+            e.Handled = true;
+        }
+
+        private void WorkSpace_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
+            if (e.Key != VirtualKey.Escape
+                || maskGrid.Visibility != Visibility.Visible
+                || _addProjectTcs == null) {
+                return;
+            }
+
+            e.Handled = true;
+            _addProjectTcs.TrySetResult(null);
+        }
+        #endregion
+
+        #region create new
+        private async void TabViewControl_AddTabButtonClick(TabView sender, object args) {
+            await ShowAddProjectPanelAsync();
+        }
+
+        private async Task ShowAddProjectPanelAsync() {
+            if (_addProjectTcs != null) return;
+
+            var tcs = new TaskCompletionSource<PreProjectData[]?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _addProjectTcs = tcs;
+            var overlayPayload = new FrameworkPayload().Merge(Payload);
+            overlayPayload.Set(NaviPayloadKey.TargetEditPanelState, EditPanelState.GetStart);
+            overlayPayload.Set(NaviPayloadKey.IsFromWorkSpaceForAddProj, true);
+            overlayPayload.Set(NaviPayloadKey.EditConfigTCS, tcs);
+            ShowOverlayPage(typeof(ConfigSpace), overlayPayload);
+
+            try {
+                var result = await tcs.Task;
+                await _viewModel.AddNewItemsAsync(result);
+                HideOverlayPage();
+            }
+            catch (Exception ex) {
+                HideOverlayPage();
+                ArcLog.GetLogger<WorkSpace>().Error(ex);
+            } finally {
+                _addProjectTcs = null;
+            }
+        }
+
+        private async void MFI_CreateNew_Clicked(object sender, RoutedEventArgs e) {
+            await ShowAddProjectPanelAsync();
+        }
+        #endregion
+
+        #region close
+        private async void TabViewControl_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args) {
+            if (args.Tab is not ArcTabViewItem tabViewItem || tabViewItem.Tag is not IRuntime runtime) return;
+            await TryCloseItemAsync(tabViewItem, runtime);
+            if (_viewModel.TabViewItems.Count == 0) {
+                _editPage?.NavigateByState(EditPanelState.ConfigSpace);
+            }
+        }
+
+        private async Task TryCloseItemAsync(ArcTabViewItem tabViewItem, IRuntime runtime) {
+            var res = await _viewModel.CheckSaveStatusAsync(runtime);
+            if (res) {
+                CleanUpTabUI(tabViewItem);
+            }
+        }
+
+        private async void MFI_Exit_Clicked(object sender, RoutedEventArgs e) {
+            await foreach (var tabViewItem in _viewModel.HandleExitItemsAsync()) {
+                CleanUpTabUI(tabViewItem);
+            }
+            _editPage?.NavigateByState(EditPanelState.ConfigSpace);
+        }
+
+        private void CleanUpTabUI(IArcTabViewItem tabViewItem) {
+            if (_tabToHost.TryGetValue(tabViewItem, out var host)) {
+                workspaceContentPool.Children.Remove(host);
+                _tabToHost.Remove(tabViewItem);
+                host.Content = null;
+            }
+        }
+        #endregion
+
+        #region export
+        private async void OnExportMenuItemClick(object sender, RoutedEventArgs e) {
+            if (sender is MenuFlyoutItem menuItem &&
+                menuItem.Tag is string tagStr &&
+                Enum.TryParse<ExportImageFormat>(tagStr, true, out var exportFormat)) {
+
+                var ctx = ArcPageContextManager.GetContext<Edit>();
+                var loadingCtx = ctx?.LoadingContext;
+                if (loadingCtx == null)
+                    return;
+
+                await loadingCtx.RunAsync(
+                    operation: async (token) => {
+                        try {
+                            await _viewModel.ExportAsync(exportFormat);
+                        }
+                        catch (Exception ex) {
+                            ArcLog.GetLogger<WorkSpace>().Error(ex);
+                            GlobalMessageUtil.ShowException(ex);
+                        }
+                    });
+            }
+        }
+
+        private async void OnAddToLibraryMenuItemClick(object sender, RoutedEventArgs e) {
+            var ctx = ArcPageContextManager.GetContext<Edit>();
+            var loadingCtx = ctx?.LoadingContext;
+            if (loadingCtx == null)
+                return;
+
+            await loadingCtx.RunAsync(
+                operation: async (token) => {
+                    try {
+                        await _viewModel.AddToLibraryAsync();
+                    }
+                    catch (Exception ex) {
+                        ArcLog.GetLogger<WorkSpace>().Error(ex);
+                        GlobalMessageUtil.ShowException(ex);
+                    }
+                });
+        }
+        #endregion
+
+        private Edit? _editPage;
+        private readonly WorkSpaceViewModel _viewModel;
+        private PreProjectData[]? _preProjectDatas;
+        private TaskCompletionSource<PreProjectData[]?>? _addProjectTcs;
+        private readonly Dictionary<IArcTabViewItem, ContentControl> _tabToHost = [];
+    }
+}

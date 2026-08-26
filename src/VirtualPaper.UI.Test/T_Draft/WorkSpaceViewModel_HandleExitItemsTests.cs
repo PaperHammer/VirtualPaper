@@ -1,6 +1,6 @@
 using Moq;
-using VirtualPaper.DraftPanel.Services;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.EditPanel.Services;
+using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using Workloads.Utils.DraftUtils.Interfaces;

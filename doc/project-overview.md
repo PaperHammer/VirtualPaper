@@ -49,7 +49,7 @@ VirtualPaper/
 | 静态图创作 | `StaticImg/` |
 | Web 壁纸创作 | `WebBackdrop/` |
 | Web 壁纸播放 | `VirtualPaper.PlayerWeb/`, `VirtualPaper.PlayerWeb.Core/` |
-| 草稿工作区 | `VirtualPaper.DraftPanel/` |
+| 草稿工作区 | `VirtualPaper.EditPanel/` |
 | 风格迁移、超分辨率、深度估计 | `VirtualPaper.ML/`, `VirtualPaper.IntelligentPanel/` |
 | 屏保 | `VirtualPaper.ScreenSaver/` |
 | 应用更新与安装 | `VirtualPaper/Cores/AppUpdate/`, `InnoSetup/`, `.github/workflows/` |

@@ -268,73 +268,79 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         private void Rotate(ArcSize targetArcSize) {
-            var original = GetOriginalContent();
+            CanvasRenderTarget original = RenderTarget;
             var newSize = targetArcSize.ToSize();
-            var newTarget = CreateNewRenderTarget(newSize);
-            using (var ds = newTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
+            var newTarget = CreateNewRenderTarget(targetArcSize, original);
+            try {
+                using (var ds = newTarget.CreateDrawingSession()) {
+                    ds.Clear(Colors.Transparent);
 
-                // 使用标准的 90 度边缘映射矩阵，避免 width/2f 带来的浮点数漂移
-                if (targetArcSize.Rebuild == RebuildMode.RotateLeft) {
-                    // 逆时针 90 度：先绕 (0,0) 旋转 -90度，然后向下平移新画布的高度
-                    ds.Transform = Matrix3x2.CreateRotation(-(float)(Math.PI / 2)) *
-                                   Matrix3x2.CreateTranslation(0, (float)newSize.Height);
+                    // 使用标准的 90 度边缘映射矩阵，避免 width/2f 带来的浮点数漂移
+                    if (targetArcSize.Rebuild == RebuildMode.RotateLeft) {
+                        // 逆时针 90 度：先绕 (0,0) 旋转 -90度，然后向下平移新画布的高度
+                        ds.Transform = Matrix3x2.CreateRotation(-(float)(Math.PI / 2)) *
+                                       Matrix3x2.CreateTranslation(0, (float)newSize.Height);
+                    }
+                    else {
+                        // 顺时针 90 度：先绕 (0,0) 旋转 90度，然后向右平移新画布的宽度
+                        ds.Transform = Matrix3x2.CreateRotation((float)(Math.PI / 2)) *
+                                       Matrix3x2.CreateTranslation((float)newSize.Width, 0);
+                    }
+
+                    // RenderTarget 可直接作为 GPU 图像源，不需要读取并重建 CPU 像素。
+                    ds.DrawImage(original);
                 }
-                else {
-                    // 顺时针 90 度：先绕 (0,0) 旋转 90度，然后向右平移新画布的宽度
-                    ds.Transform = Matrix3x2.CreateRotation((float)(Math.PI / 2)) *
-                                   Matrix3x2.CreateTranslation((float)newSize.Width, 0);
-                }
-                //this.Transform = ds.Transform;
-                ds.DrawImage(original);
             }
+            catch {
+                newTarget.Dispose();
+                throw;
+            }
+
             UpdateRenderTarget(newTarget);
         }
 
         private void Flip(ArcSize targetArcSize) {
-            var original = GetOriginalContent();
-            var newTarget = CreateNewRenderTarget(targetArcSize.ToSize());
-            using (var ds = newTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
+            CanvasRenderTarget original = RenderTarget;
+            var newTarget = CreateNewRenderTarget(targetArcSize, original);
+            try {
+                using (var ds = newTarget.CreateDrawingSession()) {
+                    ds.Clear(Colors.Transparent);
 
-                float width = (float)Math.Round(original.Size.Width);
-                float height = (float)Math.Round(original.Size.Height);
+                    float width = (float)Math.Round(original.Size.Width);
+                    float height = (float)Math.Round(original.Size.Height);
 
-                // 抛弃带小数点的 Center，使用“原点缩放 + 物理平移”算法
-                if (targetArcSize.Rebuild == RebuildMode.FlipHorizontal) {
-                    // 水平翻转：X轴变为-1（画面跑到左边负数区），然后再向右平移 width 距离拉回来
-                    ds.Transform = Matrix3x2.CreateScale(-1, 1) * Matrix3x2.CreateTranslation(width, 0);
+                    // 抛弃带小数点的 Center，使用“原点缩放 + 物理平移”算法
+                    if (targetArcSize.Rebuild == RebuildMode.FlipHorizontal) {
+                        // 水平翻转：X轴变为-1（画面跑到左边负数区），然后再向右平移 width 距离拉回来
+                        ds.Transform = Matrix3x2.CreateScale(-1, 1) * Matrix3x2.CreateTranslation(width, 0);
+                    }
+                    else {
+                        // 垂直翻转：Y轴变为-1（画面跑到上边负数区），然后再向下平移 height 距离拉回来
+                        ds.Transform = Matrix3x2.CreateScale(1, -1) * Matrix3x2.CreateTranslation(0, height);
+                    }
+
+                    // 同尺寸翻转使用最近邻采样，保持像素边缘且不经过 CPU。
+                    ds.DrawImage(original, 0, 0, original.Bounds, 1.0f, CanvasImageInterpolation.NearestNeighbor);
                 }
-                else {
-                    // 垂直翻转：Y轴变为-1（画面跑到上边负数区），然后再向下平移 height 距离拉回来
-                    ds.Transform = Matrix3x2.CreateScale(1, -1) * Matrix3x2.CreateTranslation(0, height);
-                }
-
-                // 设置高质量插值模式，防止极个别情况下的边缘采样溢出
-                ds.DrawImage(original, 0, 0, original.Bounds, 1.0f, CanvasImageInterpolation.NearestNeighbor);
             }
+            catch {
+                newTarget.Dispose();
+                throw;
+            }
+
             UpdateRenderTarget(newTarget);
         }
 
-        private CanvasBitmap GetOriginalContent() {
-            return CanvasBitmap.CreateFromBytes(
-                InkProjectSession.SharedDevice,
-                RenderTarget.GetPixelBytes(),
-                (int)RenderTarget.SizeInPixels.Width,
-                (int)RenderTarget.SizeInPixels.Height,
-                RenderTarget.Format,
-                RenderTarget.Dpi,
-                RenderTarget.AlphaMode);
-        }
-
-        private CanvasRenderTarget CreateNewRenderTarget(Size size) {
+        private static CanvasRenderTarget CreateNewRenderTarget(
+            ArcSize targetArcSize,
+            CanvasRenderTarget source) {
             return new CanvasRenderTarget(
-                InkProjectSession.SharedDevice,
-                (float)size.Width,
-                (float)size.Height,
-                _arcSize.Dpi,
-                DirectXPixelFormat.B8G8R8A8UIntNormalized,
-                CanvasAlphaMode.Premultiplied);
+                source,
+                (float)targetArcSize.Width,
+                (float)targetArcSize.Height,
+                targetArcSize.Dpi,
+                source.Format,
+                source.AlphaMode);
         }
 
         private void UpdateRenderTarget(CanvasRenderTarget newTarget) {

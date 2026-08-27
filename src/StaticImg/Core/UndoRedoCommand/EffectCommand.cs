@@ -54,9 +54,15 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
                 ds.DrawImage(rt);
 
             var result = EffectApplier.Apply(_shaderType, effectParams, temp);
-            using (var ds = rt.CreateDrawingSession()) {
-                ds.Clear(Microsoft.UI.Colors.Transparent);
-                ds.DrawImage(result);
+            try {
+                using (var ds = rt.CreateDrawingSession()) {
+                    ds.Clear(Microsoft.UI.Colors.Transparent);
+                    ds.DrawImage(result);
+                }
+            }
+            finally {
+                if (!ReferenceEquals(result, temp))
+                    (result as IDisposable)?.Dispose();
             }
 
             _requestRenderAction?.Invoke();

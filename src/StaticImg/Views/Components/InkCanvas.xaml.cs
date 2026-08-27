@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -43,12 +43,21 @@ using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Components {
     public sealed partial class InkCanvas : ArcUserControl {
+        private static readonly TimeSpan EffectPreviewThrottleInterval = TimeSpan.FromMilliseconds(100);
         public TaskCompletionSource<bool> IsInited => _isInited;
 
         public InkCanvas() {
             this.InitializeComponent();
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+
+            _effectPreviewTimer = DispatcherQueue.CreateTimer();
+            _effectPreviewTimer.Interval = EffectPreviewThrottleInterval;
+            _effectPreviewTimer.IsRepeating = true;
+            _effectPreviewTimer.Tick += EffectPreviewTimer_Tick;
+            Unloaded += InkCanvas_Unloaded;
         }
+
+        private void InkCanvas_Unloaded(object sender, RoutedEventArgs e) => CancelPendingEffectPreview();
 
         protected override void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
             base.OnPayloadChanged(newPayload, oldPayload);
@@ -164,6 +173,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 if (op) RenderToCompositeTarget(RenderMode.FullRegion);
             }
             else if (_selectedTool is EffectTool et) {
+                CancelPendingEffectPreview();
                 et.Cancel();
                 CanvasEffect.Restore();
                 UnsubscribeCurrentEffectPanel();
@@ -482,6 +492,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void CanvasEffect_Cancel(object sender, RoutedEventArgs e) {
             if (_selectedTool is not EffectTool et) return;
 
+            CancelPendingEffectPreview();
             et.Cancel();
             UnsubscribeCurrentEffectPanel();
             effectPanelHost.Visibility = Visibility.Collapsed;
@@ -491,7 +502,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void CanvasEffect_Commit(object sender, RoutedEventArgs e) {
             if (_selectedTool is not EffectTool et) return;
 
-            et.Commit();
+            et.Commit(TakePendingEffectParams());
             UnsubscribeCurrentEffectPanel();
             effectPanelHost.Visibility = Visibility.Collapsed;
             CanvasEffect.ClickedEffectId = null;
@@ -507,6 +518,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void OnEffectPreviewRequested(object? sender, string effectId) {
             if (_selectedTool is not EffectTool et) return;
 
+            CancelPendingEffectPreview();
             et.Cancel(); // 先取消之前的预览，避免重复叠加效果
 
             var shaderType = EffectMap.ToShaderType(effectId);
@@ -543,8 +555,39 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void OnEffectPanelParamsChanged(object? sender, EffectParams p) {
-            if (_selectedTool is EffectTool et && et.IsPreviewing)
-                et.UpdateParams(p);
+            if (_selectedTool is not EffectTool { IsPreviewing: true }) return;
+
+            _pendingEffectParams = p;
+            if (_effectPreviewTimer.IsRunning) return;
+
+            ApplyPendingEffectPreview();
+            _effectPreviewTimer.Start();
+        }
+
+        private void EffectPreviewTimer_Tick(DispatcherQueueTimer sender, object args) {
+            if (_pendingEffectParams.HasValue)
+                ApplyPendingEffectPreview();
+            else
+                sender.Stop();
+        }
+
+        private EffectParams? TakePendingEffectParams() {
+            _effectPreviewTimer.Stop();
+            EffectParams? pendingParams = _pendingEffectParams;
+            _pendingEffectParams = null;
+            return pendingParams;
+        }
+
+        private void ApplyPendingEffectPreview() {
+            EffectParams? pendingParams = _pendingEffectParams;
+            _pendingEffectParams = null;
+            if (pendingParams.HasValue && _selectedTool is EffectTool { IsPreviewing: true } et)
+                et.UpdateParams(pendingParams.Value);
+        }
+
+        private void CancelPendingEffectPreview() {
+            _effectPreviewTimer.Stop();
+            _pendingEffectParams = null;
         }
 
         private EffectPanelBase? GetEffectPanel(ShaderType shaderType) => shaderType switch {
@@ -760,5 +803,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private CanvasImageBrush? _gridBrush;
         private const int _gridSize = 20;
         private InkProjectSession _session = null!;
+        private readonly DispatcherQueueTimer _effectPreviewTimer;
+        private EffectParams? _pendingEffectParams;
     }
 }

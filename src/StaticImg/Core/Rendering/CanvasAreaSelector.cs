@@ -53,10 +53,10 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public override void HandleMoved(CanvasPointerEventArgs e) {
             var position = e.Pointer.Position;
             if (_isDragging || (e.PointerPos == PointerPosition.InsideCanvas && _selectionRect.Contains(position))) {
-                RequestCursorChange(InputSystemCursor.Create(InputSystemCursorShape.SizeAll));
+                UpdateSelectionCursor(InputSystemCursorShape.SizeAll);
             }
             else {
-                RequestCursorChange(InputSystemCursor.Create(InputSystemCursorShape.Cross));
+                UpdateSelectionCursor(InputSystemCursorShape.Cross);
             }
 
             if (!e.Pointer.Properties.IsLeftButtonPressed || _currentState != SelectionState.Selecting) return;
@@ -115,8 +115,19 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public override void HandleExited(CanvasPointerEventArgs e) {
             if (e.PointerPos == PointerPosition.InsideCanvas ||
                 e.PointerPos == PointerPosition.InsideContainer) return;
+            _lastCursorShape = null;
             base.HandleExited(e);
             EndSelection();
+        }
+
+        private void UpdateSelectionCursor(InputSystemCursorShape shape) {
+            if (_lastCursorShape == shape) return;
+
+            _lastCursorShape = shape;
+            InputCursor cursor = shape == InputSystemCursorShape.SizeAll
+                ? _moveCursor ??= InputSystemCursor.Create(InputSystemCursorShape.SizeAll)
+                : _crossCursor ??= InputSystemCursor.Create(InputSystemCursorShape.Cross);
+            RequestCursorChange(cursor);
         }
 
         private void EndSelection() {
@@ -432,6 +443,9 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         protected bool _isDragging; // 标记当前是否在拖动        
 
         private readonly SelectionResourceStore<CanvasRenderTarget> _resources = new();
+        private InputCursor? _crossCursor;
+        private InputCursor? _moveCursor;
+        private InputSystemCursorShape? _lastCursorShape;
 
         // 绘制样式
         protected readonly Color _selectionBorderColor = Colors.Black;

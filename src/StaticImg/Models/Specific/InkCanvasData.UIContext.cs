@@ -62,9 +62,15 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         string _pointerPosText = string.Empty;
+        int _lastPointerPixelX = int.MinValue;
+        int _lastPointerPixelY = int.MinValue;
         public string PointerPosText {
             get { return _pointerPosText; }
-            set { _pointerPosText = value; OnPropertyChanged(); }
+            set {
+                if (_pointerPosText == value) return;
+                _pointerPosText = value;
+                OnPropertyChanged();
+            }
         }
 
         Color _foregroundColor = Colors.Black;
@@ -234,8 +240,20 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         }
 
         internal void UpdatePointerPos(Point? position = null) {
-            PointerPosText = position == null || !IsPointerOverTaregt(position) ?
-                string.Empty : $"{position.Value.X:F0}, {position.Value.Y:F0} px";
+            if (position == null || !IsPointerOverTaregt(position)) {
+                _lastPointerPixelX = int.MinValue;
+                _lastPointerPixelY = int.MinValue;
+                PointerPosText = string.Empty;
+                return;
+            }
+
+            int pixelX = (int)System.Math.Round(position.Value.X);
+            int pixelY = (int)System.Math.Round(position.Value.Y);
+            if (pixelX == _lastPointerPixelX && pixelY == _lastPointerPixelY) return;
+
+            _lastPointerPixelX = pixelX;
+            _lastPointerPixelY = pixelY;
+            PointerPosText = $"{pixelX}, {pixelY} px";
         }
 
         private bool IsPointerOverTaregt(Point? position) {

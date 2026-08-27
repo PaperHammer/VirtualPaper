@@ -51,9 +51,17 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                     AddLayer(isBackground: true);
                 }
 
-                // Select first layer if none selected
-                if (SelectedLayer == null && ActiveLayers.Count > 0) {
-                    SelectedLayer = ActiveLayers[0];
+                // 加载集合时图层列表控件可能会自动选中最后加入的图层。
+                // 必须在所有图层就绪后显式恢复 VPD 保存的活动图层，
+                // 否则绘画和特效可能会落到另一个空白图层上。
+                MarkActiveLayersDirty();
+                var activeLayers = ActiveLayers;
+                if (activeLayers.Count > 0) {
+                    int selectedIndex = Math.Clamp(
+                        businessData?.SelectedLayerIndex ?? 0,
+                        0,
+                        activeLayers.Count - 1);
+                    SelectedLayer = activeLayers[selectedIndex];
                 }
 
                 return true;

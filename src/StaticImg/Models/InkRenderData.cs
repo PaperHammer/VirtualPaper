@@ -45,7 +45,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 _arcSize.Dpi,
                 _session.SharedFormat,
                 _session.SharedAlphaMode);
-            if (IsNeedBackground) InitializeBlankRenderTarget(); // 初始化空白画布
+            InitializeBlankRenderTarget();
             IsInited.TrySetResult(true);
         }
 
@@ -158,12 +158,9 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private void InitializeBlankRenderTarget() {
             using var ds = RenderTarget.CreateDrawingSession();
-            if (IsNeedBackground) {
-                ds.Clear(Colors.White);
-            }
-            else {
-                ds.Clear(Colors.Transparent);
-            }
+            // CanvasRenderTarget 的初始内容未定义。普通新图层也必须显式清空，
+            // 否则复用的 GPU 内存可能呈现为刚刚操作过的图层内容。
+            ds.Clear(IsNeedBackground ? Colors.White : Colors.Transparent);
         }
 
         internal InkRenderData Clone() {

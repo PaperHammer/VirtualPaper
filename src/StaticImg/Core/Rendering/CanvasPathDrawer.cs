@@ -97,8 +97,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 return;
             }
 
-            CurrentStroke.Points.Add(e.Pointer.Position.ToVector2());
-            RenderToTarget();
+            if (StrokePointSampler.AddOrUpdate(CurrentStroke.Points, e.Pointer.Position.ToVector2()))
+                RenderToTarget();
         }
 
         protected void EndDrawing() {

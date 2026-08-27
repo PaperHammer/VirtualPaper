@@ -17,7 +17,7 @@ namespace Workloads.Creation.StaticImg.Core.Brushes {
         public List<Vector2> Points { get; set; } = [];
         public bool ShouldRender => Points.Count > 0;
         public bool IsSinglePoint => Points.Count == 1;
-        public virtual CanvasStrokeStyle Style => new() {
+        public virtual CanvasStrokeStyle Style { get; } = new() {
             StartCap = CanvasCapStyle.Round,
             EndCap = CanvasCapStyle.Round,
             LineJoin = CanvasLineJoin.Round

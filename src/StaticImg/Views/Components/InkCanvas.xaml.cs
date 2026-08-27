@@ -240,7 +240,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            DebugUtil.Output("RenderToCompositeTarget triggered");
             RebuildCompositeIfNeeded();
             if (_compositeTarget == null) return;
 

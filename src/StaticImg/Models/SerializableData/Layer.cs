@@ -57,7 +57,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
             var renderData = new InkRenderData(session, canvasSize);
             var state = LayerState.Deserialize(reader);
-            var name = Encoding.UTF8.GetString(reader.ReadBytes(reader.ReadUInt16()));
+            ushort nameLength = reader.ReadUInt16();
+            byte[] nameBytes = reader.ReadBytes(nameLength);
+            if (nameBytes.Length != nameLength)
+                throw new EndOfStreamException("Layer name data is incomplete.");
+            var name = Encoding.UTF8.GetString(nameBytes);
             var layer = new Layer(name, state, renderData);
 
             await renderData.LoadAsync(ms);

@@ -108,7 +108,8 @@ namespace Workloads.Creation.StaticImg.Models {
                     var headerBuffer = ArrayPool<byte>.Shared.Rent(8);
 
                     try {
-                        while (await inputStream.ReadAsync(headerBuffer.AsMemory(0, 8), ct) == 8) {
+                        while (inputStream.Position < inputStream.Length) {
+                            await inputStream.ReadExactlyAsync(headerBuffer.AsMemory(0, 8), ct);
                             ct.ThrowIfCancellationRequested();
 
                             int originalLength = BitConverter.ToInt32(headerBuffer, 0);
@@ -116,7 +117,9 @@ namespace Workloads.Creation.StaticImg.Models {
 
                             var compressedChunk = ArrayPool<byte>.Shared.Rent(compressedLength);
                             try {
-                                await inputStream.ReadAsync(compressedChunk.AsMemory(0, compressedLength), ct);
+                                await inputStream.ReadExactlyAsync(
+                                    compressedChunk.AsMemory(0, compressedLength),
+                                    ct);
                                 var decompressed = LZ4Compressor.Decompress(
                                     compressedChunk.AsSpan(0, compressedLength),
                                     originalLength);

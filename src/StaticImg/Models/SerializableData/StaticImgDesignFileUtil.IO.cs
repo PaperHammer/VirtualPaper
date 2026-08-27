@@ -32,9 +32,10 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 byte[] headerBytes = new byte[headerSize];
 
                 using var fs = CreateFileStream(filePath, FileMode.Open, autoCheckHeaderOnOpenMode: true);
-                int bytesRead = await fs.ReadAsync(headerBytes.AsMemory(0, headerSize));
-
-                if (bytesRead < headerSize) {
+                try {
+                    await fs.ReadExactlyAsync(headerBytes.AsMemory(0, headerSize));
+                }
+                catch (EndOfStreamException) {
                     GlobalMessageUtil.ShowWarning(
                         message: nameof(Constants.I18n.Project_FileLoad_FileCorrupted),
                         isNeedLocalizer: true,
@@ -73,13 +74,13 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
                 // Read and validate header
                 var headerBytes = new byte[Marshal.SizeOf<FileHeader>()];
-                await fs.ReadAsync(headerBytes);
+                await fs.ReadExactlyAsync(headerBytes);
                 var header = BytesToStructure<FileHeader>(headerBytes);
 
                 // Read business data
                 fs.Position = header.BusinessDataOffset;
                 var businessDataBytes = new byte[header.BusinessDataLength];
-                await fs.ReadAsync(businessDataBytes);
+                await fs.ReadExactlyAsync(businessDataBytes);
                 var businessData = BusinessData.Deserialize(businessDataBytes);
 
                 // Read layers
@@ -290,7 +291,9 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             while (remaining > 0) {
                 int count = (int)Math.Min(buffer.Length, remaining);
                 int read = await input.ReadAsync(buffer.AsMemory(0, count));
-                if (read == 0) break; // End of stream unexpected
+                if (read == 0)
+                    throw new EndOfStreamException(
+                        $"Expected {bytesToCopy} bytes, but the source stream ended with {remaining} bytes remaining.");
 
                 await output.WriteAsync(buffer.AsMemory(0, read));
                 remaining -= read;

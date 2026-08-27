@@ -1,4 +1,6 @@
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
@@ -15,6 +17,7 @@ namespace Workloads.Creation.StaticImg.Models {
         public InkRenderData RenderData {
             get => _renderData;
             set {
+                CancelPendingThumbnailUpdate();
                 if (_renderData != null) _renderData.OnceRenderCompleted -= OnContentChanged;
                 _renderData = value;
                 if (_renderData != null) _renderData.OnceRenderCompleted += OnContentChanged;
@@ -41,7 +44,14 @@ namespace Workloads.Creation.StaticImg.Models {
             }
         }
 
-        public bool IsDeleted { get; set; }
+        public bool IsDeleted {
+            get => _isDeleted;
+            set {
+                if (_isDeleted == value) return;
+                _isDeleted = value;
+                if (value) CancelPendingThumbnailUpdate();
+            }
+        }
         public int ZIndex { get; set; }
 
         ImageSource? _layerThum;
@@ -55,41 +65,144 @@ namespace Workloads.Creation.StaticImg.Models {
         private CanvasImageSource? _thumbSource;
 
         private void OnContentChanged(object? sender, EventArgs e) {
-            UpdateThumbnail();
+            if (sender is not InkRenderData renderData) return;
+
+            CancellationTokenSource requestCts;
+            CancellationTokenSource? previousCts;
+            long requestVersion;
+            lock (_thumbnailUpdateLock) {
+                previousCts = _thumbnailDebounceCts;
+                requestCts = new CancellationTokenSource();
+                _thumbnailDebounceCts = requestCts;
+                requestVersion = Interlocked.Increment(ref _thumbnailRequestVersion);
+            }
+            CancelSafely(previousCts);
+
+            _ = UpdateThumbnailAfterDelayAsync(renderData, requestVersion, requestCts);
         }
 
-        private void UpdateThumbnail() {
+        private async Task UpdateThumbnailAfterDelayAsync(
+            InkRenderData renderData,
+            long requestVersion,
+            CancellationTokenSource requestCts) {
             try {
-                if (RenderData?.RenderTarget == null) return;
+                await Task.Delay(ThumbnailDebounceDelay, requestCts.Token).ConfigureAwait(false);
+                requestCts.Token.ThrowIfCancellationRequested();
 
-                var offscreenRT = new CanvasRenderTarget(RenderData.RenderTarget.Device, 60, 38, 96);
+                if (!IsThumbnailRequestCurrent(renderData, requestVersion)) return;
+                UpdateThumbnail(renderData, requestVersion, requestCts.Token);
+            }
+            catch (OperationCanceledException) when (requestCts.IsCancellationRequested) {
+                // 后续内容变更已经替代本次缩略图请求。
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<LayerInfo>().Error($"Error scheduling thumbnail update: {ex}");
+            }
+            finally {
+                lock (_thumbnailUpdateLock) {
+                    if (ReferenceEquals(_thumbnailDebounceCts, requestCts)) {
+                        _thumbnailDebounceCts = null;
+                    }
+                }
+                requestCts.Dispose();
+            }
+        }
+
+        private void UpdateThumbnail(
+            InkRenderData renderData,
+            long requestVersion,
+            CancellationToken token) {
+            CanvasRenderTarget? offscreenRT = null;
+            bool isDispatchedToUi = false;
+            try {
+                if (!IsThumbnailRequestCurrent(renderData, requestVersion)) return;
+
+                CanvasRenderTarget source = renderData.RenderTarget;
+
+                offscreenRT = new CanvasRenderTarget(
+                    source.Device,
+                    Consts.LayerThumWidth,
+                    Consts.LayerThumHeight,
+                    96);
 
                 using (var ds = offscreenRT.CreateDrawingSession()) {
                     ds.Clear(Colors.Transparent);
-                    ds.DrawImage(RenderData.RenderTarget, offscreenRT.Bounds, RenderData.RenderTarget.Bounds, 1f, CanvasImageInterpolation.HighQualityCubic);
+                    ds.DrawImage(
+                        source,
+                        offscreenRT.Bounds,
+                        source.Bounds,
+                        1f,
+                        CanvasImageInterpolation.HighQualityCubic);
                 }
 
+                token.ThrowIfCancellationRequested();
+                if (!IsThumbnailRequestCurrent(renderData, requestVersion)) return;
+
+                CanvasRenderTarget completedThumbnail = offscreenRT;
                 CrossThreadInvoker.InvokeOnUIThread(() => {
                     try {
+                        if (!IsThumbnailRequestCurrent(renderData, requestVersion)) return;
+
                         if (_thumbSource == null) {
-                            _thumbSource = new CanvasImageSource(RenderData.RenderTarget.Device, 60, 38, 96);
+                            _thumbSource = new CanvasImageSource(
+                                completedThumbnail.Device,
+                                Consts.LayerThumWidth,
+                                Consts.LayerThumHeight,
+                                96);
                             LayerThum = _thumbSource;
                         }
 
                         using (var ds = _thumbSource.CreateDrawingSession(Colors.Transparent)) {
                             ds.Clear(Colors.Transparent);
-                            ds.DrawImage(offscreenRT);
+                            ds.DrawImage(completedThumbnail);
                         }
                     }
                     finally {
-                        offscreenRT.Dispose();
+                        completedThumbnail.Dispose();
                     }
                 });
-
+                isDispatchedToUi = true;
+            }
+            catch (OperationCanceledException) when (token.IsCancellationRequested) {
+                // 防抖期间产生了更新的缩略图请求。
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LayerInfo>().Error($"Error updating thumbnail: {ex}");
             }
+            finally {
+                if (!isDispatchedToUi) offscreenRT?.Dispose();
+            }
         }
+
+        private bool IsThumbnailRequestCurrent(InkRenderData renderData, long requestVersion) {
+            return requestVersion == Volatile.Read(ref _thumbnailRequestVersion)
+                && ReferenceEquals(_renderData, renderData)
+                && !Volatile.Read(ref _isDeleted);
+        }
+
+        private void CancelPendingThumbnailUpdate() {
+            CancellationTokenSource? pendingCts;
+            lock (_thumbnailUpdateLock) {
+                Interlocked.Increment(ref _thumbnailRequestVersion);
+                pendingCts = _thumbnailDebounceCts;
+                _thumbnailDebounceCts = null;
+            }
+            CancelSafely(pendingCts);
+        }
+
+        private static void CancelSafely(CancellationTokenSource? cts) {
+            try {
+                cts?.Cancel();
+            }
+            catch (ObjectDisposedException) {
+                // 请求已在完成路径释放，无需再次取消。
+            }
+        }
+
+        private static readonly TimeSpan ThumbnailDebounceDelay = TimeSpan.FromMilliseconds(150);
+        private readonly object _thumbnailUpdateLock = new();
+        private CancellationTokenSource? _thumbnailDebounceCts;
+        private long _thumbnailRequestVersion;
+        private bool _isDeleted;
     }
 }

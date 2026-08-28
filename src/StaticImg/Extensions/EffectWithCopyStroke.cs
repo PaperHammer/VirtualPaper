@@ -27,8 +27,8 @@ namespace Workloads.Creation.StaticImg.Extensions {
 
         // EffectWithCopyStroke.MergeImages: 复杂混合 (Shader)
         public override ICanvasImage MergeImages(
-            CanvasRenderTarget foreground,
-            CanvasRenderTarget background,
+            ICanvasImage foreground,
+            ICanvasImage background,
             CanvasDevice device
         ) {
             // 使用 PixelShaderEffect 混合 SnapshotRT (原图) 和 TempRT (遮罩)

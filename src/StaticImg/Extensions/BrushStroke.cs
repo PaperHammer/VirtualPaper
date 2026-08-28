@@ -41,8 +41,8 @@ namespace Workloads.Creation.StaticImg.Extensions {
 
         // BrushStroke.MergeImages: 简单混合 (SourceOver)
         public override ICanvasImage MergeImages(
-            CanvasRenderTarget foreaground,
-            CanvasRenderTarget background,
+            ICanvasImage foreaground,
+            ICanvasImage background,
             CanvasDevice device
         ) {
             return new CompositeEffect {

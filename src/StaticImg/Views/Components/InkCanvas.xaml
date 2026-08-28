@@ -220,6 +220,59 @@
             </StackPanel>
         </Grid>
 
+        <!-- 仅用于本地渲染诊断；由 StaticImgDebugSwitches 控制显示。 -->
+        <Border x:Name="strokeTileDebugPanel"
+            Grid.Row="0"
+            Canvas.ZIndex="100"
+            MaxWidth="920"
+            Margin="8"
+            Padding="10,7"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            IsHitTestVisible="False"
+            Visibility="Collapsed"
+            Background="#E61E1E1E"
+            BorderBrush="#FF707070"
+            BorderThickness="1"
+            CornerRadius="6">
+            <StackPanel Spacing="4">
+                <StackPanel Orientation="Horizontal" Spacing="14">
+                    <TextBlock
+                        Text="Tile Debug"
+                        Foreground="White"
+                        FontSize="16"
+                        FontWeight="SemiBold"/>
+                    <TextBlock x:Name="strokeTileDebugSummary"
+                        Foreground="#FFFFE45C"
+                        FontSize="15"
+                        FontWeight="SemiBold"/>
+                </StackPanel>
+                <TextBlock x:Name="strokeTileDebugDetails"
+                    Foreground="#FFE8E8E8"
+                    FontFamily="Consolas"
+                    FontSize="13"/>
+
+                <StackPanel Orientation="Horizontal" Spacing="14">
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Rectangle Width="20" Height="10" Stroke="#FF00C8FF" StrokeThickness="2"/>
+                        <TextBlock Text="已分配" Foreground="White" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Rectangle Width="20" Height="10" Stroke="#FFFFA500" StrokeThickness="3"/>
+                        <TextBlock Text="本帧写入" Foreground="White" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Rectangle Width="20" Height="10" Stroke="#FFFF00FF" StrokeThickness="2"/>
+                        <TextBlock Text="Dirty" Foreground="White" FontSize="13"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <Rectangle Width="20" Height="10" Stroke="#FF50FF50" StrokeThickness="2"/>
+                        <TextBlock Text="活动范围" Foreground="White" FontSize="13"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
         <staticImgTools:BottomDataBarControl x:Name="bottomDataBarControl"
             Grid.Row="1"
             FitViewRequest="BottomDataBarControl_FitViewRequest"

@@ -84,16 +84,47 @@ namespace Workloads.Creation.StaticImg.Core.Brushes {
         }
 
         public CanvasGeometry CreateStrokeGeometry(CanvasDevice device) {
-            if (Points.Count == 1)
-                return CanvasGeometry.CreateCircle(device, Points[0], BrushArgs.Thickness / 2);
+            return CreateStrokeGeometry(device, Points);
+        }
+
+        public CanvasGeometry CreateStrokeGeometry(CanvasDevice device, IReadOnlyList<Vector2> points) {
+            return CreateStrokeGeometry(device, points, false, true);
+        }
+
+        /// <summary>
+        /// 根据采样点创建平滑笔画几何，并支持构建分块笔画的中间段。
+        /// 分块时，相邻块在两个采样点的中点处衔接，以保持二次贝塞尔曲线连续。
+        /// </summary>
+        /// <param name="device">用于创建几何资源的 Win2D 设备。</param>
+        /// <param name="points">参与当前几何段构建的有序采样点。</param>
+        /// <param name="startsAtLeadingMidpoint">
+        /// 是否从前两个采样点的中点开始。首个笔画块传 <see langword="false"/>，
+        /// 后续块传 <see langword="true"/>，从上一块的结束中点继续绘制。
+        /// </param>
+        /// <param name="includesFinalSegment">
+        /// 是否从最后一个贝塞尔中点连接到末尾采样点。活动块或完整笔画传
+        /// <see langword="true"/>；提交到稳定缓存的中间块传 <see langword="false"/>，
+        /// 避免生成一条下一块还会重新计算的末尾直线。
+        /// </param>
+        /// <returns>调用方负责释放的笔画几何。</returns>
+        public CanvasGeometry CreateStrokeGeometry(
+            CanvasDevice device,
+            IReadOnlyList<Vector2> points,
+            bool startsAtLeadingMidpoint,
+            bool includesFinalSegment) {
+            if (points.Count == 1)
+                return CanvasGeometry.CreateCircle(device, points[0], BrushArgs.Thickness / 2);
 
             using var builder = new CanvasPathBuilder(device);
-            builder.BeginFigure(Points[0]);
-            for (int i = 1; i < Points.Count - 1; i++) {
-                var mid = (Points[i] + Points[i + 1]) / 2;
-                builder.AddQuadraticBezier(Points[i], mid);
+            builder.BeginFigure(startsAtLeadingMidpoint
+                ? (points[0] + points[1]) / 2
+                : points[0]);
+            for (int i = 1; i < points.Count - 1; i++) {
+                var mid = (points[i] + points[i + 1]) / 2;
+                builder.AddQuadraticBezier(points[i], mid);
             }
-            builder.AddLine(Points[^1]);
+            if (includesFinalSegment)
+                builder.AddLine(points[^1]);
             builder.EndFigure(CanvasFigureLoop.Open);
 
             return CanvasGeometry.CreatePath(builder);
@@ -109,8 +140,8 @@ namespace Workloads.Creation.StaticImg.Core.Brushes {
         // 图像混合/合成 (负责混合 TempRT 和 SnapshotRT)
         // 这只在工具需要复杂混合时才使用 (如擦除)
         public abstract ICanvasImage MergeImages(
-            CanvasRenderTarget foreground,
-            CanvasRenderTarget background,
+            ICanvasImage foreground,
+            ICanvasImage background,
             CanvasDevice device
         );
 

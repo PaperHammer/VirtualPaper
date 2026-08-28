@@ -69,9 +69,14 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
         protected virtual void InitDrawState(Vector2 vec) {
             _isDrawing = true;
+            _previousStrokeBounds = Rect.Empty;
             CurrentStroke.Points = [];
             CurrentStroke.Points.Add(vec);
             EnsurePathBuffersReady();
+
+            // 每条新笔画只在落笔时清空一次，避免上一条笔画的遮罩残留。
+            using (var tempDs = TempRenderTarget.CreateDrawingSession())
+                tempDs.Clear(Colors.Transparent);
 
             using var ds = SnapshotRenderTarget.CreateDrawingSession();
             ds.Clear(Colors.Transparent);
@@ -124,10 +129,13 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             try {
                 using var geometry = CurrentStroke.CreateStrokeGeometry(RenderTarget!.Device);
                 var bounds = CurrentStroke.GetBounds();
+                var dirtyBounds = CombineBounds(_previousStrokeBounds, bounds);
 
                 // *** TempRenderTarget 重用与增量绘制 ***
                 using (var dsTemp = TempRenderTarget.CreateDrawingSession()) {
-                    dsTemp.Clear(Colors.Transparent);
+                    // 同时清理上一帧范围，覆盖采样器替换末端点后边界轻微收缩的情况。
+                    dsTemp.Blend = CanvasBlend.Copy;
+                    dsTemp.FillRectangle(dirtyBounds, Colors.Transparent);
                     CurrentStroke.RenderIncrement(dsTemp, geometry);
                 }
 
@@ -142,11 +150,15 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                         // 因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
                         // 所以用 Copy 模式替换 RenderTarget 的内容。
                         dsTarget.Blend = CanvasBlend.Copy;
+                        // 效果链以完整画布坐标计算。通过裁剪层限制写回区域，不能把
+                        // dirtyBounds 同时作为效果源矩形，否则部分效果会丢失背景源。
+                        using var clipLayer = dsTarget.CreateLayer(1f, dirtyBounds);
                         dsTarget.DrawImage(mergedImage);
                     }
                 }
 
-                HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, bounds));
+                _previousStrokeBounds = bounds;
+                HandleRender(new RenderTargetChangedEventArgs(RenderMode.PartialRegion, dirtyBounds));
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
@@ -159,6 +171,16 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 ReportFatalError(ex);
                 EndDrawing();
             }
+        }
+
+        private static Rect CombineBounds(Rect previous, Rect current) {
+            if (previous == Rect.Empty) return current;
+
+            double left = Math.Min(previous.Left, current.Left);
+            double top = Math.Min(previous.Top, current.Top);
+            double right = Math.Max(previous.Right, current.Right);
+            double bottom = Math.Max(previous.Bottom, current.Bottom);
+            return new Rect(left, top, right - left, bottom - top);
         }
 
         private void CaptureUndoRedoSnapshot() {
@@ -211,5 +233,6 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         private bool _isDrawing = false;
+        private Rect _previousStrokeBounds = Rect.Empty;
     }
 }

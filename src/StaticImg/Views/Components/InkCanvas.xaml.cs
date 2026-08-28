@@ -58,7 +58,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             Unloaded += InkCanvas_Unloaded;
         }
 
-        private void InkCanvas_Unloaded(object sender, RoutedEventArgs e) => CancelPendingEffectPreview();
+        private void InkCanvas_Unloaded(object sender, RoutedEventArgs e) {
+            CancelPendingEffectPreview();
+            _tool?.CancelPendingOperations();
+        }
 
         protected override void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
             base.OnPayloadChanged(newPayload, oldPayload);
@@ -188,13 +191,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             float requiredHeight = (float)_viewModel.Data.CanvasSize.Height;
 
             if (_compositeTarget == null ||
-                _compositeTarget.SizeInPixels.Width < requiredWidth ||
-                _compositeTarget.SizeInPixels.Height < requiredHeight) {
+                _compositeTarget.Size.Width < requiredWidth ||
+                _compositeTarget.Size.Height < requiredHeight) {
                 DebugUtil.Output("RebuildComposite triggered: Expanding target");
 
                 // 每次多分配 20% 的空间，避免频繁重建
-                float newWidth = Math.Max(requiredWidth * 1.2f, requiredWidth);
-                float newHeight = Math.Max(requiredHeight * 1.2f, requiredHeight);
+                float maximumEdge = Consts.GetMaximumCanvasEdge(_viewModel.Data.CanvasSize.Dpi);
+                float newWidth = Math.Min(maximumEdge, Math.Max(requiredWidth * 1.2f, requiredWidth));
+                float newHeight = Math.Min(maximumEdge, Math.Max(requiredHeight * 1.2f, requiredHeight));
 
                 _compositeTarget?.Dispose();
                 _compositeTarget = new CanvasRenderTarget(
@@ -462,7 +466,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region CanvasSet
         private async void CanvasSet_OnValueCommited(object sender, ArcSize e) {
-            await _viewModel.Data.ApplyResizeOrScaleAsync(e);
+            bool isApplied = await _viewModel.Data.ApplyResizeOrScaleAsync(e);
+            if (!isApplied) {
+                CanvasSet.RestoreCurrentSize();
+            }
         }
 
         private async void CanvasOperationBtn_Click(object sender, CanvasOperation e) {
@@ -802,8 +809,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            _selectedTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
-            if (_selectedTool == null) {
+            RenderBase? nextTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
+            _selectedTool = nextTool;
+            if (nextTool == null) {
                 // 还原光标
                 this.ProtectedCursor = _originalInputCursor;
                 return;
@@ -812,7 +820,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             if (_selectedTool is not CanvasPathDrawer)
                 UpdateStrokeTileDebugPanel(null);
 
-            action(_selectedTool);
+            action(nextTool);
         }
 
         private void Container_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {

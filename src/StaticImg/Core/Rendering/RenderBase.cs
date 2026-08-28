@@ -41,6 +41,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             UpdateViewport(canvasSize);
         }
 
+        internal virtual void CancelPendingOperation() { }
+
         protected void ReportFatalError(Exception ex) {
             FatalErrorOccurred?.Invoke(this, ex);
         }

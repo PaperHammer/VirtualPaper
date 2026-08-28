@@ -783,7 +783,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>添加到自定义颜色</value>
   </data>
   <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
-    <value>画布最大宽度与高度应在 1 - </value>
+    <value>画布宽度和高度必须在 1–{0} 像素以内（当前显卡上限）。已恢复为 {1} × {2}。</value>
   </data>
   <data name="Account_Email_InvalidTip" xml:space="preserve">
     <value>邮箱格式不合法</value>

@@ -783,7 +783,7 @@ Author: PaperHammer</value>
     <value>Add to custom colors</value>
   </data>
   <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
-    <value>The maximum width and height of the canvas should be 1 - </value>
+    <value>Canvas width and height must be between 1 and {0} pixels (the current GPU limit). Restored to {1} × {2}.</value>
   </data>
   <data name="Account_Email_InvalidTip" xml:space="preserve">
     <value>The email address format is not legal</value>

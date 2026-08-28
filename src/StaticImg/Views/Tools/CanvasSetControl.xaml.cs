@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -64,13 +65,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
         private void ProcessSizeInput(TextBox modifiedBox) {
             bool isWidthModified = modifiedBox == widthTextBox;
-            bool op1 = ValidateSizeInput(widthTextBox.Text, out int width);
-            bool op2 = ValidateSizeInput(heightTextBox.Text, out int height);
+            int maximumEdge = Consts.GetMaximumCanvasEdge(Size.Dpi);
+            bool op1 = ValidateSizeInput(widthTextBox.Text, maximumEdge, out int width);
+            bool op2 = ValidateSizeInput(heightTextBox.Text, maximumEdge, out int height);
             bool isValid = op1 && op2;
 
             if (!isValid) {
-                ShowSizeIllegalMsg();
                 ResetToOriginalValues();
+                ShowSizeIllegalMsg(maximumEdge);
                 return;
             }
 
@@ -78,19 +80,24 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 if (isWidthModified) {
                     isValid = ValidateSizeInput(
                         (width / Size.Ratio).ToString("F0"),
+                        maximumEdge,
                         out height);
                 }
                 else {
                     isValid = ValidateSizeInput(
                         (height * Size.Ratio).ToString("F0"),
+                        maximumEdge,
                         out width);
                 }
 
                 if (!isValid) {
                     ResetToOriginalValues();
-                    ShowSizeIllegalMsg();
+                    ShowSizeIllegalMsg(maximumEdge);
                     return;
                 }
+
+                widthTextBox.Text = width.ToString();
+                heightTextBox.Text = height.ToString();
             }
 
             var rebuild = _isScaleContent ? RebuildMode.ResizeScale : RebuildMode.ResizeExpand;
@@ -98,7 +105,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             CloseSizeIllegalMsg();
         }
 
-        private static bool ValidateSizeInput(string text, out int res) {
+        private static bool ValidateSizeInput(string text, int maximumEdge, out int res) {
             if (string.IsNullOrEmpty(text)) {
                 res = 0;
                 return false;
@@ -106,7 +113,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
             var op = int.TryParse(text, out res) &&
                 res >= 1 &&
-                res <= Consts.MAX_CANVAS_SIZE_WITH_DPI;
+                res <= maximumEdge;
 
             return op;
         }
@@ -116,16 +123,31 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             heightTextBox.Text = Size.Height.ToString("F0");
         }
 
+        /// <summary>
+        /// Restores both input boxes from the last canvas size accepted by the model.
+        /// Used when an asynchronous resize fails after the values have been submitted.
+        /// </summary>
+        public void RestoreCurrentSize() => ResetToOriginalValues();
+
         private static void CloseSizeIllegalMsg() {
             GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
         }
 
-        private static void ShowSizeIllegalMsg() {
+        private void ShowSizeIllegalMsg(int maximumEdge) {
+            string messageTemplate = LanguageUtil.GetI18n(
+                nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
+            string message = string.Format(
+                messageTemplate,
+                maximumEdge,
+                Size.Width.ToString("F0"),
+                Size.Height.ToString("F0"));
+
+            // Replace an existing warning so its restored dimensions cannot become stale.
+            CloseSizeIllegalMsg();
             GlobalMessageUtil.ShowError(
-                message: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                message: message,
                 key: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
-                isNeedLocalizer: true,
-                extraMsg: Consts.MAX_CANVAS_SIZE_WITH_DPI.ToString());
+                isNeedLocalizer: false);
         }
 
         private void LockAspectRatio_Checked(object sender, RoutedEventArgs e) {

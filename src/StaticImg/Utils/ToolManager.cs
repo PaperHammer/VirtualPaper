@@ -35,6 +35,11 @@ namespace Workloads.Creation.StaticImg.Utils {
             }
         }
 
+        public void CancelPendingOperations() {
+            foreach (var tool in GetAllTools())
+                tool.CancelPendingOperation();
+        }
+
         private readonly Dictionary<ToolType, RenderBase> _tools = [];
     }
 }

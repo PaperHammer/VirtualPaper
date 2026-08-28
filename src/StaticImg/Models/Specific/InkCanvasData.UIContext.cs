@@ -291,17 +291,19 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
-        public async Task ApplyResizeOrScaleAsync(ArcSize targetSize) {
+        public async Task<bool> ApplyResizeOrScaleAsync(ArcSize targetSize) {
             try {
                 var command = BuildUndoCommandForLayerRebuild(CanvasSize, targetSize);
                 if (command != null) {
                     await command.ExecuteAsync();
                     _session.UnReUtil.RecordCommand(command);
                 }
+                return true;
             }
             catch (Exception ex) {
                 GlobalMessageUtil.ShowError(ex.Message);
                 ArcLog.GetLogger<CropTool>().Error(ex);
+                return false;
             }
         }
 

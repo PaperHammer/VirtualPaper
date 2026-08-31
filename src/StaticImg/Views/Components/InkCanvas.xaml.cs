@@ -381,46 +381,73 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             PerformZoom((float)zoomFactor);
         }
 
-        // todo：按照目标点位缩放；空白区域响应水平滚动
         /// <summary>
         /// 通用缩放方法
         /// </summary>
         /// <param name="targetZoom">目标缩放比例</param>
         /// <param name="contentAnchor">内容坐标系上的锚点（鼠标在 container 上的位置）。如果为 null，则以当前视口中心为基准。</param>
+        /// <param name="viewportAnchor">锚点在 ScrollViewer 视口中的位置；与 contentAnchor 成对传入。</param>
         /// <param name="disableAnimation">是否禁用动画（Slider拖动建议禁用，按钮点击建议启用）</param>
-        private void PerformZoom(float targetZoom, Point? contentAnchor = null, bool disableAnimation = false) {
+        private void PerformZoom(
+            float targetZoom,
+            Point? contentAnchor = null,
+            Point? viewportAnchor = null,
+            bool disableAnimation = false) {
             float currentZoom = scroll.ZoomFactor;
             targetZoom = Math.Clamp(targetZoom, (float)Consts.MinZoomFactor, (float)Consts.MaxZoomFactor);
 
             if (Math.Abs(targetZoom - currentZoom) < 1e-5) return;
 
-            if (contentAnchor.HasValue) {
-                // 先计算原来的锚点在视口中的坐标
-                double oldAnchorViewportX = contentAnchor.Value.X * currentZoom - scroll.HorizontalOffset;
-                double oldAnchorViewportY = contentAnchor.Value.Y * currentZoom - scroll.VerticalOffset;
-
-                // 再在新缩放下，保证锚点还在同一个视口坐标
-                double newOffsetX = contentAnchor.Value.X * targetZoom - oldAnchorViewportX;
-                double newOffsetY = contentAnchor.Value.Y * targetZoom - oldAnchorViewportY;
-
-                scroll.ChangeView(newOffsetX, newOffsetY, targetZoom, disableAnimation);
+            Point effectiveViewportAnchor;
+            Point effectiveContentAnchor;
+            if (contentAnchor.HasValue && viewportAnchor.HasValue) {
+                effectiveContentAnchor = contentAnchor.Value;
+                effectiveViewportAnchor = viewportAnchor.Value;
             }
             else {
-                double viewportCenterX = scroll.ViewportWidth / 2.0;
-                double viewportCenterY = scroll.ViewportHeight / 2.0;
-                var centerPointInScroll = new Point(viewportCenterX, viewportCenterY);
-
-                var transform = scroll.TransformToVisual(container);
-                Point centerPointInCanvas = transform.TransformPoint(centerPointInScroll);
-
-                double oldAnchorViewportX = centerPointInCanvas.X * currentZoom - scroll.HorizontalOffset;
-                double oldAnchorViewportY = centerPointInCanvas.Y * currentZoom - scroll.VerticalOffset;
-
-                double newOffsetX = centerPointInCanvas.X * targetZoom - oldAnchorViewportX;
-                double newOffsetY = centerPointInCanvas.Y * targetZoom - oldAnchorViewportY;
-
-                scroll.ChangeView(newOffsetX, newOffsetY, targetZoom, disableAnimation);
+                effectiveViewportAnchor = new Point(
+                    scroll.ViewportWidth / 2.0,
+                    scroll.ViewportHeight / 2.0);
+                effectiveContentAnchor = new Point(
+                    (scroll.HorizontalOffset + effectiveViewportAnchor.X) / currentZoom - container.Margin.Left,
+                    (scroll.VerticalOffset + effectiveViewportAnchor.Y) / currentZoom - container.Margin.Top);
             }
+
+            Point newOffset = CalculateZoomOffset(
+                targetZoom,
+                effectiveContentAnchor,
+                effectiveViewportAnchor,
+                container.Margin.Left,
+                container.Margin.Top);
+            scroll.ChangeView(newOffset.X, newOffset.Y, targetZoom, disableAnimation);
+        }
+
+        /// <summary>
+        /// 计算保持指定内容点停留在同一视口位置所需的新滚动偏移。
+        /// 屏幕显示位置满足：视口位置 = (画布位置 + 内容外边距) * 缩放比例 - 滚动偏移。
+        /// 已知画布锚点、目标缩放比例和希望保持不变的视口锚点后，变换公式得到：
+        /// 滚动偏移 = (画布位置 + 内容外边距) * 目标缩放比例 - 视口位置。
+        /// 因此缩放后将 ScrollViewer 调整到该偏移，可以让鼠标指向的画布内容仍停留在鼠标下方。
+        /// </summary>
+        internal static Point CalculateZoomOffset(
+            float targetZoom,
+            Point contentAnchor,
+            Point viewportAnchor,
+            double contentMarginLeft,
+            double contentMarginTop) => new(
+                (contentAnchor.X + contentMarginLeft) * targetZoom - viewportAnchor.X,
+                (contentAnchor.Y + contentMarginTop) * targetZoom - viewportAnchor.Y);
+
+        private static float GetWheelZoomTarget(float currentZoom, double wheelDelta) {
+            int detentCount = Math.Max(1, (int)Math.Round(Math.Abs(wheelDelta) / 120d));
+            double targetZoom = currentZoom;
+            for (int i = 0; i < detentCount; i++) {
+                targetZoom += wheelDelta > 0
+                    ? Consts.GetAddStepSize(targetZoom)
+                    : -Consts.GetSubStepSize(targetZoom);
+                targetZoom = Math.Clamp(targetZoom, Consts.MinZoomFactor, Consts.MaxZoomFactor);
+            }
+            return (float)targetZoom;
         }
 
         /// <summary>
@@ -826,13 +853,24 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         private void Container_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
             var modifiers = e.KeyModifiers;
-            var pointerPoint = e.GetCurrentPoint(container);
-            var properties = pointerPoint.Properties;
-            double delta = properties.MouseWheelDelta;
+            PointerPoint contentPointer = e.GetCurrentPoint(container);
+            double delta = contentPointer.Properties.MouseWheelDelta;
 
             if (delta == 0) return;
 
-            if (modifiers == Windows.System.VirtualKeyModifiers.Shift) {
+            if (modifiers.HasFlag(Windows.System.VirtualKeyModifiers.Control)) {
+                Point viewportAnchor = e.GetCurrentPoint(scroll).Position;
+                float targetZoom = GetWheelZoomTarget(scroll.ZoomFactor, delta);
+                PerformZoom(
+                    targetZoom,
+                    contentPointer.Position,
+                    viewportAnchor,
+                    disableAnimation: true);
+                e.Handled = true;
+                return;
+            }
+
+            if (modifiers.HasFlag(Windows.System.VirtualKeyModifiers.Shift)) {
                 e.Handled = true;
                 PerformScroll(-delta, 0);
                 return;

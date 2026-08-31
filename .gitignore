@@ -387,3 +387,6 @@ InnoSetup/Output/
 src/WebBackdrop/Assets/monaco-editor-0.55.1/package/dev/
 src/WebBackdrop/Assets/monaco-editor-0.55.1/package/README.md
 src/WebBackdrop/Assets/monaco-editor-0.55.1/package/CHANGELOG.md
+
+# Local working documents (not version controlled)
+/.local-docs/

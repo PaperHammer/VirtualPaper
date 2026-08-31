@@ -36,5 +36,23 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\VirtualPaper.ML\ObjectDetection\ai_models\**" Link="Plugins\ML\ObjectDetection\ai_models\%(RecursiveDir)%(Filename)%(Extension)">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\VirtualPaper.ML\Segmentation\ai_models\**" Link="Plugins\ML\Segmentation\ai_models\%(RecursiveDir)%(Filename)%(Extension)">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Include="..\VirtualPaper.ML\Inpainting\ai_models\**" Link="Plugins\ML\Inpainting\ai_models\%(RecursiveDir)%(Filename)%(Extension)">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 	
 </Project>

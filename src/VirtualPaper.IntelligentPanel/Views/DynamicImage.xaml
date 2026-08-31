@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="VirtualPaper.IntelligentPanel.Views.DynamicImage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:models="using:VirtualPaper.IntelligentPanel.Models"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:input="using:VirtualPaper.UIComponent.Input">
+
+    <Grid>
+        <StackPanel
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            Width="720"
+            Spacing="16"
+            Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!}">
+            <FontIcon Glyph="&#xE91B;" FontSize="52" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+            <TextBlock Text="{markup:I18n Key=Intelligent_Dynamic_Title}" FontSize="28" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=Intelligent_Dynamic_Desc}" FontSize="14" TextWrapping="Wrap" TextAlignment="Center" LineHeight="24"/>
+            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Message="{markup:I18n Key=Intelligent_Dynamic_Warning}"/>
+        </StackPanel>
+
+        <ListView
+            Margin="16"
+            ItemsSource="{x:Bind _viewModel.Tasks}"
+            SelectionMode="None"
+            Visibility="{x:Bind _viewModel.HasTasks, Mode=OneWay}">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Margin" Value="0,0,0,10"/>
+                    <Setter Property="Padding" Value="0"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="models:DynamicImageTaskItem">
+                    <Border
+                        Padding="18"
+                        CornerRadius="10"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1">
+                        <Grid ColumnSpacing="16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border Height="112" CornerRadius="8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                                <Image Source="{x:Bind SourceFilePath, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                            </Border>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="7">
+                                <TextBlock Text="{x:Bind SourceFilePath}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <TextBlock Text="{x:Bind SourceResolution}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Text="{x:Bind QualityText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ProgressRing Width="16" Height="16" IsActive="{x:Bind IsProcessing, Mode=OneWay}"/>
+                                    <TextBlock Text="{x:Bind StatusText, Mode=OneWay}"/>
+                                    <TextBlock Text="{x:Bind ResultSummary, Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                <input:ArcButton Content="{markup:I18n Key=Text_Preview}" Command="{x:Bind PreviewCommand}"/>
+                                <input:ArcButton Content="{markup:I18n Key=Intelligent_Dynamic_OpenFolder}" Command="{x:Bind OpenFolderCommand}"/>
+                                <input:ArcButton Content="{markup:I18n Key=Intelligent_Dynamic_Export}" Command="{x:Bind ExportCommand}"/>
+                                <input:ArcButton Content="{markup:I18n Key=Text_Delete}" Command="{x:Bind RemoveCommand}" Foreground="#FFD13438"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

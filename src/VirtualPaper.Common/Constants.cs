@@ -116,6 +116,8 @@ namespace VirtualPaper.Common {
             public static string ML_StyleTransfer_AI_Models => Path.Combine(ML_StyleTransfer, "ai_models");
             public static string ML_SuperResolution => Path.Combine(ML, "SuperResolution");
             public static string ML_SuperResolution_AI_Models => Path.Combine(ML_SuperResolution, "ai_models");
+            public static string ML_ObjectDetection => Path.Combine(ML, "ObjectDetection");
+            public static string ML_ObjectDetection_AI_Models => Path.Combine(ML_ObjectDetection, "ai_models");
             public static string PlayerWeb => Path.Combine("Plugins", "PlayerWeb");
             //public static string PlayerWeb => Path.Combine("Plugins", "PlayerWeb", "win-x64");
             public static string ScrSaver => Path.Combine("Plugins", "ScrSaver");

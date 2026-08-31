@@ -308,12 +308,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private string? SetDepthPath(IWpBasicData data) {
-            var midas = AppServiceLocator.Services.GetRequiredService<IDepthEstimate>();
-            midas.LoadModel();
-            var output = midas.Run(data.FilePath);
-            string depthFilePath = midas.SaveDepthMap(output, data.FolderPath);
-            midas.Dispose();
-            return depthFilePath;
+            using var depthEstimator =
+                AppServiceLocator.Services.GetRequiredService<IDepthEstimate>();
+            depthEstimator.LoadModel();
+            var output = depthEstimator.Run(data.FilePath);
+            return depthEstimator.SaveDepthMap(output, data.FolderPath);
         }
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {

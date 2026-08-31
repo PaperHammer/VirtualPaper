@@ -22,6 +22,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
+using VirtualPaper.ML.DynamicImage;
 using VirtualPaper.ML.StyleTransfer;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution;
@@ -112,6 +113,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<LibraryContentsViewModel>()
                 .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
+                .AddSingleton<DynamicImageViewModel>()
                 .AddTransient<EditPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
@@ -120,6 +122,7 @@ namespace VirtualPaper.UI {
                 .AddTransient<IntelligentViewModel>()
                 .AddTransient<StyleTransferAddTaskViewModel>()
                 .AddTransient<SuperResolutionAddTaskViewModel>()
+                .AddTransient<DynamicImageAddTaskViewModel>()
                 .AddTransient<WebFileTreeViewModel>()
                 .AddTransient<WebPropertyPanelViewModel>()
 
@@ -141,7 +144,8 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
                 .AddSingleton<IPipeServerFactory, NamedPipeServerFactory>()
 
-                .AddSingleton<IDepthEstimate, MiDaS>()
+                .AddTransient<IDepthEstimate, DepthAnythingV2>()
+                .AddTransient<DynamicImageAnalyzer>()
                 .AddSingleton<IStyleTransfer, AdaIn>()
                 .AddSingleton<ISuperResolution, Realesrgan>()
 

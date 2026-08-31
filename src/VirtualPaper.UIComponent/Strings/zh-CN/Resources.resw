@@ -1293,6 +1293,45 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
     <value>图像增强</value>
   </data>
+  <data name="Intelligent_SelBarItem3_DynamicImage" xml:space="preserve">
+    <value>图片动态化</value>
+  </data>
+  <data name="Intelligent_Dynamic_Title" xml:space="preserve">
+    <value>AI 图片动态化</value>
+  </data>
+  <data name="Intelligent_Dynamic_Desc" xml:space="preserve">
+    <value>使用本地模型检测画面对象、生成精细蒙版并估算相对深度，将普通图片拆分为可用于视差和局部形变的前景、中景、背景及对象图层。</value>
+  </data>
+  <data name="Intelligent_Dynamic_Warning" xml:space="preserve">
+    <value>当前阶段输出分层素材与预览，不会直接生成 Live2D 模型。复杂遮挡和未识别对象可能需要后续手动调整。</value>
+  </data>
+  <data name="Intelligent_Dynamic_Quality" xml:space="preserve">
+    <value>分析质量</value>
+  </data>
+  <data name="Intelligent_Dynamic_Balanced" xml:space="preserve">
+    <value>均衡（推荐）</value>
+  </data>
+  <data name="Intelligent_Dynamic_Balanced_Desc" xml:space="preserve">
+    <value>640 检测、518 深度输入，最多处理 8 个对象；适合大多数 CPU。</value>
+  </data>
+  <data name="Intelligent_Dynamic_High" xml:space="preserve">
+    <value>高质量</value>
+  </data>
+  <data name="Intelligent_Dynamic_High_Desc" xml:space="preserve">
+    <value>960 检测、686 深度输入，最多处理 12 个对象；小目标更稳定但耗时和内存占用更高。</value>
+  </data>
+  <data name="Intelligent_Dynamic_OutputHint" xml:space="preserve">
+    <value>完成后可预览图层顺序，或导出透明图层、深度图、补洞蒙版与 JSON 清单。</value>
+  </data>
+  <data name="Intelligent_Dynamic_OpenFolder" xml:space="preserve">
+    <value>打开目录</value>
+  </data>
+  <data name="Intelligent_Dynamic_Export" xml:space="preserve">
+    <value>导出素材</value>
+  </data>
+  <data name="Intelligent_Dynamic_ResultSummary" xml:space="preserve">
+    <value>{0} 个对象 · {1} 个图层 · {2:F1} 秒</value>
+  </data>
   <data name="Intelligent_Intro_Title" xml:space="preserve">
     <value>图像风格迁移</value>
   </data>

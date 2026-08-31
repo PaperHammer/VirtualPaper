@@ -19,6 +19,8 @@
 	  <None Remove="Views\Comp\ConfigSpace.xaml" />
 	  <None Remove="Views\StyleTranfer.xaml" />
 	  <None Remove="Views\SuperResolution.xaml" />
+	  <None Remove="Views\DynamicImage.xaml" />
+	  <None Remove="Views\DynamicImageComp\DynamicImageAddTask.xaml" />
 	  <None Remove="Views\SuperResolutionComp\SuperResolutionTasksView.xaml" />
 	</ItemGroup>
 	<ItemGroup>
@@ -61,6 +63,12 @@
 	</ItemGroup>
 	<ItemGroup>
 	  <Page Update="Views\StyleTranfer.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	  <Page Update="Views\DynamicImage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	  <Page Update="Views\DynamicImageComp\DynamicImageAddTask.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>

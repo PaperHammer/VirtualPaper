@@ -1293,6 +1293,45 @@ The following words cannot be used as usernames:
   <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
     <value>Enhance</value>
   </data>
+  <data name="Intelligent_SelBarItem3_DynamicImage" xml:space="preserve">
+    <value>Animate</value>
+  </data>
+  <data name="Intelligent_Dynamic_Title" xml:space="preserve">
+    <value>AI Image Animation</value>
+  </data>
+  <data name="Intelligent_Dynamic_Desc" xml:space="preserve">
+    <value>Uses local models to detect objects, create precise masks, and estimate relative depth, splitting an image into background, midground, foreground, and object layers for parallax and local deformation.</value>
+  </data>
+  <data name="Intelligent_Dynamic_Warning" xml:space="preserve">
+    <value>This stage exports layered assets and a preview rather than a Live2D model. Complex occlusion and unrecognized objects may require manual adjustment later.</value>
+  </data>
+  <data name="Intelligent_Dynamic_Quality" xml:space="preserve">
+    <value>Analysis quality</value>
+  </data>
+  <data name="Intelligent_Dynamic_Balanced" xml:space="preserve">
+    <value>Balanced (recommended)</value>
+  </data>
+  <data name="Intelligent_Dynamic_Balanced_Desc" xml:space="preserve">
+    <value>640 detection, 518 depth input, up to 8 objects; suitable for most CPUs.</value>
+  </data>
+  <data name="Intelligent_Dynamic_High" xml:space="preserve">
+    <value>High quality</value>
+  </data>
+  <data name="Intelligent_Dynamic_High_Desc" xml:space="preserve">
+    <value>960 detection, 686 depth input, up to 12 objects; more stable for small objects but uses more time and memory.</value>
+  </data>
+  <data name="Intelligent_Dynamic_OutputHint" xml:space="preserve">
+    <value>When complete, preview the layer order or export transparent layers, depth, inpainting mask, and JSON manifest.</value>
+  </data>
+  <data name="Intelligent_Dynamic_OpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Intelligent_Dynamic_Export" xml:space="preserve">
+    <value>Export assets</value>
+  </data>
+  <data name="Intelligent_Dynamic_ResultSummary" xml:space="preserve">
+    <value>{0} objects · {1} layers · {2:F1}s</value>
+  </data>
   <data name="Intelligent_Intro_Title" xml:space="preserve">
     <value>Image style transfer</value>
   </data>

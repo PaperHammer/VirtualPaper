@@ -42,6 +42,7 @@ namespace VirtualPaper.IntelligentPanel.Views.Comp {
             var targetTaskPageType = _selectedPageIdx switch {
                 0 => typeof(StyleTransferComp.StyleTransferAddTask),
                 1 => typeof(SuperResolutionComp.SuperResolutionAddTask),
+                2 => typeof(DynamicImageComp.DynamicImageAddTask),
                 _ => throw new NotImplementedException(),
             };
             FrameComp.Navigate(targetTaskPageType, Payload);

@@ -72,6 +72,7 @@ namespace VirtualPaper.IntelligentPanel {
             Type pageType = currentSelectedIndex switch {
                 0 => typeof(StyleTranfer),
                 1 => typeof(SuperResolution),
+                2 => typeof(DynamicImage),
                 _ => throw new NotImplementedException(),
             };
             Payload?.Set(NaviPayloadKey.SelectedIntelliPageIdx, currentSelectedIndex);

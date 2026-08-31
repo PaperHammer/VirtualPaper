@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<arc:ArcPage
+    x:Class="VirtualPaper.IntelligentPanel.Views.DynamicImageComp.DynamicImageAddTask"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:arc="using:VirtualPaper.UIComponent.Templates"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:utils="using:VirtualPaper.UIComponent.Utils"
+    Unloaded="Page_Unloaded">
+
+    <Grid HorizontalAlignment="Center" VerticalAlignment="Center" ColumnSpacing="28">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="430"/>
+            <ColumnDefinition Width="340"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Spacing="8">
+            <TextBlock Text="{markup:I18n Key=Intelligent_Task_Scr_Img}" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+            <Border
+                x:Name="SourceImageBorder"
+                Height="290"
+                CornerRadius="12"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                BorderThickness="1"
+                utils:CursorUtil.CursorShape="Hand"
+                Tapped="SourceImageBorder_Tapped">
+                <Grid>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8"
+                        Visibility="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
+                        <FontIcon Glyph="&#xE8B9;" FontSize="32"/>
+                        <TextBlock Text="{markup:I18n Key=Intelligent_Task_Scr_Img_Import}"/>
+                    </StackPanel>
+                    <Image x:Name="SourceImage" Source="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" Stretch="UniformToFill"/>
+                </Grid>
+            </Border>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16">
+                <TextBlock Text="{x:Bind _viewModel.SourceFileResolution, Mode=OneWay}"/>
+                <TextBlock Text="{x:Bind _viewModel.SourceFileSize, Mode=OneWay}"/>
+                <TextBlock Text="{x:Bind _viewModel.SourceFileExt, Mode=OneWay}"/>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="14">
+            <TextBlock Text="{markup:I18n Key=Intelligent_Dynamic_Quality}" FontSize="16" FontWeight="SemiBold"/>
+            <Border Padding="18" CornerRadius="10" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                <StackPanel Spacing="12">
+                    <RadioButton GroupName="DynamicQuality" IsChecked="{x:Bind _viewModel.IsBalanced, Mode=TwoWay}">
+                        <StackPanel>
+                            <TextBlock Text="{markup:I18n Key=Intelligent_Dynamic_Balanced}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{markup:I18n Key=Intelligent_Dynamic_Balanced_Desc}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </RadioButton>
+                    <RadioButton GroupName="DynamicQuality" IsChecked="{x:Bind _viewModel.IsHighQuality, Mode=TwoWay}">
+                        <StackPanel>
+                            <TextBlock Text="{markup:I18n Key=Intelligent_Dynamic_High}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{markup:I18n Key=Intelligent_Dynamic_High_Desc}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </RadioButton>
+                </StackPanel>
+            </Border>
+            <InfoBar IsOpen="True" IsClosable="False" Severity="Informational" Message="{markup:I18n Key=Intelligent_Dynamic_OutputHint}"/>
+        </StackPanel>
+    </Grid>
+</arc:ArcPage>

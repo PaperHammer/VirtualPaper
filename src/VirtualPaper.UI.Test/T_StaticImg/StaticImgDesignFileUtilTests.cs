@@ -222,6 +222,54 @@ namespace VirtualPaper.UI.Test.T_StaticImg {
 
         // ── 辅助 ─────────────────────────────────────────────────────
 
+        [TestMethod]
+        public async Task WriteLengthPrefixedBlockAsync_WritesV1LayoutAndRestoresEndPosition() {
+            byte[] prefix = [0x11, 0x22, 0x33];
+            byte[] payload = Enumerable.Range(0, 4097)
+                .Select(static value => (byte)(value % 251))
+                .ToArray();
+            using var stream = new MemoryStream();
+            await stream.WriteAsync(prefix);
+
+            long written = await Layer.WriteLengthPrefixedBlockAsync(
+                stream,
+                async (target, cancellationToken) => {
+                    await target.WriteAsync(payload.AsMemory(0, 2048), cancellationToken);
+                    await target.WriteAsync(payload.AsMemory(2048), cancellationToken);
+                });
+
+            Assert.AreEqual(sizeof(int) + sizeof(int) + payload.Length, written);
+            Assert.AreEqual(prefix.Length + written, stream.Position);
+
+            stream.Position = prefix.Length;
+            using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: true);
+            Assert.AreEqual(0x4C415952, reader.ReadInt32());
+            Assert.AreEqual(payload.Length, reader.ReadInt32());
+            CollectionAssert.AreEqual(payload, reader.ReadBytes(payload.Length));
+        }
+
+        [TestMethod]
+        public async Task WriteLengthPrefixedBlockAsync_MultipleBlocksRemainSequential() {
+            using var stream = new MemoryStream();
+            byte[][] payloads = [[1, 2, 3], [4, 5, 6, 7, 8]];
+
+            foreach (byte[] payload in payloads) {
+                await Layer.WriteLengthPrefixedBlockAsync(
+                    stream,
+                    (target, cancellationToken) =>
+                        target.WriteAsync(payload, cancellationToken).AsTask());
+            }
+
+            stream.Position = 0;
+            using var reader = new BinaryReader(stream);
+            foreach (byte[] payload in payloads) {
+                Assert.AreEqual(0x4C415952, reader.ReadInt32());
+                Assert.AreEqual(payload.Length, reader.ReadInt32());
+                CollectionAssert.AreEqual(payload, reader.ReadBytes(payload.Length));
+            }
+            Assert.AreEqual(stream.Length, stream.Position);
+        }
+
         private static byte[] StructureToBytes<T>(T structure) where T : struct {
             int size = Marshal.SizeOf<T>();
             byte[] arr = new byte[size];

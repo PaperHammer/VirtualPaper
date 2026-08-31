@@ -48,19 +48,21 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             return format;
         }
 
-        public async Task InitCacheAsync(
+        public Task InitCacheAsync(
             ArcSize arcSize,
             BusinessData business,
             List<Layer> layers) {
             var businessDataBytes = BusinessData.Serialize(business);
-            var layersBytes = await Layer.SerializeAsync(layers);
+            // 非 VPD 项目初始化时尚未需要持久化图层。真正保存时会逐层
+            // 序列化并回填准确长度，这里不再为计算缓存头而生成全部图层字节。
             var header = FileHeader.Create(
                 arcSize,
                 layers.Count,
                 (uint)businessDataBytes.Length,
-                (uint)layersBytes.Length);
+                layersLength: 0);
 
             UpdateCache(header, business, layers);
+            return Task.CompletedTask;
         }
 
         /// <summary>

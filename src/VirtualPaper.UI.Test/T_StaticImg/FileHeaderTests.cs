@@ -13,11 +13,11 @@ namespace VirtualPaper.UI.Test.T_StaticImg {
         }
 
         [TestMethod]
-        public void Create_SetsVersion1() {
+        public void Create_SetsCurrentVersion() {
             var arcSize = new ArcSize(800, 600, 96, RebuildMode.None);
             var header = FileHeader.Create(arcSize, 1, 100, 200);
 
-            Assert.AreEqual((ushort)1, header.Version);
+            Assert.AreEqual(FileHeader.Version2, header.Version);
         }
 
         [TestMethod]
@@ -174,6 +174,30 @@ namespace VirtualPaper.UI.Test.T_StaticImg {
             };
 
             Assert.IsFalse(header.IsValid());
+        }
+
+        [TestMethod]
+        public void IsValid_Version1_ReturnsTrue() {
+            var header = FileHeader.Create(
+                new ArcSize(800, 600, 96, RebuildMode.None),
+                1,
+                100,
+                200);
+            header.Version = FileHeader.Version1;
+
+            Assert.IsTrue(header.IsValid());
+        }
+
+        [TestMethod]
+        public void IsValid_Version2_ReturnsTrue() {
+            var header = FileHeader.Create(
+                new ArcSize(800, 600, 96, RebuildMode.None),
+                1,
+                100,
+                200);
+            header.Version = FileHeader.Version2;
+
+            Assert.IsTrue(header.IsValid());
         }
 
         // --- GetTotalFileSize ---

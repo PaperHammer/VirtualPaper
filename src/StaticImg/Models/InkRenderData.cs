@@ -93,6 +93,26 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         /// <summary>
+        /// 将 PNG 编码结果直接写入目标流，不创建完整 PNG 内存副本。
+        /// 相对流保证编码器定位到 0 时只回到 PNG 区段起点。
+        /// </summary>
+        internal async Task SavePngAsync(
+            Stream outputStream,
+            CancellationToken ct = default) {
+            ArgumentNullException.ThrowIfNull(outputStream);
+            if (!outputStream.CanWrite || !outputStream.CanSeek)
+                throw new ArgumentException("PNG 流必须可写且可寻址。", nameof(outputStream));
+
+            ct.ThrowIfCancellationRequested();
+            long pngStart = outputStream.Position;
+            using var pngSegment = new RelativeStream(outputStream, pngStart, leaveOpen: true);
+            using var randomAccessStream = pngSegment.AsRandomAccessStream();
+            await RenderTarget.SaveAsync(randomAccessStream, CanvasBitmapFileFormat.Png);
+            ct.ThrowIfCancellationRequested();
+            outputStream.Position = checked(pngStart + pngSegment.Length);
+        }
+
+        /// <summary>
         /// 从流加载渲染数据
         /// </summary>
         public async Task LoadAsync(
@@ -140,7 +160,7 @@ namespace Workloads.Creation.StaticImg.Models {
 
                 // 加载到渲染目标
                 using var fileStream = File.OpenRead(tempFile);
-                var bitmap = await CanvasBitmap.LoadAsync(
+                using var bitmap = await CanvasBitmap.LoadAsync(
                     InkProjectSession.SharedDevice,
                     fileStream.AsRandomAccessStream());
 
@@ -154,6 +174,38 @@ namespace Workloads.Creation.StaticImg.Models {
                     File.Delete(tempFile);
             }
         }        
+
+        /// <summary>
+        /// 直接从当前流的剩余区段解码 PNG，不创建完整 PNG 内存副本或临时文件。
+        /// </summary>
+        internal async Task LoadPngAsync(
+            Stream inputStream,
+            CancellationToken ct = default) {
+            ArgumentNullException.ThrowIfNull(inputStream);
+            if (!inputStream.CanRead || !inputStream.CanSeek)
+                throw new ArgumentException("PNG 流必须可读且可寻址。", nameof(inputStream));
+
+            ct.ThrowIfCancellationRequested();
+            long pngStart = inputStream.Position;
+            long pngLength = inputStream.Length - pngStart;
+            if (pngLength <= 0) throw new InvalidDataException("PNG 图层数据为空。");
+
+            using var pngSegment = new RelativeStream(
+                inputStream,
+                pngStart,
+                pngLength,
+                leaveOpen: true);
+            using var randomAccessStream = pngSegment.AsRandomAccessStream();
+            using var bitmap = await CanvasBitmap.LoadAsync(
+                InkProjectSession.SharedDevice,
+                randomAccessStream);
+            ct.ThrowIfCancellationRequested();
+
+            using var ds = RenderTarget.CreateDrawingSession();
+            ds.Clear(Colors.Transparent);
+            ds.DrawImage(bitmap);
+            inputStream.Position = checked(pngStart + pngLength);
+        }
         #endregion
 
         private void InitializeBlankRenderTarget() {

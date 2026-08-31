@@ -20,13 +20,6 @@ namespace VirtualPaper.Common.Logging {
         /// <summary>
         /// 获取指定类型的日志记录器（自动识别程序集）
         /// </summary>
-        //public static ArcLoggerProxy GetLogger<T>() {
-        //    var type = typeof(T);
-        //    var loggerName = type.FullName ?? "UnknownTypeFullName";
-        //    return _cache.GetOrAdd(loggerName, _ =>
-        //        new ArcLoggerProxy(LogManager.GetLogger(loggerName)));
-        //}
-
         public static ArcLoggerProxy GetLogger<T>() => GetLogger(typeof(T));
 
         public static ArcLoggerProxy GetLogger(Type type) {

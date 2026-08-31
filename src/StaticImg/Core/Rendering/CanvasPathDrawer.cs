@@ -74,12 +74,12 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             _isDrawing = true;
             _previousStrokeBounds = Rect.Empty;
             _strokeBounds = Rect.Empty;
-            _useBlockCache = CanUseBlockCache(CurrentStroke);
+            _useDynamicStrokeCache = CanUseDynamicStrokeCache(CurrentStroke);
             _isContinuationBlock = false;
             CurrentStroke.Points = [];
             CurrentStroke.Points.Add(vec);
             EnsurePathBuffersReady();
-            ClearCommittedStrokeTiles();
+            ClearCommittedStrokeCache();
 
             // 每条新笔画只在落笔时清空一次，避免上一条笔画的遮罩残留。
             using (var tempDs = TempRenderTarget.CreateDrawingSession())
@@ -121,6 +121,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
             _isDrawing = false;
             CaptureUndoRedoSnapshot();
+            ClearCommittedStrokeCache();
             base.RequestOnceRender();
         }
 
@@ -137,8 +138,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             if (!IsCanvasReady || !CurrentStroke.ShouldRender) return;
 
             try {
-                _updatedStrokeTiles.Clear();
-                // GPU 块提交必须位于设备丢失/资源释放异常保护范围内。
+                _updatedStrokeCacheBounds = Rect.Empty;
+                // 稳定曲线块提交必须位于设备丢失/资源释放异常保护范围内。
                 CommitStableBlockIfNeeded();
                 using var geometry = CurrentStroke.CreateStrokeGeometry(
                     RenderTarget!.Device,
@@ -157,12 +158,9 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                     CurrentStroke.RenderIncrement(dsTemp, geometry);
                 }
 
-                using var combinedForeground = _useBlockCache
-                    ? CreateCombinedForeground(dirtyBounds)
-                    : null;
-                ICanvasImage foreground = combinedForeground is null
+                ICanvasImage foreground = _combinedStrokeForeground is null
                     ? TempRenderTarget
-                    : combinedForeground;
+                    : _combinedStrokeForeground;
 
                 // *** 合成并绘制到 RenderTarget ***
                 using (var mergedImage = CurrentStroke.MergeImages(
@@ -186,7 +184,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 HandleRender(new RenderTargetChangedEventArgs(
                     RenderMode.PartialRegion,
                     dirtyBounds,
-                    CreateStrokeTileDebugInfo(dirtyBounds, bounds)));
+                    CreateStrokeCacheDebugInfo(dirtyBounds, bounds)));
             }
             catch (Exception ex) when (IsDeviceLost(ex)) {
                 HandleDeviceLost();
@@ -202,7 +200,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         private void CommitStableBlockIfNeeded() {
-            if (!_useBlockCache || CurrentStroke.Points.Count < ActiveBlockPointLimit) return;
+            if (!_useDynamicStrokeCache || CurrentStroke.Points.Count < ActiveBlockPointLimit) return;
 
             List<Vector2> committedPoints = CurrentStroke.Points.GetRange(0, CommitPointCount);
             using var geometry = CurrentStroke.CreateStrokeGeometry(
@@ -210,65 +208,85 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 committedPoints,
                 _isContinuationBlock,
                 false);
-            foreach (var tileKey in EnumerateStrokeTileKeys(
-                committedPoints,
-                _isContinuationBlock,
-                false)) {
-                CanvasRenderTarget tile = GetOrCreateCommittedStrokeTile(tileKey);
-                if (StaticImgDebugSwitches.ShowStrokeTileOverlay)
-                    _updatedStrokeTiles.Add(tileKey);
-                using var ds = tile.CreateDrawingSession();
+            Rect committedBounds = CurrentStroke.GetBounds(committedPoints);
+            EnsureCommittedStrokeCache(committedBounds);
+
+            using (var ds = _committedStrokeCache!.CreateDrawingSession()) {
                 ds.Units = CanvasUnits.Pixels;
                 ds.Transform = Matrix3x2.CreateTranslation(
-                    -tileKey.Column * StrokeTileSize,
-                    -tileKey.Row * StrokeTileSize);
+                    -(float)_committedStrokeCacheBounds.X,
+                    -(float)_committedStrokeCacheBounds.Y);
                 CurrentStroke.RenderIncrement(ds, geometry);
             }
+
+            _updatedStrokeCacheBounds = committedBounds;
 
             CurrentStroke.Points.RemoveRange(0, CommitPointCount - BlockOverlapPointCount);
             _isContinuationBlock = true;
         }
 
-        private StrokeTileDebugInfo? CreateStrokeTileDebugInfo(Rect dirtyBounds, Rect activeBounds) {
-            if (!StaticImgDebugSwitches.ShowStrokeTileOverlay) return null;
+        private StrokeCacheDebugInfo? CreateStrokeCacheDebugInfo(Rect dirtyBounds, Rect activeBounds) {
+            if (!StaticImgDebugSwitches.ShowStrokeCacheOverlay) return null;
 
-            var allocatedTiles = new List<Rect>(_committedStrokeTiles.Count);
-            foreach (var tileKey in _committedStrokeTiles.Keys)
-                allocatedTiles.Add(GetTileBounds(tileKey));
-
-            var updatedTiles = new List<Rect>(_updatedStrokeTiles.Count);
-            foreach (var tileKey in _updatedStrokeTiles)
-                updatedTiles.Add(GetTileBounds(tileKey));
-
-            return new StrokeTileDebugInfo(
+            return new StrokeCacheDebugInfo(
                 dirtyBounds,
                 activeBounds,
-                allocatedTiles,
-                updatedTiles,
+                _committedStrokeCacheBounds,
+                _updatedStrokeCacheBounds,
                 CurrentStroke.Points.Count);
         }
 
-        private Rect GetTileBounds((int Column, int Row) key) {
-            var canvasSize = RenderTarget.SizeInPixels;
-            int left = key.Column * StrokeTileSize;
-            int top = key.Row * StrokeTileSize;
-            int width = Math.Min(StrokeTileSize, (int)canvasSize.Width - left);
-            int height = Math.Min(StrokeTileSize, (int)canvasSize.Height - top);
-            return new Rect(left, top, width, height);
+        private void EnsureCommittedStrokeCache(Rect requiredBounds) {
+            Rect targetBounds = CalculateDynamicCacheBounds(
+                requiredBounds,
+                _committedStrokeCacheBounds,
+                RenderTarget.SizeInPixels);
+            if (_committedStrokeCache != null && targetBounds == _committedStrokeCacheBounds)
+                return;
+
+            float dipScale = 96f / RenderTarget.Dpi;
+            var expandedCache = new CanvasRenderTarget(
+                RenderTarget.Device,
+                (float)targetBounds.Width * dipScale,
+                (float)targetBounds.Height * dipScale,
+                RenderTarget.Dpi,
+                RenderTarget.Format,
+                RenderTarget.AlphaMode);
+            try {
+                using (var ds = expandedCache.CreateDrawingSession()) {
+                    ds.Units = CanvasUnits.Pixels;
+                    ds.Clear(Colors.Transparent);
+                    if (_committedStrokeCache != null) {
+                        ds.DrawImage(
+                            _committedStrokeCache,
+                            (float)(_committedStrokeCacheBounds.X - targetBounds.X),
+                            (float)(_committedStrokeCacheBounds.Y - targetBounds.Y));
+                    }
+                }
+
+                CanvasCommandList combinedForeground = CreateCombinedForeground(
+                    expandedCache,
+                    targetBounds);
+                _combinedStrokeForeground?.Dispose();
+                _committedStrokeCache?.Dispose();
+                _combinedStrokeForeground = combinedForeground;
+                _committedStrokeCache = expandedCache;
+                _committedStrokeCacheBounds = targetBounds;
+            }
+            catch {
+                expandedCache.Dispose();
+                throw;
+            }
         }
 
-        private CanvasCommandList CreateCombinedForeground(Rect dirtyBounds) {
+        private CanvasCommandList CreateCombinedForeground(
+            CanvasRenderTarget committedCache,
+            Rect cacheBounds) {
             var commandList = new CanvasCommandList(RenderTarget.Device);
             try {
                 using var ds = commandList.CreateDrawingSession();
                 ds.Units = CanvasUnits.Pixels;
-                foreach (var tileKey in EnumerateTileKeys(dirtyBounds)) {
-                    if (!_committedStrokeTiles.TryGetValue(tileKey, out var tile)) continue;
-                    ds.DrawImage(
-                        tile,
-                        tileKey.Column * StrokeTileSize,
-                        tileKey.Row * StrokeTileSize);
-                }
+                ds.DrawImage(committedCache, (float)cacheBounds.X, (float)cacheBounds.Y);
                 ds.DrawImage(TempRenderTarget);
                 return commandList;
             }
@@ -278,134 +296,71 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             }
         }
 
-        private CanvasRenderTarget GetOrCreateCommittedStrokeTile((int Column, int Row) key) {
-            if (_committedStrokeTiles.TryGetValue(key, out var tile)) return tile;
+        internal static Rect CalculateDynamicCacheBounds(
+            Rect requiredBounds,
+            Rect existingBounds,
+            BitmapSize canvasSize) {
+            double left = Math.Max(0, requiredBounds.Left - DynamicCacheGrowthPadding);
+            double top = Math.Max(0, requiredBounds.Top - DynamicCacheGrowthPadding);
+            double right = Math.Min(canvasSize.Width, requiredBounds.Right + DynamicCacheGrowthPadding);
+            double bottom = Math.Min(canvasSize.Height, requiredBounds.Bottom + DynamicCacheGrowthPadding);
 
-            var canvasSize = RenderTarget.SizeInPixels;
-            int originX = key.Column * StrokeTileSize;
-            int originY = key.Row * StrokeTileSize;
-            int widthInPixels = Math.Min(StrokeTileSize, (int)canvasSize.Width - originX);
-            int heightInPixels = Math.Min(StrokeTileSize, (int)canvasSize.Height - originY);
-            float dipScale = 96f / RenderTarget.Dpi;
-            tile = new CanvasRenderTarget(
-                RenderTarget.Device,
-                widthInPixels * dipScale,
-                heightInPixels * dipScale,
-                RenderTarget.Dpi,
-                RenderTarget.Format,
-                RenderTarget.AlphaMode);
-            try {
-                using (var ds = tile.CreateDrawingSession())
-                    ds.Clear(Colors.Transparent);
-                _committedStrokeTiles.Add(key, tile);
-                return tile;
-            }
-            catch {
-                tile.Dispose();
-                throw;
-            }
-        }
+            if (existingBounds != Rect.Empty) {
+                if (left < existingBounds.Left) {
+                    double growth = Math.Max(existingBounds.Width, existingBounds.Left - left);
+                    left = Math.Max(0, existingBounds.Left - growth);
+                }
+                else {
+                    left = existingBounds.Left;
+                }
 
-        private IEnumerable<(int Column, int Row)> EnumerateStrokeTileKeys(
-            List<Vector2> points,
-            bool startsAtLeadingMidpoint,
-            bool includesFinalSegment) {
-            var keys = new HashSet<(int Column, int Row)>();
-            float margin = CurrentStroke.BrushArgs.Thickness / 2f + StrokeBoundsPadding;
-            Vector2 segmentStart = startsAtLeadingMidpoint
-                ? (points[0] + points[1]) / 2
-                : points[0];
+                if (top < existingBounds.Top) {
+                    double growth = Math.Max(existingBounds.Height, existingBounds.Top - top);
+                    top = Math.Max(0, existingBounds.Top - growth);
+                }
+                else {
+                    top = existingBounds.Top;
+                }
 
-            for (int i = 1; i < points.Count - 1; i++) {
-                Vector2 segmentEnd = (points[i] + points[i + 1]) / 2;
-                AddQuadraticTileKeys(keys, segmentStart, points[i], segmentEnd, margin, 0);
-                segmentStart = segmentEnd;
-            }
+                if (right > existingBounds.Right) {
+                    double growth = Math.Max(existingBounds.Width, right - existingBounds.Right);
+                    right = Math.Min(canvasSize.Width, existingBounds.Right + growth);
+                }
+                else {
+                    right = existingBounds.Right;
+                }
 
-            if (includesFinalSegment)
-                AddLineTileKeys(keys, segmentStart, points[^1], margin);
-            return keys;
-        }
-
-        private void AddQuadraticTileKeys(
-            HashSet<(int Column, int Row)> keys,
-            Vector2 start,
-            Vector2 control,
-            Vector2 end,
-            float margin,
-            int depth) {
-            float controlPolygonLength = Vector2.Distance(start, control) +
-                Vector2.Distance(control, end);
-            if (controlPolygonLength <= TileCurveSubdivisionLength ||
-                depth >= MaxTileCurveSubdivisionDepth) {
-                AddBoundsTileKeys(
-                    keys,
-                    MathF.Min(start.X, MathF.Min(control.X, end.X)) - margin,
-                    MathF.Min(start.Y, MathF.Min(control.Y, end.Y)) - margin,
-                    MathF.Max(start.X, MathF.Max(control.X, end.X)) + margin,
-                    MathF.Max(start.Y, MathF.Max(control.Y, end.Y)) + margin);
-                return;
+                if (bottom > existingBounds.Bottom) {
+                    double growth = Math.Max(existingBounds.Height, bottom - existingBounds.Bottom);
+                    bottom = Math.Min(canvasSize.Height, existingBounds.Bottom + growth);
+                }
+                else {
+                    bottom = existingBounds.Bottom;
+                }
             }
 
-            Vector2 startControl = (start + control) / 2;
-            Vector2 controlEnd = (control + end) / 2;
-            Vector2 midpoint = (startControl + controlEnd) / 2;
-            AddQuadraticTileKeys(keys, start, startControl, midpoint, margin, depth + 1);
-            AddQuadraticTileKeys(keys, midpoint, controlEnd, end, margin, depth + 1);
+            left = Math.Max(0, Math.Floor(left / DynamicCacheAllocationStep) * DynamicCacheAllocationStep);
+            top = Math.Max(0, Math.Floor(top / DynamicCacheAllocationStep) * DynamicCacheAllocationStep);
+            right = Math.Min(
+                canvasSize.Width,
+                Math.Ceiling(right / DynamicCacheAllocationStep) * DynamicCacheAllocationStep);
+            bottom = Math.Min(
+                canvasSize.Height,
+                Math.Ceiling(bottom / DynamicCacheAllocationStep) * DynamicCacheAllocationStep);
+
+            return new Rect(left, top, right - left, bottom - top);
         }
 
-        private void AddLineTileKeys(
-            HashSet<(int Column, int Row)> keys,
-            Vector2 start,
-            Vector2 end,
-            float margin) {
-            float length = Vector2.Distance(start, end);
-            int segmentCount = Math.Max(1, (int)Math.Ceiling(length / TileCurveSubdivisionLength));
-            Vector2 previous = start;
-            for (int i = 1; i <= segmentCount; i++) {
-                Vector2 current = Vector2.Lerp(start, end, i / (float)segmentCount);
-                AddBoundsTileKeys(
-                    keys,
-                    MathF.Min(previous.X, current.X) - margin,
-                    MathF.Min(previous.Y, current.Y) - margin,
-                    MathF.Max(previous.X, current.X) + margin,
-                    MathF.Max(previous.Y, current.Y) + margin);
-                previous = current;
-            }
+        private void ClearCommittedStrokeCache() {
+            _combinedStrokeForeground?.Dispose();
+            _combinedStrokeForeground = null;
+            _committedStrokeCache?.Dispose();
+            _committedStrokeCache = null;
+            _committedStrokeCacheBounds = Rect.Empty;
+            _updatedStrokeCacheBounds = Rect.Empty;
         }
 
-        private void AddBoundsTileKeys(
-            HashSet<(int Column, int Row)> keys,
-            float left,
-            float top,
-            float right,
-            float bottom) {
-            foreach (var key in EnumerateTileKeys(new Rect(left, top, right - left, bottom - top)))
-                keys.Add(key);
-        }
-
-        private IEnumerable<(int Column, int Row)> EnumerateTileKeys(Rect bounds) {
-            var canvasSize = RenderTarget.SizeInPixels;
-            int columnCount = ((int)canvasSize.Width + StrokeTileSize - 1) / StrokeTileSize;
-            int rowCount = ((int)canvasSize.Height + StrokeTileSize - 1) / StrokeTileSize;
-            int firstColumn = Math.Max(0, (int)Math.Floor(bounds.Left / StrokeTileSize));
-            int firstRow = Math.Max(0, (int)Math.Floor(bounds.Top / StrokeTileSize));
-            int lastColumn = Math.Min(columnCount - 1, (int)Math.Ceiling(bounds.Right / StrokeTileSize) - 1);
-            int lastRow = Math.Min(rowCount - 1, (int)Math.Ceiling(bounds.Bottom / StrokeTileSize) - 1);
-
-            for (int row = firstRow; row <= lastRow; row++)
-                for (int column = firstColumn; column <= lastColumn; column++)
-                    yield return (column, row);
-        }
-
-        private void ClearCommittedStrokeTiles() {
-            foreach (CanvasRenderTarget tile in _committedStrokeTiles.Values)
-                tile.Dispose();
-            _committedStrokeTiles.Clear();
-            _updatedStrokeTiles.Clear();
-        }
-
-        private static bool CanUseBlockCache(StrokeBase stroke) {
+        private static bool CanUseDynamicStrokeCache(StrokeBase stroke) {
             if (stroke.IsEraser) return true;
 
             return stroke.BrushArgs.Type == BrushType.General &&
@@ -473,23 +428,23 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             base.Dispose();
             TempRenderTarget?.Dispose();
             SnapshotRenderTarget?.Dispose();
-            ClearCommittedStrokeTiles();
+            ClearCommittedStrokeCache();
             GC.SuppressFinalize(this);
         }
 
         private bool _isDrawing = false;
-        private bool _useBlockCache;
+        private bool _useDynamicStrokeCache;
         private bool _isContinuationBlock;
         private Rect _previousStrokeBounds = Rect.Empty;
-        private readonly Dictionary<(int Column, int Row), CanvasRenderTarget> _committedStrokeTiles = [];
-        private readonly HashSet<(int Column, int Row)> _updatedStrokeTiles = [];
+        private CanvasRenderTarget? _committedStrokeCache;
+        private CanvasCommandList? _combinedStrokeForeground;
+        private Rect _committedStrokeCacheBounds = Rect.Empty;
+        private Rect _updatedStrokeCacheBounds = Rect.Empty;
         private Rect _strokeBounds = Rect.Empty;
         private const int ActiveBlockPointLimit = 34;
         private const int CommitPointCount = 32;
         private const int BlockOverlapPointCount = 2;
-        private const int StrokeTileSize = 256;
-        private const float StrokeBoundsPadding = 5f;
-        private const float TileCurveSubdivisionLength = StrokeTileSize / 2f;
-        private const int MaxTileCurveSubdivisionDepth = 16;
+        private const int DynamicCacheAllocationStep = 512;
+        private const int DynamicCacheGrowthPadding = 128;
     }
 }

@@ -221,7 +221,7 @@
         </Grid>
 
         <!-- 仅用于本地渲染诊断；由 StaticImgDebugSwitches 控制显示。 -->
-        <Border x:Name="strokeTileDebugPanel"
+        <Border x:Name="strokeCacheDebugPanel"
             Grid.Row="0"
             Canvas.ZIndex="100"
             MaxWidth="920"
@@ -238,16 +238,16 @@
             <StackPanel Spacing="4">
                 <StackPanel Orientation="Horizontal" Spacing="14">
                     <TextBlock
-                        Text="Tile Debug"
+                        Text="Stroke Cache Debug"
                         Foreground="White"
                         FontSize="16"
                         FontWeight="SemiBold"/>
-                    <TextBlock x:Name="strokeTileDebugSummary"
+                    <TextBlock x:Name="strokeCacheDebugSummary"
                         Foreground="#FFFFE45C"
                         FontSize="15"
                         FontWeight="SemiBold"/>
                 </StackPanel>
-                <TextBlock x:Name="strokeTileDebugDetails"
+                <TextBlock x:Name="strokeCacheDebugDetails"
                     Foreground="#FFE8E8E8"
                     FontFamily="Consolas"
                     FontSize="13"/>
@@ -255,11 +255,11 @@
                 <StackPanel Orientation="Horizontal" Spacing="14">
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <Rectangle Width="20" Height="10" Stroke="#FF00C8FF" StrokeThickness="2"/>
-                        <TextBlock Text="已分配" Foreground="White" FontSize="13"/>
+                        <TextBlock Text="动态缓存" Foreground="White" FontSize="13"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <Rectangle Width="20" Height="10" Stroke="#FFFFA500" StrokeThickness="3"/>
-                        <TextBlock Text="本帧写入" Foreground="White" FontSize="13"/>
+                        <TextBlock Text="本次提交" Foreground="White" FontSize="13"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Spacing="5">
                         <Rectangle Width="20" Height="10" Stroke="#FFFF00FF" StrokeThickness="2"/>

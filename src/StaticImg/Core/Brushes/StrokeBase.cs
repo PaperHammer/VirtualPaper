@@ -36,17 +36,19 @@ namespace Workloads.Creation.StaticImg.Core.Brushes {
             Type = type;
         }
 
-        public Rect GetBounds() {
-            if (Points.Count == 0)
+        public Rect GetBounds() => GetBounds(Points);
+
+        public Rect GetBounds(IReadOnlyList<Vector2> points) {
+            if (points.Count == 0)
                 return Rect.Empty;
 
-            float minX = Points[0].X;
-            float maxX = Points[0].X;
-            float minY = Points[0].Y;
-            float maxY = Points[0].Y;
+            float minX = points[0].X;
+            float maxX = points[0].X;
+            float minY = points[0].Y;
+            float maxY = points[0].Y;
 
-            for (int i = 1; i < Points.Count; i++) {
-                var p = Points[i];
+            for (int i = 1; i < points.Count; i++) {
+                var p = points[i];
                 if (p.X < minX) minX = p.X;
                 if (p.X > maxX) maxX = p.X;
                 if (p.Y < minY) minY = p.Y;

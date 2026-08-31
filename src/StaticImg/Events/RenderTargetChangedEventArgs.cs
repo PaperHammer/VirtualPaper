@@ -1,22 +1,21 @@
 using System;
-using System.Collections.Generic;
 using Windows.Foundation;
 
 namespace Workloads.Creation.StaticImg.Events {
     public class RenderTargetChangedEventArgs(
         RenderMode mode,
         Rect region = default,
-        StrokeTileDebugInfo? strokeTileDebugInfo = null) : EventArgs {
+        StrokeCacheDebugInfo? strokeCacheDebugInfo = null) : EventArgs {
         public RenderMode Mode { get; } = mode;
         public Rect Region { get; } = region;
-        public StrokeTileDebugInfo? StrokeTileDebugInfo { get; } = strokeTileDebugInfo;
+        public StrokeCacheDebugInfo? StrokeCacheDebugInfo { get; } = strokeCacheDebugInfo;
     }
 
-    public sealed record StrokeTileDebugInfo(
+    public sealed record StrokeCacheDebugInfo(
         Rect DirtyBounds,
         Rect ActiveStrokeBounds,
-        IReadOnlyList<Rect> AllocatedTiles,
-        IReadOnlyList<Rect> UpdatedTiles,
+        Rect CacheBounds,
+        Rect UpdatedCacheBounds,
         int ActivePointCount);
 
     public enum RenderMode {

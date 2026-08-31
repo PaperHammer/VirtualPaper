@@ -6,11 +6,11 @@ namespace Workloads.Creation.StaticImg.Debugging {
     public static class StaticImgDebugSwitches {
 #if DEBUG
         /// <summary>
-        /// 显示笔画瓦片、当前帧更新瓦片、活动笔画范围和画布脏区。
+        /// 显示稳定笔画动态缓存、当前提交范围、活动笔画范围和画布脏区。
         /// </summary>
-        public static bool ShowStrokeTileOverlay { get; set; } = false;
+        public static bool ShowStrokeCacheOverlay { get; set; } = false;
 #else
-        public static bool ShowStrokeTileOverlay {
+        public static bool ShowStrokeCacheOverlay {
             get => false;
             set { }
         }

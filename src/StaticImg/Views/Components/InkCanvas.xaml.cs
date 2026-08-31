@@ -97,7 +97,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                     this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
                 };
                 tool.RenderRequest += (s, e) => {
-                    UpdateStrokeTileDebugPanel(e.StrokeTileDebugInfo);
+                    UpdateStrokeCacheDebugPanel(e.StrokeCacheDebugInfo);
                     RenderToCompositeTarget(e.Mode, e.Region);
                 };
                 tool.OnceRenderCompleted += (s, e) => {
@@ -238,41 +238,42 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             Rect sourceRect = destRect;
             using (args.DrawingSession) {
                 args.DrawingSession.DrawImage(_compositeTarget, destRect, sourceRect);
-                DrawStrokeTileDebugOverlay(args.DrawingSession);
+                DrawStrokeCacheDebugOverlay(args.DrawingSession);
             }
         }
 
-        private void DrawStrokeTileDebugOverlay(CanvasDrawingSession ds) {
-            if (!StaticImgDebugSwitches.ShowStrokeTileOverlay ||
-                _strokeTileDebugInfo is not { } debugInfo) return;
+        private void DrawStrokeCacheDebugOverlay(CanvasDrawingSession ds) {
+            if (!StaticImgDebugSwitches.ShowStrokeCacheOverlay ||
+                _strokeCacheDebugInfo is not { } debugInfo) return;
 
-            foreach (Rect tile in debugInfo.AllocatedTiles)
-                ds.DrawRectangle(tile, Color.FromArgb(255, 0, 200, 255), 2f);
+            if (debugInfo.CacheBounds != Rect.Empty)
+                ds.DrawRectangle(debugInfo.CacheBounds, Color.FromArgb(255, 0, 200, 255), 2f);
 
-            foreach (Rect tile in debugInfo.UpdatedTiles)
-                ds.DrawRectangle(tile, Color.FromArgb(255, 255, 165, 0), 4f);
+            if (debugInfo.UpdatedCacheBounds != Rect.Empty)
+                ds.DrawRectangle(debugInfo.UpdatedCacheBounds, Color.FromArgb(255, 255, 165, 0), 4f);
 
             ds.DrawRectangle(debugInfo.DirtyBounds, Color.FromArgb(255, 255, 0, 255), 3f);
             ds.DrawRectangle(debugInfo.ActiveStrokeBounds, Color.FromArgb(255, 80, 255, 80), 3f);
         }
 
-        private void UpdateStrokeTileDebugPanel(StrokeTileDebugInfo? debugInfo) {
-            _strokeTileDebugInfo = debugInfo;
-            if (!StaticImgDebugSwitches.ShowStrokeTileOverlay || debugInfo == null) {
-                strokeTileDebugPanel.Visibility = Visibility.Collapsed;
+        private void UpdateStrokeCacheDebugPanel(StrokeCacheDebugInfo? debugInfo) {
+            _strokeCacheDebugInfo = debugInfo;
+            if (!StaticImgDebugSwitches.ShowStrokeCacheOverlay || debugInfo == null) {
+                strokeCacheDebugPanel.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            strokeTileDebugPanel.Visibility = Visibility.Visible;
-            strokeTileDebugSummary.Text =
-                $"Tiles {debugInfo.AllocatedTiles.Count}  |  " +
-                $"Updated {debugInfo.UpdatedTiles.Count}  |  " +
+            strokeCacheDebugPanel.Visibility = Visibility.Visible;
+            strokeCacheDebugSummary.Text =
+                $"Cache {(debugInfo.CacheBounds == Rect.Empty ? "none" : "allocated")}  |  " +
+                $"Updated {(debugInfo.UpdatedCacheBounds == Rect.Empty ? "no" : "yes")}  |  " +
                 $"Points {debugInfo.ActivePointCount}";
-            strokeTileDebugDetails.Text =
+            strokeCacheDebugDetails.Text =
                 $"Dirty ({debugInfo.DirtyBounds.X:F0},{debugInfo.DirtyBounds.Y:F0}) " +
                 $"{debugInfo.DirtyBounds.Width:F0}×{debugInfo.DirtyBounds.Height:F0}  |  " +
                 $"Active {debugInfo.ActiveStrokeBounds.Width:F0}×{debugInfo.ActiveStrokeBounds.Height:F0}  |  " +
-                "Tile 256²  |  Block 32  |  Overlap 2";
+                $"Cache {debugInfo.CacheBounds.Width:F0}×{debugInfo.CacheBounds.Height:F0}  |  " +
+                "Block 32  |  Overlap 2";
         }
 
         private void OnOnceRenderCompleted() {
@@ -818,7 +819,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             }
 
             if (_selectedTool is not CanvasPathDrawer)
-                UpdateStrokeTileDebugPanel(null);
+                UpdateStrokeCacheDebugPanel(null);
 
             action(nextTool);
         }
@@ -851,6 +852,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private InkProjectSession _session = null!;
         private readonly DispatcherQueueTimer _effectPreviewTimer;
         private EffectParams? _pendingEffectParams;
-        private StrokeTileDebugInfo? _strokeTileDebugInfo;
+        private StrokeCacheDebugInfo? _strokeCacheDebugInfo;
     }
 }

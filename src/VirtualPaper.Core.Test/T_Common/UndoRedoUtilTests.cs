@@ -41,6 +41,42 @@ namespace VirtualPaper.Core.Test.T_Common {
             public Task UndoAsync() { UndoCount++; _undo(); return Task.CompletedTask; }
         }
 
+        private sealed class MemoryCommand : IUndoableCommand, IMemoryAwareUndoableCommand {
+            public string Description { get; }
+            public long EstimatedMemoryBytes { get; }
+
+            public MemoryCommand(string description, long estimatedMemoryBytes) {
+                Description = description;
+                EstimatedMemoryBytes = estimatedMemoryBytes;
+            }
+
+            public Task ExecuteAsync() => Task.CompletedTask;
+            public Task UndoAsync() => Task.CompletedTask;
+        }
+
+        private sealed class SpillableMemoryCommand : IUndoableCommand, IMemoryAwareUndoableCommand {
+            public string Description { get; }
+            public long EstimatedMemoryBytes { get; private set; }
+            public long StorageBytes { get; private set; }
+            public bool IsReleased { get; private set; }
+
+            public SpillableMemoryCommand(string description, long memoryBytes) {
+                Description = description;
+                EstimatedMemoryBytes = memoryBytes;
+            }
+
+            public bool Spill() {
+                if (EstimatedMemoryBytes <= 64) return false;
+                StorageBytes = EstimatedMemoryBytes;
+                EstimatedMemoryBytes = 64;
+                return true;
+            }
+
+            public void Release() => IsReleased = true;
+            public Task ExecuteAsync() => Task.CompletedTask;
+            public Task UndoAsync() => Task.CompletedTask;
+        }
+
         // ── Record ────────────────────────────────────────────────────
 
         [TestMethod]
@@ -73,6 +109,217 @@ namespace VirtualPaper.Core.Test.T_Common {
             limited.Record(MakeCommand("d"));
 
             Assert.AreEqual(3, limited.UndoStackSize);
+        }
+
+        [TestMethod]
+        public void Record_WhenMemoryLimitExceeded_RemovesOldestCommands() {
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxStackSize: 20,
+                maxMemoryBytes: 1_000);
+
+            limited.Record(new MemoryCommand("a", 400));
+            limited.Record(new MemoryCommand("b", 400));
+            limited.Record(new MemoryCommand("c", 400));
+
+            Assert.AreEqual(2, limited.UndoStackSize);
+            Assert.AreEqual(800L, limited.UndoMemoryBytes);
+            Assert.AreEqual(800L, limited.TotalMemoryBytes);
+        }
+
+        [TestMethod]
+        public void Record_WhenSingleCommandExceedsMemoryLimit_DoesNotRetainCommand() {
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxStackSize: 20,
+                maxMemoryBytes: 500);
+
+            limited.Record(new MemoryCommand("oversized", 600));
+
+            Assert.AreEqual(0, limited.UndoStackSize);
+            Assert.AreEqual(0L, limited.TotalMemoryBytes);
+            Assert.IsFalse(limited.IsSaved);
+        }
+
+        [TestMethod]
+        public void Record_WhenCommandCanSpill_RetainsCommandWithinMemoryLimit() {
+            var command = new SpillableMemoryCommand("large", 600);
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxStackSize: 20,
+                maxMemoryBytes: 500,
+                maxStorageBytes: 2_000,
+                commandStorageEstimator: item => ((SpillableMemoryCommand)item).StorageBytes,
+                tryReduceCommandMemory: item => ((SpillableMemoryCommand)item).Spill(),
+                commandReleased: item => ((SpillableMemoryCommand)item).Release());
+
+            limited.Record(command);
+
+            Assert.AreEqual(1, limited.UndoStackSize);
+            Assert.AreEqual(64L, limited.TotalMemoryBytes);
+            Assert.AreEqual(600L, limited.TotalStorageBytes);
+            Assert.IsFalse(command.IsReleased);
+        }
+
+        [TestMethod]
+        public void Record_WhenStorageLimitExceeded_RemovesOldestSpilledCommand() {
+            var first = new SpillableMemoryCommand("first", 400);
+            var second = new SpillableMemoryCommand("second", 400);
+            var third = new SpillableMemoryCommand("third", 400);
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxMemoryBytes: 200,
+                maxStorageBytes: 1_000,
+                commandStorageEstimator: item => ((SpillableMemoryCommand)item).StorageBytes,
+                tryReduceCommandMemory: item => ((SpillableMemoryCommand)item).Spill(),
+                commandReleased: item => ((SpillableMemoryCommand)item).Release());
+
+            limited.Record(first);
+            limited.Record(second);
+            limited.Record(third);
+
+            Assert.AreEqual(2, limited.UndoStackSize);
+            Assert.AreEqual(128L, limited.TotalMemoryBytes);
+            Assert.AreEqual(800L, limited.TotalStorageBytes);
+            Assert.IsTrue(first.IsReleased);
+            Assert.IsFalse(second.IsReleased);
+            Assert.IsFalse(third.IsReleased);
+        }
+
+        [TestMethod]
+        public void Record_WhenStorageLimitExceeded_KeepsMemoryOnlyCommands() {
+            var memoryOnly = new MemoryCommand("metadata", 10);
+            var stored = new SpillableMemoryCommand("pixels", 600);
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxMemoryBytes: 100,
+                maxStorageBytes: 500,
+                commandStorageEstimator: item =>
+                    item is SpillableMemoryCommand spillable ? spillable.StorageBytes : 0,
+                tryReduceCommandMemory: item =>
+                    item is SpillableMemoryCommand spillable && spillable.Spill(),
+                commandReleased: item => {
+                    if (item is SpillableMemoryCommand spillable) spillable.Release();
+                });
+
+            limited.Record(memoryOnly);
+            limited.Record(stored);
+
+            Assert.AreEqual(1, limited.UndoStackSize);
+            Assert.AreEqual(10L, limited.TotalMemoryBytes);
+            Assert.AreEqual(0L, limited.TotalStorageBytes);
+            Assert.IsTrue(stored.IsReleased);
+        }
+
+        [TestMethod]
+        public async Task Record_AfterUndo_ReleasesRedoCommandStorage() {
+            var first = new SpillableMemoryCommand("first", 400);
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxMemoryBytes: 100,
+                maxStorageBytes: 1_000,
+                commandStorageEstimator: item => ((SpillableMemoryCommand)item).StorageBytes,
+                tryReduceCommandMemory: item => ((SpillableMemoryCommand)item).Spill(),
+                commandReleased: item => ((SpillableMemoryCommand)item).Release());
+            limited.Record(first);
+            await limited.UndoAsync();
+
+            limited.Record(new SpillableMemoryCommand("second", 50));
+
+            Assert.AreEqual(0L, limited.RedoStorageBytes);
+            Assert.IsTrue(first.IsReleased);
+        }
+
+        [TestMethod]
+        public async Task Record_WithAsyncSpill_ReturnsBeforeSpillCompletes() {
+            var command = new SpillableMemoryCommand("large", 600);
+            var spillStarted = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var allowSpill = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxMemoryBytes: 100,
+                maxStorageBytes: 1_000,
+                commandStorageEstimator: item => ((SpillableMemoryCommand)item).StorageBytes,
+                tryReduceCommandMemoryAsync: async (item, cancellationToken) => {
+                    spillStarted.TrySetResult();
+                    await allowSpill.Task.WaitAsync(cancellationToken);
+                    return ((SpillableMemoryCommand)item).Spill();
+                });
+
+            limited.Record(command);
+            await spillStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Assert.AreEqual(600L, limited.TotalMemoryBytes);
+            Assert.AreEqual(0L, limited.TotalStorageBytes);
+
+            allowSpill.TrySetResult();
+            await limited.WaitForPendingMaintenanceAsync();
+
+            Assert.AreEqual(64L, limited.TotalMemoryBytes);
+            Assert.AreEqual(600L, limited.TotalStorageBytes);
+        }
+
+        [TestMethod]
+        public async Task UndoAsync_WhenBackgroundSpillIsActive_WaitsForMaintenance() {
+            var command = new SpillableMemoryCommand("large", 600);
+            var spillStarted = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            var allowSpill = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxMemoryBytes: 100,
+                commandStorageEstimator: item => ((SpillableMemoryCommand)item).StorageBytes,
+                tryReduceCommandMemoryAsync: async (item, cancellationToken) => {
+                    spillStarted.TrySetResult();
+                    await allowSpill.Task.WaitAsync(cancellationToken);
+                    return ((SpillableMemoryCommand)item).Spill();
+                });
+            limited.Record(command);
+            await spillStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+            Task<bool> undoTask = limited.UndoAsync();
+            await Task.Delay(20);
+            Assert.IsFalse(undoTask.IsCompleted);
+
+            allowSpill.TrySetResult();
+            Assert.IsTrue(await undoTask);
+            Assert.AreEqual(1, limited.RedoStackSize);
+        }
+
+        [TestMethod]
+        public async Task UndoRedo_MovesMemoryBetweenStacksWithoutChangingTotal() {
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxMemoryBytes: 1_000);
+            limited.Record(new MemoryCommand("a", 400));
+
+            await limited.UndoAsync();
+            Assert.AreEqual(0L, limited.UndoMemoryBytes);
+            Assert.AreEqual(400L, limited.RedoMemoryBytes);
+            Assert.AreEqual(400L, limited.TotalMemoryBytes);
+
+            await limited.RedoAsync();
+            Assert.AreEqual(400L, limited.UndoMemoryBytes);
+            Assert.AreEqual(0L, limited.RedoMemoryBytes);
+            Assert.AreEqual(400L, limited.TotalMemoryBytes);
+        }
+
+        [TestMethod]
+        public async Task Record_AfterUndo_ReleasesRedoMemory() {
+            using var limited = new UndoRedoUtil<IUndoableCommand>(
+                isSaved: true,
+                maxMemoryBytes: 1_000);
+            limited.Record(new MemoryCommand("a", 400));
+            await limited.UndoAsync();
+
+            limited.Record(new MemoryCommand("b", 300));
+
+            Assert.AreEqual(300L, limited.UndoMemoryBytes);
+            Assert.AreEqual(0L, limited.RedoMemoryBytes);
+            Assert.AreEqual(300L, limited.TotalMemoryBytes);
         }
 
         // ── UndoAsync ─────────────────────────────────────────────────

@@ -48,6 +48,7 @@ namespace VirtualPaper.Common {
             /// 临时缓存（预览、临时更换）
             /// </summary>
             public static string TempDir => Path.Combine(AppDataDir, "temp");
+            public static string TempStaticImgUndoDir => Path.Combine(TempDir, "staticImgUndo");
 
             public static string ExeIconDir => Path.Combine(CommonDataDir, "exeIcon");
 

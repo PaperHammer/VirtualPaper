@@ -129,6 +129,37 @@ namespace VirtualPaper.Core.Test.T_Common {
         // ── GetChecksumSHA256 ─────────────────────────────────────────
 
         [TestMethod]
+        public void IsPathWithinDirectory_DirectChild_ReturnsTrue() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+            string child = Path.Combine(root, "session", "payload.undo");
+
+            Assert.IsTrue(FileUtil.IsPathWithinDirectory(root, child));
+        }
+
+        [TestMethod]
+        public void IsPathWithinDirectory_ParentTraversalOutsideRoot_ReturnsFalse() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+            string escaped = Path.Combine(root, "session", "..", "..", "payload.undo");
+
+            Assert.IsFalse(FileUtil.IsPathWithinDirectory(root, escaped));
+        }
+
+        [TestMethod]
+        public void IsPathWithinDirectory_SiblingWithSamePrefix_ReturnsFalse() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+            string sibling = Path.Combine(Path.GetTempPath(), "path-root-backup", "payload.undo");
+
+            Assert.IsFalse(FileUtil.IsPathWithinDirectory(root, sibling));
+        }
+
+        [TestMethod]
+        public void IsPathWithinDirectory_RootItself_ReturnsFalse() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+
+            Assert.IsFalse(FileUtil.IsPathWithinDirectory(root, root));
+        }
+
+        [TestMethod]
         public void GetChecksumSHA256_SameContent_SameHash() {
             var tempFile = Path.GetTempFileName();
             File.WriteAllText(tempFile, "hello world");

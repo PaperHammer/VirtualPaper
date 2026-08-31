@@ -30,7 +30,7 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
         private void Initialize() {
             SharedFormat = DirectXPixelFormat.B8G8R8A8UIntNormalized;
             SharedAlphaMode = CanvasAlphaMode.Premultiplied;
-            UnReUtil = new StaticImgUndoRedoUtil(DesignFileUtil.IsSaveFromInit);
+            UnReUtil = new StaticImgUndoRedoUtil(DesignFileUtil.IsSaveFromInit, sessionId: SessionId);
             UnReUtil.IsSavedChanged += UnReUtil_IsSavedChanged;
         }
 

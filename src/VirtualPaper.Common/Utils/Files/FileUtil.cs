@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
+using VirtualPaper.Common.Logging;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 
@@ -212,6 +213,28 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         /// <summary>
+        /// Determines whether <paramref name="candidatePath"/> is a strict
+        /// descendant of <paramref name="rootDirectory"/> after both paths
+        /// have been normalized. The separator boundary prevents a sibling
+        /// such as "root-backup" from matching "root".
+        /// </summary>
+        public static bool IsPathWithinDirectory(
+            string rootDirectory,
+            string candidatePath) {
+            ArgumentException.ThrowIfNullOrWhiteSpace(rootDirectory);
+            ArgumentException.ThrowIfNullOrWhiteSpace(candidatePath);
+
+            string fullRootWithSeparator = Path.GetFullPath(rootDirectory).TrimEnd(
+                Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            string fullCandidatePath = Path.GetFullPath(candidatePath);
+
+            return fullCandidatePath.StartsWith(
+                fullRootWithSeparator,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
         /// 清空目录内容（删除所有文件和子目录），但保留目录本身。
         /// 使用 Enumerate 延迟求值，适合大目录。
         /// 跳过符号链接和联接点，避免意外删除外部文件。
@@ -279,18 +302,18 @@ namespace VirtualPaper.Common.Utils.Files {
         /// <param name="initialDelay"></param>
         /// <param name="retryDelay"></param>
         /// <returns>True if deletion completed succesfully.</returns>
-        public static async Task<bool> TryDeleteDirectoryAsync(string folderPath, int initialDelay = 1000, int retryDelay = 4000) {
+        public static async Task<bool> TryDeleteDirectoryAsync(string folderPath, int initialDelay = 1000, int retryDelay = 4000, bool isRecursive = true) {
             bool status = true;
             if (Directory.Exists(folderPath)) {
                 await Task.Delay(initialDelay);
                 try {
-                    await Task.Run(() => Directory.Delete(folderPath, true));
+                    await Task.Run(() => Directory.Delete(folderPath, isRecursive));
                 }
                 catch (Exception) {
                     //App.Log.Errors("Folder Delete Failure {0}.\nRetrying..", ex.Message);
                     await Task.Delay(retryDelay);
                     try {
-                        await Task.Run(() => Directory.Delete(folderPath, true));
+                        await Task.Run(() => Directory.Delete(folderPath, isRecursive));
                     }
                     catch (Exception) {
                         //App.Log.Errors("(Retry)Folder Delete Failure: {0}", ie.Message);
@@ -300,7 +323,34 @@ namespace VirtualPaper.Common.Utils.Files {
             }
             return status;
         }
-        
+
+        /// <summary>
+        /// Async folder delete operation after given delay.
+        /// </summary>
+        /// <param name="folderPath"></param>
+        /// <param name="initialDelay"></param>
+        /// <param name="retryDelay"></param>
+        /// <returns>True if deletion completed succesfully.</returns>
+        public static bool TryDeleteDirectory(string folderPath, int retryDelay = 4000, bool isRecursive = true) {
+            bool status = true;
+            if (Directory.Exists(folderPath)) {
+                try {
+                    Directory.Delete(folderPath, isRecursive);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {folderPath}.\nRetrying..", ex);
+                    try {
+                        Directory.Delete(folderPath, isRecursive);
+                    }
+                    catch (Exception ex2) {
+                        ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {folderPath}", ex2);
+                        status = false;
+                    }
+                }
+            }
+            return status;
+        }
+
         /// <summary>
         /// Async folder delete operation after given delay.
         /// </summary>
@@ -315,14 +365,34 @@ namespace VirtualPaper.Common.Utils.Files {
                 try {
                     await Task.Run(() => File.Delete(filePath));
                 }
-                catch (Exception) {
-                    //App.Log.Errors("Folder Delete Failure {0}.\nRetrying..", ex.Message);
+                catch (Exception ex) {
+                    ArcLog.GetLogger(typeof(FileUtil)).Error($"File Delete Failure {filePath}.\nRetrying..", ex);
                     await Task.Delay(retryDelay);
                     try {
                         await Task.Run(() => File.Delete(filePath));
                     }
-                    catch (Exception) {
-                        //App.Log.Errors("(Retry)Folder Delete Failure: {0}", ie.Message);
+                    catch (Exception ex2) {
+                        ArcLog.GetLogger(typeof(FileUtil)).Error($"File Delete Failure {filePath}", ex2);
+                        status = false;
+                    }
+                }
+            }
+            return status;
+        }
+
+        public static bool TryDeletFile(string filePath) {
+            bool status = true;
+            if (File.Exists(filePath)) {
+                try {
+                    File.Delete(filePath);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {filePath}.\nRetrying..", ex);
+                    try {
+                        File.Delete(filePath);
+                    }
+                    catch (Exception ex2) {
+                        ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {filePath}", ex2);
                         status = false;
                     }
                 }

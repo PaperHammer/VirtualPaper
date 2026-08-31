@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Utils.UndoRedo;
@@ -17,8 +18,14 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
     /// for the affected region to ensure the canvas display is updated accordingly. The command requires valid
     /// references to the target layer, canvas data, and pixel buffers for both the original and current
     /// states.</remarks>
-    public record RegionPixelSnapshotCommand : IUndoableCommand {
+    public partial record RegionPixelSnapshotCommand : IUndoableCommand, IMemoryAwareUndoableCommand, IDiskSpillableUndoCommand, IDisposable {
         public string Description { get; }
+        public long EstimatedMemoryBytes =>
+            _originalPixels.ResidentMemoryBytes +
+            _currentPixels.ResidentMemoryBytes +
+            CommandOverheadBytes;
+        long IDiskSpillableUndoCommand.DiskStorageBytes =>
+            _originalPixels.DiskStorageBytes + _currentPixels.DiskStorageBytes;
 
         public RegionPixelSnapshotCommand(
             Guid layerId,
@@ -32,30 +39,42 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             _layerId = layerId;
             _canvasData = canvasData;
             _dirtyRegion = dirtyRegion;
-            _originalPixels = originalPixels;
+            _originalPixels = new UndoDiskPayload(originalPixels);
             _isCompressed = isCompressed;
-            _currentPixels = currentPixels;
+            _currentPixels = new UndoDiskPayload(currentPixels);
             Description = description;
             _requestRenderAction = requestRenderAction;
         }
 
         public async Task ExecuteAsync() {
-            ApplyPixels(_currentPixels);
+            await ApplyPixelsAsync(_currentPixels);
         }
 
         public async Task UndoAsync() {
-            ApplyPixels(_originalPixels);
+            await ApplyPixelsAsync(_originalPixels);
         }
 
-        private void ApplyPixels(byte[] pixels) {
+        async Task<bool> IDiskSpillableUndoCommand.TrySpillToDiskAsync(
+            UndoDiskStore store,
+            CancellationToken cancellationToken) {
+            bool originalSpilled = await _originalPixels.TrySpillToDiskAsync(store, cancellationToken);
+            bool currentSpilled = await _currentPixels.TrySpillToDiskAsync(store, cancellationToken);
+            return originalSpilled || currentSpilled;
+        }
+
+        private async Task ApplyPixelsAsync(UndoDiskPayload payload) {
             int x = (int)_dirtyRegion.Left;
             int y = (int)_dirtyRegion.Top;
             int w = (int)_dirtyRegion.Width;
             int h = (int)_dirtyRegion.Height;
 
-            var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
+            byte[] pixels = await payload.ReadAsync();
+            if (_isCompressed)
+                pixels = await Task.Run(pixels.DecompressPixels);
 
-            if (_isCompressed) pixels = pixels.DecompressPixels();
+            // The disk read can yield; refresh the layer reference before touching
+            // its WinRT render target in case the layer was rebuilt meanwhile.
+            var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
             renderData?.RenderTarget?.SetPixelBytes(pixels, x, y, w, h);
 
             _requestRenderAction?.Invoke(_dirtyRegion);
@@ -65,9 +84,28 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
         private readonly Guid _layerId;
         private readonly InkCanvasData _canvasData;
         private readonly Rect _dirtyRegion;
-        private readonly byte[] _originalPixels;
+        private readonly UndoDiskPayload _originalPixels;
         private readonly bool _isCompressed;
-        private readonly byte[] _currentPixels;
+        private readonly UndoDiskPayload _currentPixels;
         private readonly Action<Rect> _requestRenderAction;
+        private const long CommandOverheadBytes = 256;
+
+        #region dispose
+        private bool _isDisposed;
+
+        protected virtual void Dispose(bool disposing) {
+            if (_isDisposed) return;
+            if (disposing) {
+                _originalPixels.Dispose();
+                _currentPixels.Dispose();
+            }
+            _isDisposed = true;
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

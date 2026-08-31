@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using VirtualPaper.Common.Extensions;
@@ -13,8 +14,10 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
     /// <summary>
     /// 效果应用的撤销/重做命令。存储效果参数和压缩后的原始图层数据
     /// </summary>
-    public record EffectCommand : IUndoableCommand {
+    public partial record EffectCommand : IUndoableCommand, IMemoryAwareUndoableCommand, IDiskSpillableUndoCommand, IDisposable {
         public string Description { get; }
+        public long EstimatedMemoryBytes => _originalPixels.ResidentMemoryBytes + 256;
+        long IDiskSpillableUndoCommand.DiskStorageBytes => _originalPixels.DiskStorageBytes;
 
         public EffectCommand(
             Guid layerId,
@@ -28,21 +31,22 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             _canvasData = canvasData;
             _shaderType = shaderType;
             _effectParams = effectParams;
-            _compressedOriginalPixels = compressedOriginalPixels;
+            _originalPixels = new UndoDiskPayload(compressedOriginalPixels);
             Description = description;
             _requestRenderAction = requestRenderAction;
         }
 
-        public Task ExecuteAsync() {
-            RestoreOriginal();
+        public async Task ExecuteAsync() {
+            await RestoreOriginalAsync();
             ApplyEffect(_effectParams);
-            return Task.CompletedTask;
         }
 
-        public Task UndoAsync() {
-            RestoreOriginal();
-            return Task.CompletedTask;
-        }
+        public Task UndoAsync() => RestoreOriginalAsync();
+
+        Task<bool> IDiskSpillableUndoCommand.TrySpillToDiskAsync(
+            UndoDiskStore store,
+            CancellationToken cancellationToken) =>
+            _originalPixels.TrySpillToDiskAsync(store, cancellationToken);
 
         private void ApplyEffect(EffectParams effectParams) {
             var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
@@ -69,22 +73,42 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             renderData.HandleOnceRenderCompleted();
         }
 
-        private void RestoreOriginal() {
+        private async Task RestoreOriginalAsync() {
+            byte[] compressedPixels = await _originalPixels.ReadAsync();
+            byte[] originalPixels = await Task.Run(compressedPixels.DecompressPixels);
+
+            // Disk I/O can yield. Resolve the layer again afterwards so a layer
+            // replacement does not leave us writing to a stale WinRT resource.
             var renderData = _canvasData.Layers.FirstOrDefault(l => l.Tag == _layerId)?.RenderData;
             if (renderData?.RenderTarget == null) return;
-
-            var originalPixels = _compressedOriginalPixels.DecompressPixels();
             renderData.RenderTarget.SetPixelBytes(originalPixels);
 
             _requestRenderAction?.Invoke();
             renderData.HandleOnceRenderCompleted();
         }
 
+        #region dispose
+        private bool _isDisposed;
+        protected virtual void Dispose(bool disposing) {
+            if (!_isDisposed) {
+                if (disposing) {
+                    _originalPixels.Dispose();
+                }
+                _isDisposed = true;
+            }
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+
         private readonly Guid _layerId;
         private readonly InkCanvasData _canvasData;
         private readonly ShaderType _shaderType;
         private readonly EffectParams _effectParams;
-        private readonly byte[] _compressedOriginalPixels;
+        private readonly UndoDiskPayload _originalPixels;
         private readonly Action _requestRenderAction;
     }
 }

@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Windows.Input;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.ThreadContext;
@@ -11,16 +13,24 @@ namespace VirtualPaper.UIComponent.Utils {
     /// 全局消息服务
     /// </summary>
     public static class GlobalMessageUtil {
-        private static void AddMsg(ArcWindow? arcWindow, GlobalMsgInfo globalMsgInfo, bool isAllowDuplication = false) {
+        private static void AddMsg(
+            ArcWindow? arcWindow,
+            GlobalMsgInfo globalMsgInfo,
+            bool isAllowDuplication = false,
+            bool replaceExisting = false) {
             if (Constants.IsTestMode) return;
 
             arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
             ExecuteOnUIThread(() => {
-                // 如果key不为null且不允许重复，检查是否已存在
-                if (globalMsgInfo.Key != null &&
-                    !isAllowDuplication &&
-                    GetGlobalMsg(globalMsgInfo.Key, arcWindow) != null)
-                    return;
+                // 固定 key 默认用于抑制重复消息；需要展示最新状态时，先移除同 key
+                // 的旧消息，再添加新实例，使消息文本和操作回调一起更新。
+                if (globalMsgInfo.Key != null && !isAllowDuplication) {
+                    GlobalMsgInfo? existing = GetGlobalMsg(globalMsgInfo.Key, arcWindow);
+                    if (existing != null) {
+                        if (!replaceExisting) return;
+                        arcWindow.InfobarMessages.Remove(existing);
+                    }
+                }
 
                 // 如果key为null，生成唯一key（时间戳+随机数）
                 if (globalMsgInfo.Key == null) {
@@ -64,8 +74,64 @@ namespace VirtualPaper.UIComponent.Utils {
         /// <summary>
         /// 显示成功消息
         /// </summary>
-        public static void ShowSuccess(string message, ArcWindow? arcWindow = null, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
-            AddMsg(arcWindow, new GlobalMsgInfo(key, isNeedLocalizer, message, extraMsg, InfoBarSeverity.Success));
+        public static void ShowSuccess(
+            string message,
+            ArcWindow? arcWindow = null,
+            string? key = null,
+            bool isNeedLocalizer = false,
+            string? extraMsg = null) {
+            AddMsg(arcWindow, new GlobalMsgInfo(
+                key,
+                isNeedLocalizer,
+                message,
+                extraMsg,
+                InfoBarSeverity.Success));
+        }
+
+        /// <summary>
+        /// 显示包含可点击操作的成功消息。
+        /// </summary>
+        public static void ShowSuccess(
+            string message,
+            string actionText,
+            Action action,
+            ArcWindow? arcWindow = null,
+            string? key = null,
+            bool isNeedLocalizer = false,
+            string? extraMsg = null) {
+            AddMsg(arcWindow, new GlobalMsgInfo(
+                key,
+                isNeedLocalizer,
+                message,
+                extraMsg,
+                InfoBarSeverity.Success,
+                actionText,
+                action));
+        }
+
+        /// <summary>
+        /// 显示包含可点击操作的成功消息，并使用 key 替换已有消息。
+        /// </summary>
+        public static void ShowSuccess(
+            string message,
+            string actionText,
+            Action action,
+            bool replaceExisting,
+            ArcWindow? arcWindow = null,
+            string? key = null,
+            bool isNeedLocalizer = false,
+            string? extraMsg = null) {
+            AddMsg(
+                arcWindow,
+                new GlobalMsgInfo(
+                    key,
+                    isNeedLocalizer,
+                    message,
+                    extraMsg,
+                    InfoBarSeverity.Success,
+                    actionText,
+                    action),
+                replaceExisting: replaceExisting);
         }
 
         /// <summary>
@@ -215,13 +281,44 @@ namespace VirtualPaper.UIComponent.Utils {
 
         public string Message { get; set; }
         public InfoBarSeverity Severity { get; set; }
+        public string? ActionText { get; }
+        public ICommand? ActionCommand { get; }
+        public Visibility ActionVisibility => ActionCommand == null
+            ? Visibility.Collapsed
+            : Visibility.Visible;
 
-        public GlobalMsgInfo(string? key, bool isNeedLocalizer, string msgOri18nKey, string? extraMsg, InfoBarSeverity infoBarSeverity) {
+        public GlobalMsgInfo(
+            string? key,
+            bool isNeedLocalizer,
+            string msgOri18nKey,
+            string? extraMsg,
+            InfoBarSeverity infoBarSeverity)
+            : this(
+                key,
+                isNeedLocalizer,
+                msgOri18nKey,
+                extraMsg,
+                infoBarSeverity,
+                null,
+                null) { }
+
+        public GlobalMsgInfo(
+            string? key,
+            bool isNeedLocalizer,
+            string msgOri18nKey,
+            string? extraMsg,
+            InfoBarSeverity infoBarSeverity,
+            string? actionText,
+            Action? action = null) {
             _key = key;
             Severity = infoBarSeverity;
 
             var mainMessage = isNeedLocalizer ? LanguageUtil.GetI18n(msgOri18nKey) : msgOri18nKey;
             Message = extraMsg != null ? mainMessage + extraMsg : mainMessage;
+            ActionText = actionText;
+            ActionCommand = action == null || string.IsNullOrWhiteSpace(actionText)
+                ? null
+                : new RelayCommand(action);
 
             IsOpen = true;
         }

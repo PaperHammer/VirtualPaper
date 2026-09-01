@@ -208,6 +208,7 @@ namespace VirtualPaper.Common {
             public static string Text_Off => "Text_Off";
             public static string Text_On => "Text_On";
             public static string Text_Resolution => "Text_Resolution";
+            public static string Text_ShowOnDisk => "Text_ShowOnDisk";
             public static string? Text_Save { get; }
             public static string? Text_Unsave { get; }
             public static string Text_VersionInfo => "Text_VersionInfo";

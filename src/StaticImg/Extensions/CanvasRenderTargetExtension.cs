@@ -3,11 +3,13 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
-using Microsoft.UI;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
+using Windows.Graphics.DirectX;
+using Windows.UI;
 using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Creation.StaticImg.Extensions {
@@ -40,20 +42,20 @@ namespace Workloads.Creation.StaticImg.Extensions {
             ExportDataStaticImg data,
             CancellationToken cancellationToken = default) {
             if (renderTarget == null) {
-                GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_InternalError)}");                
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_InternalError)));
                 return null;
-            }            
+            }
 
             if (string.IsNullOrWhiteSpace(data.Path)) {
-                GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_PathNotBeNone)}");
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_PathNotBeNone)));
                 return null;
             }
 
             try {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                string? directory = Path.GetDirectoryName(data.Path);
-                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory)) {
+                string directory = Path.GetDirectoryName(Path.GetFullPath(data.Path))!;
+                if (!Directory.Exists(directory)) {
                     Directory.CreateDirectory(directory);
                 }
 
@@ -65,16 +67,32 @@ namespace Workloads.Creation.StaticImg.Extensions {
                     _ => CanvasBitmapFileFormat.Png
                 };
 
+                bool supportsTransparency = SupportsTransparency(data.Format);
                 using var exportRenderTarget = new CanvasRenderTarget(
                     renderTarget.Device,
                     (float)size.Width,
                     (float)size.Height,
-                    renderTarget.Dpi);
+                    renderTarget.Dpi,
+                    DirectXPixelFormat.B8G8R8A8UIntNormalized,
+                    CanvasAlphaMode.Premultiplied);
 
                 using (var ds = exportRenderTarget.CreateDrawingSession()) {
-                    ds.Clear(Colors.Transparent);
                     var sourceRect = new Rect(0, 0, size.Width, size.Height);
                     var destRect = new Rect(0, 0, size.Width, size.Height);
+
+                    if (supportsTransparency) {
+                        // PNG/JPEG XR 支持 Alpha。Copy 模式直接复制合成结果的 RGBA，
+                        // 避免透明像素再次经过 SourceOver 混合后丢失透明度或颜色信息。
+                        ds.Clear(Color.FromArgb(0, 0, 0, 0));
+                        ds.Blend = CanvasBlend.Copy;
+                    }
+                    else {
+                        // JPEG/BMP 没有可靠的透明通道表示，显式铺白底，避免透明区域
+                        // 被编码器或查看器解释成不可预测的黑色背景。
+                        ds.Clear(Color.FromArgb(255, 255, 255, 255));
+                        ds.Blend = CanvasBlend.SourceOver;
+                    }
+
                     ds.DrawImage(renderTarget, destRect, sourceRect);
                 }
 
@@ -90,7 +108,12 @@ namespace Workloads.Creation.StaticImg.Extensions {
                 await exportRenderTarget.SaveAsync(randomAccessStream, bitmapFormat).AsTask(cancellationToken);
                 await randomAccessStream.FlushAsync().AsTask(cancellationToken);
 
-                GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {data.Path}");
+                GlobalMessageUtil.ShowSuccess(
+                    $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {data.Path}",
+                    LanguageUtil.GetI18n(Constants.I18n.Text_ShowOnDisk),
+                    () => _ = FileUtil.OpenFolderAsync(data.Path),
+                    replaceExisting: true,
+                    key: nameof(Constants.I18n.Project_Export_Success));
 
                 return data.Path;
             }
@@ -101,5 +124,12 @@ namespace Workloads.Creation.StaticImg.Extensions {
 
             return null;
         }
+
+        /// <summary>
+        /// Win2D 导出格式中，PNG 和 JPEG XR 可以保留 BGRA 像素的 Alpha 通道。
+        /// JPEG 不支持透明；BMP 的 Alpha 兼容性依赖读取方，因此按不透明格式处理。
+        /// </summary>
+        internal static bool SupportsTransparency(ExportImageFormat format) =>
+            format is ExportImageFormat.Png or ExportImageFormat.JpegXR;
     }
 }

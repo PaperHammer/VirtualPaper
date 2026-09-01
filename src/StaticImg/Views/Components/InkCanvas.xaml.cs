@@ -61,6 +61,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void InkCanvas_Unloaded(object sender, RoutedEventArgs e) {
             CancelPendingEffectPreview();
             _tool?.CancelPendingOperations();
+            _cropOverlayRenderer?.Dispose();
+            _cropOverlayRenderer = null;
         }
 
         protected override void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
@@ -89,7 +91,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.Data));
             _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.Data));
             _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.Data));
-            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.Data));
+            var cropTool = new CropTool(_viewModel.Data);
+            cropTool.OnSelectRectChanged += CropTool_OnSelectRectChanged;
+            _tool.RegisterTool(ToolType.Crop, cropTool);
             _tool.RegisterTool(ToolType.CanvasEffect, new EffectTool());
 
             foreach (var tool in _tool.GetAllTools()) {
@@ -157,9 +161,43 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void HandleCropAspectClicked(double e) {
+            if (_isSynchronizingCropAspectSelection || e <= 0) return;
+
             if (_selectedTool is CropTool ct) {
-                ct.RestoreOriginalContent();
-                ct.ApplyAspectRatio(e);
+                // 切换预设比例时会先清除旧裁剪框，再创建新裁剪框。这只是替换过程，
+                // 不能把中间出现的空矩形误判为“退出裁剪”并清除刚选中的模板。
+                _isReplacingCropAspect = true;
+                try {
+                    ct.RestoreOriginalContent();
+                    ct.ApplyAspectRatio(e);
+                }
+                finally {
+                    _isReplacingCropAspect = false;
+                    if (ct.CurrentState == CanvasAreaSelector.SelectionState.None)
+                        ClearSelectedCropAspect();
+                }
+            }
+        }
+
+        private void CropTool_OnSelectRectChanged(object? sender, Rect selectionRect) {
+            // 裁剪辅助层属于最终显示层，矩形变化只需重绘 CanvasControl，
+            // 无需重新合成任何图层。
+            renderCanvas.Invalidate();
+            if (!selectionRect.IsEmpty || _isReplacingCropAspect) return;
+            ClearSelectedCropAspect();
+        }
+
+        private void ClearSelectedCropAspect() {
+            if (_viewModel.Data.SeletcedAspectItem == null) return;
+
+            // 清空绑定属性会触发 SelectedCropAspectClicked；同步期间忽略该回调，
+            // 避免在裁剪工具 Reset 的调用栈中再次进入状态清理。
+            _isSynchronizingCropAspectSelection = true;
+            try {
+                _viewModel.Data.SeletcedAspectItem = null;
+            }
+            finally {
+                _isSynchronizingCropAspectSelection = false;
             }
         }
 
@@ -174,8 +212,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 if (op) RenderToCompositeTarget(RenderMode.FullRegion);
             }
             else if (_selectedTool is CropTool ct) {
-                var op = ct.RestoreOriginalContent();
-                if (op) RenderToCompositeTarget(RenderMode.FullRegion);
+                ct.RestoreOriginalContent();
+                // 工具或图层切换后裁剪 Overlay 已退出，模板状态也同步清除。
+                ClearSelectedCropAspect();
             }
             else if (_selectedTool is EffectTool et) {
                 CancelPendingEffectPreview();
@@ -238,8 +277,20 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             Rect sourceRect = destRect;
             using (args.DrawingSession) {
                 args.DrawingSession.DrawImage(_compositeTarget, destRect, sourceRect);
+                DrawCropOverlay(args.DrawingSession, destRect);
                 DrawStrokeCacheDebugOverlay(args.DrawingSession);
             }
+        }
+
+        private void DrawCropOverlay(CanvasDrawingSession drawingSession, Rect canvasBounds) {
+            if (_selectedTool is not CropTool {
+                CurrentState: not CanvasAreaSelector.SelectionState.None
+            } cropTool) return;
+
+            (_cropOverlayRenderer ??= new CropOverlayRenderer()).Draw(
+                drawingSession,
+                canvasBounds,
+                cropTool.SelectionRect);
         }
 
         private void DrawStrokeCacheDebugOverlay(CanvasDrawingSession ds) {
@@ -829,7 +880,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            if (!_viewModel.Data.SelectedLayer.IsVisible) {
+            RenderBase? nextTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
+            if (!_viewModel.Data.SelectedLayer.IsVisible && nextTool is not CropTool) {
                 GlobalMessageUtil.ShowWarning(
                     message: nameof(Constants.I18n.Draft_SI_LayerLocked),
                     key: nameof(Constants.I18n.Draft_SI_LayerLocked),
@@ -837,7 +889,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
 
-            RenderBase? nextTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
             _selectedTool = nextTool;
             if (nextTool == null) {
                 // 还原光标
@@ -891,5 +942,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private readonly DispatcherQueueTimer _effectPreviewTimer;
         private EffectParams? _pendingEffectParams;
         private StrokeCacheDebugInfo? _strokeCacheDebugInfo;
+        private CropOverlayRenderer? _cropOverlayRenderer;
+        private bool _isReplacingCropAspect;
+        private bool _isSynchronizingCropAspectSelection;
     }
 }

@@ -24,6 +24,12 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public Rect SelectionRect => _selectionRect;
         public SelectionState CurrentState => _currentState;
 
+        /// <summary>
+        /// 是否需要在开始选择时保存目标图层快照。
+        /// 普通选区需要依靠快照移动和恢复像素；仅显示辅助框的工具可以关闭。
+        /// </summary>
+        protected virtual bool RequiresOriginalContentSnapshot => true;
+
         protected abstract IUndoableCommand? BuildUndoCommand();
 
         public override void HandlePressed(CanvasPointerEventArgs e) {
@@ -207,7 +213,8 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         }
 
         private void StartNewSelection(Point position) {
-            SaveOriginalContentSnapshot();
+            if (RequiresOriginalContentSnapshot)
+                SaveOriginalContentSnapshot();
             _startPoint = position;
             UpdateSelectionRect(new Rect(position, new Size(0, 0)));
             _originalSelectionRect = Rect.Empty;

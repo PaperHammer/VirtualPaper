@@ -25,7 +25,14 @@
                         IsOpen="{x:Bind IsOpen, Mode=TwoWay}"
                         Severity="{x:Bind Severity}"
                         Message="{x:Bind Message}"
-                        MaxWidth="900"/>
+                        MaxWidth="900">
+                        <InfoBar.ActionButton>
+                            <HyperlinkButton
+                                Content="{x:Bind ActionText}"
+                                Command="{x:Bind ActionCommand}"
+                                Visibility="{x:Bind ActionVisibility}"/>
+                        </InfoBar.ActionButton>
+                    </InfoBar>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

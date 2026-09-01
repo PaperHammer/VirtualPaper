@@ -4,6 +4,7 @@ using System.Text;
 using VirtualPaper.Common.Logging;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using Windows.System;
 
 namespace VirtualPaper.Common.Utils.Files {
     public static class FileUtil {
@@ -49,6 +50,10 @@ namespace VirtualPaper.Common.Utils.Files {
         /// </summary>
         /// <param name="path"></param>
         public static void OpenFolderByExplorer(string path) {
+            TryOpenFolderByExplorer(path);
+        }
+
+        private static bool TryOpenFolderByExplorer(string path) {
             try {
                 ProcessStartInfo startInfo = new() {
                     FileName = "explorer.exe"
@@ -64,8 +69,36 @@ namespace VirtualPaper.Common.Utils.Files {
                     throw new FileNotFoundException();
                 }
                 Process.Start(startInfo);
+                return true;
             }
-            catch { }
+            catch {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 使用系统文件管理器定位文件或打开目录。传入文件时优先通过 explorer.exe
+        /// 选中文件；失败时回退为通过 Windows Launcher 打开文件所在目录。
+        /// </summary>
+        public static async Task OpenFolderAsync(string path) {
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            bool isFile = File.Exists(path);
+            string fullPath = Path.GetFullPath(path);
+            if (isFile && TryOpenFolderByExplorer(fullPath)) return;
+
+            string folderPath = isFile
+                ? Path.GetDirectoryName(fullPath)!
+                : fullPath;
+            if (!Directory.Exists(folderPath)) return;
+
+            try {
+                StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
+                await Launcher.LaunchFolderAsync(folder);
+            }
+            catch {
+                OpenFolderByExplorer(folderPath);
+            }
         }
 
         /// <summary>

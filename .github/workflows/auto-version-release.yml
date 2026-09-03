@@ -555,7 +555,8 @@ jobs:
             Write-Error "No installer found in dist\"
             exit 1
         }
-        $installDir = "C:\VirtualPaperSmokeTest"
+        # Exercise quoting and Unicode path handling in both installer and application startup.
+        $installDir = Join-Path $env:RUNNER_TEMP "Virtual Paper 冒烟测试"
         Write-Host "Installer : $($installer.FullName)"
         Write-Host "Target dir: $installDir"
         $proc = Start-Process -FilePath $installer.FullName `
@@ -574,7 +575,67 @@ jobs:
 
     - name: Run smoke tests
       shell: pwsh
-      run: dotnet run --project src/VirtualPaper.SmokeTest/VirtualPaper.SmokeTest.csproj -c Release --no-build -- --install-dir "${{ steps.install.outputs.install_dir }}"
+      run: dotnet run --project src/VirtualPaper.SmokeTest/VirtualPaper.SmokeTest.csproj -c Release --no-build -- --install-dir "${{ steps.install.outputs.install_dir }}" --results-file TestResults/Smoke/smoke-results.json
+
+    - name: Publish smoke summary
+      if: always()
+      shell: pwsh
+      run: |
+        $resultPath = "TestResults/Smoke/smoke-results.json"
+        if (!(Test-Path -LiteralPath $resultPath)) {
+          "### Smoke test`n`nNo structured result was produced." >> $env:GITHUB_STEP_SUMMARY
+          exit 0
+        }
+        $report = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
+        "### Smoke test`n" >> $env:GITHUB_STEP_SUMMARY
+        "| Check | Result | Duration |" >> $env:GITHUB_STEP_SUMMARY
+        "| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
+        foreach ($check in $report.Checks) {
+          $status = if ($check.Passed) { 'PASS' } else { 'FAIL' }
+          "| $($check.Name) | $status | $($check.DurationMilliseconds) ms |" >> $env:GITHUB_STEP_SUMMARY
+        }
+
+    - name: Uninstall and verify cleanup
+      if: always() && steps.install.outputs.install_dir != ''
+      shell: pwsh
+      run: |
+        $installDir = "${{ steps.install.outputs.install_dir }}"
+        $uninstaller = Get-ChildItem -LiteralPath $installDir -Filter "unins*.exe" -File | Select-Object -First 1
+        if (-not $uninstaller) {
+          Write-Error "Uninstaller not found in $installDir"
+          exit 1
+        }
+        $process = Start-Process -FilePath $uninstaller.FullName `
+          -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" `
+          -Wait -PassThru
+        if ($process.ExitCode -ne 0) {
+          Write-Error "Uninstaller failed with exit code $($process.ExitCode)"
+          exit 1
+        }
+        Start-Sleep -Seconds 2
+        $remainingProcesses = @('VirtualPaper', 'VirtualPaper.UI', 'VirtualPaper.PlayerWeb', 'VirtualPaper.ScreenSaver') |
+          ForEach-Object { Get-Process -Name $_ -ErrorAction SilentlyContinue }
+        if ($remainingProcesses) {
+          Write-Error "VirtualPaper processes remain after uninstall: $($remainingProcesses.Name -join ', ')"
+          exit 1
+        }
+        if (Test-Path -LiteralPath $installDir) {
+          $remainingFiles = Get-ChildItem -LiteralPath $installDir -Force -Recurse -File
+          if ($remainingFiles) {
+            Write-Error "Files remain after uninstall: $($remainingFiles.FullName -join '; ')"
+            exit 1
+          }
+        }
+        Write-Host "[OK] Uninstall completed without process or file residue"
+
+    - name: Upload smoke test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-smoke
+        path: TestResults/Smoke/
+        if-no-files-found: warn
+        retention-days: 7
 
   # ─────────────────────────────────────────────────────────────
   # Job 4.5: 制作插件更新包（plugin zips + manifest）
@@ -897,7 +958,7 @@ jobs:
         if [ "${{ needs.prepare.outputs.has_plugin_update }}" = "true" ]; then
           echo -e "\033[0;32m[OK]\033[0m Plugins update packages uploaded as Artifact"
         fi
-        echo -e "\033[0;32m[OK]\033[0m Smoke test passed (install + launch + singleton)"
+        echo -e "\033[0;32m[OK]\033[0m Smoke test passed (install + launch + singleton + uninstall cleanup)"
         echo -e "\033[0;32m[OK]\033[0m Draft GitHub Release will be created: v${{ needs.prepare.outputs.new_version }}"
         echo -e "\033[0;32m==========================================\033[0m"
 

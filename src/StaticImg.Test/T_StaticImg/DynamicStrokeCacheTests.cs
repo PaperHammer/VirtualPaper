@@ -2,7 +2,7 @@ using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Workloads.Creation.StaticImg.Core.Rendering;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class DynamicStrokeCacheTests {
         [TestMethod]

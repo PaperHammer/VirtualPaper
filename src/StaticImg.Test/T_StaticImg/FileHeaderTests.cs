@@ -1,7 +1,7 @@
 using Workloads.Creation.StaticImg;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class FileHeaderTests {
         [TestMethod]
@@ -172,6 +172,43 @@ namespace VirtualPaper.UI.Test.T_StaticImg {
                 LayersOffset = 200,
                 LayersLength = 100,
             };
+
+            Assert.IsFalse(header.IsValid());
+        }
+
+        [TestMethod]
+        public void IsValid_NullMagic_ReturnsFalse() {
+            var header = FileHeader.Create(
+                new ArcSize(800, 600, 96, RebuildMode.None),
+                1,
+                100,
+                200);
+            header.Magic = null!;
+
+            Assert.IsFalse(header.IsValid());
+        }
+
+        [TestMethod]
+        public void IsValid_InfiniteCanvasDimension_ReturnsFalse() {
+            var header = FileHeader.Create(
+                new ArcSize(800, 600, 96, RebuildMode.None),
+                1,
+                100,
+                200);
+            header.CanvasWidth = float.PositiveInfinity;
+
+            Assert.IsFalse(header.IsValid());
+        }
+
+        [TestMethod]
+        public void IsValid_OverflowingBusinessDataRange_ReturnsFalse() {
+            var header = FileHeader.Create(
+                new ArcSize(800, 600, 96, RebuildMode.None),
+                1,
+                100,
+                200);
+            header.BusinessDataLength = uint.MaxValue;
+            header.LayersOffset = header.BusinessDataOffset;
 
             Assert.IsFalse(header.IsValid());
         }

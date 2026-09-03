@@ -334,28 +334,5 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             Assert.HasCount(2, _vm.Effects);
         }
 
-        //// ── 辅助方法 ──────────────────────────────────────────────────
-
-        ///// <summary>通过反射调用 private async void AddToWhiteListScr</summary>
-        //private async Task InvokeAddToWhiteListScrAsync(ProcInfo proc) {
-        //    var method = typeof(ScreenSaverViewModel)
-        //        .GetMethod("AddToWhiteListScr",
-        //            System.Reflection.BindingFlags.NonPublic |
-        //            System.Reflection.BindingFlags.Instance);
-        //    Assert.IsNotNull(method, "AddToWhiteListScr 方法未找到");
-        //    method.Invoke(_vm, new object[] { proc });
-        //    await Task.Delay(50); // async void，等待 Task.Run 完成
-        //}
-
-        ///// <summary>通过反射调用 internal async void RemoveFromWhiteScr</summary>
-        //private async Task InvokeRemoveFromWhiteScrAsync(ProcInfo proc) {
-        //    var method = typeof(ScreenSaverViewModel)
-        //        .GetMethod("RemoveFromWhiteScr",
-        //            System.Reflection.BindingFlags.NonPublic |
-        //            System.Reflection.BindingFlags.Instance);
-        //    Assert.IsNotNull(method, "RemoveFromWhiteScr 方法未找到");
-        //    method.Invoke(_vm, new object[] { proc });
-        //    await Task.Delay(50); // async void，等待 Task.Run 完成
-        //}
     }
 }

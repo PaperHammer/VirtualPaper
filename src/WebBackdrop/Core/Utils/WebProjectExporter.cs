@@ -40,11 +40,12 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             // 入口文件：以 project.json 的 file 字段为准；缺失时回退到 manifest 中 role=entry 的文件
             var entryRelative = NormalizePath(projectData.File);
             if (!File.Exists(Path.Combine(projectFolder, entryRelative))) {
-                var manifestEntry = designFileUtil.GetManifestItems()
-                    .FirstOrDefault(item => string.Equals(item.Role, "entry", StringComparison.OrdinalIgnoreCase))?.Path;
-                var manifestEntryRelative = NormalizePath(manifestEntry);
-                if (!string.IsNullOrWhiteSpace(manifestEntryRelative)
-                    && File.Exists(Path.Combine(projectFolder, manifestEntryRelative))) {
+                var manifestEntryRelative = designFileUtil.GetManifestItems()
+                    .Where(item => string.Equals(item.Role, "entry", StringComparison.OrdinalIgnoreCase))
+                    .Select(item => NormalizePath(item.Path))
+                    .FirstOrDefault(relative => !string.IsNullOrWhiteSpace(relative)
+                        && File.Exists(Path.Combine(projectFolder, relative)));
+                if (!string.IsNullOrWhiteSpace(manifestEntryRelative)) {
                     entryRelative = manifestEntryRelative;
                     projectData.File = entryRelative;
                 }

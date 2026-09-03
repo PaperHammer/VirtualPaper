@@ -384,8 +384,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 _userSettingsClient.Object,
                 _storagePicker.Object);
 
-            _vm.Detect();
-            await Task.Delay(100); // 等待 async void 完成
+            await _vm.DetectAsync(Task.CompletedTask);
 
             // Monitors 已被重新填充
             Assert.HasCount(1, _vm.Monitors);
@@ -400,9 +399,12 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 .Callback(() => monitorManagerCallCount++)
                 .Returns(new List<IMonitor> { _primaryMonitor.Object }.AsReadOnly());
 
-            _vm.Detect();
-            _vm.Detect(); // 第二次应该被 Interlocked 拦截
-            await Task.Delay(200);
+            var cooldown = new TaskCompletionSource(
+                TaskCreationOptions.RunContinuationsAsynchronously);
+            Task first = _vm.DetectAsync(cooldown.Task);
+            Task second = _vm.DetectAsync(cooldown.Task); // 第二次应该被 Interlocked 拦截
+            cooldown.SetResult();
+            await Task.WhenAll(first, second);
 
             // 第二次调用在第一次完成前被拦截，只执行了一次
             Assert.AreEqual(1, monitorManagerCallCount);
@@ -414,8 +416,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         public async Task Identify_WhenCalled_CallsIdentifyMonitorsAsync() {
             _vm = CreateVm();
 
-            _vm.Identify();
-            await Task.Delay(100);
+            await _vm.IdentifyAsync(Task.CompletedTask);
 
             _monitorManagerClient.Verify(m => m.IdentifyMonitorsAsync(), Times.Once);
         }
@@ -436,8 +437,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 _userSettingsClient.Object,
                 _storagePicker.Object);
 
-            _vm.Close();
-            await Task.Delay(100);
+            await _vm.CloseAsync();
 
             _wpControlClient.Verify(
                 w => w.CloseWallpaperAsync(monitor.Object),
@@ -456,8 +456,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 _userSettingsClient.Object,
                 _storagePicker.Object);
 
-            _vm.Close();
-            await Task.Delay(100);
+            await _vm.CloseAsync();
 
             Assert.AreEqual(string.Empty, _vm.Monitors[0].ThumbnailPath);
         }

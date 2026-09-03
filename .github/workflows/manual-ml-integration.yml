@@ -1,0 +1,46 @@
+name: Manual ML Integration Tests
+run-name: "[Manual] ML Integration | ${{ github.ref_name }}"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-ml-integration:
+    name: ML Integration Tests (Non-Dynamic-Image)
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Build ML tests
+      run: dotnet build src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release
+      shell: pwsh
+
+    - name: Run non-dynamic-image integration tests
+      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --filter "TestCategory=Integration&FullyQualifiedName!~DynamicImage" --settings src/test.runsettings --logger "trx;LogFileName=ml-integration-tests.trx" --results-directory TestResults/MLIntegration
+      shell: pwsh
+
+    - name: Upload ML integration results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ml-integration-${{ github.sha }}
+        path: TestResults/MLIntegration/
+        if-no-files-found: error
+        retention-days: 7

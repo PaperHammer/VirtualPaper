@@ -160,6 +160,47 @@ namespace VirtualPaper.Core.Test.T_Common {
         }
 
         [TestMethod]
+        public void GetContainedRelativePath_NestedPath_ReturnsNormalizedRelativePath() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+            string path = Path.Combine(root, "images", "cover.png");
+
+            string relative = FileUtil.GetContainedRelativePath(root, path, nameof(path));
+
+            Assert.AreEqual(Path.Combine("images", "cover.png"), relative);
+        }
+
+        [TestMethod]
+        public void GetContainedRelativePath_RootItself_ReturnsCurrentDirectory() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+
+            string relative = FileUtil.GetContainedRelativePath(root, root, nameof(root));
+
+            Assert.AreEqual(".", relative);
+        }
+
+        [TestMethod]
+        public void GetContainedRelativePath_SiblingWithSamePrefix_Throws() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+            string sibling = Path.Combine(Path.GetTempPath(), "contained-root-backup", "cover.png");
+
+            var exception = Assert.ThrowsExactly<ArgumentException>(() =>
+                FileUtil.GetContainedRelativePath(root, sibling, nameof(sibling)));
+
+            Assert.AreEqual(nameof(sibling), exception.ParamName);
+        }
+
+        [TestMethod]
+        public void GetContainedRelativePath_ParentTraversalOutsideRoot_Throws() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+            string escaped = Path.Combine(root, "images", "..", "..", "cover.png");
+
+            var exception = Assert.ThrowsExactly<ArgumentException>(() =>
+                FileUtil.GetContainedRelativePath(root, escaped, nameof(escaped)));
+
+            Assert.AreEqual(nameof(escaped), exception.ParamName);
+        }
+
+        [TestMethod]
         public void GetChecksumSHA256_SameContent_SameHash() {
             var tempFile = Path.GetTempFileName();
             File.WriteAllText(tempFile, "hello world");

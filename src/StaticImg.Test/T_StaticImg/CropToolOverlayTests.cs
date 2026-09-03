@@ -4,7 +4,7 @@ using Windows.Foundation;
 using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Models.ToolItems;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class CropToolOverlayTests {
         [TestMethod]

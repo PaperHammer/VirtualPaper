@@ -100,7 +100,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             var dir = Path.GetDirectoryName(filePath)!;
             var entry = Path.GetFileName(filePath);
             var server = new PreviewServer();
-            await server.StartAsync(dir);
+            await server.StartAsync(dir, new PreviewServerOptions {
+                AllowedOrigin = _shellServer is null
+                    ? null
+                    : $"http://127.0.0.1:{_shellServer.Port}"
+            });
             _resourceServers.Add(server);
             return server.GetUrl(entry);
         }

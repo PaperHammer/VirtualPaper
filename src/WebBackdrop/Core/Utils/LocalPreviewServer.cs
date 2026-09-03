@@ -239,7 +239,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             return true;
         }
 
-        private string? GetFilePath(string requestPath) {
+        internal string? GetFilePath(string requestPath) {
             string relativePath;
             try {
                 relativePath = Uri.UnescapeDataString(requestPath.TrimStart('/')).Replace('/', Path.DirectorySeparatorChar);
@@ -259,7 +259,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             response.Close();
         }
 
-        private static string InjectRefreshClient(string html) {
+        internal static string InjectRefreshClient(string html) {
             const string script = "<script>(() => { const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/__preview_events`); ws.onmessage = e => { if (e.data === 'css') { document.querySelectorAll('link[rel=\\\"stylesheet\\\"]').forEach(link => { const url = new URL(link.href); url.searchParams.set('__preview', Date.now()); link.href = url; }); } else { window.parent.postMessage('__preview_reload', '*'); } }; })();</script>";
             return html.Contains("</body>", StringComparison.OrdinalIgnoreCase)
                 ? html.Replace("</body>", script + "</body>", StringComparison.OrdinalIgnoreCase)
@@ -277,7 +277,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             return ((IPEndPoint)listener.LocalEndpoint).Port;
         }
 
-        private static string GetContentType(string filePath) => Path.GetExtension(filePath).ToLowerInvariant() switch {
+        internal static string GetContentType(string filePath) => Path.GetExtension(filePath).ToLowerInvariant() switch {
             ".css" => "text/css; charset=utf-8",
             ".js" => "text/javascript; charset=utf-8",
             ".json" => "application/json; charset=utf-8",

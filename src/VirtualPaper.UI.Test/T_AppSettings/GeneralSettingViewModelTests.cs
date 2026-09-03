@@ -20,7 +20,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         private Mock<IUserSettingsClient> _userSettingsClient = null!;
         private Mock<IWallpaperControlClient> _wpControlClient = null!;
         private Mock<ISettings> _settings = null!;
-        private Mock<ICommandsClient> _commandsClient;
+        private Mock<ICommandsClient> _commandsClient = null!;
         private GeneralSettingViewModel _vm = null!;
 
         [TestInitialize]

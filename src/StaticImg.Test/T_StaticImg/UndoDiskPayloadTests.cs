@@ -2,7 +2,7 @@ using VirtualPaper.Common.Utils.UndoRedo;
 using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.InkSystem.Utils;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class UndoDiskPayloadTests {
         private string _testRoot = null!;

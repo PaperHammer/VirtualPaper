@@ -69,13 +69,13 @@ namespace VirtualPaper.UIComponent.Templates {
             }
 
             // Tab/F6 不属于文本编辑，在子控件响应前截止，避免转移焦点。
-            if (IsGlobalNavigationKey(e.Key)) {
+            if (ArcWindowKeyboardPolicy.IsGlobalNavigationKey(e.Key)) {
                 e.Handled = true;
                 return;
             }
 
             // 文本输入仍可移动光标、换行和输入空格；其他控件不响应隐式键盘操作。
-            if (IsControlInteractionKey(e.Key) && !isTextInput) {
+            if (ArcWindowKeyboardPolicy.IsControlInteractionKey(e.Key) && !isTextInput) {
                 e.Handled = true;
             }
         }
@@ -89,7 +89,8 @@ namespace VirtualPaper.UIComponent.Templates {
             }
 
             // 输入控件未消费的边界方向键在窗口边界截止，避免焦点外逸。
-            if (!e.Handled && (IsGlobalNavigationKey(e.Key) || IsControlInteractionKey(e.Key))) {
+            if (!e.Handled && (ArcWindowKeyboardPolicy.IsGlobalNavigationKey(e.Key) ||
+                ArcWindowKeyboardPolicy.IsControlInteractionKey(e.Key))) {
                 e.Handled = true;
             }
         }
@@ -108,11 +109,23 @@ namespace VirtualPaper.UIComponent.Templates {
             PART_KeyboardFocusSink.Focus(FocusState.Programmatic);
         }
 
-        private static bool IsGlobalNavigationKey(VirtualKey key) => key is
+        private static bool IsTextInput(DependencyObject? current) {
+            while (current != null) {
+                if (current is TextBox or PasswordBox or RichEditBox or AutoSuggestBox or NumberBox or WebView2) {
+                    return true;
+                }
+                current = VisualTreeHelper.GetParent(current);
+            }
+            return false;
+        }
+    }
+
+    internal static class ArcWindowKeyboardPolicy {
+        public static bool IsGlobalNavigationKey(VirtualKey key) => key is
             VirtualKey.Tab or
             VirtualKey.F6;
 
-        private static bool IsControlInteractionKey(VirtualKey key) => key is
+        public static bool IsControlInteractionKey(VirtualKey key) => key is
             VirtualKey.Escape or
             VirtualKey.Enter or
             VirtualKey.Space or
@@ -124,15 +137,5 @@ namespace VirtualPaper.UIComponent.Templates {
             VirtualKey.End or
             VirtualKey.PageUp or
             VirtualKey.PageDown;
-
-        private static bool IsTextInput(DependencyObject? current) {
-            while (current != null) {
-                if (current is TextBox or PasswordBox or RichEditBox or AutoSuggestBox or NumberBox or WebView2) {
-                    return true;
-                }
-                current = VisualTreeHelper.GetParent(current);
-            }
-            return false;
-        }
     }
 }

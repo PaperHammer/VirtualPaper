@@ -38,7 +38,9 @@
 		</AssemblyAttribute>
 	</ItemGroup>
 
-	<Target Name="CopyToVirtualPaper" AfterTargets="Build">
+	<Target Name="CopyToVirtualPaper"
+			AfterTargets="Build"
+			Condition="'$(SolutionDir)' != '' and '$(SolutionDir)' != '*Undefined*'">
 		<ItemGroup>
 			<DepthModels Include="$(ProjectDir)DepthEstimate\ai_models\**\*" />
 			<StyleModels Include="$(ProjectDir)StyleTransfer\ai_models\**\*" />

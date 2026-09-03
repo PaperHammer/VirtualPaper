@@ -101,6 +101,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             await writePayloadAsync(output, cancellationToken);
             long layerEnd = output.Position;
             long layerLength = layerEnd - layerStart;
+            if (layerLength < 0)
+                throw new InvalidDataException("图层写入结束位置不能早于载荷起始位置。");
             if (layerLength > int.MaxValue)
                 throw new InvalidDataException($"单图层数据超过格式上限: {layerLength} bytes。");
 

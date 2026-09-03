@@ -35,17 +35,17 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
             Watcher.Stop();
         }
 
-        private void OnCreated(string path) {
+        internal void OnCreated(string path) {
             Tree.Add(path);
             Raise(ProjectChangeType.Created, path);
         }
 
-        private void OnDeleted(string path) {
+        internal void OnDeleted(string path) {
             Tree.Remove(path);
             Raise(ProjectChangeType.Deleted, path);
         }
 
-        private void OnRenamed(string oldPath, string newPath) {
+        internal void OnRenamed(string oldPath, string newPath) {
             Tree.Rename(oldPath, newPath);
 
             if (Documents.IsOpen(oldPath)) {
@@ -55,7 +55,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
             Raise(ProjectChangeType.Renamed, newPath, oldPath);
         }
 
-        private void OnModified(string path) {
+        internal void OnModified(string path) {
             var document = Documents.Get(path);
 
             /*

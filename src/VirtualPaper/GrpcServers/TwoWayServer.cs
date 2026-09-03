@@ -1,5 +1,6 @@
 using Grpc.Core;
 using System.Collections.Concurrent;
+using System.IO;
 using VirtualPaper.Grpc.Service.TwoWay;
 
 namespace VirtualPaper.GrpcServers {
@@ -10,12 +11,12 @@ namespace VirtualPaper.GrpcServers {
             ServerCallContext context) {
 
             var clientId = Guid.NewGuid().ToString();
-            _clients[clientId] = responseStream;
+            _clients[clientId] = new ClientConnection(responseStream);
 
             try {
                 await foreach (var message in requestStream.ReadAllAsync()) {
                     // 处理接收到的消息
-                    await HandleMessageAsync(clientId, message, responseStream);
+                    HandleMessage(message);
                 }
             }
             finally {
@@ -23,17 +24,12 @@ namespace VirtualPaper.GrpcServers {
             }
         }
 
-        private async Task HandleMessageAsync(string clientId, TwoWayMessage message, IServerStreamWriter<TwoWayMessage> responseStream) {
-            switch (message.Type) {
-                case "UI_CLOSE_RESULT":
-                    if (_closeRequestTcs != null && message.RequestId == _closeRequestId) {
-                        var canClose = bool.Parse(message.Payload);
-                        _closeRequestTcs.TrySetResult(canClose);
-                    }
-                    break;
+        private static void HandleMessage(TwoWayMessage message) {
+            if (message.Type == "UI_CLOSE_RESULT"
+                && bool.TryParse(message.Payload, out var canClose)
+                && _closeRequests.TryGetValue(message.RequestId, out var request)) {
+                request.TrySetResult(canClose);
             }
-
-            await Task.CompletedTask;
         }
 
         #region 静态方法用于发送消息和等待响应
@@ -42,8 +38,13 @@ namespace VirtualPaper.GrpcServers {
         /// 向所有连接的客户端发送消息
         /// </summary>
         public static async Task BroadcastAsync(TwoWayMessage message) {
-            foreach (var client in _clients.Values) {
-                await client.WriteAsync(message);
+            foreach (var client in _clients) {
+                try {
+                    await client.Value.WriteAsync(message);
+                }
+                catch (Exception ex) when (ex is IOException or InvalidOperationException or RpcException) {
+                    _clients.TryRemove(client.Key, out _);
+                }
             }
         }
 
@@ -52,33 +53,46 @@ namespace VirtualPaper.GrpcServers {
         /// </summary>
         public static async Task<bool> RequestUICloseAsync(TimeSpan? timeout = null) {
             timeout ??= TimeSpan.FromSeconds(30);
-            _closeRequestTcs = new TaskCompletionSource<bool>();
-            _closeRequestId = Guid.NewGuid().ToString();
+            var request = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var requestId = Guid.NewGuid().ToString();
+            _closeRequests[requestId] = request;
 
             var message = new TwoWayMessage {
                 Type = "REQUEST_CLOSE",
-                RequestId = _closeRequestId,
+                RequestId = requestId,
                 Payload = ""
             };
 
             await BroadcastAsync(message);
 
             using var cts = new CancellationTokenSource(timeout.Value);
-            using var registration = cts.Token.Register(() => _closeRequestTcs.TrySetResult(false));
+            using var registration = cts.Token.Register(() => request.TrySetResult(false));
 
             try {
-                return await _closeRequestTcs.Task;
+                return await request.Task;
             }
             finally {
-                _closeRequestTcs = null;
-                _closeRequestId = null;
+                _closeRequests.TryRemove(requestId, out _);
             }
         }
 
         #endregion
 		
-        private static readonly ConcurrentDictionary<string, IServerStreamWriter<TwoWayMessage>> _clients = new();
-        private static TaskCompletionSource<bool>? _closeRequestTcs;
-        private static string? _closeRequestId;
+        private sealed class ClientConnection(IServerStreamWriter<TwoWayMessage> writer) {
+            public async Task WriteAsync(TwoWayMessage message) {
+                await _writeLock.WaitAsync();
+                try {
+                    await writer.WriteAsync(message);
+                }
+                finally {
+                    _writeLock.Release();
+                }
+            }
+
+            private readonly SemaphoreSlim _writeLock = new(1, 1);
+        }
+
+		private static readonly ConcurrentDictionary<string, ClientConnection> _clients = new();
+        private static readonly ConcurrentDictionary<string, TaskCompletionSource<bool>> _closeRequests = new();
     }
 }

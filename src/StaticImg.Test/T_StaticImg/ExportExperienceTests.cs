@@ -10,7 +10,7 @@ using Windows.Storage;
 using Workloads.Creation.StaticImg.Extensions;
 using Workloads.Utils.DraftUtils.Models;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class ExportExperienceTests {
         [TestMethod]

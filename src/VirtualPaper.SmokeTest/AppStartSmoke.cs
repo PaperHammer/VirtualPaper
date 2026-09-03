@@ -17,14 +17,37 @@ internal static class AppStartSmoke {
 
         bool ok = true;
         foreach (var f in required) {
-            if (File.Exists(f))
+            if (IsPortableExecutable(f))
                 Console.WriteLine($"  [OK]  {f}");
             else {
-                Console.Error.WriteLine($"  [MISSING] {f}");
+                Console.Error.WriteLine($"  [MISSING/INVALID] {f}");
                 ok = false;
             }
         }
         return ok;
+    }
+
+    public static bool TestProcessCleanup() {
+        string[] processNames =
+        [
+            "VirtualPaper",
+            "VirtualPaper.UI",
+            "VirtualPaper.PlayerWeb",
+            "VirtualPaper.ScreenSaver",
+        ];
+        KillAllProcesses(processNames);
+
+        var remaining = processNames
+            .SelectMany(Process.GetProcessesByName)
+            .ToArray();
+        if (remaining.Length == 0) {
+            Console.WriteLine("  [OK] No VirtualPaper processes remain");
+            return true;
+        }
+
+        Console.Error.WriteLine(
+            $"  Processes remain: {string.Join(", ", remaining.Select(process => $"{process.ProcessName}({process.Id})"))}");
+        return false;
     }
 
     // ── 阶段 1+2: 启动主进程，等待 UI 自动拉起（最多 10s）────────────────
@@ -290,6 +313,20 @@ internal static class AppStartSmoke {
             if (Process.GetProcessesByName(name).Length > 0) return;
             Thread.Sleep(500);
             elapsed += 500;
+        }
+    }
+
+    private static bool IsPortableExecutable(string path) {
+        if (!File.Exists(path)) return false;
+        try {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return stream.Length >= 2 && stream.ReadByte() == 'M' && stream.ReadByte() == 'Z';
+        }
+        catch (IOException) {
+            return false;
+        }
+        catch (UnauthorizedAccessException) {
+            return false;
         }
     }
 

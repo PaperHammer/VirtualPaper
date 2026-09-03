@@ -1,7 +1,7 @@
 using Windows.UI;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class BusinessDataTests {
         [TestMethod]

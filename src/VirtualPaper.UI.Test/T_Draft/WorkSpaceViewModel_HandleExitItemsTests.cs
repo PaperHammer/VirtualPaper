@@ -21,7 +21,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
                 Mock.Of<IUserSettingsClient>(),
                 Mock.Of<Workloads.Entry.Interfaces.IRuntimeFactory>(),
                 _saveCoordinator.Object,
-                new Mock<Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry>(new Workloads.Entry.FileLoaders.IProjectFileLoader[] { }).Object);
+                new Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry([]));
         }
 
         private Mock<IRuntime> RegisterRuntime(bool isSaved, string fileName = "file.vp") {
@@ -58,7 +58,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             }
 
             Assert.IsEmpty(result);
-            Assert.AreEqual(2, _vm.TabViewItems.Count);
+            Assert.HasCount(2, _vm.TabViewItems);
             _saveCoordinator.Verify(x => x.CanCloseAsync(It.IsAny<IRuntime>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
         }
 
@@ -72,7 +72,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
                 result.Add(item);
             }
 
-            Assert.AreEqual(2, result.Count);
+            Assert.HasCount(2, result);
             Assert.IsEmpty(_vm.TabViewItems);
             _saveCoordinator.Verify(x => x.CanCloseAsync(It.IsAny<IRuntime>(), false, false), Times.Exactly(2));
         }
@@ -90,7 +90,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             }
 
             Assert.IsEmpty(result);
-            Assert.AreEqual(1, _vm.TabViewItems.Count);
+            Assert.HasCount(1, _vm.TabViewItems);
         }
 
         [TestMethod]
@@ -103,8 +103,8 @@ namespace VirtualPaper.UI.Test.T_Draft {
                 result.Add(item);
             }
 
-            Assert.AreEqual(1, result.Count);
-            Assert.AreEqual(1, _vm.TabViewItems.Count);
+            Assert.HasCount(1, result);
+            Assert.HasCount(1, _vm.TabViewItems);
             _saveCoordinator.Verify(x => x.CanCloseAsync(It.IsAny<IRuntime>(), false, false), Times.Once);
         }
     }

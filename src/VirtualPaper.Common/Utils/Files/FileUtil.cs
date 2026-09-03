@@ -268,6 +268,21 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         /// <summary>
+        /// Returns the normalized relative path when <paramref name="path"/>
+        /// is contained by <paramref name="root"/>; otherwise throws.
+        /// </summary>
+        public static string GetContainedRelativePath(string root, string path, string parameterName) {
+            var relative = Path.GetRelativePath(Path.GetFullPath(root), Path.GetFullPath(path));
+            if (relative == ".." ||
+                relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
+                Path.IsPathRooted(relative)) {
+                throw new ArgumentException("The path must be inside its configured root directory.", parameterName);
+            }
+
+            return relative;
+        }
+
+        /// <summary>
         /// 清空目录内容（删除所有文件和子目录），但保留目录本身。
         /// 使用 Enumerate 延迟求值，适合大目录。
         /// 跳过符号链接和联接点，避免意外删除外部文件。

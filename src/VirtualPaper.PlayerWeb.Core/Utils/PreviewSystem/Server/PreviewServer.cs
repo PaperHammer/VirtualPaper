@@ -24,6 +24,14 @@ namespace VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server {
 
             _app = builder.Build();
 
+            if (!string.IsNullOrWhiteSpace(options.AllowedOrigin)) {
+                var allowedOrigin = options.AllowedOrigin;
+                _app.Use(async (context, next) => {
+                    context.Response.Headers["Access-Control-Allow-Origin"] = allowedOrigin;
+                    await next(context);
+                });
+            }
+
             _app.UseStaticFiles(new StaticFileOptions {
                 FileProvider = new PhysicalFileProvider(_root)
             });

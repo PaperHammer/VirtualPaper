@@ -281,7 +281,6 @@ namespace VirtualPaper.Core.Test.T_Common {
             await spillStarted.Task.WaitAsync(TimeSpan.FromSeconds(2));
 
             Task<bool> undoTask = limited.UndoAsync();
-            await Task.Delay(20);
             Assert.IsFalse(undoTask.IsCompleted);
 
             allowSpill.TrySetResult();

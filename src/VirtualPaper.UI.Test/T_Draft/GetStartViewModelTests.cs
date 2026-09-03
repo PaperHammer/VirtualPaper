@@ -242,7 +242,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             string? fileName,
             string filePath) {
             var mock = new Mock<IRecentUsed>();
-            mock.Setup(r => r.FileName).Returns(fileName);
+            mock.Setup(r => r.FileName).Returns(() => fileName!);
             mock.Setup(r => r.FilePath).Returns(filePath);
             return mock.Object;
         }

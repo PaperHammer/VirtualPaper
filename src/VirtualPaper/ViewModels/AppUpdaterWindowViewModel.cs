@@ -103,11 +103,14 @@ namespace VirtualPaper.ViewModels {
             IDownloadService downloadService,
             IContentDialogService contentDialogService,
             IServiceProvider serviceProvider,
-            IAppUpdaterService appUpdaterService) {
+            IAppUpdaterService appUpdaterService,
+            Func<SimpleContentDialogCreateOptions, Task<ContentDialogResult>>? dialogPresenter = null) {
             _downloadService = downloadService;
             _contentDialogService = contentDialogService;
             _serviceProvider = serviceProvider;
             _appUpdaterService = appUpdaterService;
+            _dialogPresenter = dialogPresenter ??
+                (options => _contentDialogService.ShowSimpleDialogAsync(options));
         }
 
         public void ReceiveParameter(object? parameter) {
@@ -138,7 +141,7 @@ namespace VirtualPaper.ViewModels {
         }
 
         public async Task<bool> ShowCancelDialogAsync() {
-            var res = await _contentDialogService.ShowSimpleDialogAsync(
+            var res = await _dialogPresenter(
                 new SimpleContentDialogCreateOptions() {
                     Title = LanguageManager.Instance["AppUpdater_Update_TitleCancelQuestion"],
                     Content = CurrentState == DownloadState.Downloading ? LanguageManager.Instance["AppUpdater_Update_DescriptionCancelQuestion_ForDownloading"] : LanguageManager.Instance["AppUpdater_Update_DescriptionCancelQuestion_ForCompleted"],
@@ -151,7 +154,9 @@ namespace VirtualPaper.ViewModels {
         }
 
         #region Command Handlers
-        internal async void OnActionCommand() {
+        internal async void OnActionCommand() => await OnActionCommandAsync();
+
+        internal async Task OnActionCommandAsync() {
             switch (CurrentState) {
                 case DownloadState.Ready:
                 case DownloadState.DownloadFailed:
@@ -233,7 +238,9 @@ namespace VirtualPaper.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<AppUpdaterWindowViewModel>().Error(ex);
-                CurrentState = DownloadState.DownloadFailed;
+                CurrentState = CurrentState == DownloadState.Verifying
+                    ? DownloadState.VerifyFailed
+                    : DownloadState.DownloadFailed;
             }
             finally {
                 _cts?.Dispose();
@@ -301,7 +308,7 @@ namespace VirtualPaper.ViewModels {
                     ActionButtonText = LanguageManager.Instance["Common_TextConfirm"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_Completed"];
                     ClearSpeedInfo();
-                    _ = _contentDialogService.ShowSimpleDialogAsync(
+                    _ = _dialogPresenter(
                         new SimpleContentDialogCreateOptions() {
                             Title = LanguageManager.Instance["PluginsUpdate_Close"],
                             Content = IsPluginsUpdate
@@ -349,6 +356,7 @@ namespace VirtualPaper.ViewModels {
 
         private readonly IDownloadService _downloadService;
         private readonly IContentDialogService _contentDialogService;
+        private readonly Func<SimpleContentDialogCreateOptions, Task<ContentDialogResult>> _dialogPresenter;
         private readonly IServiceProvider _serviceProvider;
         private readonly IAppUpdaterService _appUpdaterService;
         private ReleaseInfo? _releaseInfo;

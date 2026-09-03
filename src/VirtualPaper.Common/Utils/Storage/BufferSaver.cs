@@ -24,10 +24,10 @@ namespace VirtualPaper.Common.Utils.Storage {
         }
 
         public async Task SaveManuallyAsync() {
+            await _saveLock.WaitAsync();
             try {
                 if (_filePath == string.Empty) return;
 
-                await _saveLock.WaitAsync();
                 await FlushBufferToFileAsync();
             }
             finally {

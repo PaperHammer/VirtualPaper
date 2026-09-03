@@ -39,6 +39,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Validate test workflow wiring
+      shell: pwsh
+      run: ./scripts/validate-test-workflow.ps1
+
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -109,7 +113,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Run Core Tests
-      run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=core-tests.trx" --results-directory TestResults/Core
+      run: dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj --configuration Release --no-build --verbosity normal --settings src/test.runsettings --logger "trx;LogFileName=core-tests.trx" --results-directory TestResults/Core
       shell: pwsh
 
     - name: Verify test results exist
@@ -154,7 +158,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Run UI Tests
-      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
+      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~DynamicImage" --settings src/test.runsettings --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
       shell: pwsh
 
     - name: Verify test results exist
@@ -172,6 +176,141 @@ jobs:
       with:
         name: test-results-ui
         path: TestResults/UI/
+        retention-days: 7
+
+  test-static-img:
+    name: StaticImg Tests
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run StaticImg Tests
+      run: dotnet test src/StaticImg.Test/StaticImg.Test.csproj --configuration Release --no-build --verbosity normal --settings src/test.runsettings --logger "trx;LogFileName=static-img-tests.trx" --results-directory TestResults/StaticImg
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/StaticImg/static-img-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
+      shell: pwsh
+
+    - name: Upload StaticImg test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-static-img
+        path: TestResults/StaticImg/
+        retention-days: 7
+
+  test-web-backdrop:
+    name: WebBackdrop Tests
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run WebBackdrop Tests
+      run: dotnet test src/WebBackdrop.Test/WebBackdrop.Test.csproj --configuration Release --no-build --verbosity normal --settings src/test.runsettings --logger "trx;LogFileName=web-backdrop-tests.trx" --results-directory TestResults/WebBackdrop
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/WebBackdrop/web-backdrop-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
+      shell: pwsh
+
+    - name: Upload WebBackdrop test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-web-backdrop
+        path: TestResults/WebBackdrop/
+        retention-days: 7
+
+  test-ui-component:
+    name: UIComponent Tests
+    runs-on: windows-latest
+    needs: build
+
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run UIComponent Tests
+      run: dotnet test src/VirtualPaper.UIComponent.Test/VirtualPaper.UIComponent.Test.csproj --configuration Release --no-build --verbosity normal --settings src/test.runsettings --logger "trx;LogFileName=ui-component-tests.trx" --results-directory TestResults/UIComponent
+      shell: pwsh
+
+    - name: Verify test results exist
+      run: |
+        if (!(Test-Path "TestResults/UIComponent/ui-component-tests.trx")) {
+          Write-Error "Test result file not found! Tests may not have run."
+          exit 1
+        }
+        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Test results file found"
+      shell: pwsh
+
+    - name: Upload UIComponent test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ui-component
+        path: TestResults/UIComponent/
         retention-days: 7
 
   test-ml:
@@ -199,7 +338,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Run ML Tests
-      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=ml-tests.trx" --results-directory TestResults/ML
+      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --filter "TestCategory!=Integration&FullyQualifiedName!~DynamicImage" --settings src/test.runsettings --logger "trx;LogFileName=ml-tests.trx" --results-directory TestResults/ML
       shell: pwsh
 
     - name: Verify test results exist
@@ -244,7 +383,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Run Shader Tests
-      run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=shader-tests.trx" --results-directory TestResults/Shader
+      run: dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj --configuration Release --no-build --verbosity normal --settings src/test.runsettings --logger "trx;LogFileName=shader-tests.trx" --results-directory TestResults/Shader
       shell: pwsh
 
     - name: Verify test results exist
@@ -267,7 +406,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [build, test-core, test-ui, test-ml, test-shader]
+    needs: [build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader]
     # build 被 skip（[skip ci]）或任意 job 被 cancel 时，整条链跳过
     if: |
       always() &&
@@ -279,13 +418,12 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         pattern: test-results-*
-        merge-multiple: true
         path: TestResults/
 
     - name: Verify all test results
       run: |
         echo "=== Checking test result files ==="
-        EXPECTED_FILES=("core-tests.trx" "ui-tests.trx" "ml-tests.trx" "shader-tests.trx" "release-build-tests.trx")
+        EXPECTED_FILES=("core-tests.trx" "ui-tests.trx" "static-img-tests.trx" "web-backdrop-tests.trx" "ui-component-tests.trx" "ml-tests.trx" "shader-tests.trx" "release-build-tests.trx")
         MISSING=0
         
         for file in "${EXPECTED_FILES[@]}"; do
@@ -307,6 +445,48 @@ jobs:
           echo -e "\033[0;32m[OK]\033[0m All test result files present"
           echo "TEST_RESULTS_VALID=true" >> $GITHUB_ENV
         fi
+
+    - name: Summarize code coverage
+      shell: pwsh
+      run: |
+          # Microsoft.Testing.Platform also stages each attachment under an In directory.
+          # Keep one canonical copy per project so coverage is not counted twice.
+          $coverageFiles = @(
+            Get-ChildItem -LiteralPath "TestResults" -Filter "*.cobertura.xml" -Recurse |
+              Where-Object { $_.FullName -notmatch '[\\/]In[\\/]' }
+          )
+          if ($coverageFiles.Count -ne 7) {
+            Write-Error "Expected 7 Cobertura reports, found $($coverageFiles.Count)."
+            exit 1
+          }
+          $covered = 0L
+          $valid = 0L
+          $rows = @()
+          $resultsRoot = (Resolve-Path -LiteralPath "TestResults").Path
+          foreach ($file in $coverageFiles) {
+            [xml]$report = Get-Content -LiteralPath $file.FullName -Raw
+            $projectCovered = [long]$report.coverage.'lines-covered'
+            $projectValid = [long]$report.coverage.'lines-valid'
+            $projectRate = if ($projectValid -eq 0) { 0 } else { [math]::Round(100 * $projectCovered / $projectValid, 2) }
+            $relativePath = [IO.Path]::GetRelativePath($resultsRoot, $file.FullName)
+            $artifactDirectory = [regex]::Split($relativePath, '[\\/]')[0]
+            $project = $artifactDirectory -replace '^test-results-', ''
+            $rows += "| $project | $projectCovered / $projectValid | $projectRate% |"
+            $covered += $projectCovered
+            $valid += $projectValid
+          }
+          $rate = if ($valid -eq 0) { 0 } else { [math]::Round(100 * $covered / $valid, 2) }
+          $summary = @(
+            "### Code coverage",
+            "",
+            "| Project | Lines | Coverage |",
+            "| --- | ---: | ---: |"
+          ) + ($rows | Sort-Object) + @(
+            "",
+            "**Combined:** $covered / $valid lines covered (**$rate%**) across 7 regular test projects."
+          )
+          $summary -join "`n" >> $env:GITHUB_STEP_SUMMARY
+          Write-Host "Combined line coverage: $covered / $valid ($rate%)"
 
     - name: Upload combined test results
       uses: actions/upload-artifact@v4

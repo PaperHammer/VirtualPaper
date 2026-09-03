@@ -8,6 +8,11 @@
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>VirtualPaper.UIComponent.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 
 	<!--避免打包时生成额外的语言包文件夹-->
 	<PropertyGroup>

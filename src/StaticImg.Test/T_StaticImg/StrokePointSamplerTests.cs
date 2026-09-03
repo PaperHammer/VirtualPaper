@@ -1,7 +1,7 @@
 using System.Numerics;
 using Workloads.Creation.StaticImg.Core.Rendering;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class StrokePointSamplerTests {
         [TestMethod]

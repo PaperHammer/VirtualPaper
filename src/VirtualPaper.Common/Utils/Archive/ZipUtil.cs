@@ -22,17 +22,12 @@ namespace VirtualPaper.Common.Utils.Archive {
 
                 for (int i = 0; i < folders.Count; i++) {
                     var folder = folders[i];
-                    int folderOffset = folder.Length + (folder.EndsWith('\\') ? 0 : 1);
                     var files = Directory.GetFiles(folder, "*.*", SearchOption.AllDirectories);
                     for (int j = 0; j < files.Length; j++) {
                         var file = files[j];
                         var fi = new FileInfo(file);
 
-                        // Make the name in zip based on the folder
-                        var entryName = file.Substring(folderOffset);
-
-                        // Remove drive from name and fix slash direction
-                        entryName = ZipEntry.CleanName(entryName);
+                        var entryName = GetSafeEntryName(folder, file);
 
                         var newEntry = new ZipEntry(entryName) {
                             // Note the zip format stores 2 second granularity
@@ -96,16 +91,11 @@ namespace VirtualPaper.Common.Utils.Archive {
 
                 for (int i = 0; i < fileData.Count; i++) {
                     var item = fileData[i];
-                    int folderOffset = item.ParentDirectory.Length + (item.ParentDirectory.EndsWith("\\") ? 0 : 1);
                     for (int j = 0; j < item.Files.Count; j++) {
                         var file = item.Files[j];
                         var fi = new FileInfo(file);
 
-                        // Make the name in zip based on the folder
-                        var entryName = file[folderOffset..];
-
-                        // Remove drive from name and fix slash direction
-                        entryName = ZipEntry.CleanName(entryName);
+                        var entryName = GetSafeEntryName(item.ParentDirectory, file);
 
                         var newEntry = new ZipEntry(entryName) {
                             // Note the zip format stores 2 second granularity
@@ -157,6 +147,26 @@ namespace VirtualPaper.Common.Utils.Archive {
                 await gzipStream.CopyToAsync(outputStream);
                 return outputStream.ToArray();
             }
+        }
+
+        private static string GetSafeEntryName(string parentDirectory, string filePath) {
+            var parentPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(parentDirectory));
+            var parentPrefix = parentPath + Path.DirectorySeparatorChar;
+            var fullFilePath = Path.GetFullPath(filePath);
+            if (!fullFilePath.StartsWith(parentPrefix, StringComparison.OrdinalIgnoreCase)) {
+                throw new ArgumentException(
+                    $"File must be located under its declared parent directory: {filePath}",
+                    nameof(filePath));
+            }
+
+            var relativePath = Path.GetRelativePath(parentPath, fullFilePath);
+            if (Path.IsPathRooted(relativePath)
+                || relativePath == ".."
+                || relativePath.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal)) {
+                throw new ArgumentException("Archive entry cannot traverse outside its parent directory.", nameof(filePath));
+            }
+
+            return ZipEntry.CleanName(relativePath);
         }
     }
 }

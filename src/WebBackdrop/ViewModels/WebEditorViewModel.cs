@@ -45,12 +45,23 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             _wpControlClient = AppServiceLocator.Services.GetRequiredService<IWallpaperControlClient>();
         }
 
+        internal WebEditorViewModel(
+            WebProjectSession session,
+            ArcPageContextKey contextKey,
+            IUserSettingsClient userSettings,
+            IWallpaperControlClient wpControlClient) {
+            _contextKey = contextKey;
+            Session = session;
+            _userSettings = userSettings;
+            _wpControlClient = wpControlClient;
+        }
+
         public async Task OpenFileAsync(string filePath, CancellationToken cancellationToken = default) {
             if (_cachedFileMap.TryGetValue(filePath, out var existing)) {
                 TouchCachedFile(existing);
                 ActiveFile = existing;
                 if (existing.CanOpenAsText) {
-                    Session.FileManager.UpdateSnapshot(filePath);
+                    Session.FileManager.UpdateSnapshot(existing.FilePath);
                 }
                 return;
             }

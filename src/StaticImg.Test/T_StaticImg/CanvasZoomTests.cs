@@ -1,7 +1,7 @@
 using Windows.Foundation;
 using Workloads.Creation.StaticImg.Views.Components;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class CanvasZoomTests {
         [TestMethod]

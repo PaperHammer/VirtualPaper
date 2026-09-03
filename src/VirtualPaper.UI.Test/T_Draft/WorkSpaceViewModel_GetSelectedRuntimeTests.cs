@@ -16,8 +16,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
                 Mock.Of<IUserSettingsClient>(),
                 Mock.Of<Workloads.Entry.Interfaces.IRuntimeFactory>(),
                 Mock.Of<VirtualPaper.EditPanel.Services.IWorkspaceSaveCoordinator>(),
-                new Mock<Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry>(
-                    new Workloads.Entry.FileLoaders.IProjectFileLoader[] { }).Object);
+                new Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry([]));
         }
 
         [TestMethod]

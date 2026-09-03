@@ -287,7 +287,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         #region Buttons Command
-        public async void Close() {
+        public async void Close() => await CloseAsync();
+
+        internal async Task CloseAsync() {
             if (Interlocked.Exchange(ref _canClose, 0) != 1) return;
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
@@ -298,7 +300,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        public async void Detect() {
+        public async void Detect() => await DetectAsync();
+
+        internal async Task DetectAsync(Task? cooldown = null) {
             if (Interlocked.Exchange(ref _canDetect, 0) != 1) return;
             (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
@@ -308,18 +312,20 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 key: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
                 isNeedLocalizer: true,
                 extraMsg: $" {Monitors.Count}");
-            await Task.Delay(3000);
+            await (cooldown ?? Task.Delay(3000));
 
             Interlocked.Exchange(ref _canDetect, 1);
             (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        public async void Identify() {
+        public async void Identify() => await IdentifyAsync();
+
+        internal async Task IdentifyAsync(Task? cooldown = null) {
             if (Interlocked.Exchange(ref _canIdentify, 0) != 1) return;
             (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
             await _monitorManagerClient.IdentifyMonitorsAsync();
-            await Task.Delay(3000);
+            await (cooldown ?? Task.Delay(3000));
 
             Interlocked.Exchange(ref _canIdentify, 1);
             (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();

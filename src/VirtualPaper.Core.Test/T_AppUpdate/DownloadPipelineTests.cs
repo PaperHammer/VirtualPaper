@@ -45,7 +45,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         [TestMethod]
         public async Task DownloadFileAsync_Success_ReturnsFilePath() {
             var progressValues = new List<DownloadProgress>();
-            var progress = new Progress<DownloadProgress>(p => progressValues.Add(p));
+            var progress = new InlineProgress<DownloadProgress>(p => progressValues.Add(p));
             var service = CreateInstallerService();
 
             var (success, filePath, error) = await service.DownloadFilePublicAsync(progress, CancellationToken.None);
@@ -462,7 +462,7 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             var info = new ReleaseInfo {
                 InstallerUri = new Uri("https://fake/setup.exe"),
             };
-            return await DownloadUpdateAsync(info, null, token);
+            return await DownloadUpdateAsync(info, new Progress<DownloadProgress>(), token);
         }
 
         public async Task<bool> VerifyUpdatePublicAsync() {
@@ -472,5 +472,9 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             };
             return await VerifyUpdateAsync(info, CancellationToken.None);
         }
+    }
+
+    internal sealed class InlineProgress<T>(Action<T> report) : IProgress<T> {
+        public void Report(T value) => report(value);
     }
 }

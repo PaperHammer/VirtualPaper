@@ -60,15 +60,18 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         /// 验证文件头有效性
         /// </summary>
         public readonly bool IsValid() {
-            return Encoding.ASCII.GetString(Magic) == "_VPD" &&
+            ulong businessDataEnd = (ulong)BusinessDataOffset + BusinessDataLength;
+
+            return Magic is { Length: 4 } &&
+                Encoding.ASCII.GetString(Magic) == "_VPD" &&
                 Version is Version1 or Version2 &&
-                CanvasWidth > 0 &&
-                CanvasHeight > 0 &&
+                float.IsFinite(CanvasWidth) && CanvasWidth > 0 &&
+                float.IsFinite(CanvasHeight) && CanvasHeight > 0 &&
                 Dpi >= 72 &&
                 Dpi <= 1200 &&
                 LayerCount > 0 &&
                 BusinessDataOffset >= Marshal.SizeOf<FileHeader>() &&
-                LayersOffset >= BusinessDataOffset + BusinessDataLength;
+                LayersOffset >= businessDataEnd;
         }
 
         /// <summary>

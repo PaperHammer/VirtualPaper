@@ -5,7 +5,7 @@ using Workloads.Creation.StaticImg;
 using Workloads.Creation.StaticImg.Models.SerializableData;
 using Workloads.Utils.DraftUtils.Models;
 
-namespace VirtualPaper.UI.Test.T_StaticImg {
+namespace StaticImg.Test.T_StaticImg {
     [TestClass]
     public class StaticImgDesignFileUtilTests {
         // ── Create 工厂 ──────────────────────────────────────────────
@@ -270,6 +270,42 @@ namespace VirtualPaper.UI.Test.T_StaticImg {
             Assert.AreEqual(stream.Length, stream.Position);
         }
 
+        [TestMethod]
+        public async Task WriteLengthPrefixedBlockAsync_RejectsInvalidOutputStreams() {
+            using var readOnly = new MemoryStream(new byte[16], writable: false);
+            using var nonSeekable = new NonSeekableWriteStream();
+
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                Layer.WriteLengthPrefixedBlockAsync(readOnly, static (_, _) => Task.CompletedTask));
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                Layer.WriteLengthPrefixedBlockAsync(nonSeekable, static (_, _) => Task.CompletedTask));
+        }
+
+        [TestMethod]
+        public async Task WriteLengthPrefixedBlockAsync_PropagatesPayloadFailure() {
+            using var stream = new MemoryStream();
+
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                Layer.WriteLengthPrefixedBlockAsync(
+                    stream,
+                    static (_, _) => throw new InvalidOperationException("payload failed")));
+
+            Assert.AreEqual("payload failed", exception.Message);
+        }
+
+        [TestMethod]
+        public async Task WriteLengthPrefixedBlockAsync_RejectsPayloadThatMovesBeforeStart() {
+            using var stream = new MemoryStream();
+
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                Layer.WriteLengthPrefixedBlockAsync(
+                    stream,
+                    static (target, _) => {
+                        target.Position = 0;
+                        return Task.CompletedTask;
+                    }));
+        }
+
         private static byte[] StructureToBytes<T>(T structure) where T : struct {
             int size = Marshal.SizeOf<T>();
             byte[] arr = new byte[size];
@@ -278,6 +314,10 @@ namespace VirtualPaper.UI.Test.T_StaticImg {
             Marshal.Copy(ptr, arr, 0, size);
             Marshal.FreeHGlobal(ptr);
             return arr;
+        }
+
+        private sealed class NonSeekableWriteStream : MemoryStream {
+            public override bool CanSeek => false;
         }
     }
 }

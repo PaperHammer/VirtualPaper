@@ -9,6 +9,11 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>WebBackdrop.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+	<ItemGroup>
 		<None Remove="MainPage.xaml" />
 		<None Remove="Views\Components\WebEditor.xaml" />
 		<None Remove="Views\Components\WebQuickOpenControl.xaml" />

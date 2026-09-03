@@ -15,5 +15,12 @@ namespace VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server {
         /// before &lt;/body&gt;.  Used for HMR hotreload.js injection.
         /// </summary>
         public string? InjectionScript { get; set; }
+
+        /// <summary>
+        /// Optional origin allowed to load resources from this server.
+        /// This is used by the 3D preview because WebGL textures are served
+        /// from a separate loopback port.
+        /// </summary>
+        public string? AllowedOrigin { get; set; }
     }
 }

@@ -71,8 +71,26 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Project {
             if (node == null)
                 return;
 
+            var oldParent = node.Parent;
+            var newParent = Find(Path.GetDirectoryName(newPath)!) as ProjectFolder;
+            if (newParent != null && !ReferenceEquals(oldParent, newParent)) {
+                oldParent?.Children.Remove(node);
+                newParent.Children.Add(node);
+                node.Parent = newParent;
+            }
+
+            RebindPath(node, oldPath, newPath);
+        }
+
+        private static void RebindPath(ProjectNode node, string oldPath, string newPath) {
             node.FullPath = newPath;
             node.Name = Path.GetFileName(newPath);
+
+            if (node is not ProjectFolder folder) return;
+            foreach (var child in folder.Children) {
+                var relativePath = Path.GetRelativePath(oldPath, child.FullPath);
+                RebindPath(child, child.FullPath, Path.Combine(newPath, relativePath));
+            }
         }
 
         public ProjectNode? Find(string path) {
@@ -80,7 +98,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Project {
         }
 
         private static ProjectNode? FindNode(ProjectNode node, string path) {
-            if (node.FullPath == path)
+            if (string.Equals(node.FullPath, path, StringComparison.OrdinalIgnoreCase))
                 return node;
 
             if (node is ProjectFolder folder) {

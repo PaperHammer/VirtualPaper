@@ -31,6 +31,7 @@
 		<ProjectReference Include="..\VirtualPaper.EditPanel\VirtualPaper.EditPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.IntelligentPanel\VirtualPaper.IntelligentPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
+		<ProjectReference Include="..\Workloads.Entry\Workloads.Entry.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

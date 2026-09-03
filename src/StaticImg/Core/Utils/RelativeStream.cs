@@ -20,7 +20,7 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             if (origin < 0 || origin > baseStream.Length)
                 throw new ArgumentOutOfRangeException(nameof(origin));
             if (fixedLength is < 0 ||
-                fixedLength.HasValue && origin + fixedLength.Value > baseStream.Length)
+                fixedLength.HasValue && fixedLength.Value > baseStream.Length - origin)
                 throw new ArgumentOutOfRangeException(nameof(fixedLength));
 
             _baseStream = baseStream;

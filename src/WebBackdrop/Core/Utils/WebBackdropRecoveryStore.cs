@@ -26,14 +26,17 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
         /// <summary>项目内文件的备份绝对路径（按相对路径镜像到恢复目录）。</summary>
         public static string GetBackupPath(string projectFolder, string filePath) {
-            var relative = Path.GetRelativePath(projectFolder, filePath);
-            return Path.Combine(GetProjectRecoveryDir(projectFolder), relative);
+            var relative = FileUtil.GetContainedRelativePath(projectFolder, filePath, nameof(filePath));
+            return Path.GetFullPath(Path.Combine(GetProjectRecoveryDir(projectFolder), relative));
         }
 
         /// <summary>从备份绝对路径还原出项目内原始文件的绝对路径。</summary>
         public static string GetOriginalPath(string projectFolder, string backupPath) {
-            var relative = Path.GetRelativePath(GetProjectRecoveryDir(projectFolder), backupPath);
-            return Path.Combine(projectFolder, relative);
+            var relative = FileUtil.GetContainedRelativePath(
+                GetProjectRecoveryDir(projectFolder),
+                backupPath,
+                nameof(backupPath));
+            return Path.GetFullPath(Path.Combine(projectFolder, relative));
         }
 
         public static IReadOnlyList<string> ListBackupPaths(string projectFolder) {

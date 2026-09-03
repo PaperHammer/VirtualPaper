@@ -81,7 +81,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         // FileSystemWatcher 一次保存常会产生多次 Modified/Reloaded，合并后避免重复清单处理、UI 刷新与文件冲突提示
 
         // 项目文件系统的总入口；创建、删除、重命名立即处理，修改、重载、冲突进入合并队列
-        private void OnProjectChanged(ProjectChangedEvent e) {
+        internal void OnProjectChanged(ProjectChangedEvent e) {
             if (e.Type is ProjectChangeType.Modified or ProjectChangeType.Reloaded or ProjectChangeType.Conflict) {
                 QueueChangedEvent(e);
                 return;

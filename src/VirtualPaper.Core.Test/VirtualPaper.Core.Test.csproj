@@ -18,6 +18,6 @@
 	</ItemGroup>
 
 	<PropertyGroup>
-		<RunSettingsFilePath>$(MSBuildProjectDirectory)\test.runsettings</RunSettingsFilePath>
+		<RunSettingsFilePath>$(MSBuildProjectDirectory)\..\test.runsettings</RunSettingsFilePath>
 	</PropertyGroup>
 </Project>

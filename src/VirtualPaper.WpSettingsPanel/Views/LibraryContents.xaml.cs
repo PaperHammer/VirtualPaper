@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
@@ -74,10 +76,58 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {
+            if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
+                return;
+            }
+
             if (e.ClickedItem is IWpBasicData data) {
                 var ctx = ArcPageContextManager.GetContext<WpSettings>();
                 await _viewModel.PreviewAsync(data, ctx);
             }
+        }
+
+        public void EnterSelectionMode() {
+            wallpapersLibView.SelectionMode = ListViewSelectionMode.Multiple;
+            NotifySelectionChanged();
+        }
+
+        public void SelectAllItems() {
+            if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
+                wallpapersLibView.SelectAll();
+            }
+        }
+
+        public async Task DeleteSelectedItemsAsync() {
+            var selectedItems = wallpapersLibView.SelectedItems
+                .OfType<IWpBasicData>()
+                .ToList();
+            if (selectedItems.Count == 0) return;
+
+            await _viewModel.DeleteAsync(selectedItems);
+            if (wallpapersLibView.SelectedItems.Count == 0) {
+                ExitSelectionMode();
+            }
+            else {
+                NotifySelectionChanged();
+            }
+        }
+
+        public void ExitSelectionMode() {
+            wallpapersLibView.SelectedItems.Clear();
+            wallpapersLibView.SelectionMode = ListViewSelectionMode.None;
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(false, 0);
+        }
+
+        private void WallpapersLibView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            NotifySelectionChanged();
+        }
+
+        private void NotifySelectionChanged() {
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(
+                wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple,
+                wallpapersLibView.SelectedItems.Count);
         }
 
         private async void ContextMenu_Click(object sender, RoutedEventArgs e) {

@@ -2,6 +2,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.UIComponent.Templates;
@@ -36,6 +37,10 @@ namespace VirtualPaper.WpSettingsPanel {
         #region nav
         private void NvLocal_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
+                if (ContentFrame.Content is LibraryContents currentLibrary) {
+                    currentLibrary.ExitSelectionMode();
+                }
+
                 Type pageType = args.SelectedItemContainer.Name switch {
                     "Nav_LibraryContents" => typeof(LibraryContents),
                     "Nav_ScreenSaver" => typeof(ScreenSaver),
@@ -64,6 +69,39 @@ namespace VirtualPaper.WpSettingsPanel {
             if (sender.Tag is FilterKey fk) {
                 _viewModel.OnFilterChanged(fk, sender.Text);
             }
+        }
+
+        private void SelectLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                library.EnterSelectionMode();
+            }
+        }
+
+        private void SelectAllLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                library.SelectAllItems();
+            }
+        }
+
+        private async void DeleteSelectedLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                await library.DeleteSelectedItemsAsync();
+            }
+        }
+
+        private void CancelLibrarySelection_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                library.ExitSelectionMode();
+            }
+        }
+
+        internal void UpdateLibrarySelectionState(bool isSelecting, int selectedCount) {
+            LibraryBrowseTools.Visibility = isSelecting ? Visibility.Collapsed : Visibility.Visible;
+            LibrarySelectionTools.Visibility = isSelecting ? Visibility.Visible : Visibility.Collapsed;
+            LibrarySelectionCount.Text = string.Format(
+                LanguageUtil.GetI18n(Constants.I18n.WpLib_SelectedCount),
+                selectedCount);
+            DeleteSelectedLibraryItems.IsEnabled = selectedCount > 0;
         }
 
         private readonly WpSettingsViewModel _viewModel;

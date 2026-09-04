@@ -345,23 +345,51 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task DeleteAsync(IWpBasicData data) {
+            await DeleteAsync(new[] { data });
+        }
+
+        internal async Task DeleteAsync(IReadOnlyCollection<IWpBasicData> items) {
             try {
+                var uniqueItems = items
+                    .GroupBy(item => item.WallpaperUid)
+                    .Select(group => group.First())
+                    .ToList();
+                if (uniqueItems.Count == 0) return;
+
+                string message = uniqueItems.Count == 1
+                    ? LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
+                    : string.Format(
+                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDeleteMany),
+                        uniqueItems.Count);
                 var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
-                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
+                    message
                     , LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt)
                     , LanguageUtil.GetI18n(Constants.I18n.Text_Confirm)
                     , LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes != DialogResult.Primary) return;
 
-                bool isUsing = await IsFileInUseAsync(data);
-                if (isUsing) {
+                await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
+                var activeFolders = _userSettingsClient.WallpaperLayouts
+                    .Select(layout => layout.FolderPath)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var deletable = uniqueItems
+                    .Where(item => !activeFolders.Contains(item.FolderPath))
+                    .ToList();
+                if (deletable.Count == 0) {
                     GlobalMessageUtil.ShowInfo(Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                     return;
                 }
 
-                HandleDelete(data);
-                if (Directory.Exists(data.FolderPath)) {
-                    Directory.Delete(data.FolderPath, true);
+                HandleDelete(deletable);
+                foreach (string folderPath in deletable
+                    .Select(item => item.FolderPath)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)) {
+                    if (Directory.Exists(folderPath)) {
+                        Directory.Delete(folderPath, true);
+                    }
+                }
+                if (deletable.Count != uniqueItems.Count) {
+                    GlobalMessageUtil.ShowInfo(Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                 }
             }
             catch (Exception ex) {
@@ -371,10 +399,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public void HandleDelete(IWpBasicData data) {
-            LibraryWallpapers.Remove(data);
-            _libraryWallpapers.Remove(data);
-            _wallpaperIndexService.Remove(data);
-            ItemDeleted?.Invoke(this, EventArgs.Empty);
+            HandleDelete(new[] { data });
+        }
+
+        public void HandleDelete(IEnumerable<IWpBasicData> items) {
+            bool handledAny = false;
+            foreach (var data in items
+                .GroupBy(item => item.WallpaperUid)
+                .Select(group => group.First())) {
+                LibraryWallpapers.Remove(data);
+                _libraryWallpapers.Remove(data);
+                _wallpaperIndexService.Remove(data);
+                handledAny = true;
+            }
+            if (handledAny) {
+                ItemDeleted?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <summary>删除条目后触发，通知 View 层检查是否需要补充加载更多数据</summary>

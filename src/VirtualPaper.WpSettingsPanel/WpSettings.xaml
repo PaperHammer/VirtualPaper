@@ -35,6 +35,7 @@
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <!-- 库专属工具并入顶部导航，避免额外占用一整行内容空间。 -->
                     <StackPanel x:Name="FilterBar" Orientation="Horizontal" Spacing="6">
+                        <StackPanel x:Name="LibraryBrowseTools" Orientation="Horizontal" Spacing="6">
                         <AutoSuggestBox x:Name="tbSearchName"
                             Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
                             Width="360"
@@ -90,6 +91,53 @@
                             Command="{x:Bind _viewModel.AddToLibCommand}">
                             <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xF8AA;" FontSize="16"/>
                         </Button>
+
+                        <Button x:Name="SelectLibraryItems"
+                            Width="32"
+                            Height="32"
+                            Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Click="SelectLibraryItems_Click"
+                            ToolTipService.ToolTip="{markup:I18n Key=WpLib_Select}">
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE762;" FontSize="16"/>
+                        </Button>
+                        </StackPanel>
+
+                        <StackPanel x:Name="LibrarySelectionTools"
+                            Orientation="Horizontal"
+                            Spacing="6"
+                            Visibility="Collapsed">
+                            <TextBlock x:Name="LibrarySelectionCount"
+                                MinWidth="96"
+                                VerticalAlignment="Center"
+                                TextAlignment="Right"/>
+                            <Button
+                                Height="32"
+                                Padding="10 0"
+                                Click="SelectAllLibraryItems_Click"
+                                Content="{markup:I18n Key=WpLib_SelectAll}"/>
+                            <Button x:Name="DeleteSelectedLibraryItems"
+                                Height="32"
+                                Padding="10 0"
+                                IsEnabled="False"
+                                Click="DeleteSelectedLibraryItems_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                    <TextBlock Text="{markup:I18n Key=Text_Delete}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Click="CancelLibrarySelection_Click"
+                                ToolTipService.ToolTip="{markup:I18n Key=Text_Cancel}">
+                                <FontIcon Glyph="&#xE711;" FontSize="14"/>
+                            </Button>
+                        </StackPanel>
                     </StackPanel>
 
                     <Button x:Name="ControlCenter"

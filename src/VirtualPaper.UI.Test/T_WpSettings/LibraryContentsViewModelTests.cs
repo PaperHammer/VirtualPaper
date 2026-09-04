@@ -175,6 +175,33 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _wallpaperIndexService.Verify(s => s.Remove(item), Times.Once);
         }
 
+        [TestMethod]
+        public void HandleDelete_MultipleItems_RemovesAllAndRaisesOneNotification() {
+            var first = MakeWpData("uid-1", "First");
+            var second = MakeWpData("uid-2", "Second");
+            PopulateLibrary(first, second);
+            int notifications = 0;
+            _vm.ItemDeleted += (_, _) => notifications++;
+
+            _vm.HandleDelete(new[] { first, second });
+
+            Assert.HasCount(0, _vm.LibraryWallpapers);
+            _wallpaperIndexService.Verify(s => s.Remove(first), Times.Once);
+            _wallpaperIndexService.Verify(s => s.Remove(second), Times.Once);
+            Assert.AreEqual(1, notifications);
+        }
+
+        [TestMethod]
+        public void HandleDelete_MultipleItems_DeduplicatesByWallpaperUid() {
+            var item = MakeWpData("uid-1", "First");
+            var duplicate = MakeWpData("uid-1", "Duplicate instance");
+            PopulateLibrary(item);
+
+            _vm.HandleDelete(new[] { item, duplicate });
+
+            _wallpaperIndexService.Verify(s => s.Remove(It.IsAny<IWpBasicData>()), Times.Once);
+        }
+
         // ── UpdateLib (TryGetValue 命中) ──────────────────────────────
 
         [TestMethod]

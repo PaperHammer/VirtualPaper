@@ -164,6 +164,7 @@ namespace VirtualPaper.Common {
             public static string Dialog_Content_Import_Failed_Lib => "Dialog_Content_Import_Failed_Lib";
             public static string Dialog_Content_Import_NeedUpdate => "Dialog_Content_Import_NeedUpdate";
             public static string Dialog_Content_LibraryDelete => "Dialog_Content_LibraryDelete";
+            public static string Dialog_Content_LibraryDeleteMany => "Dialog_Content_LibraryDeleteMany";
             public static string Dialog_Content_OnlyPictureAndGif => "Dialog_Content_OnlyPictureAndGif";
             public static string Dialog_Content_WallpaperDirectoryChangePathInvalid => "Dialog_Content_WallpaperDirectoryChangePathInvalid";
             public static string Dialog_Title_CreateType => "Dialog_Title_CreateType";
@@ -213,6 +214,7 @@ namespace VirtualPaper.Common {
             public static string? Text_Unsave { get; }
             public static string Text_VersionInfo => "Text_VersionInfo";
             public static string WpArrange_Duplicate => "WpArrange_Duplicate";
+            public static string WpLib_SelectedCount => "WpLib_SelectedCount";
             public static string WpArrange_DuplicateExplain => "WpArrange_DuplicateExplain";
             public static string WpArrange_Expand => "WpArrange_Expand";
             public static string WpArrange_ExpandExplain => "WpArrange_ExpandExplain";

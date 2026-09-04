@@ -172,6 +172,9 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
     <value>是否删除该文件？</value>
   </data>
+  <data name="Dialog_Content_LibraryDeleteMany" xml:space="preserve">
+    <value>是否删除选中的 {0} 个文件？</value>
+  </data>
   <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
     <value>仅支持以下文件类型：
     动图 .gif
@@ -239,6 +242,15 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   </data>
   <data name="Text_RemoveFromLib" xml:space="preserve">
     <value>从库中删除</value>
+  </data>
+  <data name="WpLib_Select" xml:space="preserve">
+    <value>选择</value>
+  </data>
+  <data name="WpLib_SelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="WpLib_SelectedCount" xml:space="preserve">
+    <value>已选择 {0} 项</value>
   </data>
   <data name="Text_ShowOnDisk" xml:space="preserve">
     <value>打开文件所在目录</value>

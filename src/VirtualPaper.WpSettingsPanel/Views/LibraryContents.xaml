@@ -26,6 +26,29 @@
                             PointerExited="GridViewItem_PointerExited"
                             PointerCanceled="GridViewItem_PointerCanceled">
 
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver"/>
+                                    <VisualState x:Name="Pressed"/>
+                                    <VisualState x:Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Target="SelectionOverlay.Opacity" Value="1"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="SelectedPointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="SelectionOverlay.Opacity" Value="1"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="SelectedPressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="SelectionOverlay.Opacity" Value="1"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
                             <ContentPresenter x:Name="contentPresenter"
                                 RenderTransformOrigin="0.5 0.5"
                                 Content="{TemplateBinding Content}"
@@ -34,6 +57,28 @@
                                     <CompositeTransform x:Name="ContentPresenterTransform" ScaleX="1" ScaleY="1"/>
                                 </ContentPresenter.RenderTransform>
                             </ContentPresenter>
+
+                            <Border x:Name="SelectionOverlay"
+                                Opacity="0"
+                                IsHitTestVisible="False"
+                                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                                BorderThickness="3"
+                                CornerRadius="8">
+                                <Border
+                                    Width="26"
+                                    Height="26"
+                                    Margin="8"
+                                    Padding="5"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    CornerRadius="13">
+                                    <FontIcon
+                                        Glyph="&#xE73E;"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
+                                </Border>
+                            </Border>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -185,6 +230,8 @@
                 VerticalContentAlignment="Stretch"
                 ItemClick="WallpapersLibView_ItemClick"
                 IsItemClickEnabled="True"
+                SelectionMode="None"
+                SelectionChanged="WallpapersLibView_SelectionChanged"
                 ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
                 ItemTemplate="{StaticResource WallpaperItemTemplate}"
                 ItemsPanel="{StaticResource WallpaperItemsPanel}"

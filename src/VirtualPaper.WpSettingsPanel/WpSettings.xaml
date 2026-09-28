@@ -36,72 +36,71 @@
                     <!-- 库专属工具并入顶部导航，避免额外占用一整行内容空间。 -->
                     <StackPanel x:Name="FilterBar" Orientation="Horizontal" Spacing="6">
                         <StackPanel x:Name="LibraryBrowseTools" Orientation="Horizontal" Spacing="6">
-                        <AutoSuggestBox x:Name="tbSearchName"
-                            Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
-                            Width="360"
-                            Height="32"
-                            QueryIcon="Find"
-                            PlaceholderText="{markup:I18n Key=WpLib_Search_Placeholder}"
-                            VerticalAlignment="Center"
-                            TextChanged="OnFilterChanged"/>
+                            <AutoSuggestBox x:Name="tbSearchName"
+                                Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
+                                Width="360"
+                                Height="32"
+                                QueryIcon="Find"
+                                PlaceholderText="{markup:I18n Key=WpLib_Search_Placeholder}"
+                                VerticalAlignment="Center"
+                                TextChanged="OnFilterChanged"/>
 
-                        <DropDownButton
-                            Width="142"
-                            Height="32"
-                            HorizontalContentAlignment="Left"
-                            VerticalAlignment="Center"
-                            Padding="10 0">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <FontIcon Glyph="&#xE71C;" FontSize="13"/>
-                                <TextBlock
+                            <DropDownButton
+                                Width="142"
+                                Height="32"
+                                HorizontalContentAlignment="Left"
+                                VerticalAlignment="Center"
+                                Padding="10 0">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE71C;" FontSize="13"/>
+                                    <TextBlock
                                     VerticalAlignment="Center"
                                     Text="{x:Bind _viewModel.TypeFilterLabel, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
-                            <DropDownButton.Flyout>
-                                <Flyout Placement="BottomEdgeAlignedLeft">
-                                    <ItemsControl
+                                </StackPanel>
+                                <DropDownButton.Flyout>
+                                    <Flyout Placement="BottomEdgeAlignedLeft">
+                                        <ItemsControl
                                         MinWidth="170"
                                         ItemsSource="{x:Bind _viewModel.TypeFilters}">
-                                        <ItemsControl.ItemTemplate>
-                                            <DataTemplate x:DataType="localUtils:WpTypeFilterItem">
-                                                <CheckBox
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="localUtils:WpTypeFilterItem">
+                                                    <CheckBox
                                                     MinWidth="150"
                                                     MinHeight="32"
                                                     Padding="4 0"
                                                     VerticalContentAlignment="Center"
                                                     IsChecked="{x:Bind IsSelected, Mode=TwoWay}">
-                                                    <TextBlock
+                                                        <TextBlock
                                                         VerticalAlignment="Center"
                                                         Text="{x:Bind Label}"/>
-                                                </CheckBox>
-                                            </DataTemplate>
-                                        </ItemsControl.ItemTemplate>
-                                    </ItemsControl>
-                                </Flyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
+                                                    </CheckBox>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Flyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
 
-                        <Button x:Name="AddToLib"
-                            Width="32"
-                            Height="32"
-                            Padding="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Command="{x:Bind _viewModel.AddToLibCommand}">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xF8AA;" FontSize="16"/>
-                        </Button>
+                            <Button x:Name="AddToLib"
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Command="{x:Bind _viewModel.AddToLibCommand}">
+                                <FontIcon Glyph="&#xF8AA;" FontSize="16"/>
+                            </Button>
 
-                        <Button x:Name="SelectLibraryItems"
-                            Width="32"
-                            Height="32"
-                            Padding="0"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Click="SelectLibraryItems_Click"
-                            ToolTipService.ToolTip="{markup:I18n Key=WpLib_Select}">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE762;" FontSize="16"/>
-                        </Button>
+                            <Button x:Name="SelectLibraryItems"
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Click="SelectLibraryItems_Click">
+                                <FontIcon Glyph="&#xE762;" FontSize="16"/>
+                            </Button>
                         </StackPanel>
 
                         <StackPanel x:Name="LibrarySelectionTools"
@@ -117,6 +116,11 @@
                                 Padding="10 0"
                                 Click="SelectAllLibraryItems_Click"
                                 Content="{markup:I18n Key=WpLib_SelectAll}"/>
+                            <Button
+                                Height="32"
+                                Padding="10 0"
+                                Click="InvertLibrarySelection_Click"
+                                Content="{markup:I18n Key=WpLib_InvertSelection}"/>
                             <Button x:Name="DeleteSelectedLibraryItems"
                                 Height="32"
                                 Padding="10 0"

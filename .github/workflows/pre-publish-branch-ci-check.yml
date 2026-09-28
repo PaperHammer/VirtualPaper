@@ -41,7 +41,7 @@ jobs:
 
     - name: Validate test workflow wiring
       shell: pwsh
-      run: ./scripts/validate-test-workflow.ps1
+      run: ./.github/scripts/validate-test-workflow.ps1
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -158,7 +158,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Run UI Tests
-      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --filter "FullyQualifiedName!~DynamicImage" --settings src/test.runsettings --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
+      run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --settings src/test.runsettings --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
       shell: pwsh
 
     - name: Verify test results exist
@@ -338,7 +338,7 @@ jobs:
         dotnet-version: 8.0.x
 
     - name: Run ML Tests
-      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --filter "TestCategory!=Integration&FullyQualifiedName!~DynamicImage" --settings src/test.runsettings --logger "trx;LogFileName=ml-tests.trx" --results-directory TestResults/ML
+      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --verbosity normal --filter "TestCategory!=Integration" --settings src/test.runsettings --logger "trx;LogFileName=ml-tests.trx" --results-directory TestResults/ML
       shell: pwsh
 
     - name: Verify test results exist

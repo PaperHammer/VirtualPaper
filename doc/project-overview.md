@@ -35,7 +35,7 @@ VirtualPaper/
 ├─ src/                 解决方案与全部 C# 项目
 ├─ resources/           README 图片、Logo 等仓库级资源
 ├─ InnoSetup/           安装包定义
-├─ scripts/             构建/发布辅助脚本
+├─ scripts/             本地辅助脚本（不纳入版本控制；CI 脚本位于 .github/scripts）
 ├─ .github/workflows/   CI、版本和发布流水线
 └─ doc/                 开发者文档
 ```

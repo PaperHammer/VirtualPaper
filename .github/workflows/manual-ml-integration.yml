@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   test-ml-integration:
-    name: ML Integration Tests (Non-Dynamic-Image)
+    name: ML Integration Tests
     runs-on: windows-latest
 
     steps:
@@ -32,8 +32,8 @@ jobs:
       run: dotnet build src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release
       shell: pwsh
 
-    - name: Run non-dynamic-image integration tests
-      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --filter "TestCategory=Integration&FullyQualifiedName!~DynamicImage" --settings src/test.runsettings --logger "trx;LogFileName=ml-integration-tests.trx" --results-directory TestResults/MLIntegration
+    - name: Run ML integration tests
+      run: dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --no-build --filter "TestCategory=Integration" --settings src/test.runsettings --logger "trx;LogFileName=ml-integration-tests.trx" --results-directory TestResults/MLIntegration
       shell: pwsh
 
     - name: Upload ML integration results

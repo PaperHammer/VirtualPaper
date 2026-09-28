@@ -162,5 +162,19 @@ namespace VirtualPaper.ML.Test.T_DepthEstimate {
         public void LoadModel_CalledTwice_DoesNotThrow() {
             _estimator.LoadModel(ModelPath);
         }
+
+        [TestMethod]
+        public async Task Cache_RealModel_PublishesAndReusesOriginalSizePng() {
+            _estimator.Dispose();
+            string path = await DepthMapCache.GetOrCreateAsync(
+                _imagePath, _tempDir, () => new DepthAnythingV2(), CancellationToken.None, ModelPath);
+            using var image = Cv2.ImRead(path, ImreadModes.Grayscale);
+            Assert.AreEqual(96, image.Width);
+            Assert.AreEqual(64, image.Height);
+            string reused = await DepthMapCache.GetOrCreateAsync(
+                _imagePath, _tempDir, () => throw new AssertFailedException("Cache hit loaded a model"),
+                CancellationToken.None, ModelPath);
+            Assert.AreEqual(path, reused);
+        }
     }
 }

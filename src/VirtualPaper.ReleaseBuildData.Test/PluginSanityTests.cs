@@ -144,12 +144,5 @@ namespace VirtualPaper.ReleaseBuildData.Test {
                 "ML/DepthEstimate/ai_models");
         }
 
-        [TestMethod]
-        [TestCategory("ReleaseBuild")]
-        public void Plugin_ML_ObjectDetection_ModelsDir_Exists() {
-            ReleaseBuildSanityTests.AssertDirExists(
-                Path.Combine(PluginsDir, "ML", "ObjectDetection", "ai_models"),
-                "ML/ObjectDetection/ai_models");
-        }
     }
 }

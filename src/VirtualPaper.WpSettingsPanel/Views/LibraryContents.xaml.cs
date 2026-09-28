@@ -87,6 +87,8 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         public void EnterSelectionMode() {
+            // WinUI 的 ItemClick 模式与原生多选互斥；关闭后点击会立即更新 SelectedItems 和选中视觉态。
+            wallpapersLibView.IsItemClickEnabled = false;
             wallpapersLibView.SelectionMode = ListViewSelectionMode.Multiple;
             NotifySelectionChanged();
         }
@@ -95,6 +97,28 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
                 wallpapersLibView.SelectAll();
             }
+        }
+
+        public void InvertSelection() {
+            if (wallpapersLibView.SelectionMode != ListViewSelectionMode.Multiple) return;
+
+            var selected = wallpapersLibView.SelectedItems.Cast<object>().ToHashSet();
+            var toSelect = wallpapersLibView.Items.Cast<object>()
+                .Where(item => !selected.Contains(item))
+                .ToArray();
+
+            _updatingSelection = true;
+            try {
+                wallpapersLibView.SelectedItems.Clear();
+                foreach (var item in toSelect) {
+                    wallpapersLibView.SelectedItems.Add(item);
+                }
+            }
+            finally {
+                _updatingSelection = false;
+            }
+
+            NotifySelectionChanged();
         }
 
         public async Task DeleteSelectedItemsAsync() {
@@ -115,12 +139,13 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         public void ExitSelectionMode() {
             wallpapersLibView.SelectedItems.Clear();
             wallpapersLibView.SelectionMode = ListViewSelectionMode.None;
+            wallpapersLibView.IsItemClickEnabled = true;
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
             ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(false, 0);
         }
 
         private void WallpapersLibView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            NotifySelectionChanged();
+            if (!_updatingSelection) NotifySelectionChanged();
         }
 
         private void NotifySelectionChanged() {
@@ -130,6 +155,17 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 wallpapersLibView.SelectedItems.Count);
         }
 
+        private void WallpaperContextFlyout_Opening(object sender, object e) {
+            if (sender is not MenuFlyout flyout) return;
+
+            bool selecting = wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple;
+            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) {
+                item.Visibility = !selecting || (item.Tag as string) == "RemoveFromLib"
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+        }
+
         private async void ContextMenu_Click(object sender, RoutedEventArgs e) {
             try {
                 if (((FrameworkElement)sender).DataContext is not IWpBasicData data)
@@ -137,6 +173,18 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
                 var selectedMeun = (MenuFlyoutItem)sender;
                 string? name = selectedMeun.Tag.ToString();
+                if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
+                    if (name == "RemoveFromLib") {
+                        if (wallpapersLibView.SelectedItems.Contains(data)) {
+                            await DeleteSelectedItemsAsync();
+                        }
+                        else {
+                            await _viewModel.DeleteAsync(data);
+                        }
+                    }
+                    return;
+                }
+
                 switch (name) {
                     case "Details":
                         _viewModel.ShowDetail(data);
@@ -264,6 +312,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private readonly LibraryContentsViewModel _viewModel;
         private const double _scrollThreshold = 200;
+        private bool _updatingSelection;
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);

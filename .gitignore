@@ -390,3 +390,7 @@ src/WebBackdrop/Assets/monaco-editor-0.55.1/package/CHANGELOG.md
 
 # Local working documents (not version controlled)
 /.local-docs/
+
+# Local development scripts and verification artifacts
+/scripts/
+/.artifacts/

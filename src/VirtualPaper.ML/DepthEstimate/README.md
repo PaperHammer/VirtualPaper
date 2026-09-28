@@ -1,6 +1,6 @@
 # Depth Anything V2 Relative Depth
 
-`DepthAnythingV2` is the preferred relative-depth implementation for the dynamic-image pipeline. It uses the general-purpose Depth Anything V2 ViT-S dynamic FP32 ONNX model.
+`DepthAnythingV2` implements `IDepthEstimate` for the Library 3D depth-wallpaper feature. It uses the general-purpose Depth Anything V2 ViT-S dynamic FP32 ONNX model. The retired MiDaS implementation and its tests have been removed.
 
 - Model: `ai_models/depth_anything_v2_vits_dynamic.onnx`
 - Input: `image`, FP32 RGB NCHW, dynamic batch/height/width
@@ -34,6 +34,16 @@ string previewPath = depthEstimator.SaveDepthMap(depth, outputFolder);
 ```
 
 The returned depth array is resized to the original image dimensions and normalized to `[0,1]`. Larger values represent regions estimated to be closer to the camera.
+
+Library uses `DepthMapCache.GetOrCreateAsync` to run inference off the UI thread.
+Requests share a cancellable inference gate. Cached PNG names include a SHA-256 key
+of the source image, ONNX model, and preprocessing version. A valid cache hit avoids
+loading an ONNX session; incomplete results are never published. Old cache files are
+retained because saved wallpaper layouts may still reference them.
+
+The depth player renders on demand, releases resources on replacement, and limits
+displacement at image borders and depth discontinuities. This mitigates sampling
+artifacts; it does not reconstruct occluded pixels or correct erroneous depth predictions.
 
 Sources:
 

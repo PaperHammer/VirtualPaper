@@ -18,6 +18,7 @@ using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
+using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -208,17 +209,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                         if (rtype == RuntimeType.RUnknown) return;
 
-                        string? depthFilePath = null;
-                        if (rtype == RuntimeType.RImage3D) {
-                            depthFilePath = SetDepthPath(data);
-                        }
-
                         if (_previews.TryGetValue((data.WallpaperUid, rtype), out var preview)) {
                             preview.Activate();
                             return;
                         }
 
+                        string? depthFilePath = rtype == RuntimeType.RImage3D
+                            ? await SetDepthPathAsync(data, token) : null;
+                        token.ThrowIfCancellationRequested();
                         var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, depthFilePath, token);
+                        token.ThrowIfCancellationRequested();
+                        // Another request may have opened this preview while inference was running.
+                        if (_previews.TryGetValue((data.WallpaperUid, rtype), out preview)) {
+                            preview.Activate();
+                            return;
+                        }
+
                         var previewWindow = rtype switch {
                             RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb => new PreviewWithWeb(jsonString),
                             _ or RuntimeType.RUnknown => throw new NotImplementedException(),
@@ -277,7 +283,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                         string? depthFilePath = null;
                         if (rtype == RuntimeType.RImage3D) {
-                            depthFilePath = SetDepthPath(data);
+                            depthFilePath = await SetDepthPathAsync(data, token);
                         }
                         
                         Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
@@ -307,13 +313,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }, cts: ctsApply);
         }
 
-        private string? SetDepthPath(IWpBasicData data) {
-            using var depthEstimator =
-                AppServiceLocator.Services.GetRequiredService<IDepthEstimate>();
-            depthEstimator.LoadModel();
-            var output = depthEstimator.Run(data.FilePath);
-            return depthEstimator.SaveDepthMap(output, data.FolderPath);
-        }
+        private static Task<string> SetDepthPathAsync(IWpBasicData data, CancellationToken token) =>
+            DepthMapCache.GetOrCreateAsync(data.FilePath, data.FolderPath,
+                () => AppServiceLocator.Services.GetRequiredService<IDepthEstimate>(), token);
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
             var ctx = ArcPageContextManager.GetContext<WpSettings>();

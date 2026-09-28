@@ -27,6 +27,12 @@ namespace VirtualPaper.ML.DepthEstimate {
         private string _outputName = string.Empty;
         private bool _isLoaded;
         private bool _isDisposed;
+        private readonly int _cpuThreads;
+
+        public DepthAnythingV2(int? cpuThreads = null) {
+            _cpuThreads = cpuThreads ?? Math.Max(1, Environment.ProcessorCount);
+            if (_cpuThreads < 1) throw new ArgumentOutOfRangeException(nameof(cpuThreads));
+        }
 
         public string ModelPath { get; private set; } = null!;
 
@@ -56,7 +62,7 @@ namespace VirtualPaper.ML.DepthEstimate {
                     GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
                     EnableCpuMemArena = false,
                     EnableMemoryPattern = false,
-                    IntraOpNumThreads = Math.Max(1, Environment.ProcessorCount),
+                    IntraOpNumThreads = _cpuThreads,
                     InterOpNumThreads = 1
                 };
 

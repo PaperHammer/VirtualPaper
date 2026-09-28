@@ -144,7 +144,9 @@
                 HorizontalAlignment="Center"/>
         </ItemsPanelTemplate>
 
-        <MenuFlyout x:Key="WallpaperContextFlyout" ShowMode="Transient">
+        <MenuFlyout x:Key="WallpaperContextFlyout"
+            ShowMode="Transient"
+            Opening="WallpaperContextFlyout_Opening">
             <MenuFlyoutItem
                 Tag="Details"
                 Text="{markup:I18n Key=Text_Details}"

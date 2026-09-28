@@ -83,6 +83,12 @@ namespace VirtualPaper.WpSettingsPanel {
             }
         }
 
+        private void InvertLibrarySelection_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                library.InvertSelection();
+            }
+        }
+
         private async void DeleteSelectedLibraryItems_Click(object sender, RoutedEventArgs e) {
             if (ContentFrame.Content is LibraryContents library) {
                 await library.DeleteSelectedItemsAsync();

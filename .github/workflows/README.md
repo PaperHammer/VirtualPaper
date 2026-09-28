@@ -7,7 +7,7 @@
 | `pre-publish-branch-ci-check.yml` | push / PR → dev · release · bugfix | 构建 + 单元测试                      |
 | `branch-protection.yml`           | PR → main                            | 校验源分支合法性                     |
 | `auto-version-release.yml`        | PR 合并到 main                        | 版本递增 · 打包 · 冒烟测试 · 发布 |
-| `manual-ml-integration.yml`       | 手动触发                              | 非动态图片 ML 模型集成测试          |
+| `manual-ml-integration.yml`       | 手动触发                              | ML 模型集成测试                    |
 
 ---
 
@@ -42,7 +42,7 @@
 3. 各测试项目使用共享 `src/test.runsettings` 生成 Cobertura 覆盖率数据，排除测试程序集、生成代码和第三方程序集，并在汇总页展示分项目及合并行覆盖率
 4. 汇总测试结果，写入 commit status `ci-check/pre-publish-tests`
 
-常规 UI/ML job 暂不执行动态图片测试；常规 ML job 同时排除需要真实模型推理的 `Integration` 分类。
+常规 ML job 排除需要真实模型推理的 `Integration` 分类。
 
 该 status 是合并到 main 的**必需检查项**之一。
 
@@ -152,7 +152,7 @@ release（草稿）
 > **文件：** `manual-ml-integration.yml`
 > **触发：** GitHub Actions 页面手动运行
 
-使用仓库内模型运行 `TestCategory=Integration` 测试，同时明确排除动态图片测试。测试结果、TRX 与覆盖率文件保留 7 天，不阻塞常规分支 CI。
+使用仓库内模型运行 `TestCategory=Integration` 测试。测试结果、TRX 与覆盖率文件保留 7 天，不阻塞常规分支 CI。
 
 ---
 

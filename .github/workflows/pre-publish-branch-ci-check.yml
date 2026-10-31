@@ -51,6 +51,19 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Check web player lifecycle
+      shell: pwsh
+      run: |
+        node .github/scripts/test-atmosphere.cjs
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        node .github/scripts/test-depth-player.cjs
+        exit $LASTEXITCODE
+
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:

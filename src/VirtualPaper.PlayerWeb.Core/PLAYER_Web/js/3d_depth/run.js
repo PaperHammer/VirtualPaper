@@ -232,8 +232,13 @@ window.updateDimensions = resizeContent;
 window.startParallax = () => { parallaxEnabled = true; };
 window.stopParallax = stopParallax;
 window.updateFit3D = mode => { currentFitMode = mode; resizeContent(); return 'done'; };
-window.play = () => { paused = false; requestRender(); };
+window.play = () => {
+    window.vpAtmosphere?.setPaused(false);
+    paused = false;
+    requestRender();
+};
 window.pause = () => {
+    window.vpAtmosphere?.setPaused(true);
     // 暂停只停止后续绘制，保留纹理和 WebGL 场景以便快速恢复。
     paused = true;
     if (frame !== null) cancelAnimationFrame(frame);

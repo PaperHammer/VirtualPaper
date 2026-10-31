@@ -18,6 +18,15 @@ let tpConfig = null; // 存储 C# 下发的参数
 function propertyListener(propertyType, val) {
     console.log('propertyType: ', propertyType, ', val: ', val)
     switch (propertyType) {
+        case "Atmosphere":
+            window.vpAtmosphere?.setPreset(Number(val));
+            return;
+        case "AtmosphereIntensity":
+            window.vpAtmosphere?.setIntensity(Number(val));
+            return;
+        case "AtmosphereStyle":
+            window.vpAtmosphere?.setStyle(Number(val));
+            return;
         case "Volume":
             volume = parseFloat(val);
             break;

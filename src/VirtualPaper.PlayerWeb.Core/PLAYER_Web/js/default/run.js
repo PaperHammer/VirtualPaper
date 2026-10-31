@@ -74,6 +74,7 @@ function videoRelease() {
 
 //在某些浏览器（例如 Chrome 70.0）中，如果没有设置 muted 属性，autoplay 将不会生效。
 function play() {
+    window.vpAtmosphere?.setPaused(false);
     var videoElement = document.getElementById('videoEle');
     if (videoElement) {
         videoElement.play();
@@ -83,6 +84,7 @@ function play() {
 }
 
 function playbackChanged(isPaused) {
+    window.vpAtmosphere?.setPaused(isPaused);
     var videoElement = document.getElementById('videoEle');
     if (videoElement) {
         if (isPaused) videoElement.pause();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json.Nodes;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Navigation;
@@ -43,12 +44,15 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         }
 
         private void InitUI() {
+            _atmosphereButton?.Flyout?.Hide();
+            _atmospherePanel.Children.Clear();
             skPanel.Children.Clear();
             if (AnyFilePathsEmpty()) {
                 return;
             }
 
             _wpEffectData = JsonNodeUtil.GetWritableJson(_startArgs.WpEffectFilePathUsing);
+            AtmosphereProperties.EnsureAtmosphereProperties(_wpEffectData.AsObject());
             GenerateUIElements();
         }
 
@@ -145,7 +149,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                         };
                         var array = item.Value["Items"].AsArray();
                         foreach (var dropItem in array) {
-                            cmbBox.Items.Add(dropItem.ToString());
+                            cmbBox.Items.Add(GetDropdownItemText(item.Key, dropItem.ToString()));
                         }
                         cmbBox.SelectionChanged += ComboBox_SelectionChanged;
                     }
@@ -208,6 +212,32 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
                 AddUIElement(item.Key, obj, true);
             }
+            RefreshAtmosphereStyleOptions();
+            UpdateAtmosphereSummary();
+        }
+
+        private static string GetDropdownItemText(string propertyName, string item) => propertyName switch {
+            nameof(UniverseCostumise.Atmosphere) => LanguageUtil.GetI18n("Atmosphere_" + item),
+            nameof(UniverseCostumise.AtmosphereStyle) => LanguageUtil.GetI18n("AtmosphereStyle_" + item),
+            _ => item,
+        };
+
+        private void RefreshAtmosphereStyleOptions() {
+            if (_wpEffectData == null || !_controls.TryGetValue(nameof(UniverseCostumise.AtmosphereStyle), out var control)
+                || control is not ComboBox styles) return;
+            styles.SelectionChanged -= ComboBox_SelectionChanged;
+            var property = _wpEffectData[nameof(UniverseCostumise.AtmosphereStyle)]!;
+            styles.Items.Clear();
+            foreach (var item in property["Items"]!.AsArray()) {
+                styles.Items.Add(GetDropdownItemText(nameof(UniverseCostumise.AtmosphereStyle), item!.ToString()));
+            }
+            styles.IsEnabled = styles.Items.Count > 0;
+            styles.SelectedIndex = styles.IsEnabled ? (int)property["Value"]! : -1;
+            styles.SelectionChanged += ComboBox_SelectionChanged;
+            if (_controls.TryGetValue(nameof(UniverseCostumise.AtmosphereIntensity), out var intensity)
+                && intensity is Slider slider) {
+                slider.IsEnabled = styles.IsEnabled;
+            }
         }
 
         private TextBlock SetSliderExtra(KeyValuePair<string, JsonNode?> item, string title) {
@@ -243,10 +273,53 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         }
 
         private void AddUIElement(string name, UIElement obj, bool needTrack) {
-            skPanel.Children.Add(obj);
+            var propertyName = name.EndsWith("_Title", StringComparison.Ordinal) ? name[..^6] : name;
+            if (propertyName is nameof(UniverseCostumise.Atmosphere)
+                or nameof(UniverseCostumise.AtmosphereStyle)
+                or nameof(UniverseCostumise.AtmosphereIntensity)) {
+                if (_atmospherePanel.Children.Count == 0) AddAtmosphereFlyout();
+                if (obj is FrameworkElement element) element.HorizontalAlignment = HorizontalAlignment.Stretch;
+                _atmospherePanel.Children.Add(obj);
+            }
+            else {
+                skPanel.Children.Add(obj);
+            }
             if (needTrack) {
                 _controls[name] = obj;
             }
+        }
+
+        private void AddAtmosphereFlyout() {
+            var title = LanguageUtil.GetI18n("EffectPrefix_Atmosphere");
+            if (_atmosphereButton == null) {
+                _atmosphereSummary = new TextBlock { TextTrimming = TextTrimming.CharacterEllipsis };
+                _atmosphereButton = new DropDownButton {
+                    Name = "AtmosphereOptions",
+                    Content = _atmosphereSummary,
+                    MinWidth = MIN_WIDTH,
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch,
+                    Margin = MARGIN,
+                    Flyout = new Flyout { Content = _atmospherePanel, Placement = FlyoutPlacementMode.Bottom }
+                };
+            }
+            skPanel.Children.Add(new TextBlock { Text = title });
+            skPanel.Children.Add(_atmosphereButton);
+        }
+
+        private void UpdateAtmosphereSummary() {
+            if (_atmosphereSummary == null || _atmosphereButton == null || _wpEffectData == null) return;
+            var text = LanguageUtil.GetI18n("Atmosphere_None");
+            if (_controls.TryGetValue(nameof(UniverseCostumise.Atmosphere), out var effectControl)
+                && effectControl is ComboBox { SelectedIndex: > 0 } effects
+                && _controls.TryGetValue(nameof(UniverseCostumise.AtmosphereStyle), out var styleControl)
+                && styleControl is ComboBox { SelectedIndex: >= 0 } styles) {
+                var intensity = (double)_wpEffectData[nameof(UniverseCostumise.AtmosphereIntensity)]!["Value"]!;
+                text = $"{effects.SelectedItem} · {styles.SelectedItem} · {intensity:0.#}%";
+            }
+            _atmosphereSummary.Text = text;
+            AutomationProperties.SetName(_atmosphereButton, $"{LanguageUtil.GetI18n("EffectPrefix_Atmosphere")}: {text}");
+            ToolTipService.SetToolTip(_atmosphereButton, text);
         }
 
         private void UnSubscribe() {
@@ -292,7 +365,19 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e = default) {
             try {
                 var item = (ComboBox)sender;
+                if (item.SelectedIndex < 0) return;
                 _wpEffectData[item.Name]["Value"] = item.SelectedIndex;
+                if (item.Name == nameof(UniverseCostumise.Atmosphere)) {
+                    AtmosphereProperties.UpdateStyleItems(_wpEffectData.AsObject());
+                    RefreshAtmosphereStyleOptions();
+                    if (item.SelectedIndex != 0) {
+                        OnEffectValueChanged(new EffectValueChanged<int> {
+                            ControlName = "Dropdown",
+                            PropertyName = nameof(UniverseCostumise.AtmosphereStyle),
+                            Value = (int)_wpEffectData[nameof(UniverseCostumise.AtmosphereStyle)]!["Value"]!
+                        });
+                    }
+                }
                 OnEffectValueChanged(new EffectValueChanged<int> { ControlName = "Dropdown", PropertyName = item.Name, Value = item.SelectedIndex });
             }
             catch { }
@@ -499,6 +584,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         #region value changed        
         private void OnEffectValueChanged<T>(EffectValueChanged<T> e) {
             _effectService?.UpdateEffectValue(e);
+            if (e.PropertyName is nameof(UniverseCostumise.Atmosphere)
+                or nameof(UniverseCostumise.AtmosphereStyle)
+                or nameof(UniverseCostumise.AtmosphereIntensity)) {
+                UpdateAtmosphereSummary();
+            }
         }
         #endregion
 
@@ -521,6 +611,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
+                    _atmosphereButton?.Flyout?.Hide();
                     UnSubscribe();
                 }
                 _controls.Clear();
@@ -536,6 +627,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         private Thickness MARGIN = new Thickness(0, 4, 0, 12);
         private const double MIN_WIDTH = 200;
+        private readonly StackPanel _atmospherePanel = new() { MinWidth = 260, MaxWidth = 320 };
+        private DropDownButton? _atmosphereButton;
+        private TextBlock? _atmosphereSummary;
         private JsonNode? _wpEffectData;
         private StartArgsWeb _startArgs = null!;
         private IEffectService _effectService = null!;

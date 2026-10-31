@@ -1827,4 +1827,33 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Virtual Paper 网页壁纸详细信息</value></data>
   <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>调整网页壁纸</value></data>
   <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Monaco 编辑器正在加载...</value></data>
+  <data name="EffectPrefix_Atmosphere" xml:space="preserve">
+    <value>氛围特效</value>
+  </data>
+  <data name="EffectPrefix_AtmosphereIntensity" xml:space="preserve">
+    <value>氛围强度</value>
+  </data>
+  <data name="Atmosphere_None" xml:space="preserve"><value>关闭</value></data>
+  <data name="Atmosphere_Stardust" xml:space="preserve"><value>星尘</value></data>
+  <data name="Atmosphere_Snow" xml:space="preserve"><value>飘雪</value></data>
+  <data name="Atmosphere_Fireflies" xml:space="preserve"><value>萤火</value></data>
+  <data name="Atmosphere_Meteor" xml:space="preserve"><value>流星</value></data>
+  <data name="EffectPrefix_AtmosphereStyle" xml:space="preserve"><value>特效样式</value></data>
+  <data name="Atmosphere_Rain" xml:space="preserve"><value>雨</value></data>
+  <data name="Atmosphere_Petals" xml:space="preserve"><value>花瓣</value></data>
+  <data name="Atmosphere_Bokeh" xml:space="preserve"><value>柔光</value></data>
+  <data name="AtmosphereStyle_Dust" xml:space="preserve"><value>光点</value></data>
+  <data name="AtmosphereStyle_Stars" xml:space="preserve"><value>星芒</value></data>
+  <data name="AtmosphereStyle_SnowDots" xml:space="preserve"><value>雪点</value></data>
+  <data name="AtmosphereStyle_Snowflakes" xml:space="preserve"><value>小雪花</value></data>
+  <data name="AtmosphereStyle_WarmFireflies" xml:space="preserve"><value>暖色萤火</value></data>
+  <data name="AtmosphereStyle_BlueFireflies" xml:space="preserve"><value>蓝色萤火</value></data>
+  <data name="AtmosphereStyle_ShootingStars" xml:space="preserve"><value>流星雨</value></data>
+  <data name="AtmosphereStyle_Comets" xml:space="preserve"><value>彩色彗星</value></data>
+  <data name="AtmosphereStyle_Drizzle" xml:space="preserve"><value>细雨</value></data>
+  <data name="AtmosphereStyle_Downpour" xml:space="preserve"><value>骤雨</value></data>
+  <data name="AtmosphereStyle_CherryBlossoms" xml:space="preserve"><value>樱花</value></data>
+  <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>玫瑰花瓣</value></data>
+  <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>柔光光斑</value></data>
+  <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>透明气泡</value></data>
 </root>

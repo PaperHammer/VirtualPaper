@@ -185,6 +185,18 @@ namespace VirtualPaper.Common {
     #endregion
 
     #region costumise
+    // Values are persisted as dropdown indexes and shared with atmosphere.js.
+    public enum AtmosphereEffect {
+        None = 0,
+        Stardust = 1,
+        Snow = 2,
+        Fireflies = 3,
+        Meteor = 4,
+        Rain = 5,
+        Petals = 6,
+        Bokeh = 7,
+    }
+
     public class UniverseCostumise {
         [JsonPropertyOrder(1)]
         public Saturation Saturation { get; }
@@ -201,6 +213,15 @@ namespace VirtualPaper.Common {
         [JsonPropertyOrder(5)]
         public TimePerception TimeAtmoPerception { get; }
 
+        [JsonPropertyOrder(14)]
+        public AtmospherePreset Atmosphere { get; } = new();
+
+        [JsonPropertyOrder(15)]
+        public AtmosphereStyleProperty AtmosphereStyle { get; } = new();
+
+        [JsonPropertyOrder(16)]
+        public AtmosphereIntensity AtmosphereIntensity { get; } = new();
+
         public UniverseCostumise() {
             Saturation = new();
             Hue = new();
@@ -214,6 +235,9 @@ namespace VirtualPaper.Common {
                 { nameof(Brightness), Brightness },
                 { nameof(Contrast), Contrast },
                 { nameof(TimeAtmoPerception), TimeAtmoPerception },
+                { nameof(Atmosphere), Atmosphere },
+                { nameof(AtmosphereStyle), AtmosphereStyle },
+                { nameof(AtmosphereIntensity), AtmosphereIntensity },
             };
         }
 
@@ -431,6 +455,52 @@ namespace VirtualPaper.Common {
 
         public List<string> Items { get; init; } = ["Fill", "Contain", "Cover", "None", "Scale-Down"];
         public string Help { get; init; } = "Effect_Help_Scaling";
+    }
+
+    public class AtmospherePreset {
+        public string Type { get; init; } = "Dropdown";
+        public string Text { get; init; } = "Atmosphere";
+        public int Min => (int)AtmosphereEffect.None;
+        public int Max => (int)AtmosphereEffect.Bokeh;
+        private int _value;
+        public int Value {
+            get => _value;
+            set => _value = Enum.IsDefined(typeof(AtmosphereEffect), value) ? value : Min;
+        }
+        public List<string> Items { get; init; } = ["None", "Stardust", "Snow", "Fireflies", "Meteor", "Rain", "Petals", "Bokeh"];
+    }
+
+    public class AtmosphereStyleProperty {
+        public string Type { get; init; } = "Dropdown";
+        public string Text { get; init; } = "AtmosphereStyle";
+        public int Min => 0;
+        public int Max => 1;
+        private int _value;
+        public int Value {
+            get => _value;
+            set => _value = Math.Clamp(value, Min, Max);
+        }
+        public List<string> Items { get; init; } = [];
+
+        // Item indexes remain stable while the labels follow the selected effect.
+        public static string[] GetItems(AtmosphereEffect effect) => effect switch {
+            AtmosphereEffect.Stardust => ["Dust", "Stars"],
+            AtmosphereEffect.Snow => ["SnowDots", "Snowflakes"],
+            AtmosphereEffect.Fireflies => ["WarmFireflies", "BlueFireflies"],
+            AtmosphereEffect.Meteor => ["ShootingStars", "Comets"],
+            AtmosphereEffect.Rain => ["Drizzle", "Downpour"],
+            AtmosphereEffect.Petals => ["CherryBlossoms", "RosePetals"],
+            AtmosphereEffect.Bokeh => ["SoftLights", "Bubbles"],
+            _ => [],
+        };
+    }
+
+    public class AtmosphereIntensity : SliderProperty<int> {
+        public override string Text => "AtmosphereIntensity";
+        public override int Min => 0;
+        public override int Max => 100;
+        public override int DefaultValue => 50;
+        public int Step { get; init; } = 1;
     }
 
     public class Parallax {

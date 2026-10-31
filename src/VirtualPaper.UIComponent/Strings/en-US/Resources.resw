@@ -1827,4 +1827,33 @@ The following words cannot be used as usernames:
   <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Virtual Paper Web Details</value></data>
   <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>Adjust Web Wallpaper</value></data>
   <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Monaco Editor is loading...</value></data>
+  <data name="EffectPrefix_Atmosphere" xml:space="preserve">
+    <value>Atmosphere effect</value>
+  </data>
+  <data name="EffectPrefix_AtmosphereIntensity" xml:space="preserve">
+    <value>Atmosphere intensity</value>
+  </data>
+  <data name="Atmosphere_None" xml:space="preserve"><value>None</value></data>
+  <data name="Atmosphere_Stardust" xml:space="preserve"><value>Stardust</value></data>
+  <data name="Atmosphere_Snow" xml:space="preserve"><value>Snow</value></data>
+  <data name="Atmosphere_Fireflies" xml:space="preserve"><value>Fireflies</value></data>
+  <data name="Atmosphere_Meteor" xml:space="preserve"><value>Meteors</value></data>
+  <data name="EffectPrefix_AtmosphereStyle" xml:space="preserve"><value>Effect style</value></data>
+  <data name="Atmosphere_Rain" xml:space="preserve"><value>Rain</value></data>
+  <data name="Atmosphere_Petals" xml:space="preserve"><value>Petals</value></data>
+  <data name="Atmosphere_Bokeh" xml:space="preserve"><value>Bokeh</value></data>
+  <data name="AtmosphereStyle_Dust" xml:space="preserve"><value>Light motes</value></data>
+  <data name="AtmosphereStyle_Stars" xml:space="preserve"><value>Star glints</value></data>
+  <data name="AtmosphereStyle_SnowDots" xml:space="preserve"><value>Snow dots</value></data>
+  <data name="AtmosphereStyle_Snowflakes" xml:space="preserve"><value>Snowflakes</value></data>
+  <data name="AtmosphereStyle_WarmFireflies" xml:space="preserve"><value>Warm fireflies</value></data>
+  <data name="AtmosphereStyle_BlueFireflies" xml:space="preserve"><value>Blue fireflies</value></data>
+  <data name="AtmosphereStyle_ShootingStars" xml:space="preserve"><value>Meteor shower</value></data>
+  <data name="AtmosphereStyle_Comets" xml:space="preserve"><value>Colorful comets</value></data>
+  <data name="AtmosphereStyle_Drizzle" xml:space="preserve"><value>Drizzle</value></data>
+  <data name="AtmosphereStyle_Downpour" xml:space="preserve"><value>Downpour</value></data>
+  <data name="AtmosphereStyle_CherryBlossoms" xml:space="preserve"><value>Cherry blossoms</value></data>
+  <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>Rose petals</value></data>
+  <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>Soft lights</value></data>
+  <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>Bubbles</value></data>
 </root>

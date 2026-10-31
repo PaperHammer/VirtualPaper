@@ -50,6 +50,12 @@
 		<None Update="PLAYER_Web\js\base.js">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="PLAYER_Web\js\atmosphere.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\js\effects\**\*.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
 		<None Update="PLAYER_Web\js\default\run.js">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

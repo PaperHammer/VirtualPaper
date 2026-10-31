@@ -421,11 +421,14 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         private void ExecuteCheckBoxSet(string propertyName, bool val) {
             switch (propertyName) {
-                case "Parallax":
+                case nameof(Picture3DCostumize.Parallax):
                     RunParallax(val);
                     break;
-                case "TimeAtmoPerception":
+                case nameof(Picture3DCostumize.TimeAtmoPerception):
                     RunTimePerception(val);
+                    break;
+                case nameof(Picture3DCostumize.ParallaxAutoDrift):
+                    _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, propertyName, val);
                     break;
                 default:
                     break;

@@ -316,12 +316,20 @@ namespace VirtualPaper.Common {
         [JsonPropertyOrder(13)]
         public Parallax Parallax { get; }
 
+        [JsonPropertyOrder(17)]
+        public ParallaxStrength ParallaxStrength { get; } = new();
+
+        [JsonPropertyOrder(18)]
+        public ParallaxAutoDrift ParallaxAutoDrift { get; } = new();
+
         public Picture3DCostumize() {
             Scaling = new();
             Parallax = new();
 
             _properties[nameof(Scaling)] = Scaling;
             _properties[nameof(Parallax)] = Parallax;
+            _properties[nameof(ParallaxStrength)] = ParallaxStrength;
+            _properties[nameof(ParallaxAutoDrift)] = ParallaxAutoDrift;
         }
     }
 
@@ -508,6 +516,26 @@ namespace VirtualPaper.Common {
         public string Text { get; init; } = "Parallax";
         public bool Value { get; set; } = false;
         public string Help { get; init; } = "Effect_Help_Parallax";
+    }
+
+    public class ParallaxStrength {
+        public string Type { get; init; } = "Dropdown";
+        public string Text { get; init; } = "ParallaxStrength";
+        public int Min => 0;
+        public int Max => 2;
+        private int _value = 1;
+        public int Value {
+            get => _value;
+            set => _value = Math.Clamp(value, Min, Max);
+        }
+        public List<string> Items { get; init; } = ["Gentle", "Standard", "Strong"];
+    }
+
+    public class ParallaxAutoDrift {
+        public string Type { get; init; } = "CheckBox";
+        public string Text { get; init; } = "ParallaxAutoDrift";
+        public bool Value { get; set; } = false;
+        public string Help { get; init; } = "Effect_Help_ParallaxAutoDrift";
     }
 
     //public class Speed {

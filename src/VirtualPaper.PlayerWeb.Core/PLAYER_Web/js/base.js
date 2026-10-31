@@ -18,6 +18,12 @@ let tpConfig = null; // 存储 C# 下发的参数
 function propertyListener(propertyType, val) {
     console.log('propertyType: ', propertyType, ', val: ', val)
     switch (propertyType) {
+        case "ParallaxStrength":
+            window.setParallaxStrength?.(Number(val));
+            return;
+        case "ParallaxAutoDrift":
+            window.setParallaxAutoDrift?.(val === true || val === 'true');
+            return;
         case "Atmosphere":
             window.vpAtmosphere?.setPreset(Number(val));
             return;

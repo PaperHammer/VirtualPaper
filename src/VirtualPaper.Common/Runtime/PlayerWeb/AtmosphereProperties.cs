@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-namespace VirtualPaper.Common.Utils.Storage {
+namespace VirtualPaper.Common.Runtime.PlayerWeb {
     public static class AtmosphereProperties {
         // Keep user values while adding missing fields and refreshing dropdown options.
         // The existing save/apply action persists them with the other settings.

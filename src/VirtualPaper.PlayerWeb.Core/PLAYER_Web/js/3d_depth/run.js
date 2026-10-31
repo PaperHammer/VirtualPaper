@@ -12,8 +12,11 @@ import * as THREE from './three.module.min.js';
 let current = null, frame = null;
 // 填充模式、鼠标视差开关和播放暂停相互独立；暂停不销毁已加载的场景。
 let currentFitMode = 'fill', parallaxEnabled = false, paused = false;
+const strengths = [0.016, 0.024, 0.036]; // gentle / standard / strong
+let strength = 1, autoDrift = false, driftTime = 0, lastFrameTime = null;
 // target 是归一化鼠标目标位置，mouse 是逐帧逼近它的实际位移位置。
 const mouse = new THREE.Vector2(), target = new THREE.Vector2();
+const motionTarget = new THREE.Vector2();
 
 /**
  * 按需请求下一帧。frame 非空说明已有一帧排队，连续鼠标事件会合并到同一帧；
@@ -24,23 +27,40 @@ function requestRender() {
         frame = requestAnimationFrame(render);
 }
 
-function render() {
+function render(now) {
     // 回调已开始，先清空 ID，后续才可以安排下一帧。
     frame = null;
     if (!current?.ready || paused || document.hidden) return;
+    const drifting = autoDrift && !current.depthFailed;
+    // Target 30 draws/s, allowing RAF timestamp rounding; mouse-only playback keeps its cadence.
+    if (drifting && lastFrameTime !== null && now - lastFrameTime < 1000 / 30 - 0.5) {
+        requestRender();
+        return;
+    }
+    const dt = lastFrameTime === null ? 0 : Math.min((now - lastFrameTime) / 1000, 0.1);
+    lastFrameTime = now;
+    motionTarget.copy(target);
+    if (drifting) {
+        driftTime += dt;
+        // Share a bounded target with mouse following; never increase the shader's safe range.
+        motionTarget.set(target.x * 0.2 + Math.sin(driftTime * Math.PI * 2 / 10) * 0.8,
+            target.y * 0.4 + Math.sin(driftTime * Math.PI * 2 / 14) * 0.6);
+    }
     // 用指数插值平滑鼠标动作；足够接近时直接对齐目标，终止帧循环。
     // 阈值比较的是二维距离的平方，和 distanceToSquared 的返回值一致。
-    mouse.lerp(target, 0.18);
-    const moving = mouse.distanceToSquared(target) > 0.000001;
-    if (!moving) mouse.copy(target);
+    mouse.lerp(motionTarget, 0.18);
+    const moving = mouse.distanceToSquared(motionTarget) > 0.000001;
+    if (!moving) mouse.copy(motionTarget);
     current.renderer.render(current.scene, current.camera);
-    if (moving) requestRender();
+    if (moving || drifting) requestRender();
+    else lastFrameTime = null;
 }
 
 function disposeCurrent() {
     // 更换壁纸或离开页面时取消排队帧；先清空 current，让旧纹理加载回调失效。
     if (frame !== null) cancelAnimationFrame(frame);
     frame = null;
+    lastFrameTime = null;
     if (!current) return;
     const old = current;
     current = null;
@@ -65,6 +85,7 @@ function resourceLoad3D(imgFilePath, depthFilePath) {
     disposeCurrent();
     mouse.set(0, 0);
     target.set(0, 0);
+    driftTime = 0;
     // 3d_depth_map.html 初始已有占位 #content；重新加载时用新的容器替换。
     document.getElementById('content')?.remove();
     const element = document.createElement('div');
@@ -111,6 +132,7 @@ function resourceLoad3D(imgFilePath, depthFilePath) {
         // 深度图失败时仍可显示原图：把视差强度归零，并提供有效的 1x1
         // 占位纹理，避免着色器采样缺失纹理。此状态也视为 depthLoaded。
         console.error('Unable to load depth texture; showing the original image', error);
+        state.depthFailed = true;
         state.mesh.material.uniforms.uStrength.value = 0;
         state.depth.dispose();
         state.depth = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
@@ -124,7 +146,7 @@ function resourceLoad3D(imgFilePath, depthFilePath) {
         // uAspect 根据网格的显示宽高修正横向位移，避免宽屏图被横向拉得过多。
         uniforms: {
             uTexture: { value: state.texture }, uDepthTexture: { value: state.depth },
-            uMouse: { value: mouse }, uStrength: { value: 0.012 }, uAspect: { value: 1 },
+            uMouse: { value: mouse }, uStrength: { value: strengths[strength] }, uAspect: { value: 1 },
         },
         vertexShader: `
             // Keep the mesh flat and pass UV coordinates to the fragment shader.
@@ -200,9 +222,9 @@ function resizeContent() {
 }
 
 function stopParallax() {
-    // 关闭鼠标跟踪并清零视差，请求一帧把画面恢复到原始采样位置。
+    // 关闭鼠标跟踪；开启自动漂移时平滑接回漂移轨迹。
     parallaxEnabled = false;
-    mouse.set(0, 0);
+    if (!autoDrift) mouse.set(0, 0);
     target.set(0, 0);
     requestRender();
 }
@@ -214,6 +236,7 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden && frame !== null) {
         cancelAnimationFrame(frame);
         frame = null;
+        lastFrameTime = null;
     } else requestRender();
 });
 document.addEventListener('mousemove', e => {
@@ -231,6 +254,17 @@ window.resourceLoad = resourceLoad3D;
 window.updateDimensions = resizeContent;
 window.startParallax = () => { parallaxEnabled = true; };
 window.stopParallax = stopParallax;
+window.setParallaxStrength = value => {
+    strength = Number.isInteger(value) && value >= 0 && value < strengths.length ? value : 1;
+    if (current?.mesh) {
+        current.mesh.material.uniforms.uStrength.value = current.depthFailed ? 0 : strengths[strength];
+        requestRender();
+    }
+};
+window.setParallaxAutoDrift = value => {
+    autoDrift = value === true;
+    requestRender();
+};
 window.updateFit3D = mode => { currentFitMode = mode; resizeContent(); return 'done'; };
 window.play = () => {
     window.vpAtmosphere?.setPaused(false);
@@ -241,6 +275,7 @@ window.pause = () => {
     window.vpAtmosphere?.setPaused(true);
     // 暂停只停止后续绘制，保留纹理和 WebGL 场景以便快速恢复。
     paused = true;
+    lastFrameTime = null;
     if (frame !== null) cancelAnimationFrame(frame);
     frame = null;
 };

@@ -1856,4 +1856,13 @@ The following words cannot be used as usernames:
   <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>Rose petals</value></data>
   <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>Soft lights</value></data>
   <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>Bubbles</value></data>
+  <data name="EffectPrefix_ParallaxStrength" xml:space="preserve"><value>Parallax strength</value></data>
+  <data name="ParallaxStrength_Gentle" xml:space="preserve"><value>Gentle</value></data>
+  <data name="ParallaxStrength_Standard" xml:space="preserve"><value>Standard</value></data>
+  <data name="ParallaxStrength_Strong" xml:space="preserve"><value>Strong</value></data>
+  <data name="EffectPrefix_ParallaxAutoDrift" xml:space="preserve"><value>Auto drift</value></data>
+  <data name="Effect_Help_ParallaxAutoDrift" xml:space="preserve"><value>Slowly move the image automatically, independently of mouse following. Parallax strength applies to both.</value></data>
+  <data name="ParallaxMode_Mouse" xml:space="preserve"><value>Mouse following</value></data>
+  <data name="ParallaxMode_Auto" xml:space="preserve"><value>Auto drift</value></data>
+  <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D Parallax</value></data>
 </root>

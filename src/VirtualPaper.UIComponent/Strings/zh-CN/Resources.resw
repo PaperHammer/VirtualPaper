@@ -1856,4 +1856,13 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>玫瑰花瓣</value></data>
   <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>柔光光斑</value></data>
   <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>透明气泡</value></data>
+  <data name="EffectPrefix_ParallaxStrength" xml:space="preserve"><value>视差强度</value></data>
+  <data name="ParallaxStrength_Gentle" xml:space="preserve"><value>轻柔</value></data>
+  <data name="ParallaxStrength_Standard" xml:space="preserve"><value>标准</value></data>
+  <data name="ParallaxStrength_Strong" xml:space="preserve"><value>明显</value></data>
+  <data name="EffectPrefix_ParallaxAutoDrift" xml:space="preserve"><value>自动漂移</value></data>
+  <data name="Effect_Help_ParallaxAutoDrift" xml:space="preserve"><value>让画面缓慢自动移动，可单独开启；视差强度同时影响鼠标跟随和自动漂移。</value></data>
+  <data name="ParallaxMode_Mouse" xml:space="preserve"><value>鼠标跟随</value></data>
+  <data name="ParallaxMode_Auto" xml:space="preserve"><value>自动漂移</value></data>
+  <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D 视差</value></data>
 </root>

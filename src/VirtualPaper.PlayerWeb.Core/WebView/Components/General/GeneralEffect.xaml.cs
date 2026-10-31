@@ -46,14 +46,23 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private void InitUI() {
             _atmosphereButton?.Flyout?.Hide();
             _atmospherePanel.Children.Clear();
+            _parallaxButton?.Flyout?.Hide();
+            _parallaxPanel.Children.Clear();
             skPanel.Children.Clear();
             if (AnyFilePathsEmpty()) {
                 return;
             }
 
             _wpEffectData = JsonNodeUtil.GetWritableJson(_startArgs.WpEffectFilePathUsing);
-            AtmosphereProperties.EnsureAtmosphereProperties(_wpEffectData.AsObject());
+            EnsureEffectProperties(_wpEffectData.AsObject());
             GenerateUIElements();
+        }
+
+        private void EnsureEffectProperties(JsonObject properties) {
+            AtmosphereProperties.EnsureAtmosphereProperties(properties);
+            if (_startArgs.RuntimeType == nameof(RuntimeType.RImage3D)) {
+                ParallaxProperties.EnsureDepthProperties(properties);
+            }
         }
 
         #region generate ui
@@ -214,11 +223,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             }
             RefreshAtmosphereStyleOptions();
             UpdateAtmosphereSummary();
+            UpdateParallaxSummary();
         }
 
         private static string GetDropdownItemText(string propertyName, string item) => propertyName switch {
             nameof(UniverseCostumise.Atmosphere) => LanguageUtil.GetI18n("Atmosphere_" + item),
             nameof(UniverseCostumise.AtmosphereStyle) => LanguageUtil.GetI18n("AtmosphereStyle_" + item),
+            nameof(Picture3DCostumize.ParallaxStrength) => LanguageUtil.GetI18n("ParallaxStrength_" + item),
             _ => item,
         };
 
@@ -277,9 +288,26 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             if (propertyName is nameof(UniverseCostumise.Atmosphere)
                 or nameof(UniverseCostumise.AtmosphereStyle)
                 or nameof(UniverseCostumise.AtmosphereIntensity)) {
-                if (_atmospherePanel.Children.Count == 0) AddAtmosphereFlyout();
+                if (_atmospherePanel.Children.Count == 0) {
+                    AddEffectFlyout("AtmosphereOptions", "EffectPrefix_Atmosphere", _atmospherePanel,
+                        ref _atmosphereButton, ref _atmosphereSummary);
+                }
                 if (obj is FrameworkElement element) element.HorizontalAlignment = HorizontalAlignment.Stretch;
                 _atmospherePanel.Children.Add(obj);
+            }
+            else if (_startArgs.RuntimeType == nameof(RuntimeType.RImage3D)
+                && propertyName is nameof(Picture3DCostumize.Parallax)
+                    or nameof(Picture3DCostumize.ParallaxStrength)
+                    or nameof(Picture3DCostumize.ParallaxAutoDrift)) {
+                if (_parallaxPanel.Children.Count == 0) {
+                    AddEffectFlyout("ParallaxOptions", "EffectPrefix_Parallax3D", _parallaxPanel,
+                        ref _parallaxButton, ref _parallaxSummary);
+                }
+                if (obj is FrameworkElement element) element.HorizontalAlignment = HorizontalAlignment.Stretch;
+                if (name == nameof(Picture3DCostumize.Parallax) && obj is CheckBox mouse) {
+                    mouse.Content = LanguageUtil.GetI18n("ParallaxMode_Mouse");
+                }
+                _parallaxPanel.Children.Add(obj);
             }
             else {
                 skPanel.Children.Add(obj);
@@ -289,22 +317,44 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             }
         }
 
-        private void AddAtmosphereFlyout() {
-            var title = LanguageUtil.GetI18n("EffectPrefix_Atmosphere");
-            if (_atmosphereButton == null) {
-                _atmosphereSummary = new TextBlock { TextTrimming = TextTrimming.CharacterEllipsis };
-                _atmosphereButton = new DropDownButton {
-                    Name = "AtmosphereOptions",
-                    Content = _atmosphereSummary,
-                    MinWidth = MIN_WIDTH,
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
+        private void AddEffectFlyout(string name, string titleKey, StackPanel panel,
+            ref DropDownButton? button, ref TextBlock? summary) {
+            if (button == null) {
+                summary = new TextBlock { TextTrimming = TextTrimming.CharacterEllipsis };
+                button = new DropDownButton {
+                    Name = name,
+                    Content = summary,
+                    Width = MIN_WIDTH,
+                    HorizontalAlignment = HorizontalAlignment.Left,
                     HorizontalContentAlignment = HorizontalAlignment.Stretch,
                     Margin = MARGIN,
-                    Flyout = new Flyout { Content = _atmospherePanel, Placement = FlyoutPlacementMode.Bottom }
+                    Flyout = new Flyout { Content = panel, Placement = FlyoutPlacementMode.Bottom }
                 };
             }
-            skPanel.Children.Add(new TextBlock { Text = title });
-            skPanel.Children.Add(_atmosphereButton);
+            skPanel.Children.Add(new TextBlock { Text = LanguageUtil.GetI18n(titleKey) });
+            skPanel.Children.Add(button);
+        }
+
+        private void UpdateParallaxSummary() {
+            if (_parallaxSummary == null || _parallaxButton == null) return;
+            var modes = new List<string>();
+            if (_controls.TryGetValue(nameof(Picture3DCostumize.Parallax), out var mouse)
+                && mouse is CheckBox { IsChecked: true }) {
+                modes.Add(LanguageUtil.GetI18n("ParallaxMode_Mouse"));
+            }
+            if (_controls.TryGetValue(nameof(Picture3DCostumize.ParallaxAutoDrift), out var auto)
+                && auto is CheckBox { IsChecked: true }) {
+                modes.Add(LanguageUtil.GetI18n("ParallaxMode_Auto"));
+            }
+            var text = LanguageUtil.GetI18n("Text_Off");
+            if (_controls.TryGetValue(nameof(Picture3DCostumize.ParallaxStrength), out var control)
+                && control is ComboBox strengths) {
+                strengths.IsEnabled = modes.Count > 0;
+                if (modes.Count > 0) text = $"{strengths.SelectedItem} · {string.Join(" · ", modes)}";
+            }
+            _parallaxSummary.Text = text;
+            AutomationProperties.SetName(_parallaxButton, $"{LanguageUtil.GetI18n("EffectPrefix_Parallax3D")}: {text}");
+            ToolTipService.SetToolTip(_parallaxButton, text);
         }
 
         private void UpdateAtmosphereSummary() {
@@ -589,6 +639,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 or nameof(UniverseCostumise.AtmosphereIntensity)) {
                 UpdateAtmosphereSummary();
             }
+            if (e.PropertyName is nameof(Picture3DCostumize.Parallax)
+                or nameof(Picture3DCostumize.ParallaxStrength)
+                or nameof(Picture3DCostumize.ParallaxAutoDrift)) {
+                UpdateParallaxSummary();
+            }
         }
         #endregion
 
@@ -612,6 +667,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             if (!_isDisposed) {
                 if (disposing) {
                     _atmosphereButton?.Flyout?.Hide();
+                    _parallaxButton?.Flyout?.Hide();
                     UnSubscribe();
                 }
                 _controls.Clear();
@@ -630,6 +686,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private readonly StackPanel _atmospherePanel = new() { MinWidth = 260, MaxWidth = 320 };
         private DropDownButton? _atmosphereButton;
         private TextBlock? _atmosphereSummary;
+        private readonly StackPanel _parallaxPanel = new() { MinWidth = 260, MaxWidth = 320 };
+        private DropDownButton? _parallaxButton;
+        private TextBlock? _parallaxSummary;
         private JsonNode? _wpEffectData;
         private StartArgsWeb _startArgs = null!;
         private IEffectService _effectService = null!;

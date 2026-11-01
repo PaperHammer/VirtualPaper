@@ -1865,4 +1865,24 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="ParallaxMode_Mouse" xml:space="preserve"><value>鼠标跟随</value></data>
   <data name="ParallaxMode_Auto" xml:space="preserve"><value>自动漂移</value></data>
   <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D 视差</value></data>
+  <data name="ScreenFit_Title" xml:space="preserve"><value>高清适屏</value></data>
+  <data name="ScreenFit_SelectImage" xml:space="preserve"><value>选择图片</value></data>
+  <data name="ScreenFit_Monitor" xml:space="preserve"><value>目标显示器</value></data>
+  <data name="ScreenFit_Mode" xml:space="preserve"><value>适配方式</value></data>
+  <data name="ScreenFit_Contain" xml:space="preserve"><value>完整显示（留黑边）</value></data>
+  <data name="ScreenFit_Cover" xml:space="preserve"><value>裁剪填满（居中）</value></data>
+  <data name="ScreenFit_Preview" xml:space="preserve"><value>桌面效果预览</value></data>
+  <data name="ScreenFit_PreviewSample" xml:space="preserve"><value>图例</value></data>
+  <data name="ScreenFit_Plan" xml:space="preserve"><value>原图 {0} × {1}；可见原图范围约 {2} × {3}，居中显示。</value></data>
+  <data name="ScreenFit_Enhance" xml:space="preserve"><value>可选：高清增强</value></data>
+  <data name="ScreenFit_EnhanceSize" xml:space="preserve"><value>增强副本：{0} × {1}，保持原图比例，最高放大 4 倍。原文件不会改变。</value></data>
+  <data name="ScreenFit_NoEnhancementNeeded" xml:space="preserve"><value>原图已满足当前显示方式所需尺寸，无需增强。</value></data>
+  <data name="ScreenFit_ReadFailed" xml:space="preserve"><value>无法读取图片，请选择有效的静态图片。</value></data>
+  <data name="ScreenFit_DisplayChanged" xml:space="preserve"><value>显示器或布局已变化，请关闭窗口后重新选择。</value></data>
+  <data name="ScreenFit_Enhancing" xml:space="preserve"><value>正在高清增强，可点击取消停止…</value></data>
+  <data name="ScreenFit_Applying" xml:space="preserve"><value>正在入库并应用…</value></data>
+  <data name="ScreenFit_Canceled" xml:space="preserve"><value>已取消。可以关闭窗口，或不启用增强后重新应用。</value></data>
+  <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>高清增强失败。可关闭增强后使用原图重试。</value></data>
+  <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>入库或应用失败，请重试。</value></data>
+  <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>首版仅支持独立显示。请先在显示器控制中切换为独立显示，再打开此功能。</value></data>
 </root>

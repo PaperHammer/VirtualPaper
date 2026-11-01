@@ -12,6 +12,7 @@
 	  <None Remove="Views\AddToLib.xaml" />
 	  <None Remove="Views\LibraryContents.xaml" />
 	  <None Remove="Views\ScreenSaver.xaml" />
+	  <None Remove="Views\ScreenFitDialog.xaml" />
 	  <None Remove="WpSettings.xaml" />
 	</ItemGroup>
 

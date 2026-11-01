@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -63,6 +64,28 @@ namespace VirtualPaper.WpSettingsPanel {
 
         private void Flyout_Opening(object sender, object e) {
             _viewModel.InitFlyoutData();
+        }
+
+        private async void ScreenFit_Click(object sender, RoutedEventArgs e) {
+            if (sender is not Button button || !button.IsEnabled) return;
+            button.IsEnabled = false;
+            try {
+                var viewModel = ActivatorUtilities.CreateInstance<ScreenFitViewModel>(AppServiceLocator.Services);
+                if (_viewModel.SelectedMonitorIndex >= 0 && _viewModel.SelectedMonitorIndex < _viewModel.Monitors.Count) {
+                    string deviceId = _viewModel.Monitors[_viewModel.SelectedMonitorIndex].DeviceId;
+                    viewModel.SelectedMonitor = viewModel.Monitors.FirstOrDefault(m => m.DeviceId == deviceId) ?? viewModel.SelectedMonitor;
+                }
+                viewModel.Imported += data => AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>().UpdateLib(data);
+                var dialog = new ScreenFitDialog(viewModel) { XamlRoot = XamlRoot, RequestedTheme = ActualTheme };
+                await dialog.ShowAsync();
+                if (dialog.Applied) {
+                    int index = _viewModel.Monitors.ToList().FindIndex(m => m.DeviceId == viewModel.SelectedMonitor?.DeviceId);
+                    if (index >= 0) _viewModel.SelectedMonitorIndex = index;
+                    _viewModel.UpdateAdjustWindowCache();
+                }
+            }
+            catch (Exception ex) { ArcLog.GetLogger<WpSettings>().Error(ex); GlobalMessageUtil.ShowException(ex); }
+            finally { button.IsEnabled = true; }
         }
 
         private void OnFilterChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {

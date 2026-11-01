@@ -92,6 +92,17 @@
                                 <FontIcon Glyph="&#xF8AA;" FontSize="16"/>
                             </Button>
 
+                            <Button x:Name="ScreenFitButton"
+                                Width="32"
+                                Height="32"
+                                Padding="0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                ToolTipService.ToolTip="{markup:I18n Key=ScreenFit_Title}"
+                                Click="ScreenFit_Click">
+                                <FontIcon Glyph="&#xE740;" FontSize="16"/>
+                            </Button>
+
                             <Button x:Name="SelectLibraryItems"
                                 Width="32"
                                 Height="32"

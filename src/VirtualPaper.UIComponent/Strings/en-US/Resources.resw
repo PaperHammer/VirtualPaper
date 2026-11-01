@@ -1865,4 +1865,24 @@ The following words cannot be used as usernames:
   <data name="ParallaxMode_Mouse" xml:space="preserve"><value>Mouse following</value></data>
   <data name="ParallaxMode_Auto" xml:space="preserve"><value>Auto drift</value></data>
   <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D Parallax</value></data>
+  <data name="ScreenFit_Title" xml:space="preserve"><value>Fit image to screen</value></data>
+  <data name="ScreenFit_SelectImage" xml:space="preserve"><value>Select image</value></data>
+  <data name="ScreenFit_Monitor" xml:space="preserve"><value>Target display</value></data>
+  <data name="ScreenFit_Mode" xml:space="preserve"><value>Fit mode</value></data>
+  <data name="ScreenFit_Contain" xml:space="preserve"><value>Show entire image (black bars)</value></data>
+  <data name="ScreenFit_Cover" xml:space="preserve"><value>Fill screen (center crop)</value></data>
+  <data name="ScreenFit_Preview" xml:space="preserve"><value>Desktop preview</value></data>
+  <data name="ScreenFit_PreviewSample" xml:space="preserve"><value>Sample</value></data>
+  <data name="ScreenFit_Plan" xml:space="preserve"><value>Source: {0} × {1}; visible source area: approximately {2} × {3}, centered.</value></data>
+  <data name="ScreenFit_Enhance" xml:space="preserve"><value>Optional: enhance image</value></data>
+  <data name="ScreenFit_EnhanceSize" xml:space="preserve"><value>Enhanced copy: {0} × {1}, preserving the source aspect ratio, up to 4×. The original file stays unchanged.</value></data>
+  <data name="ScreenFit_NoEnhancementNeeded" xml:space="preserve"><value>The source already has enough pixels for this fit mode.</value></data>
+  <data name="ScreenFit_ReadFailed" xml:space="preserve"><value>Unable to read the image. Select a valid still image.</value></data>
+  <data name="ScreenFit_DisplayChanged" xml:space="preserve"><value>The display or layout changed. Close this dialog and select again.</value></data>
+  <data name="ScreenFit_Enhancing" xml:space="preserve"><value>Enhancing image. Select Cancel to stop…</value></data>
+  <data name="ScreenFit_Applying" xml:space="preserve"><value>Importing and applying…</value></data>
+  <data name="ScreenFit_Canceled" xml:space="preserve"><value>Canceled. Close this dialog, or apply again without enhancement.</value></data>
+  <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>Enhancement failed. Turn off enhancement to retry with the original image.</value></data>
+  <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>Unable to import or apply the wallpaper. Please retry.</value></data>
+  <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>This version supports independent displays. Switch to Per display in display controls, then reopen this tool.</value></data>
 </root>

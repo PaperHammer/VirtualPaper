@@ -1,11 +1,13 @@
-using System;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System;
+using System.Linq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
@@ -52,7 +54,7 @@ namespace VirtualPaper.WpSettingsPanel {
                     ? Visibility.Visible
                     : Visibility.Collapsed;
 
-                ContentFrame.Navigate(pageType, this);
+                ContentFrame.Navigate(pageType, this, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings));
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WpSettings>().Error(ex);

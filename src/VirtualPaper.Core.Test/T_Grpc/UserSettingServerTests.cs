@@ -166,6 +166,35 @@ public class UserSettingServerTests {
         fixture.UiRunner.Verify(service => service.RestartUI(), Times.Once);
     }
 
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public async Task NavigationAnimations_SetAndGet_PersistWithoutRestart(bool enabled) {
+        var fixture = new ServerFixture();
+        var request = await fixture.Server.GetSettings(new Empty(), null!);
+        request.NavigationAnimationsEnabled = enabled;
+
+        await fixture.Server.SetSettings(request, null!);
+        var response = await fixture.Server.GetSettings(new Empty(), null!);
+
+        Assert.IsTrue(response.HasNavigationAnimationsEnabled);
+        Assert.AreEqual(enabled, response.NavigationAnimationsEnabled);
+        fixture.UserSettings.Verify(service => service.Save<ISettings>(), Times.Once);
+        fixture.UiRunner.Verify(service => service.RestartUI(), Times.Never);
+    }
+
+    [TestMethod]
+    public async Task NavigationAnimations_RequestFromOlderClient_PreservesPreference() {
+        var fixture = new ServerFixture();
+        fixture.Settings.NavigationAnimationsEnabled = false;
+        var request = await fixture.Server.GetSettings(new Empty(), null!);
+        request.ClearNavigationAnimationsEnabled();
+
+        await fixture.Server.SetSettings(request, null!);
+
+        Assert.IsFalse(fixture.Settings.NavigationAnimationsEnabled);
+    }
+
     private static T AssertSingle<T>(IEnumerable<T> values) {
         T[] items = values.ToArray();
         Assert.HasCount(1, items);

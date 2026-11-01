@@ -1,11 +1,13 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Navigation;
+using System;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.UIComponent.Data;
+using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -44,7 +46,7 @@ namespace VirtualPaper.IntelligentPanel.Views.Comp {
                 1 => typeof(SuperResolutionComp.SuperResolutionAddTask),
                 _ => throw new NotImplementedException(),
             };
-            FrameComp.Navigate(targetTaskPageType, Payload);
+            FrameComp.Navigate(targetTaskPageType, Payload, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<ISettings>()));
 
             if (FrameComp.Content is ICardComponent cardComponent) {
                 cardComponent.CardUIStateChanged = () => {

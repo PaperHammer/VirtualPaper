@@ -1,7 +1,11 @@
-using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
+using System;
 using VirtualPaper.AppSettingsPanel.Views;
+using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -31,7 +35,7 @@ namespace VirtualPaper.AppSettingsPanel {
             };
             var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
 
-            ContentFrame.Navigate(pageType, Payload, new SlideNavigationTransitionInfo() { Effect = slideNavigationTransitionEffect });
+            ContentFrame.Navigate(pageType, Payload, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings, slideNavigationTransitionEffect));
 
             _previousSelectedIndex = currentSelectedIndex;
         }

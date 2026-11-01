@@ -1,8 +1,12 @@
-using System;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
+using System;
 using VirtualPaper.Common.Runtime.PlayerWeb;
+using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.PlayerWeb.Core.WebView.Components.General;
+using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Extensions;
 
@@ -36,7 +40,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components {
             };
             var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
 
-            ContentFrame.Navigate(pageType, Payload, new SlideNavigationTransitionInfo() { Effect = slideNavigationTransitionEffect });
+            ContentFrame.Navigate(pageType, Payload, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings, slideNavigationTransitionEffect));
 
             _previousSelectedIndex = currentSelectedIndex;
         }

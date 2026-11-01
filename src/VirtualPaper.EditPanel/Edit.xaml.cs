@@ -1,10 +1,14 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.EditPanel.Views;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Attributes;
+using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -64,14 +68,14 @@ namespace VirtualPaper.EditPanel {
 
                 if (targetPageType != null) {
                     if (IsNextPageTarget(targetPageType)) {
-                        FrameCardComp.GoForward();
+                        NavigationAnimation.GoForward(FrameCardComp, AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings);
                     }
                     else if (IsPreviousPageTarget(targetPageType)) {
-                        FrameCardComp.GoBack();
+                        FrameCardComp.GoBack(NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings));
                     }
                     else {
                         Payload?.AddRange(naviPayloadDatas);
-                        FrameCardComp.Navigate(targetPageType, Payload);
+                        FrameCardComp.Navigate(targetPageType, Payload, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings));
                     }
                 }
             });

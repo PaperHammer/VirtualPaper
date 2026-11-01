@@ -274,6 +274,31 @@ public class DataAssistMappingTests {
     }
 
     [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public void NavigationAnimations_SurvivesJsonAndGrpcRoundtrip(bool enabled) {
+        var settings = MakeSettings();
+        settings.NavigationAnimationsEnabled = enabled;
+        var json = System.Text.Json.JsonSerializer.Serialize(settings, SettingsContext.Default.Settings);
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(json, SettingsContext.Default.Settings)!;
+        var grpc = DataAssist.SettingsToGrpc(loaded);
+        var restored = DataAssist.GrpcToSettings(grpc);
+
+        Assert.IsTrue(grpc.HasNavigationAnimationsEnabled);
+        Assert.AreEqual(enabled, restored.NavigationAnimationsEnabled);
+    }
+
+    [TestMethod]
+    public void NavigationAnimations_OlderConfigurationAndGrpc_DefaultToEnabled() {
+        var settings = System.Text.Json.JsonSerializer.Deserialize("{}", SettingsContext.Default.Settings)!;
+        var grpc = DataAssist.SettingsToGrpc(MakeSettings());
+        grpc.ClearNavigationAnimationsEnabled();
+
+        Assert.IsTrue(settings.NavigationAnimationsEnabled);
+        Assert.IsTrue(DataAssist.GrpcToSettings(grpc).NavigationAnimationsEnabled);
+    }
+
+    [TestMethod]
     public void Settings_Roundtrip_PreservesEnumFields() {
         var src = MakeSettings();
 

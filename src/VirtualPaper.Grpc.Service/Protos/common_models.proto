@@ -140,6 +140,7 @@ message Grpc_SettingsData {
     int32 waiting_time = 28;
     Grpc_ScrEffectEnum screen_saver_effect = 29;
     repeated Grpc_ProcInfoData white_list_scr = 30; 
+    optional bool navigation_animations_enabled = 31;
 }
 
 message Grpc_AppRulesSettings {

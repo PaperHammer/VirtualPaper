@@ -206,6 +206,7 @@ namespace VirtualPaper.DataAssistor {
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
+                NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
 
                 WallpaperDir = settings.WallpaperDir,
 
@@ -272,6 +273,7 @@ namespace VirtualPaper.DataAssistor {
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
+                NavigationAnimationsEnabled = !settings.HasNavigationAnimationsEnabled || settings.NavigationAnimationsEnabled,
 
                 WallpaperDir = settings.WallpaperDir,
 

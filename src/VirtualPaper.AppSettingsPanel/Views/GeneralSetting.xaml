@@ -258,6 +258,28 @@
                         Width="200" />
                 </Grid>
 
+                <Grid x:Name="NavigationAnimations"
+                    MinHeight="90"
+                    Margin="0 5"
+                    Padding="20 12"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <FontIcon Margin="0 0 20 0" Glyph="&#xE768;"/>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0 0 20 0">
+                        <TextBlock Text="{markup:I18n Key=Settings_General_NavigationAnimations}"/>
+                        <TextBlock Text="{markup:I18n Key=Settings_General_NavigationAnimations_Description}"
+                            TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    </StackPanel>
+                    <ToggleSwitch x:Name="NavigationAnimationsToggle"
+                        Grid.Column="2" VerticalAlignment="Center"
+                        IsOn="{x:Bind _viewModel.NavigationAnimationsEnabled, Mode=TwoWay}"
+                        AutomationProperties.Name="{markup:I18n Key=Settings_General_NavigationAnimations}"/>
+                </Grid>
+
                 <Grid x:Name="Language"
                     Height="90"
                     Margin="0 5"

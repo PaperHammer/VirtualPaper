@@ -1,14 +1,15 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
+using System;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
@@ -16,6 +17,7 @@ using VirtualPaper.IntelligentPanel.Views;
 using VirtualPaper.IntelligentPanel.Views.Comp;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 
@@ -77,7 +79,7 @@ namespace VirtualPaper.IntelligentPanel {
             Payload?.Set(NaviPayloadKey.SelectedIntelliPageIdx, currentSelectedIndex);
             var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
 
-            ContentFrame.Navigate(pageType, Payload, new SlideNavigationTransitionInfo() { Effect = slideNavigationTransitionEffect });
+            ContentFrame.Navigate(pageType, Payload, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<ISettings>(), slideNavigationTransitionEffect));
 
             _previousSelectedIndex = currentSelectedIndex;
             _viewModel.SelectedIntelliPage = ContentFrame.Content as IIntelligentPage;
@@ -115,7 +117,7 @@ namespace VirtualPaper.IntelligentPanel {
 
         public void ShowOverlayPage(Type pageType, object? parameter) {
             maskGrid.Visibility = Visibility.Visible;
-            overlayFrame.Navigate(pageType, parameter);
+            overlayFrame.Navigate(pageType, parameter, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<ISettings>()));
         }
 
         public void HideOverlayPage() {

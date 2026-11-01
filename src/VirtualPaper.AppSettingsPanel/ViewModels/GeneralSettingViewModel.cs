@@ -163,6 +163,16 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
+        public bool NavigationAnimationsEnabled {
+            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
+            set {
+                if (_userSettingsClient.Settings.NavigationAnimationsEnabled == value) return;
+                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+            }
+        }
+
         private int _seletedSystemBackdropIndx;
         public int SeletedSystemBackdropIndx {
             get => _seletedSystemBackdropIndx;

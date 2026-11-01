@@ -1,27 +1,28 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
+using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.EditPanel.Model;
 using VirtualPaper.EditPanel.ViewModels;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.Interfaces;
 using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using Windows.System;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
-using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -289,7 +290,7 @@ namespace VirtualPaper.EditPanel.Views {
         #region overlay page
         public void ShowOverlayPage(Type pageType, object? parameter) {
             maskGrid.Visibility = Visibility.Visible;
-            overlayFrame.Navigate(pageType, parameter);
+            overlayFrame.Navigate(pageType, parameter, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings));
         }
 
         public void HideOverlayPage() {

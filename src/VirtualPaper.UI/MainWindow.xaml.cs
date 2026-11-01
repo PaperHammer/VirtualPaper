@@ -17,6 +17,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Extensions;
 using VirtualPaper.WpSettingsPanel;
 using WinRT.Interop;
 using WinUIEx;
@@ -34,11 +35,11 @@ namespace VirtualPaper.UI {
         public MainWindow(IUserSettingsClient userSettings, ICommandsClient commandsClient, ITwoWayClient twoWayClient)
             : base(userSettings.Settings.ApplicationTheme, userSettings.Settings.SystemBackdrop) {
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.Main);
+            _userSettings = userSettings;
             this.InitializeComponent();
             this.InitWindowConst();
             base.InitializeWindow();
 
-            _userSettings = userSettings;
             _commandsClient = commandsClient;
             _twoWayClient = twoWayClient;
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
@@ -153,7 +154,10 @@ namespace VirtualPaper.UI {
                     _ => throw new NotImplementedException(),
                 };
 
-                NaviContent.Navigate(pageType);
+                var options = _userSettings.Settings.NavigationAnimationsEnabled
+                    ? new ArcNavigationOptions(ArcNavigationTransition.Fade)
+                    : null;
+                NaviContent.Navigate(pageType, options: options);
             }
             catch (Exception ex) {
                 GlobalMessageUtil.ShowException(ex, arcWindow: ArcWindowManager.GetArcWindow(Key));

@@ -114,6 +114,7 @@ namespace VirtualPaper.GrpcServers {
                 AppName = _userSetting.Settings.AppName,
                 AppVersion = _userSetting.Settings.AppVersion,
                 IsFirstRun = _userSetting.Settings.IsFirstRun,
+                NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
                 AppFocusPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFocus,
                 AppFullscreenPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFullscreen,
                 BatteryPause = (Grpc_AppRulesEnum)_userSetting.Settings.BatteryPoweredn,
@@ -176,6 +177,9 @@ namespace VirtualPaper.GrpcServers {
             _userSetting.Settings.AppName = request.AppName;
             _userSetting.Settings.AppVersion = request.AppVersion;
             _userSetting.Settings.IsFirstRun = request.IsFirstRun;
+            if (request.HasNavigationAnimationsEnabled) {
+                _userSetting.Settings.NavigationAnimationsEnabled = request.NavigationAnimationsEnabled;
+            }
             _userSetting.Settings.AppFocus = (Common.AppWpRunRulesEnum)((int)request.AppFocusPause);
             _userSetting.Settings.AppFullscreen = (Common.AppWpRunRulesEnum)((int)request.AppFullscreenPause);
             _userSetting.Settings.BatteryPoweredn = (Common.AppWpRunRulesEnum)((int)request.BatteryPause);

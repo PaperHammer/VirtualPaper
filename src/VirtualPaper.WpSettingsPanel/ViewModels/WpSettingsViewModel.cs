@@ -233,6 +233,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 new AddToLib(addToLibViewModel),
                 LanguageUtil.GetI18n(Constants.I18n.Text_Confirm));
             if (dialog == null) return;
+            dialog.CloseButtonText = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
 
             addToLibViewModel.OnRequestAddFile += (_, e) => {
                 files = e;
@@ -246,6 +247,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             };
 
             await dialog.ShowAsync();
+            if (files.Count == 0) return;
 
             var libViewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
             await libViewModel.DropFilesAsync(files);

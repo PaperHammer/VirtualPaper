@@ -15,6 +15,24 @@
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
+    <arc:ArcPage.Resources>
+        <Style x:Key="ToolbarButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="ToolbarIconStyle" TargetType="Path">
+            <Setter Property="StrokeThickness" Value="1.6"/>
+            <Setter Property="StrokeStartLineCap" Value="Round"/>
+            <Setter Property="StrokeEndLineCap" Value="Round"/>
+            <Setter Property="StrokeLineJoin" Value="Round"/>
+        </Style>
+    </arc:ArcPage.Resources>
+
     <arc:ArcPageHost x:Name="MainHost">
         <NavigationView x:Name="NvLocal" 
             Padding="10 0"
@@ -31,23 +49,36 @@
                     Content="{markup:I18n Key=WpSettings_NavTitle_ScrSettings}"/>
             </NavigationView.MenuItems>
 
-            <NavigationView.PaneFooter>
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <!-- 库专属工具并入顶部导航，避免额外占用一整行内容空间。 -->
-                    <StackPanel x:Name="FilterBar" Orientation="Horizontal" Spacing="6">
-                        <StackPanel x:Name="LibraryBrowseTools" Orientation="Horizontal" Spacing="6">
+            <Grid Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid x:Name="LibraryToolbar" Margin="12 4 12 8" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid x:Name="FilterBar" SizeChanged="FilterBar_SizeChanged">
+                        <StackPanel x:Name="LibraryBrowseTools" Orientation="Horizontal" Spacing="8"
+                            HorizontalAlignment="Left" VerticalAlignment="Center">
                             <AutoSuggestBox x:Name="tbSearchName"
+                                Style="{StaticResource ArcSearchBoxStyle}"
                                 Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
-                                Width="360"
-                                Height="32"
+                                Width="260"
+                                Height="36"
                                 QueryIcon="Find"
                                 PlaceholderText="{markup:I18n Key=WpLib_Search_Placeholder}"
                                 VerticalAlignment="Center"
                                 TextChanged="OnFilterChanged"/>
 
-                            <DropDownButton
-                                Width="142"
-                                Height="32"
+                            <DropDownButton x:Name="LibraryTypeFilter"
+                                Width="140"
+                                Height="36"
+                                CornerRadius="8"
+                                Background="{ThemeResource ControlFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                BorderThickness="1"
                                 HorizontalContentAlignment="Left"
                                 VerticalAlignment="Center"
                                 Padding="10 0">
@@ -82,58 +113,28 @@
                                 </DropDownButton.Flyout>
                             </DropDownButton>
 
-                            <Button x:Name="AddToLib"
-                                Width="32"
-                                Height="32"
-                                Padding="0"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Command="{x:Bind _viewModel.AddToLibCommand}">
-                                <FontIcon Glyph="&#xF8AA;" FontSize="16"/>
-                            </Button>
-
-                            <Button x:Name="ScreenFitButton"
-                                Width="32"
-                                Height="32"
-                                Padding="0"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                ToolTipService.ToolTip="{markup:I18n Key=ScreenFit_Title}"
-                                Click="ScreenFit_Click">
-                                <FontIcon Glyph="&#xE740;" FontSize="16"/>
-                            </Button>
-
-                            <Button x:Name="SelectLibraryItems"
-                                Width="32"
-                                Height="32"
-                                Padding="0"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Click="SelectLibraryItems_Click">
-                                <FontIcon Glyph="&#xE762;" FontSize="16"/>
-                            </Button>
                         </StackPanel>
 
                         <StackPanel x:Name="LibrarySelectionTools"
                             Orientation="Horizontal"
-                            Spacing="6"
+                            Spacing="8"
+                            VerticalAlignment="Center"
                             Visibility="Collapsed">
                             <TextBlock x:Name="LibrarySelectionCount"
-                                MinWidth="96"
                                 VerticalAlignment="Center"
-                                TextAlignment="Right"/>
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             <Button
-                                Height="32"
+                                Height="36"
                                 Padding="10 0"
                                 Click="SelectAllLibraryItems_Click"
                                 Content="{markup:I18n Key=WpLib_SelectAll}"/>
                             <Button
-                                Height="32"
+                                Height="36"
                                 Padding="10 0"
                                 Click="InvertLibrarySelection_Click"
                                 Content="{markup:I18n Key=WpLib_InvertSelection}"/>
                             <Button x:Name="DeleteSelectedLibraryItems"
-                                Height="32"
+                                Height="36"
                                 Padding="10 0"
                                 IsEnabled="False"
                                 Click="DeleteSelectedLibraryItems_Click">
@@ -143,8 +144,8 @@
                                 </StackPanel>
                             </Button>
                             <Button
-                                Width="32"
-                                Height="32"
+                                Width="36"
+                                Height="36"
                                 Padding="0"
                                 Background="Transparent"
                                 BorderThickness="0"
@@ -153,125 +154,168 @@
                                 <FontIcon Glyph="&#xE711;" FontSize="14"/>
                             </Button>
                         </StackPanel>
+                    </Grid>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                        HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <StackPanel x:Name="LibraryActionButtons" Orientation="Horizontal" Spacing="4">
+                            <Button x:Name="AddToLib" Style="{StaticResource ToolbarButtonStyle}"
+                                ToolTipService.ToolTip="{markup:I18n Key=WpLib_AddWallpaper}"
+                                AutomationProperties.Name="{markup:I18n Key=WpLib_AddWallpaper}"
+                                Command="{x:Bind _viewModel.AddToLibCommand}">
+                                <Viewbox Width="24" Height="24">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Style="{StaticResource ToolbarIconStyle}"
+                                            Stroke="{Binding Foreground, ElementName=AddToLib}"
+                                            Data="M12,5 L12,19 M5,12 L19,12"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Button>
+                            <Button x:Name="ScreenFitButton" Style="{StaticResource ToolbarButtonStyle}"
+                                ToolTipService.ToolTip="{markup:I18n Key=ScreenFit_Title}"
+                                AutomationProperties.Name="{markup:I18n Key=ScreenFit_Title}"
+                                Click="ScreenFit_Click">
+                                <Viewbox Width="24" Height="24">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Style="{StaticResource ToolbarIconStyle}"
+                                            Stroke="{Binding Foreground, ElementName=ScreenFitButton}"
+                                            Data="M9,4 L4,4 L4,9 M15,4 L20,4 L20,9 M4,15 L4,20 L9,20 M20,15 L20,20 L15,20 M8,15 L11,12 L13,14 L16,10"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </Button>
+                            <ToggleButton x:Name="SelectLibraryItems"
+                                Width="36" Height="36" Padding="0" CornerRadius="8"
+                                Background="Transparent" BorderThickness="0"
+                                VerticalAlignment="Center"
+                                ToolTipService.ToolTip="{markup:I18n Key=WpLib_SelectItems}"
+                                AutomationProperties.Name="{markup:I18n Key=WpLib_SelectItems}"
+                                Click="SelectLibraryItems_Click">
+                                <Viewbox Width="24" Height="24">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Style="{StaticResource ToolbarIconStyle}"
+                                            Stroke="{Binding Foreground, ElementName=SelectLibraryItems}"
+                                            Data="M4,6 L6,8 L9,4 M12,6 L20,6 M4,15 L6,17 L9,13 M12,15 L20,15 M12,20 L20,20"/>
+                                    </Canvas>
+                                </Viewbox>
+                            </ToggleButton>
+                        </StackPanel>
+                        <Button x:Name="ControlCenter" Style="{StaticResource ToolbarButtonStyle}"
+                            ToolTipService.ToolTip="{markup:I18n Key=WpLib_DisplayControls}"
+                            AutomationProperties.Name="{markup:I18n Key=WpLib_DisplayControls}">
+                            <Viewbox Width="24" Height="24">
+                                <Canvas Width="24" Height="24">
+                                    <Path Style="{StaticResource ToolbarIconStyle}"
+                                        Stroke="{Binding Foreground, ElementName=ControlCenter}"
+                                        Data="M4,4 L20,4 Q21,4 21,5 L21,15 Q21,16 20,16 L4,16 Q3,16 3,15 L3,5 Q3,4 4,4 Z M12,16 L12,20 M8,20 L16,20"/>
+                                </Canvas>
+                            </Viewbox>
+                            <Button.Flyout>
+                                <Flyout Opening="Flyout_Opening">
+                                    <Flyout.FlyoutPresenterStyle>
+                                        <Style TargetType="FlyoutPresenter">
+                                            <Setter Property="MinWidth" Value="500"></Setter>
+                                        </Style>
+                                    </Flyout.FlyoutPresenterStyle>
+                                    <StackPanel
+                                        Spacing="8"
+                                        VerticalAlignment="Stretch"
+                                        HorizontalAlignment="Stretch">
+                                        <StackPanel Orientation="Horizontal"  Spacing="8">
+                                            <input:ArcButton x:Name="BtnClose"
+                                                Height="33"
+                                                MinWidth="66"
+                                                Content="{markup:I18n Key=Text_Close}"
+                                                Background="PaleVioletRed"
+                                                Command="{x:Bind _viewModel.WpCloseCommand}"/>
+                                            <Button x:Name="BtnDetect"
+                                                Height="33"
+                                                MinWidth="66"
+                                                Content="{markup:I18n Key=Text_Detect}"
+                                                Command="{x:Bind _viewModel.WpDetectCommand}"/>
+                                            <Button x:Name="BtnIdentify"
+                                                Height="33"
+                                                MinWidth="66"
+                                                Content="{markup:I18n Key=Text_Identify}"
+                                                Command="{x:Bind _viewModel.WpIdentifyCommand}"/>
+                                            <Button x:Name="BtnAdjust"
+                                                Height="33"
+                                                MinWidth="66"
+                                                Content="{markup:I18n Key=Text_Adjust}"
+                                                Command="{x:Bind _viewModel.WpAdjustCommand}"/>
+                                        </StackPanel>
+
+                                        <GridView
+                                            HorizontalAlignment="Center"
+                                            ItemsSource="{x:Bind _viewModel.Monitors}"
+                                            SelectedIndex="{x:Bind _viewModel.SelectedMonitorIndex, Mode=TwoWay}">
+                                            <GridView.ItemTemplate>
+                                                <DataTemplate x:DataType="models:Monitor">
+                                                    <Grid Width="184" Height="120">
+                                                        <Image
+                                                            Source="{x:Bind ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}, Mode=OneWay}"
+                                                            Stretch="UniformToFill" />
+                                                        <Canvas>
+                                                            <Canvas.Background>
+                                                                <LinearGradientBrush StartPoint="0,0.4" EndPoint="0,1">
+                                                                    <GradientStop Color="Transparent" Offset="0.0"/>
+                                                                    <GradientStop Color="#0067c0" Offset="1.2"/>
+                                                                </LinearGradientBrush>
+                                                            </Canvas.Background>
+                                                        </Canvas>
+                                                        <Viewbox Width="120" Height="60">
+                                                            <TextBlock
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Text="{x:Bind Content}" />
+                                                        </Viewbox>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </GridView.ItemTemplate>
+                                            <GridView.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <ItemsWrapGrid MaximumRowsOrColumns="3" Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </GridView.ItemsPanel>
+                                        </GridView>
+
+                                        <StackPanel x:Name="WallpaperArrangement"
+                                            Orientation="Vertical"
+                                            Spacing="4">
+
+                                            <TextBlock x:Name="WpArrangHeader"
+                                                Text="{markup:I18n Key=Text_WpArrange}"
+                                                FontWeight="Bold"/>
+
+                                            <Grid BorderThickness="1" CornerRadius="5">
+                                                <ListBox
+                                                    Width="auto"
+                                                    ItemsSource="{x:Bind _viewModel.WpArrangements}"
+                                                    SelectedIndex="{x:Bind _viewModel.SelectedWpArrangementsIndex, Mode=TwoWay}">
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate x:DataType="localViewModel:WpArrangeDataModel">
+                                                            <Grid ToolTipService.ToolTip="{x:Bind Tooltip}">
+                                                                <TextBlock Text="{x:Bind Method}"/>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                    <ListBox.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <VirtualizingStackPanel Orientation="Horizontal" />
+                                                        </ItemsPanelTemplate>
+                                                    </ListBox.ItemsPanel>
+                                                </ListBox>
+                                            </Grid>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Flyout>
+                            </Button.Flyout>
+                        </Button>
                     </StackPanel>
+                </Grid>
 
-                    <Button x:Name="ControlCenter"
-                        Width="32"
-                        Height="32"
-                        Padding="0"
-                        Background="Transparent"                                
-                        BorderThickness="0">
-                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE7F4;"/>
-                        <Button.Flyout>
-                            <Flyout Opening="Flyout_Opening">
-                                <Flyout.FlyoutPresenterStyle>
-                                    <Style TargetType="FlyoutPresenter">
-                                        <Setter Property="MinWidth" Value="500"></Setter>
-                                    </Style>
-                                </Flyout.FlyoutPresenterStyle>
-                                <StackPanel
-                                    Spacing="8"
-                                    VerticalAlignment="Stretch"
-                                    HorizontalAlignment="Stretch">
-                                    <StackPanel Orientation="Horizontal"  Spacing="8">
-                                        <input:ArcButton x:Name="BtnClose"
-                                            Height="33"
-                                            MinWidth="66"
-                                            Margin="10 0 0 0"
-                                            Content="{markup:I18n Key=Text_Close}"
-                                            Background="PaleVioletRed"
-                                            Command="{x:Bind _viewModel.WpCloseCommand}"/>
-                                        <Button x:Name="BtnDetect"
-                                            Height="33"
-                                            MinWidth="66"
-                                            Margin="10 0 0 0"
-                                            Content="{markup:I18n Key=Text_Detect}"
-                                            Command="{x:Bind _viewModel.WpDetectCommand}"/>
-                                        <Button x:Name="BtnIdentify"
-                                            Height="33"
-                                            MinWidth="66"
-                                            Margin="10 0 0 0"
-                                            Content="{markup:I18n Key=Text_Identify}"
-                                            Command="{x:Bind _viewModel.WpIdentifyCommand}"/>
-                                        <Button x:Name="BtnAdjust"
-                                            Height="33"
-                                            MinWidth="66"
-                                            Margin="10 0 0 0"
-                                            Content="{markup:I18n Key=Text_Adjust}"
-                                            Command="{x:Bind _viewModel.WpAdjustCommand}"/>
-                                    </StackPanel>
-
-                                    <GridView
-                                        HorizontalAlignment="Center"
-                                        ItemsSource="{x:Bind _viewModel.Monitors}"
-                                        SelectedIndex="{x:Bind _viewModel.SelectedMonitorIndex, Mode=TwoWay}">
-                                        <GridView.ItemTemplate>
-                                            <DataTemplate x:DataType="models:Monitor">
-                                                <Grid Width="184" Height="120">
-                                                    <Image
-                                                        Source="{x:Bind ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}, Mode=OneWay}"
-                                                        Stretch="UniformToFill" />
-                                                    <Canvas>
-                                                        <Canvas.Background>
-                                                            <LinearGradientBrush StartPoint="0,0.4" EndPoint="0,1">
-                                                                <GradientStop Color="Transparent" Offset="0.0"/>
-                                                                <GradientStop Color="#0067c0" Offset="1.2"/>
-                                                            </LinearGradientBrush>
-                                                        </Canvas.Background>
-                                                    </Canvas>
-                                                    <Viewbox Width="120" Height="60">
-                                                        <TextBlock
-                                                            HorizontalAlignment="Center"
-                                                            VerticalAlignment="Center"
-                                                            Text="{x:Bind Content}" />
-                                                    </Viewbox>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </GridView.ItemTemplate>
-                                        <GridView.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <ItemsWrapGrid MaximumRowsOrColumns="3" Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </GridView.ItemsPanel>
-                                    </GridView>
-
-                                    <StackPanel x:Name="WallpaperArrangement"
-                                        Orientation="Vertical"
-                                        Spacing="4">
-
-                                        <TextBlock x:Name="WpArrangHeader"
-                                            Text="{markup:I18n Key=Text_WpArrange}"
-                                            FontWeight="Bold"/>
-
-                                        <Grid BorderThickness="1" CornerRadius="5">
-                                            <ListBox
-                                                Width="auto"
-                                                ItemsSource="{x:Bind _viewModel.WpArrangements}"
-                                                SelectedIndex="{x:Bind _viewModel.SelectedWpArrangementsIndex, Mode=TwoWay}">
-                                                <ListBox.ItemTemplate>
-                                                    <DataTemplate x:DataType="localViewModel:WpArrangeDataModel">
-                                                        <Grid ToolTipService.ToolTip="{x:Bind Tooltip}">
-                                                            <TextBlock Text="{x:Bind Method}"/>
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ListBox.ItemTemplate>
-                                                <ListBox.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <VirtualizingStackPanel Orientation="Horizontal" />
-                                                    </ItemsPanelTemplate>
-                                                </ListBox.ItemsPanel>
-                                            </ListBox>
-                                        </Grid>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Flyout>
-                        </Button.Flyout>
-                    </Button>
-                </StackPanel>
-            </NavigationView.PaneFooter>
-
-            <Frame x:Name="ContentFrame"
-                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
+                <Frame x:Name="ContentFrame" Grid.Row="1"
+                    Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"/>
+            </Grid>
         </NavigationView>
     </arc:ArcPageHost>
 </arc:ArcPage>

@@ -252,6 +252,15 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="WpLib_SelectedCount" xml:space="preserve">
     <value>已选择 {0} 项</value>
   </data>
+  <data name="WpLib_AddWallpaper" xml:space="preserve">
+    <value>添加壁纸</value>
+  </data>
+  <data name="WpLib_SelectItems" xml:space="preserve">
+    <value>选择壁纸</value>
+  </data>
+  <data name="WpLib_DisplayControls" xml:space="preserve">
+    <value>显示器控制</value>
+  </data>
   <data name="Text_ShowOnDisk" xml:space="preserve">
     <value>打开文件所在目录</value>
   </data>

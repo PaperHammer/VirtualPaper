@@ -38,6 +38,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
             this.DataContext = _viewModel;
             _viewModel.ItemDeleted += ViewModel_ItemDeleted;
+            UpdateWallpaperTileSize();
         }
 
         private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
@@ -137,8 +138,11 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         public void ExitSelectionMode() {
-            wallpapersLibView.SelectedItems.Clear();
-            wallpapersLibView.SelectionMode = ListViewSelectionMode.None;
+            // SelectionMode=None 时修改 SelectedItems 会触发 WinUI 异常，阻断页面导航。
+            if (wallpapersLibView.SelectionMode != ListViewSelectionMode.None) {
+                wallpapersLibView.SelectedItems.Clear();
+                wallpapersLibView.SelectionMode = ListViewSelectionMode.None;
+            }
             wallpapersLibView.IsItemClickEnabled = true;
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
             ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(false, 0);
@@ -234,6 +238,21 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             e.Handled = true;
         }
 
+        private void WallpapersLibView_SizeChanged(object sender, SizeChangedEventArgs e) {
+            UpdateWallpaperTileSize();
+        }
+
+        private void UpdateWallpaperTileSize() {
+            if (wallpapersLibView.ItemsPanelRoot is not ItemsWrapGrid panel || wallpapersLibView.ActualWidth <= 0) return;
+
+            const double gap = 12;
+            // 按约 320px 的卡片宽度选择列数，再平分整行；向下取整避免布局舍入导致换行。
+            int columns = Math.Max(1, (int)Math.Round(wallpapersLibView.ActualWidth / (320 + gap), MidpointRounding.AwayFromZero));
+            double cellWidth = Math.Floor(wallpapersLibView.ActualWidth / columns);
+            panel.ItemWidth = cellWidth;
+            panel.ItemHeight = Math.Round(Math.Max(1, cellWidth - gap) * 5 / 8) + gap;
+        }
+
         private void GridViewItem_PointerEntered(object sender, PointerRoutedEventArgs e) {
             AnimateScale(sender, hover: true);
         }
@@ -284,7 +303,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 anim.InsertKeyFrame(1f, new Vector3(scale, scale, 1f), ease);
                 return anim;
             }
-            var context = new ScaleAnimationContext(visual, CreateScaleAnim(1.0f), CreateScaleAnim(0.9f));
+            var context = new ScaleAnimationContext(visual, CreateScaleAnim(1.0f), CreateScaleAnim(0.98f));
 
             root.Tag = context;
         }

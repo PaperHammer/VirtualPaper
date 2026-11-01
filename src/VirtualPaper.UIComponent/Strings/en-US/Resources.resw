@@ -252,6 +252,15 @@ The file cannot be imported: </value>
   <data name="WpLib_SelectedCount" xml:space="preserve">
     <value>{0} selected</value>
   </data>
+  <data name="WpLib_AddWallpaper" xml:space="preserve">
+    <value>Add wallpaper</value>
+  </data>
+  <data name="WpLib_SelectItems" xml:space="preserve">
+    <value>Select wallpapers</value>
+  </data>
+  <data name="WpLib_DisplayControls" xml:space="preserve">
+    <value>Display controls</value>
+  </data>
   <data name="Text_ShowOnDisk" xml:space="preserve">
     <value>Open in explorer</value>
   </data>

@@ -15,7 +15,9 @@
 
     <arc:ArcPage.Resources>
         <Style x:Key="LibGridViewItemStyle" TargetType="GridViewItem">
-            <Setter Property="Margin" Value="5 5 5 10"/>
+            <Setter Property="Margin" Value="0 0 12 12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GridViewItem">
@@ -36,12 +38,12 @@
                                             <Setter Target="SelectionOverlay.Opacity" Value="1"/>
                                         </VisualState.Setters>
                                     </VisualState>
-                                    <VisualState x:Name="SelectedPointerOver">
+                                    <VisualState x:Name="PointerOverSelected">
                                         <VisualState.Setters>
                                             <Setter Target="SelectionOverlay.Opacity" Value="1"/>
                                         </VisualState.Setters>
                                     </VisualState>
-                                    <VisualState x:Name="SelectedPressed">
+                                    <VisualState x:Name="PressedSelected">
                                         <VisualState.Setters>
                                             <Setter Target="SelectionOverlay.Opacity" Value="1"/>
                                         </VisualState.Setters>
@@ -51,6 +53,8 @@
 
                             <ContentPresenter x:Name="contentPresenter"
                                 RenderTransformOrigin="0.5 0.5"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                                 Content="{TemplateBinding Content}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}">
                                 <ContentPresenter.RenderTransform>
@@ -87,8 +91,8 @@
 
         <DataTemplate x:Key="WallpaperItemTemplate" x:DataType="models:IWpBasicData">
             <Grid
-                Width="320"
-                Height="200"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
                 CornerRadius="8"
                 ContextFlyout="{StaticResource WallpaperContextFlyout}">
 
@@ -141,7 +145,7 @@
             <ItemsWrapGrid x:Name="InternalItemsWrapGrid"
                 Orientation="Horizontal" 
                 VerticalAlignment="Top"
-                HorizontalAlignment="Center"/>
+                HorizontalAlignment="Left"/>
         </ItemsPanelTemplate>
 
         <MenuFlyout x:Key="WallpaperContextFlyout"
@@ -215,13 +219,15 @@
     </arc:ArcPage.Resources>
 
     <ScrollView x:Name="wallpaperLibScrollViewer"
-         Padding="0 0 16 0" Margin="0 0 0 20"
+         HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Hidden"
+         Padding="12 0 12 0" Margin="0 0 0 20"
          ViewChanged="WallpaperLibScrollViewer_ViewChanged">
         <StackPanel
             Orientation="Vertical"
             Spacing="8">
             <GridView x:Name="wallpapersLibView"
-                Margin="5 0 5 10"
+                Margin="0 0 -12 0"
+                SizeChanged="WallpapersLibView_SizeChanged"
                 DataContext="{x:Bind _viewModel}"
                 ItemsSource="{x:Bind _viewModel.LibraryWallpapers}"
                 Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"

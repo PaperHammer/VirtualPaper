@@ -48,8 +48,7 @@ namespace VirtualPaper.WpSettingsPanel {
                     _ => throw new NotImplementedException(),
                 };
 
-                // 过滤栏仅在"库内容"标签下展示
-                FilterBar.Visibility = args.SelectedItemContainer.Name == "Nav_LibraryContents"
+                LibraryToolbar.Visibility = args.SelectedItemContainer.Name == "Nav_LibraryContents"
                     ? Visibility.Visible
                     : Visibility.Collapsed;
 
@@ -94,9 +93,19 @@ namespace VirtualPaper.WpSettingsPanel {
             }
         }
 
+        private void FilterBar_SizeChanged(object sender, SizeChangedEventArgs e) {
+            tbSearchName.Width = Math.Clamp(
+                e.NewSize.Width - LibraryTypeFilter.ActualWidth - LibraryBrowseTools.Spacing, 120, 260);
+        }
+
         private void SelectLibraryItems_Click(object sender, RoutedEventArgs e) {
             if (ContentFrame.Content is LibraryContents library) {
-                library.EnterSelectionMode();
+                if (SelectLibraryItems.IsChecked == true) {
+                    library.EnterSelectionMode();
+                }
+                else {
+                    library.ExitSelectionMode();
+                }
             }
         }
 
@@ -125,6 +134,9 @@ namespace VirtualPaper.WpSettingsPanel {
         }
 
         internal void UpdateLibrarySelectionState(bool isSelecting, int selectedCount) {
+            SelectLibraryItems.IsChecked = isSelecting;
+            AddToLib.IsEnabled = !isSelecting;
+            ScreenFitButton.IsEnabled = !isSelecting;
             LibraryBrowseTools.Visibility = isSelecting ? Visibility.Collapsed : Visibility.Visible;
             LibrarySelectionTools.Visibility = isSelecting ? Visibility.Visible : Visibility.Collapsed;
             LibrarySelectionCount.Text = string.Format(

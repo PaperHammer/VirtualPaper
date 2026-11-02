@@ -240,8 +240,11 @@ namespace VirtualPaper.UI {
             };
         }
 
-        public static async Task ShutDownAsync() {
-            await ((ServiceProvider)AppServiceLocator.Services).DisposeAsync();
+        public static void ShutDown() {
+            // The last window can end the WinUI application lifetime before an
+            // async Closed handler resumes. TwoWayClient's synchronous Dispose
+            // drains its stream without capturing the UI synchronization context.
+            ((ServiceProvider)AppServiceLocator.Services).Dispose();
             ArcLog.GetLogger<App>().Info("UI was closed");
             Application.Current.Exit();
         }

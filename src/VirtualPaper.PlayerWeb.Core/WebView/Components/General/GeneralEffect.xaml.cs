@@ -44,11 +44,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         }
 
         private void InitUI() {
-            _atmosphereButton?.Flyout?.Hide();
-            _atmospherePanel.Children.Clear();
-            _parallaxButton?.Flyout?.Hide();
-            _parallaxPanel.Children.Clear();
-            skPanel.Children.Clear();
+            PreCleanup();
             if (AnyFilePathsEmpty()) {
                 return;
             }
@@ -56,6 +52,14 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             _wpEffectData = JsonNodeUtil.GetWritableJson(_startArgs.WpEffectFilePathUsing);
             EnsureEffectProperties(_wpEffectData.AsObject());
             GenerateUIElements();
+        }
+
+        private void PreCleanup() {
+            _atmosphereButton?.Flyout?.Hide();
+            _atmospherePanel.Children.Clear();
+            _parallaxButton?.Flyout?.Hide();
+            _parallaxPanel.Children.Clear();
+            skPanel.Children.Clear();
         }
 
         private void EnsureEffectProperties(JsonObject properties) {

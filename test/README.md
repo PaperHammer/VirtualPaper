@@ -17,6 +17,7 @@ test/
       Application/ScreenSaverTests.cs         屏保设置与白名单保存重开验证
       Application/ScreenFitTests.cs           高清适屏选图预览、取消及实际应用验证
       Application/WallpaperEffectsTests.cs    已应用壁纸的正式调整窗口保存重开验证
+      Application/GeneralSettingsTests.cs     主题、材质、语言与设置子页保存重开验证
     Infrastructure/
       UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
       AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
@@ -116,6 +117,15 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 
 修改使用正式 RPC／IPC 路径，播放器保持运行；本用例不读取渲染端状态或比对渲染像素。
 它不代替粒子画质、3D 深度模型、鼠标视差及暂停／恢复的验证。
+
+`Application.GeneralSettings.SaveLanguageThemeAndReopen` 验证通用设置：
+
+1. 通过主题按钮切换浅色到深色，修改界面材质、开机启动偏好和语言，逐项核对 Core RPC 与 JSON。
+2. 在通用／系统／其他子页间导航，返回后设置保持一致，About 图片保留可访问名称。
+3. 材质与语言修改后，观察 Core 自动拉起新的 UI 进程，逐代核对旧进程退出码；不代发显示命令。
+4. 再手动关闭并重开 UI，核对中文通用标签、中文材质选项、语言和开机启动开关；最后恢复英语和关闭开机启动偏好。
+
+显式测试会话不注册系统开机启动。本用例不验证实际系统注册、材质像素、About 图片解码或更新下载。
 
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。

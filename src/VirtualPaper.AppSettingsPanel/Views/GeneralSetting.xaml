@@ -203,7 +203,8 @@
                     <ToggleButton
                         Grid.Column="2"
                         Width="200"
-                        Content="{x:Bind _viewModel.AutoStartStatu, Mode=OneWay}" 
+                        AutomationProperties.AutomationId="Settings.General.AutoStart"
+                        Content="{x:Bind _viewModel.AutoStartStatu, Mode=OneWay}"
                         IsChecked="{x:Bind _viewModel.IsAutoStart, Mode=TwoWay}"/>
                 </Grid>
 
@@ -254,6 +255,7 @@
                     </Grid>
 
                     <ComboBox x:Name="AppSystemBackdropCombo"
+                        AutomationProperties.AutomationId="Settings.General.Backdrop"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.SystemBackdrops}"
@@ -314,6 +316,7 @@
                     </Grid>
 
                     <ComboBox x:Name="AppLanguageCombo"
+                        AutomationProperties.AutomationId="Settings.General.Language"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.Languages}"

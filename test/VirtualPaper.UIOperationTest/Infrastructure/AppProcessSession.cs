@@ -83,6 +83,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
                 return false;
             }
             if (_ui.HasExited) throw new InvalidOperationException($"UI exited during startup: {_ui.ExitCode}");
+            _ = _ui.Handle; // Retain an exit-query handle before settings can restart the UI.
             _ui.Refresh();
             return _ui.MainWindowHandle != IntPtr.Zero;
         }, "Real UI process window");
@@ -98,6 +99,28 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         UiTestContext.Check(_ui.ExitCode == 0, $"UI exited abnormally: {_ui.ExitCode}");
         _ui.Dispose();
         _ui = null;
+    }
+
+    public async Task<Process> WaitForUiRestartAsync() {
+        if (_ui == null) throw new InvalidOperationException("No UI process is being tracked for restart.");
+        int previousId = _ui.Id;
+        await _ui.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+        UiTestContext.Check(_ui.ExitCode == 0, $"UI exited abnormally during automatic restart: {_ui.ExitCode}");
+        _ui.Dispose();
+        _ui = null;
+        // Observe Core's automatic restart; do not send ShowUI to create the
+        // replacement on behalf of the production settings workflow.
+        await WaitAsync(() => {
+            if (_core!.HasExited) throw new InvalidOperationException("Core exited during automatic UI restart.");
+            _ui ??= FindChild(_core.Id, "VirtualPaper.UI.exe");
+            if (_ui == null) return Task.FromResult(false);
+            UiTestContext.Check(_ui.Id != previousId && !_ui.HasExited, "Core did not create a new live UI process");
+            _ = _ui.Handle;
+            _ui.Refresh();
+            return Task.FromResult(_ui.MainWindowHandle != 0);
+        }, "Core automatically restarted UI");
+        _uiIds.Add(_ui!.Id);
+        return _ui;
     }
 
     public async Task StopAsync() {

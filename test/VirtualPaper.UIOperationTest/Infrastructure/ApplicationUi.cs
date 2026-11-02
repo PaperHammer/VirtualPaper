@@ -159,7 +159,7 @@ internal static class ApplicationUi {
         Check(!element.Current.IsOffscreen, $"No scroll container for {element.Current.AutomationId}");
     }
 
-    public static string SelectComboIndex(AutomationElement combo, int index, int count) {
+    public static string SelectComboIndex(AutomationElement combo, int index, int count, bool closesWindow = false) {
         BringIntoView(combo);
         var expand = (ExpandCollapsePattern)combo.GetCurrentPattern(ExpandCollapsePattern.Pattern);
         expand.Expand();
@@ -176,7 +176,11 @@ internal static class ApplicationUi {
             ((SelectionItemPattern)items[index].GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
             return label;
         }
-        finally { expand.Collapse(); }
+        finally {
+            // Settings such as language can synchronously close their UI as a
+            // result of Select. Their caller must observe the actual restart.
+            if (!closesWindow) expand.Collapse();
+        }
     }
 
     public static string SelectedLabel(AutomationElement combo) {

@@ -38,6 +38,7 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
                         <Image x:Name="AboutLogo" Width="96" Height="96" VerticalAlignment="Top"
+                            AutomationProperties.AutomationId="Settings.Others.AboutLogo"
                             Stretch="Uniform" AutomationProperties.Name="Virtual Paper"
                             Source="ms-appx:///Assets/splashCol_1400x1400_with_round40.png"/>
                         <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">

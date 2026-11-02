@@ -82,6 +82,7 @@
                     <Button
                         Grid.Column="2"
                         Width="200"
+                        AutomationProperties.AutomationId="Settings.System.ExportLogs"
                         Content="{markup:I18n Key=Text_Save}"
                         Command="{x:Bind _viewModel.LogCommand}"/>
                 </Grid>

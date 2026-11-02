@@ -82,12 +82,15 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
         // 项目文件系统的总入口；创建、删除、重命名立即处理，修改、重载、冲突进入合并队列
         internal void OnProjectChanged(ProjectChangedEvent e) {
-            if (e.Type is ProjectChangeType.Modified or ProjectChangeType.Reloaded or ProjectChangeType.Conflict) {
-                QueueChangedEvent(e);
-                return;
-            }
+            lock (_changeLock) {
+                if (_isDisposed) return;
+                if (e.Type is ProjectChangeType.Modified or ProjectChangeType.Reloaded or ProjectChangeType.Conflict) {
+                    QueueChangedEvent(e);
+                    return;
+                }
 
-            ApplyProjectChange(e);
+                ApplyProjectChange(e);
+            }
         }
 
         // 按文件路径暂存最新修改事件；取消上一轮 150ms 延时并重新计时，连续事件只保留一次
@@ -110,14 +113,14 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             await Task.Delay(150);
             if (cancellationToken.IsCancellationRequested) return;
 
-            List<ProjectChangedEvent> events;
             lock (_changeLock) {
-                events = [.. _pendingChangedEvents.Values];
+                if (_isDisposed || cancellationToken.IsCancellationRequested) return;
+                List<ProjectChangedEvent> events = [.. _pendingChangedEvents.Values];
                 _pendingChangedEvents.Clear();
-            }
 
-            foreach (var projectChangedEvent in events) {
-                ApplyProjectChange(projectChangedEvent);
+                foreach (var projectChangedEvent in events) {
+                    ApplyProjectChange(projectChangedEvent);
+                }
             }
         }
 
@@ -190,17 +193,18 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
         private bool _isDisposed;
         public void Dispose() {
-            if (!_isDisposed) {
-                ProjectSystem.Changed -= OnProjectChanged;
-                lock (_changeLock) {
-                    _changeDebounceCancellation?.Cancel();
-                    _changeDebounceCancellation?.Dispose();
-                    _changeDebounceCancellation = null;
-                    _pendingChangedEvents.Clear();
-                }
-                ProjectSystem.Stop();
+            lock (_changeLock) {
+                if (_isDisposed) return;
                 _isDisposed = true;
+                _changeDebounceCancellation?.Cancel();
+                _changeDebounceCancellation?.Dispose();
+                _changeDebounceCancellation = null;
+                _pendingChangedEvents.Clear();
             }
+            // Do not hold _changeLock while draining watcher callbacks: an in-flight
+            // callback may be waiting to enter OnProjectChanged.
+            ProjectSystem.Dispose();
+            ProjectSystem.Changed -= OnProjectChanged;
 
             GC.SuppressFinalize(this);
         }

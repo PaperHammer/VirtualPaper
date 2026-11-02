@@ -1,6 +1,7 @@
 using VirtualPaper.Common.Utils.ProjectSystem;
 using VirtualPaper.Common.Utils.ProjectSystem.Documents;
 using VirtualPaper.Common.Utils.ProjectSystem.Events;
+using VirtualPaper.Common.Utils.ProjectSystem.FileSystem;
 using VirtualPaper.Common.Utils.ProjectSystem.Project;
 
 namespace VirtualPaper.Core.Test.T_Common;
@@ -168,6 +169,53 @@ public class ProjectSystemTests {
         Assert.AreSame(document, manager.Documents.Get(newPath));
         Assert.AreEqual(ProjectChangeType.Renamed, change!.Type);
         Assert.AreEqual(oldPath, change.OldPath);
+    }
+
+    [TestMethod]
+    public void ProjectSystem_LateModifiedAfterDeleteDoesNotReloadOrNotify() {
+        string path = Path.Combine(_testRoot, "deleted.txt");
+        File.WriteAllText(path, "keep in memory");
+        using var manager = new ProjectSystemManager(_testRoot);
+        Document document = manager.Documents.Open(path);
+        var changes = new List<ProjectChangedEvent>();
+        manager.Changed += changes.Add;
+        File.Delete(path);
+
+        manager.OnModified(path);
+
+        Assert.AreEqual("keep in memory", document.Text);
+        Assert.IsEmpty(changes);
+    }
+
+    [TestMethod]
+    public async Task ProjectWatcher_DisposeWaitsForCallbackAndRejectsFurtherEvents() {
+        using var watcher = new ProjectWatcher(_testRoot);
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        int callbacks = 0;
+        watcher.Created += _ => {
+            Interlocked.Increment(ref callbacks);
+            entered.Set();
+            if (!release.Wait(TimeSpan.FromSeconds(5))) throw new TimeoutException("Test callback was not released");
+        };
+        watcher.Start();
+        Task? disposing = null;
+        try {
+            File.WriteAllText(Path.Combine(_testRoot, "before.txt"), "content");
+            Assert.IsTrue(entered.Wait(TimeSpan.FromSeconds(5)), "Watcher callback did not start");
+            var disposeStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            disposing = Task.Run(() => { disposeStarted.SetResult(); watcher.Dispose(); });
+            await disposeStarted.Task;
+            await Task.Delay(100);
+            Assert.IsFalse(disposing.IsCompleted, "Dispose returned while a callback was active");
+        }
+        finally {
+            release.Set();
+            if (disposing != null) await disposing.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        File.WriteAllText(Path.Combine(_testRoot, "after.txt"), "content");
+        await Task.Delay(200);
+        Assert.AreEqual(1, callbacks);
     }
 
     private string _testRoot = null!;

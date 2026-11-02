@@ -113,6 +113,20 @@ public class ProjectFileManagerTests {
     }
 
     [TestMethod]
+    public async Task Dispose_DropsPendingAndLateEventsBeforeProjectCleanup() {
+        string path = Path.Combine(_testRoot, "pending.txt");
+        Raise(ProjectChangeType.Modified, path);
+
+        _manager.Dispose();
+        Raise(ProjectChangeType.Created, path);
+        await Task.Delay(250);
+
+        Assert.IsEmpty(_changes);
+        Assert.IsEmpty(_added);
+        Assert.IsFalse(_manager.TryConsumeExternalChange(path, out _));
+    }
+
+    [TestMethod]
     public void DocumentHelpers_TrackDirtySaveAndCloseState() {
         string path = Path.Combine(_testRoot, "document.txt");
         File.WriteAllText(path, "first");

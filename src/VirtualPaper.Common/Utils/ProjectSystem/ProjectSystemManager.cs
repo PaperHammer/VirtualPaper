@@ -7,7 +7,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
     /// <summary>
     /// 项目系统管理器，负责管理项目树、文档和文件系统监视器，并处理项目变化事件
     /// </summary>
-    public class ProjectSystemManager {
+    public class ProjectSystemManager : IDisposable {
         public event Action<ProjectChangedEvent>? Changed;
 
         public string ProjectRoot { get; }
@@ -35,6 +35,11 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
             Watcher.Stop();
         }
 
+        public void Dispose() {
+            Watcher.Dispose();
+            Changed = null;
+        }
+
         internal void OnCreated(string path) {
             Tree.Add(path);
             Raise(ProjectChangeType.Created, path);
@@ -48,14 +53,23 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
         internal void OnRenamed(string oldPath, string newPath) {
             Tree.Rename(oldPath, newPath);
 
-            if (Documents.IsOpen(oldPath)) {
-                Documents.Rename(oldPath, newPath);
-            }
+            // A rename notification can arrive after the destination has already been
+            // deleted or renamed again. Keep the tree notification but skip its stamp.
+            try { Documents.Rename(oldPath, newPath); }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { }
 
             Raise(ProjectChangeType.Renamed, newPath, oldPath);
         }
 
         internal void OnModified(string path) {
+            try { ProcessModified(path); }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) {
+                // FileSystemWatcher may deliver Changed after Deleted/Renamed. The
+                // corresponding event owns removal/rebinding; do not reload old paths.
+            }
+        }
+
+        private void ProcessModified(string path) {
             var document = Documents.Get(path);
 
             /*

@@ -100,4 +100,4 @@ TreeView 会先处理拖放事件，因此控件构造函数以 `handledEventsTo
 9. 预览入口、Markdown、图片以及未知格式；
 10. 页面关闭后监听器和本地预览端口释放。
 
-独立调试可从 `VirtualPaper.Sandbox.WinUI.Preview` 入手；最终仍应在 `VirtualPaper.UI` 的草稿工作区中验证依赖注入、项目加载和保存协调是否完整。
+在 `VirtualPaper.UI` 的草稿工作区中调试，验证依赖注入、项目加载和保存协调是否完整。

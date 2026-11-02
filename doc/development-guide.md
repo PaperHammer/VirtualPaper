@@ -25,8 +25,7 @@ CI 明确使用 MSBuild，因为 `.sln` 中的 Platform Mapping 会把部分项�
 系统由核心进程和 UI 进程协作组成。Release 版本的 `VirtualPaper.UI` 会检查核心进程是否存在，不能把 UI 当作完全独立的应用启动。常见调试入口：
 
 - 完整程序：先启动 `VirtualPaper`，再由其拉起或手动启动 `VirtualPaper.UI`。
-- WebBackdrop 独立预览：使用 `VirtualPaper.Sandbox.WinUI.Preview`。
-- WPF 界面预览：使用 `VirtualPaper.Sandbox.WPF.Preview`。
+- WebBackdrop 编辑与预览：使用 `VirtualPaper.UI` 的草稿工作区。
 - 安装产物验证：使用 `VirtualPaper.SmokeTest`，参数格式可参考发布工作流。
 
 实际启动项目、架构（通常为 x64）和打包模式以对应 `.csproj.user`、解决方案配置及本机调试目标为准。

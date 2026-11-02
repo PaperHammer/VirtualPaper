@@ -42,8 +42,6 @@
 3. 各测试项目使用共享 `src/test.runsettings` 生成 Cobertura 覆盖率数据，排除测试程序集、生成代码和第三方程序集，并在汇总页展示分项目及合并行覆盖率
 4. 汇总测试结果，写入 commit status `ci-check/pre-publish-tests`
 
-构建阶段还会运行真实 WinUI 特效面板的组件链路，验证重复恢复、控件事件和保存回调，
-并上传 `test-results-effect-ui` JSON 结果。该步骤需要 Windows 图形会话，不使用鼠标坐标。
 Core 测试中的 `Workflow` 分类覆盖配置落盘、壁纸入库应用删除及近期功能的业务集成链路。
 
 常规 ML job 排除需要真实模型推理的 `Integration` 分类。

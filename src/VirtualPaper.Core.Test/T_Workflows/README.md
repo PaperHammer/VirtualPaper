@@ -32,17 +32,5 @@ inference; the existing ML Integration suite remains responsible for real models
 Image and depth-image effect configs are refreshed repeatedly, applied, stopped,
 and reopened after deleting preview caches. Missing/locked configs must fail.
 
-The real XAML effect panel has a separate desktop workflow, also run by the
-pre-publish CI build before uploading artifacts:
-
-```powershell
-pwsh -File src/VirtualPaper.Sandbox.WinUI.Preview/Verify-GeneralEffect.ps1
-```
-
-It builds the preview host and loads GeneralEffect in a real WinUI window, checks
-both flyout groups, drives sliders and the existing button Invoke providers,
-restores five times without duplicate/detached controls, and verifies apply writes
-the edited JSON and calls IApplyService. It needs an interactive Windows session;
-no physical mouse or production settings are used. It writes a JSON report and
-exits nonzero on failure. This verifies wiring/lifecycle, not visual quality or the
-JavaScript renderer, which still needs separate rendering/performance acceptance.
+These workflows do not launch real XAML pages or verify rendered pixels. Desktop
+UI interaction and rendering/performance acceptance require separate validation.

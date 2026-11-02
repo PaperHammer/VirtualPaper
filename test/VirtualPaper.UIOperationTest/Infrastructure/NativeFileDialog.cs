@@ -44,16 +44,38 @@ internal static class NativeFileDialog {
         }
         var filename = dialog.FindFirst(TreeScope.Descendants, new AndCondition(
             new PropertyCondition(AutomationElement.AutomationIdProperty, "1148"),
-            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit)));
-        Check(filename != null, "Native file dialog has no filename edit control");
-        filename!.SetFocus();
+            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit)))
+            ?? throw new InvalidOperationException("Native file dialog has no filename edit control");
         ApplicationUi.SetText(filename, path);
         Check(((ValuePattern)filename.GetCurrentPattern(ValuePattern.Pattern)).Current.Value == path,
             "Native file dialog did not retain the test filename");
-        // Submit from the filename field. Shell list items reuse numeric IDs,
-        // and the picker broker's action button varies between Windows versions.
-        nint inputWindow = GetAncestor(filename.Current.NativeWindowHandle, 2);
-        ApplicationUi.PressEnter(inputWindow == 0 ? ownerWindow : inputWindow, filename);
+        // Shell list items also use ID 1. Require a button type or the native
+        // Button class; some Windows picker versions expose Open as a Pane
+        // with no UIA patterns. Keep submission local to this owned control.
+        var open = dialog.FindFirst(TreeScope.Descendants, new AndCondition(
+            new PropertyCondition(AutomationElement.AutomationIdProperty, "1"),
+            new OrCondition(new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.SplitButton),
+                new PropertyCondition(AutomationElement.ClassNameProperty, "Button"))));
+        if (open == null) {
+            var buttons = dialog.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
+                .Where(item => item.Current.ControlType == ControlType.Button || item.Current.ControlType == ControlType.SplitButton
+                    || item.Current.AutomationId == "1")
+                .Select(item => $"{item.Current.ControlType.ProgrammaticName} {item.Current.AutomationId}: {item.Current.Name} " +
+                    $"class={item.Current.ClassName} hwnd={item.Current.NativeWindowHandle} patterns=" +
+                    string.Join(",", item.GetSupportedPatterns().Select(pattern => pattern.ProgrammaticName)));
+            throw new InvalidOperationException("Native file dialog has no Open button: " + string.Join("; ", buttons));
+        }
+        if (open.TryGetCurrentPattern(InvokePattern.Pattern, out var invoke)) {
+            ((InvokePattern)invoke).Invoke();
+        }
+        else {
+            nint button = open.Current.NativeWindowHandle;
+            Check(button != 0 && open.Current.ClassName == "Button" && GetDlgCtrlID(button) == 1,
+                "Native file dialog Open action is not an identified native button");
+            SetForegroundWindow(GetAncestor(button, 2));
+            Check(PostMessage(button, 0x00F5, 0, 0), "Native file dialog rejected BM_CLICK on its Open button");
+        }
         var submitted = Stopwatch.StartNew();
         while (submitted.Elapsed < TimeSpan.FromSeconds(5)) {
             try {
@@ -70,6 +92,9 @@ internal static class NativeFileDialog {
         throw new InvalidOperationException($"File dialog did not accept the test image:\n{string.Join("\n", remaining)}");
     }
 
-    [DllImport("user32.dll")] private static extern nint GetAncestor(nint hwnd, uint flags);
     [DllImport("user32.dll")] private static extern nint GetWindow(nint hwnd, uint command);
+    [DllImport("user32.dll")] private static extern nint GetAncestor(nint hwnd, uint flags);
+    [DllImport("user32.dll")] private static extern int GetDlgCtrlID(nint hwnd);
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool PostMessage(nint hwnd, uint message, nint wParam, nint lParam);
 }

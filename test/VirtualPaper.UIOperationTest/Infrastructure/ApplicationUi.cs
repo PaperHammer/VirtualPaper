@@ -58,25 +58,16 @@ internal static class ApplicationUi {
         keybd_event(0x1B, 0, 2, 0);
     }
 
-    public static void PressEnter(nint window, AutomationElement control) {
-        BringIntoView(control);
-        Check(SetForegroundWindow(window) || GetForegroundWindow() == window, "Could not activate the input window");
-        control.SetFocus();
-        var timer = Stopwatch.StartNew();
-        while (!control.Current.HasKeyboardFocus && timer.Elapsed < TimeSpan.FromSeconds(2)) Thread.Sleep(20);
-        Check(GetForegroundWindow() == window && control.Current.HasKeyboardFocus,
-            "The input control did not receive keyboard focus in the active input window");
-        keybd_event(0x0D, 0, 0, 0);
-        keybd_event(0x0D, 0, 2, 0);
-    }
-
     public static void WaitUntilGone(AutomationElement root, string id) {
         var timer = Stopwatch.StartNew();
         while (timer.Elapsed < TimeSpan.FromSeconds(5)) {
             try {
                 if (Matches(root, id, includePopups: true).All(element => element.Current.IsOffscreen)) return;
             }
-            catch (ElementNotAvailableException) { }
+            catch (ElementNotAvailableException) {
+                try { _ = root.Current.ProcessId; }
+                catch (ElementNotAvailableException) { return; } // The containing window itself closed.
+            }
             Thread.Sleep(100);
         }
         throw new TimeoutException($"UI element did not close: {id}");
@@ -88,17 +79,34 @@ internal static class ApplicationUi {
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll")] private static extern void keybd_event(byte key, byte scan, uint flags, nuint extraInfo);
 
-    public static AutomationElement Find(AutomationElement root, string id, bool visible = false) {
+    public static AutomationElement Find(AutomationElement root, string id, bool visible = false, bool enabled = true) {
         var timer = Stopwatch.StartNew();
         while (timer.Elapsed < TimeSpan.FromSeconds(10)) {
             try {
-                var element = Matches(root, id, includePopups: visible).FirstOrDefault(item => item.Current.IsEnabled && (!visible || !item.Current.IsOffscreen));
+                var element = Matches(root, id, includePopups: visible).FirstOrDefault(item => (!enabled || item.Current.IsEnabled) && (!visible || !item.Current.IsOffscreen));
                 if (element != null) return element;
             }
             catch (ElementNotAvailableException) { }
             Thread.Sleep(100);
         }
         throw new TimeoutException($"UI Automation element not found: {id}");
+    }
+
+    public static AutomationElement FindWindow(int processId, string descendantId) {
+        var timer = Stopwatch.StartNew();
+        while (timer.Elapsed < TimeSpan.FromSeconds(10)) {
+            foreach (AutomationElement window in AutomationElement.RootElement.FindAll(TreeScope.Children,
+                new PropertyCondition(AutomationElement.ProcessIdProperty, processId))) {
+                try {
+                    if (window.FindFirst(TreeScope.Descendants,
+                        new PropertyCondition(AutomationElement.AutomationIdProperty, descendantId)) is { } control
+                        && !control.Current.IsOffscreen) return window;
+                }
+                catch (ElementNotAvailableException) { }
+            }
+            Thread.Sleep(100);
+        }
+        throw new TimeoutException($"Window in process {processId} with control {descendantId} not found");
     }
 
     private static IEnumerable<AutomationElement> Matches(AutomationElement root, string id, bool includePopups) {

@@ -16,6 +16,7 @@ test/
       Application/WallpaperLibraryTests.cs    真实壁纸库、桌面播放器及删除验证
       Application/ScreenSaverTests.cs         屏保设置与白名单保存重开验证
       Application/ScreenFitTests.cs           高清适屏选图预览、取消及实际应用验证
+      Application/WallpaperEffectsTests.cs    已应用壁纸的正式调整窗口保存重开验证
     Infrastructure/
       UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
       AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
@@ -92,7 +93,8 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 
 启用屏保必须等待设置保存完成后再发送启动 RPC，避免后台仍读取旧的关闭值。
 白名单程序路径通过 gRPC 的新增字段往返；屏保通知管道也带测试会话后缀。
-原生键盘输入前检查所属窗口已激活、目标控件已有焦点。
+选择器经明确的打开控件提交；部分 Windows 将其暴露为没有 UIA 模式的 Pane，
+此时仅对所属选择器内、类名和原生 ID 已核对的 Button 发送点击，不发送全局回车。
 本用例使用较长等待时间且保持锁屏选项关闭，不验证真实空闲触发、屏保进程启动或系统锁屏。
 
 `Application.ScreenFit.PreviewCancelApplyAndReopen` 验证高清适屏的基础交互：
@@ -104,6 +106,16 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 5. 经正式 UI 关闭播放器、删除测试壁纸，确认源文件保持不变并正常退出前后台。
 
 本用例不运行超分模型，不代表推理、预览像素画质、多屏切换或覆盖方式实际渲染验收。
+
+`Application.WallpaperEffects.EditRestoreSaveAndReopen` 使用真实 Core、UI、桌面播放器与效果服务：
+
+1. 实际导入并应用普通图片，从显示控制打开该壁纸的正式调整窗口。
+2. 修改氛围效果和强度，经恢复按钮回到保存值，再选择雪花样式和强度 71。
+3. 保存前检查应用配置不变，保存后核对效果、样式与强度落盘，默认模板保持不变。
+4. 关闭并重开 UI，重新打开调整窗口核对三个控件，最后关闭播放器并删除测试条目。
+
+修改使用正式 RPC／IPC 路径，播放器保持运行；本用例不读取渲染端状态或比对渲染像素。
+它不代替粒子画质、3D 深度模型、鼠标视差及暂停／恢复的验证。
 
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。
@@ -117,7 +129,7 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 [Microsoft UI Automation 线程说明](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-threading)。
 新增模块时在 `Cases` 中实现用例，并在 `App.xaml.cs` 注册；脚本及 CI 不需要维护用例名称或数量。
 组件用例的效果服务和应用回调使用记录实现；应用设置用例不替代前后台服务。
-壁纸库用例启动真实播放器并验证桌面挂载；其余现有用例仍按上述边界执行。
+壁纸库、高清适屏和壁纸效果用例启动真实播放器并验证桌面挂载；各用例按上述边界执行。
 当前不覆盖 WebView 渲染画质、多屏布局、视频播放策略或 AI 推理。
 
 现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC

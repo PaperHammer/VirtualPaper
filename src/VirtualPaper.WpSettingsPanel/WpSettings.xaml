@@ -244,6 +244,7 @@
                                                 Content="{markup:I18n Key=Text_Identify}"
                                                 Command="{x:Bind _viewModel.WpIdentifyCommand}"/>
                                             <Button x:Name="BtnAdjust"
+                                                AutomationProperties.AutomationId="Library.AdjustWallpaper"
                                                 Height="33"
                                                 MinWidth="66"
                                                 Content="{markup:I18n Key=Text_Adjust}"

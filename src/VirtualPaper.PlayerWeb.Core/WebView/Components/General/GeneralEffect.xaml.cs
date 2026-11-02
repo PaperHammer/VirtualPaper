@@ -288,6 +288,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         }
 
         private void AddUIElement(string name, UIElement obj, bool needTrack) {
+            if (needTrack) AutomationProperties.SetAutomationId(obj, "GeneralEffect." + name);
             var propertyName = name.EndsWith("_Title", StringComparison.Ordinal) ? name[..^6] : name;
             if (propertyName is nameof(UniverseCostumise.Atmosphere)
                 or nameof(UniverseCostumise.AtmosphereStyle)
@@ -334,6 +335,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                     Margin = MARGIN,
                     Flyout = new Flyout { Content = panel, Placement = FlyoutPlacementMode.Bottom }
                 };
+                AutomationProperties.SetAutomationId(button, "GeneralEffect." + name);
             }
             skPanel.Children.Add(new TextBlock { Text = LanguageUtil.GetI18n(titleKey) });
             skPanel.Children.Add(button);

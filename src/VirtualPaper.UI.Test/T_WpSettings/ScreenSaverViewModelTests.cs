@@ -1,6 +1,7 @@
 using Moq;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Pipe.Interfaces;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
@@ -17,6 +18,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         private Mock<ISettings> _settings = null!;
         private ScreenSaverViewModel _vm = null!;
         private Mock<IPipeServerFactory> _pipeServerFactory = null!;
+        private Mock<IStoragePicker> _storagePicker = null!;
 
         [TestInitialize]
         public void Setup() {
@@ -25,6 +27,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _scrCommandsClient = new Mock<IScrCommandsClient>();
             _settings = new Mock<ISettings>();
             _pipeServerFactory = new Mock<IPipeServerFactory>();
+            _storagePicker = new Mock<IStoragePicker>();
 
             _settings.SetupProperty(s => s.IsScreenSaverOn, false);
             _settings.SetupProperty(s => s.IsRunningLock, false);
@@ -37,7 +40,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm = new ScreenSaverViewModel(
                 _userSettingsClient.Object,
                 _scrCommandsClient.Object,
-                _pipeServerFactory.Object);
+                _pipeServerFactory.Object,
+                _storagePicker.Object);
         }
 
         [TestCleanup]
@@ -52,6 +56,21 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm.IsScreenSaverOn = true;
 
             _scrCommandsClient.Verify(s => s.Start(), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task IsScreenSaverOn_WaitsForPersistedSettingsBeforeStartingCoreTimer() {
+            var saved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _userSettingsClient.Setup(client => client.SaveAsync<ISettings>()).Returns(saved.Task);
+            _scrCommandsClient.Setup(client => client.Start()).Callback(() => started.TrySetResult());
+
+            _vm.IsScreenSaverOn = true;
+
+            _scrCommandsClient.Verify(client => client.Start(), Times.Never);
+            saved.SetResult();
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            _scrCommandsClient.Verify(client => client.Start(), Times.Once);
         }
 
         [TestMethod]
@@ -186,6 +205,19 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         }
 
         // ── AddToWhiteListScr ─────────────────────────────────────────
+
+        [TestMethod]
+        public void AddToWhiteListCommand_CancelledPickerDoesNotSaveOrAddAnApp() {
+            _storagePicker.Setup(picker => picker.PickFilesAsync(It.IsAny<nint>(), It.IsAny<string[]>(), false))
+                .ReturnsAsync(Array.Empty<Windows.Storage.IStorageItem>());
+
+            _vm.AddToWhiteListCommand!.Execute(null);
+
+            Assert.IsEmpty(_vm.ProcsFiltered);
+            Assert.IsEmpty(_settings.Object.WhiteListScr);
+            _scrCommandsClient.Verify(client => client.AddToWhiteList(It.IsAny<string>()), Times.Never);
+            _userSettingsClient.Verify(client => client.Save<ISettings>(), Times.Never);
+        }
 
         [TestMethod]
         public void AddToWhiteListScr_AddsToProcsFiltered() {

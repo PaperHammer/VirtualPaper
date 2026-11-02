@@ -250,6 +250,7 @@ namespace VirtualPaper.DataAssistor {
             foreach (var proc in settings.WhiteListScr) {
                 data.WhiteListScr.Add(new Grpc_ProcInfoData() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });
@@ -318,6 +319,7 @@ namespace VirtualPaper.DataAssistor {
             foreach (var proc in settings.WhiteListScr) {
                 data.WhiteListScr.Add(new ProcInfo() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });

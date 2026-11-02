@@ -76,6 +76,7 @@ message Grpc_ProcInfoData {
     string proc_name = 1;
     string icon_path = 2;
     bool is_running = 3;
+    string proc_path = 4;
 }
 
 message Grpc_UpdateResponse {

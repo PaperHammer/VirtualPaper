@@ -144,7 +144,8 @@ namespace VirtualPaper.Common {
         }
 
         public static class PipeControlField {
-            public static string TrayCmdPipeName => "TRAY_CMD";
+            public static string TrayCmdPipeName => "TRAY_CMD" +
+                (TestProcessEnvironment.IsEnabled ? ":" + TestProcessEnvironment.SessionId : string.Empty);
             public static string CmdUpdateScrSettings => "UPDATE_SCRSETTINGS";
         }
 

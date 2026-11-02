@@ -15,6 +15,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
     private Process? _core;
     private Process? _ui;
     private readonly List<int> _uiIds = [];
+    private int _showUiRequests;
     private readonly Dictionary<string, int> _previousLogLines;
     private readonly Grpc_CommandsService.Grpc_CommandsServiceClient _commands;
     public Grpc_UserSettingsService.Grpc_UserSettingsServiceClient Settings { get; }
@@ -34,7 +35,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         _commands = new(channel);
     }
 
-    public async Task StartAsync() {
+    public async Task StartAsync(Action<Settings>? configure = null) {
         string coreExe = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE")
             ?? throw new InvalidOperationException("Core executable path is missing.");
         Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
@@ -42,6 +43,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             IsFirstRun = false, IsUpdated = false, IsAutoStart = false, IsScreenSaverOn = false,
             NavigationAnimationsEnabled = true, Language = "en-US"
         };
+        configure?.Invoke(settings);
         Directory.CreateDirectory(settings.WallpaperDir);
         File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, SettingsContext.Default.Settings));
         File.WriteAllText(Constants.CommonPaths.AppRulesPath, "[]");
@@ -64,13 +66,25 @@ internal sealed class AppProcessSession : IAsyncDisposable {
 
     public async Task<Process> OpenUiAsync() {
         await _commands.ShowUIAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(10));
-        await WaitAsync(() => {
+        _showUiRequests++;
+        var lastRequest = Stopwatch.StartNew();
+        await WaitAsync(async () => {
             if (_core!.HasExited) throw new InvalidOperationException("Core exited before UI became ready.");
             _ui ??= FindChild(_core.Id, "VirtualPaper.UI.exe");
-            if (_ui == null) return Task.FromResult(false);
+            if (_ui == null) {
+                // OS process exit can precede Core's Exited callback cleanup.
+                // ShowUI is idempotent; retry within readiness timeout rather
+                // than treating its first acknowledgement as a ready window.
+                if (lastRequest.ElapsedMilliseconds >= 250) {
+                    await _commands.ShowUIAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(10));
+                    _showUiRequests++;
+                    lastRequest.Restart();
+                }
+                return false;
+            }
             if (_ui.HasExited) throw new InvalidOperationException($"UI exited during startup: {_ui.ExitCode}");
             _ui.Refresh();
-            return Task.FromResult(_ui.MainWindowHandle != IntPtr.Zero);
+            return _ui.MainWindowHandle != IntPtr.Zero;
         }, "Real UI process window");
         _uiIds.Add(_ui!.Id);
         return _ui;
@@ -121,6 +135,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         context.Evidence["CoreProcessId"] = CoreId;
         context.Evidence["SessionId"] = TestProcessEnvironment.SessionId;
         context.Evidence["UiProcessIds"] = UiIds.ToArray();
+        context.Evidence["ShowUiRequests"] = _showUiRequests;
         context.Evidence["ProcessesExitedNormally"] = true;
         context.Evidence["RuntimeErrors"] = Directory.EnumerateFiles(Constants.CommonPaths.LogDir, "*.txt", SearchOption.AllDirectories)
             .SelectMany(path => File.ReadLines(path).Skip(_previousLogLines.GetValueOrDefault(path)))

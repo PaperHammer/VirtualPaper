@@ -350,7 +350,7 @@ public class DataAssistMappingTests {
     public void Settings_Roundtrip_PreservesWhiteListScr() {
         var src = MakeSettings();
         src.WhiteListScr = [
-            new ProcInfo { ProcName = "chrome.exe",  IconPath = @"C:\icon.ico", IsRunning = true  },
+            new ProcInfo { ProcName = "chrome.exe", ProcPath = @"C:\apps\chrome.exe", IconPath = @"C:\icon.ico", IsRunning = true  },
             new ProcInfo { ProcName = "notepad.exe", IconPath = string.Empty,   IsRunning = false },
         ];
 
@@ -359,6 +359,8 @@ public class DataAssistMappingTests {
 
         Assert.HasCount(2, restored.WhiteListScr);
         Assert.AreEqual("chrome.exe", restored.WhiteListScr[0].ProcName);
+        Assert.AreEqual(@"C:\apps\chrome.exe", grpc.WhiteListScr[0].ProcPath);
+        Assert.AreEqual(@"C:\apps\chrome.exe", restored.WhiteListScr[0].ProcPath);
         Assert.AreEqual(@"C:\icon.ico", restored.WhiteListScr[0].IconPath);
         Assert.IsTrue(restored.WhiteListScr[0].IsRunning);
         Assert.AreEqual("notepad.exe", restored.WhiteListScr[1].ProcName);

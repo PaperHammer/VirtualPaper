@@ -52,7 +52,8 @@ internal static class NativeFileDialog {
             "Native file dialog did not retain the test filename");
         // Submit from the filename field. Shell list items reuse numeric IDs,
         // and the picker broker's action button varies between Windows versions.
-        ApplicationUi.SubmitText(filename);
+        nint inputWindow = GetAncestor(filename.Current.NativeWindowHandle, 2);
+        ApplicationUi.PressEnter(inputWindow == 0 ? ownerWindow : inputWindow, filename);
         var submitted = Stopwatch.StartNew();
         while (submitted.Elapsed < TimeSpan.FromSeconds(5)) {
             try {
@@ -69,5 +70,6 @@ internal static class NativeFileDialog {
         throw new InvalidOperationException($"File dialog did not accept the test image:\n{string.Join("\n", remaining)}");
     }
 
+    [DllImport("user32.dll")] private static extern nint GetAncestor(nint hwnd, uint flags);
     [DllImport("user32.dll")] private static extern nint GetWindow(nint hwnd, uint command);
 }

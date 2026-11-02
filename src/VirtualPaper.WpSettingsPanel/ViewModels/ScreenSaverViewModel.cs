@@ -5,16 +5,17 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Pipe.Interfaces;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
@@ -31,11 +32,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             set {
                 _isScreenSaverOn = value;
                 OnPropertyChanged();
-                ChangeScreenSaverStatu(value);
-                if (_userSettingsClient.Settings.IsScreenSaverOn == value) return;
+                ScreenSaverStatu = LanguageUtil.GetI18n(value ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
+                if (_userSettingsClient.Settings.IsScreenSaverOn == value) {
+                    ChangeScreenSaverStatu(value);
+                    return;
+                }
 
                 _userSettingsClient.Settings.IsScreenSaverOn = value;
-                UpdateSettingsConfigFile();
+                SaveAndChangeScreenSaverAsync(value);
             }
         }
 
@@ -86,10 +90,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public ScreenSaverViewModel(
             IUserSettingsClient userSettingsClient,
             IScrCommandsClient scrCommandsClient,
-            IPipeServerFactory pipeServerFactory) {
+            IPipeServerFactory pipeServerFactory,
+            IStoragePicker storagePicker) {
             _userSettingsClient = userSettingsClient;
             _scrCommandsClient = scrCommandsClient;
             _pipeServerFactory = pipeServerFactory;
+            _storagePicker = storagePicker;
             _ctsListen = new();
 
             InitText();
@@ -99,8 +105,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void InitCommand() {
-            AddToWhiteListCommand = new RelayCommand<ProcInfo>(procInfo => {
-                PreAddToWhiteList();
+            AddToWhiteListCommand = new RelayCommand(async () => {
+                await PreAddToWhiteListAsync();
             });
         }
 
@@ -163,6 +169,19 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
+        private async void SaveAndChangeScreenSaverAsync(bool enabled) {
+            try {
+                // Core's StartAsync checks its saved IsScreenSaverOn value.
+                // Starting before the settings RPC completes can silently do nothing.
+                await _userSettingsClient.SaveAsync<ISettings>();
+                if (enabled == _isScreenSaverOn) ChangeScreenSaverStatu(enabled);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<ScreenSaverViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+        }
+
         private void ChangeLockStatu(bool isLock) {
             _scrCommandsClient.ChangeLockStatu(isLock);
         }
@@ -186,15 +205,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        private void PreAddToWhiteList() {
+        private async Task PreAddToWhiteListAsync() {
             try {
-                OpenFileDialog openFileDialog = new() {
-                    Filter = "Executable Files (*.exe)|*.exe"
-                };
-                bool? result = openFileDialog.ShowDialog();
+                var files = await _storagePicker.PickFilesAsync(WindowConsts.WindowHandle, [".exe"], false);
 
-                if (result == true) {
-                    string procPath = openFileDialog.FileName;
+                if (files is { Length: > 0 }) {
+                    string procPath = files[0].Path;
                     string procName = Path.GetFileNameWithoutExtension(procPath);
 
                     using System.Drawing.Image img = Win32Util.GetIconByFileName("FILE", procPath).ToBitmap();
@@ -250,6 +266,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IScrCommandsClient _scrCommandsClient;
         private readonly IPipeServerFactory _pipeServerFactory;
+        private readonly IStoragePicker _storagePicker;
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
         public List<ProcInfo> _whiteListScr = [];

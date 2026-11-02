@@ -30,7 +30,8 @@ public partial class App : Application {
                 context => GeneralEffectTests.EditRestoreSaveAndReopenAsync(context, RuntimeType.RImage3D)),
             new UiTestCase("Application.NavigationSettings.SaveAndReopen", NavigationSettingsTests.SaveAndReopenAsync),
             new UiTestCase("Application.PerformanceSettings.SaveAndReopen", PerformanceSettingsTests.SaveAndReopenAsync),
-            new UiTestCase("Application.WallpaperLibrary.ImportApplyCloseDelete", WallpaperLibraryTests.ImportApplyCloseDeleteAsync)
+            new UiTestCase("Application.WallpaperLibrary.ImportApplyCloseDelete", WallpaperLibraryTests.ImportApplyCloseDeleteAsync),
+            new UiTestCase("Application.ScreenSaver.SettingsAndWhitelist", ScreenSaverTests.SettingsAndWhitelistAsync)
         };
         if (commandLine.Length == 5)
             cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();

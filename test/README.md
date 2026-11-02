@@ -13,6 +13,8 @@ test/
       Components/GeneralEffectTests.cs
       Application/NavigationSettingsTests.cs  真实 Core + UI 的设置保存与重开验证
       Application/PerformanceSettingsTests.cs 性能设置的保存与重开验证
+      Application/WallpaperLibraryTests.cs    真实壁纸库、桌面播放器及删除验证
+      Application/ScreenSaverTests.cs         屏保设置与白名单保存重开验证
     Infrastructure/
       UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
       AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
@@ -55,6 +57,9 @@ test/
 5. 正常关闭 UI，再由 Core 拉起新的 UI 进程，验证开关回显为关闭。
 6. 正常关闭 UI 和 Core，检查退出码。JSON 记录 Core/UI PID、保存值及正常退出结果。
 
+重开时等待真实窗口就绪；OS 进程退出早于 Core 退出回调清理时，会在超时内有限重试幂等显示命令。
+报告记录 `ShowUiRequests`，不把一次 RPC 返回当成窗口已经可用。
+
 `Application.PerformanceSettings.SaveAndReopen` 验证性能页的 7 项设置：全屏、焦点、电池、
 省电、远程桌面的播放策略，多屏判断策略，以及仅桌面播放声音开关。
 逐项操作真实下拉框或开关，等待后台 RPC 确认，检查 JSON 落盘，再重开 UI 核对 7 个控件的回显。
@@ -76,6 +81,18 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 
 当前播放器有时记录 `Failed to retrieve GetCefD3DRenderingSubProcessId`，报告保留该 ERROR。
 普通图片窗口挂载与关闭断言通过不代表 D3D 子进程识别、3D 暂停或画质验收通过。
+
+`Application.ScreenSaver.SettingsAndWhitelist` 验证屏保设置与白名单：
+
+1. 经实际屏保页启用开关，修改等待时间和效果，独立读取后台 RPC 和 JSON。
+2. 经正式异步 `IStoragePicker` 选择系统 notepad.exe，只登记白名单，不启动程序。
+3. 核对程序名、完整路径与图标保存；搜索无匹配和有匹配状态，再重开 UI 核对回显。
+4. 经实际移除按钮删除白名单与图标，关闭屏保，再次重开核对关闭和空列表。
+
+启用屏保必须等待设置保存完成后再发送启动 RPC，避免后台仍读取旧的关闭值。
+白名单程序路径通过 gRPC 的新增字段往返；屏保通知管道也带测试会话后缀。
+原生键盘输入前检查所属窗口已激活、目标控件已有焦点。
+本用例使用较长等待时间且保持锁屏选项关闭，不验证真实空闲触发、屏保进程启动或系统锁屏。
 
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。

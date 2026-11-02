@@ -58,8 +58,11 @@ internal static class ApplicationUi {
         keybd_event(0x1B, 0, 2, 0);
     }
 
-    public static void SubmitText(AutomationElement edit) {
-        edit.SetFocus();
+    public static void PressEnter(nint window, AutomationElement control) {
+        BringIntoView(control);
+        Check(SetForegroundWindow(window) || GetForegroundWindow() == window, "Could not activate the input window");
+        control.SetFocus();
+        Check(control.Current.HasKeyboardFocus, "The input control did not receive keyboard focus");
         keybd_event(0x0D, 0, 0, 0);
         keybd_event(0x0D, 0, 2, 0);
     }

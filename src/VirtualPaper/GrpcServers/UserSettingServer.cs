@@ -141,6 +141,7 @@ namespace VirtualPaper.GrpcServers {
             foreach (var proc in settings.WhiteListScr) {
                 resp.WhiteListScr.Add(new Grpc_ProcInfoData() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });
@@ -207,6 +208,7 @@ namespace VirtualPaper.GrpcServers {
             foreach (var proc in request.WhiteListScr) {
                 _userSetting.Settings.WhiteListScr.Add(new Models.ProcInfo() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });

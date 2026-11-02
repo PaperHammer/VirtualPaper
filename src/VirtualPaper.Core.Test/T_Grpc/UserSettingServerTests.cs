@@ -111,6 +111,7 @@ public class UserSettingServerTests {
         fixture.Settings.WallpaperWaitTime = 1234;
         fixture.Settings.WhiteListScr.Add(new ProcInfo {
             ProcName = "allowed.exe",
+            ProcPath = @"C:\apps\allowed.exe",
             IconPath = "icon.png",
             IsRunning = true,
         });
@@ -125,6 +126,7 @@ public class UserSettingServerTests {
         Assert.AreEqual(1040, response.SelectedMonitor.WorkingArea.Height);
         Assert.HasCount(1, response.WhiteListScr);
         Assert.AreEqual("allowed.exe", response.WhiteListScr[0].ProcName);
+        Assert.AreEqual(@"C:\apps\allowed.exe", response.WhiteListScr[0].ProcPath);
         Assert.IsTrue(response.WhiteListScr[0].IsRunning);
     }
 
@@ -150,6 +152,7 @@ public class UserSettingServerTests {
         };
         request.WhiteListScr.Add(new Grpc_ProcInfoData {
             ProcName = "player.exe",
+            ProcPath = @"C:\apps\player.exe",
             IconPath = "player.png",
             IsRunning = true,
         });
@@ -162,6 +165,7 @@ public class UserSettingServerTests {
         Assert.AreEqual(AppSystemBackdrop.Mica, fixture.Settings.SystemBackdrop);
         Assert.AreEqual(2500, fixture.Settings.WallpaperWaitTime);
         Assert.AreEqual("player.exe", AssertSingle(fixture.Settings.WhiteListScr).ProcName);
+        Assert.AreEqual(@"C:\apps\player.exe", AssertSingle(fixture.Settings.WhiteListScr).ProcPath);
         fixture.UserSettings.Verify(service => service.Save<ISettings>(), Times.Once);
         fixture.UiRunner.Verify(service => service.RestartUI(), Times.Once);
     }

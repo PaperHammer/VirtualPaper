@@ -47,6 +47,7 @@
                     </Grid>
 
                     <ComboBox x:Name="OthersFullScreenPlayStatusCombo"
+                        AutomationProperties.AutomationId="Settings.Performance.Fullscreen"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.PlayStatus}"
@@ -82,6 +83,7 @@
                     </Grid>
 
                     <ComboBox x:Name="OthersFocusPlayStatusCombo"
+                        AutomationProperties.AutomationId="Settings.Performance.Focus"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.PlayStatus}"
@@ -108,6 +110,7 @@
                     </Grid>
 
                     <ToggleButton
+                        AutomationProperties.AutomationId="Settings.Performance.AudioOnlyOnDesktop"
                         Grid.Column="2"
                         Width="200"
                         Content="{x:Bind _viewModel.AudioStatu, Mode=OneWay}" 
@@ -152,6 +155,7 @@
                     </Grid>
 
                     <ComboBox x:Name="BatteryPowerednPlayStatusCombo"
+                        AutomationProperties.AutomationId="Settings.Performance.Battery"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.PlayStatus}"
@@ -187,6 +191,7 @@
                     </Grid>
 
                     <ComboBox x:Name="PowerSavingPlayStatusCombo"
+                        AutomationProperties.AutomationId="Settings.Performance.PowerSaving"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.PlayStatus}"
@@ -232,6 +237,7 @@
                     </Grid>
 
                     <ComboBox x:Name="RemoteDesktopPlayStatusCombo"
+                        AutomationProperties.AutomationId="Settings.Performance.RemoteDesktop"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.PlayStatus}"
@@ -272,6 +278,7 @@
                     </Grid>
 
                     <ComboBox x:Name="StatuMechanismPlayStatusCombo"
+                        AutomationProperties.AutomationId="Settings.Performance.MonitorPolicy"
                         Grid.Column="2"
                         VerticalAlignment="Center"
                         ItemsSource="{x:Bind _viewModel.StatuMechanisms}"

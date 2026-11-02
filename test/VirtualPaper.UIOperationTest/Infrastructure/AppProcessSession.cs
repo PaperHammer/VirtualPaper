@@ -14,6 +14,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
     private Process? _core;
     private Process? _ui;
     private readonly List<int> _uiIds = [];
+    private readonly Dictionary<string, int> _previousLogLines;
     private readonly Grpc_CommandsService.Grpc_CommandsServiceClient _commands;
     public Grpc_UserSettingsService.Grpc_UserSettingsServiceClient Settings { get; }
     public int CoreId => _core!.Id;
@@ -22,6 +23,10 @@ internal sealed class AppProcessSession : IAsyncDisposable {
 
     public AppProcessSession() {
         if (!TestProcessEnvironment.IsEnabled) throw new InvalidOperationException("A process test session is required.");
+        _previousLogLines = Directory.Exists(Constants.CommonPaths.LogDir)
+            ? Directory.EnumerateFiles(Constants.CommonPaths.LogDir, "*.txt", SearchOption.AllDirectories)
+                .ToDictionary(path => path, path => File.ReadLines(path).Count())
+            : [];
         var channel = new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName);
         Settings = new(channel);
         _commands = new(channel);
@@ -92,6 +97,17 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             if (timer.Elapsed > TimeSpan.FromSeconds(15)) throw new TimeoutException(operation);
             await Task.Delay(100);
         }
+    }
+
+    public void RecordEvidence(UiTestContext context) {
+        UiTestContext.Check(_core is { HasExited: true } && _ui == null, "Session processes have not exited normally");
+        context.Evidence["CoreProcessId"] = CoreId;
+        context.Evidence["SessionId"] = TestProcessEnvironment.SessionId;
+        context.Evidence["UiProcessIds"] = UiIds.ToArray();
+        context.Evidence["ProcessesExitedNormally"] = true;
+        context.Evidence["RuntimeErrors"] = Directory.EnumerateFiles(Constants.CommonPaths.LogDir, "*.txt", SearchOption.AllDirectories)
+            .SelectMany(path => File.ReadLines(path).Skip(_previousLogLines.GetValueOrDefault(path)))
+            .Where(line => line.Contains("|ERROR|", StringComparison.Ordinal)).Distinct().ToArray();
     }
 
     public async ValueTask DisposeAsync() {

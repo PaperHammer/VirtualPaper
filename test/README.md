@@ -12,9 +12,11 @@ test/
     Cases/                        按生产模块组织真实 UI 交互用例
       Components/GeneralEffectTests.cs
       Application/NavigationSettingsTests.cs  真实 Core + UI 的设置保存与重开验证
+      Application/PerformanceSettingsTests.cs 性能设置的保存与重开验证
     Infrastructure/
       UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
       AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
+      ApplicationUi.cs            跨进程控件定位、滚动和选择
 ```
 
 ## 运行
@@ -50,6 +52,11 @@ test/
 5. 正常关闭 UI，再由 Core 拉起新的 UI 进程，验证开关回显为关闭。
 6. 正常关闭 UI 和 Core，检查退出码。JSON 记录 Core/UI PID、保存值及正常退出结果。
 
+`Application.PerformanceSettings.SaveAndReopen` 验证性能页的 7 项设置：全屏、焦点、电池、
+省电、远程桌面的播放策略，多屏判断策略，以及仅桌面播放声音开关。
+逐项操作真实下拉框或开关，等待后台 RPC 确认，检查 JSON 落盘，再重开 UI 核对 7 个控件的回显。
+这覆盖设置保存链路；没有模拟电池/远程桌面状态，也未验收壁纸实际暂停或静音行为。
+
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。
 
@@ -70,3 +77,11 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 CI 顺序为：构建 → 七项常规测试并行 → WinUI 操作测试 → 汇总。WinUI 失败、未执行或结果缺失
 都不能让最终 CI 检查通过。
 进入 WinUI 阶段前还会检查常规 TRX 的未处理异常，防止“断言全通过、testhost 仍崩溃”的假绿。
+
+## 分批推进
+
+- 公共测试基础设施和最小真实链路单独提交。
+- 后续每批只推进一个模块，必要的共用辅助方法随该模块提交。
+- 完成真实交互、后台保存、重开回显和进程清理验证后，提交该模块，再开始下一个。
+- 报告中注明未覆盖的运行行为和已知异常；修复跨模块问题时另立提交。
+- 测试报告、运行日志和无关本地改动不纳入功能提交。

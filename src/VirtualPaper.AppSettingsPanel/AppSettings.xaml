@@ -21,7 +21,8 @@
             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
             HorizontalAlignment="Stretch">
             <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem1_General}" Tag="GeneralView" IsSelected="True"/>
-            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem2_Performance}" Tag="PerformanceView"/>
+            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem2_Performance}" Tag="PerformanceView"
+                AutomationProperties.AutomationId="Settings.Tab.Performance"/>
             <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem3_System}" Tag="SystemView"/>
             <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem4_Others}" Tag="OthersView"/>
         </SelectorBar>

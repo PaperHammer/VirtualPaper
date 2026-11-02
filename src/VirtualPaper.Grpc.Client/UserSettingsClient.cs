@@ -17,8 +17,10 @@ namespace VirtualPaper.Grpc.Client {
         public List<IWallpaperLayout> WallpaperLayouts { get; private set; } = [];
         public List<IRecentUsed> RecentUseds { get; private set; } = [];
 
-        public UserSettingsClient() {
-            _client = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
+        public UserSettingsClient() : this(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName)) { }
+
+        public UserSettingsClient(NamedPipeChannel channel) {
+            _client = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(channel);
 
             Task.Run(async () => {
                 await LoadAsync<ISettings>().ConfigureAwait(false);

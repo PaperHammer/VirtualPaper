@@ -16,7 +16,7 @@
 
     <Page.Resources>
         <cmd:KeepToLeft x:Key="LeftMenuItems">
-            <MenuBarItem Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_File}" KeyboardAcceleratorPlacementMode="Hidden">
+            <MenuBarItem AutomationProperties.AutomationId="Project.File" Title="{markup:I18n Key=Project_StaticImg_MenuBar_Text_File}" KeyboardAcceleratorPlacementMode="Hidden">
                 <MenuBarItem.KeyboardAccelerators>
                     <KeyboardAccelerator Modifiers="Menu" Key="F"/>
                 </MenuBarItem.KeyboardAccelerators>
@@ -26,12 +26,12 @@
                         <KeyboardAccelerator Modifiers="Control" Key="N"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Project_Open}" Command="{x:Bind _viewModel.MFI_OpenCommand}">
+                <MenuFlyoutItem AutomationProperties.AutomationId="Project.File.Open" Text="{markup:I18n Key=Project_Open}" Command="{x:Bind _viewModel.MFI_OpenCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="O"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem Text="{markup:I18n Key=Text_Save}" Command="{x:Bind _viewModel.MFI_SaveCommand}">
+                <MenuFlyoutItem AutomationProperties.AutomationId="Project.File.Save" Text="{markup:I18n Key=Text_Save}" Command="{x:Bind _viewModel.MFI_SaveCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -42,8 +42,8 @@
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutSubItem x:Name="ExportMenuSubItem" Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}">
-                    <MenuFlyoutItem x:Name="ExportPngMenuItem" Text="PNG" Tag="Png" Click="OnExportMenuItemClick"/>
+                <MenuFlyoutSubItem x:Name="ExportMenuSubItem" AutomationProperties.AutomationId="Project.File.Export" Text="{markup:I18n Key=Project_StaticImg_MenuBar_Text_Export}">
+                    <MenuFlyoutItem x:Name="ExportPngMenuItem" AutomationProperties.AutomationId="Project.File.ExportPng" Text="PNG" Tag="Png" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportBmpMenuItem" Text="BMP" Tag="Bmp" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportJpegMenuItem" Text="JPEG" Tag="Jpeg" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportJpegXrMenuItem" Text="JPEG XR" Tag="JpegXR" Click="OnExportMenuItemClick"/>

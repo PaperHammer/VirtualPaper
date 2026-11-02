@@ -42,7 +42,7 @@
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Edit">
+                    <NavigationViewItem x:Name="Nav_Edit" AutomationProperties.AutomationId="App.Navigation.Projects">
                         <!--TODO：IsSelected = true 时，若直接设置 Content 为 非IconElement or 非String 时会报错 -->
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>

@@ -19,6 +19,7 @@ test/
       Application/WallpaperEffectsTests.cs    已应用壁纸的正式调整窗口保存重开验证
       Application/GeneralSettingsTests.cs     主题、材质、语言与设置子页保存重开验证
       Application/SystemSettingsTests.cs      系统页取消保存、日志 ZIP 导出及内容验证
+      Application/StaticEditorTests.cs        静态编辑器旋转、取消、VPD 保存重开及导出验证
     Infrastructure/
       UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
       AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
@@ -136,8 +137,18 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 
 本用例只导出隔离会话的诊断数据，不包含用户生产日志，不打开后台调试窗口。
 
+`Application.StaticEditor.RotateCancelSaveReopenAndExport` 验证静态图片编辑器：
+
+1. 经正式打开入口和系统选择器载入独立 PNG，选择画布工具，将当前默认 1920×1080 画布旋转为 1080×1920。
+2. 取消未保存关闭提示，确认 UI 保留；取消一次设计保存后，再实际保存 `.vpd`。
+3. 经生产文件头读取逻辑核对尺寸和图层数，重开 UI、重新载入 `.vpd`，核对画布回显。
+4. 经正式导出菜单保存 PNG，检查尺寸、非空图像内容及源图哈希，正常退出前后台。
+
+本用例使用真实 Win2D 与着色器资源，不覆盖画笔、图层重命名、跨 DPI 或逐像素视觉一致性。
+
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。
+失败用例在结束后快照当时的 Core／UI 日志和配置到 artifacts，避免后续进程轮转日志后丢失诊断信息。
 
 脚本通过仅对子进程生效的环境变量传递测试会话 GUID 和数据根目录。
 Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单例、管道及共享文件锁。

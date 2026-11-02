@@ -35,7 +35,8 @@ public partial class App : Application {
             new UiTestCase("Application.ScreenFit.PreviewCancelApplyAndReopen", ScreenFitTests.PreviewCancelApplyAndReopenAsync),
             new UiTestCase("Application.WallpaperEffects.EditRestoreSaveAndReopen", WallpaperEffectsTests.EditRestoreSaveAndReopenAsync),
             new UiTestCase("Application.GeneralSettings.SaveLanguageThemeAndReopen", GeneralSettingsTests.SaveLanguageThemeAndReopenAsync),
-            new UiTestCase("Application.SystemSettings.ExportLogsAndCancel", SystemSettingsTests.ExportLogsAndCancelAsync)
+            new UiTestCase("Application.SystemSettings.ExportLogsAndCancel", SystemSettingsTests.ExportLogsAndCancelAsync),
+            new UiTestCase("Application.StaticEditor.RotateCancelSaveReopenAndExport", StaticEditorTests.RotateCancelSaveReopenAndExportAsync)
         };
         if (commandLine.Length == 5)
             cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
@@ -54,7 +55,10 @@ public partial class App : Application {
                     evidence = context.Evidence;
                     await testCase.Run(context);
                 }
-                catch (Exception ex) { error = ex.ToString(); }
+                catch (Exception ex) {
+                    error = ex.ToString();
+                    FailureArtifacts.Save(testCase.Name, evidence);
+                }
                 results.Add(new(testCase.Name, error == null,
                     timer.ElapsedMilliseconds, error, evidence));
             }

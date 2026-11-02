@@ -115,6 +115,7 @@
                     Click="BtnStartupNew_Click"/>
 
                 <Button x:Name="btnStartupOpen"
+                    AutomationProperties.AutomationId="Projects.Open"
                     Grid.Column="2"
                     Content="{markup:I18n Key=Project_Open}"
                     HorizontalAlignment="Stretch"

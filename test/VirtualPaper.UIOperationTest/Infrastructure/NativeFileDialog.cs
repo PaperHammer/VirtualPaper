@@ -70,6 +70,7 @@ internal static class NativeFileDialog {
             throw new InvalidOperationException($"Native file dialog has no action {actionId}: " + string.Join("; ", buttons));
         }
         nint button = open.Current.NativeWindowHandle;
+        nint pickerWindow = button == 0 ? 0 : GetAncestor(button, 2);
         if (button != 0 && open.Current.ClassName == "Button" && GetDlgCtrlID(button) == actionId) {
             // SaveFilePicker needs outgoing COM calls while validating the path.
             // UIA Invoke can run in an input-synchronous SendMessage context
@@ -83,10 +84,15 @@ internal static class NativeFileDialog {
         }
         var submitted = Stopwatch.StartNew();
         while (submitted.Elapsed < TimeSpan.FromSeconds(5)) {
+            if (pickerWindow != 0 && !IsWindow(pickerWindow)) return;
             try {
                 if (FindFilename(dialog) == null) return;
             }
             catch (ElementNotAvailableException) { return; }
+            catch (COMException ex) when (ex.HResult == unchecked((int)0x80010012) && pickerWindow != 0) {
+                // The picker broker can exit while UIA traverses its retiring
+                // provider. Still require its actual native window to close.
+            }
             Thread.Sleep(100);
         }
         var remaining = dialog.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
@@ -110,6 +116,7 @@ internal static class NativeFileDialog {
     [DllImport("user32.dll")] private static extern nint GetWindow(nint hwnd, uint command);
     [DllImport("user32.dll")] private static extern nint GetAncestor(nint hwnd, uint flags);
     [DllImport("user32.dll")] private static extern int GetDlgCtrlID(nint hwnd);
+    [DllImport("user32.dll")] private static extern bool IsWindow(nint hwnd);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool PostMessage(nint hwnd, uint message, nint wParam, nint lParam);
 }

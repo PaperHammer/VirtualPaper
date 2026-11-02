@@ -26,6 +26,11 @@ internal static class ApplicationUi {
         ((InvokePattern)element.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
     }
 
+    public static void Expand(AutomationElement element) {
+        BringIntoView(element);
+        ((ExpandCollapsePattern)element.GetCurrentPattern(ExpandCollapsePattern.Pattern)).Expand();
+    }
+
     public static void SetText(AutomationElement element, string value) {
         BringIntoView(element);
         if (element.Current.ControlType != ControlType.Edit)

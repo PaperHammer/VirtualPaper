@@ -32,9 +32,24 @@ foreach ($test in $tests) {
     }
 }
 
-$summaryNeeds = 'needs: [build, ' + (($tests.Id) -join ', ') + ']'
+$regularNeeds = 'needs: [build, ' + (($tests.Id) -join ', ') + ']'
+$summaryNeeds = 'needs: [build, ' + (($tests.Id) -join ', ') + ', test-ui-operation]'
 if (-not $workflow.Contains($summaryNeeds)) {
-    throw "test-summary dependencies do not match the seven regular test jobs."
+    throw 'test-summary must include the seven regular test jobs and WinUI operation tests.'
+}
+$operationJob = [regex]::Match($workflow, '(?ms)^  test-ui-operation:\r?\n.*?(?=^  [\w-]+:|\z)').Value
+if (-not $operationJob.Contains($regularNeeds) -or $operationJob -match '(?m)^    if:') {
+    throw 'WinUI operation tests must run only after build and all seven regular test jobs succeed.'
+}
+$operationProject = 'test/VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
+if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $operationProject)) -or
+    -not $solution.Contains($operationProject.Replace('/', '\'))) {
+    throw 'WinUI operation test project must exist and be included in the solution.'
+}
+if (-not $operationJob.Contains('./test/Run-UIOperationTests.ps1') -or
+    -not $operationJob.Contains('Verify prerequisite test host health') -or
+    -not $workflow.Contains('UI_OPERATION_RESULTS_VALID:-false')) {
+    throw 'WinUI operation results must be executed and required by the final status check.'
 }
 if ($workflow -match '(?m)^\s*matrix\s*:') {
     throw 'The regular test workflow must keep explicit jobs and must not use a matrix.'
@@ -54,4 +69,4 @@ if (-not $workflow.Contains("-notmatch '[\\/]In[\\/]'")) {
     throw 'Coverage summary must exclude the test platform In staging copies.'
 }
 
-Write-Host "[OK] Seven test projects and their shared coverage settings are present in the solution, workflow jobs, and result summary."
+Write-Host '[OK] Seven regular test projects are wired; WinUI operation tests run after them and gate the final status.'

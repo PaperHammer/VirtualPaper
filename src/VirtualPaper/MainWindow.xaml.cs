@@ -42,10 +42,11 @@ namespace VirtualPaper {
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             notifyIcon.Dispose();
-            ToastNotificationManagerCompat.Uninstall();
+            if (!TestProcessEnvironment.IsEnabled) ToastNotificationManagerCompat.Uninstall();
         }
 
         private void Window_SourceInitialized(object sender, EventArgs e) {
+            if (TestProcessEnvironment.IsEnabled) return;
             new ToastContentBuilder()
                 .AddText(LanguageManager.Instance["Virtual_Paper_isRunning"])
                 .AddText(LanguageManager.Instance["Virtual_Paper_isRunning_Greetings"])

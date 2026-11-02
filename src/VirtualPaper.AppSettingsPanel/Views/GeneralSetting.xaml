@@ -279,6 +279,7 @@
                             TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                     </StackPanel>
                     <ToggleButton x:Name="NavigationAnimationsToggle"
+                        AutomationProperties.AutomationId="Settings.General.NavigationAnimations"
                         Grid.Column="2" Width="200" VerticalAlignment="Center"
                         Content="{x:Bind _viewModel.NavigationAnimationsStatus, Mode=OneWay}"
                         IsChecked="{x:Bind _viewModel.NavigationAnimationsEnabled, Mode=TwoWay}"

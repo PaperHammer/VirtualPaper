@@ -55,6 +55,7 @@ namespace VirtualPaper.UI {
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
+            TestProcessEnvironment.ConfigureLogging("UI");
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例

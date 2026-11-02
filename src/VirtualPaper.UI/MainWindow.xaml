@@ -91,7 +91,7 @@
                     <!--<NavigationViewItem x:Name="Nav_Account" 
                         Content="{Binding SidebarAccount}"
                         Icon="Contact" />-->
-                    <NavigationViewItem x:Name="Nav_AppSettings">
+                    <NavigationViewItem x:Name="Nav_AppSettings" AutomationProperties.AutomationId="App.Navigation.Settings">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">

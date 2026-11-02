@@ -19,7 +19,9 @@ namespace VirtualPaper.Services {
         public UserSettingsService(
             IMonitorManager moitorManager,
             IJsonSaver jsonSaver) : this(moitorManager, jsonSaver,
-                enabled => { _ = WindowsAutoStart.SetAutoStart(enabled); }) { }
+                enabled => {
+                    if (!TestProcessEnvironment.IsEnabled) _ = WindowsAutoStart.SetAutoStart(enabled);
+                }) { }
 
         internal UserSettingsService(
             IMonitorManager moitorManager,

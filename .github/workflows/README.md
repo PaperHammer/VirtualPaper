@@ -40,9 +40,15 @@
 1. 构建整个解决方案（Release 配置）
 2. 并行运行 7 项常规测试：Core · UI · StaticImg · WebBackdrop · UIComponent · ML · Shader
 3. 各测试项目使用共享 `src/test.runsettings` 生成 Cobertura 覆盖率数据，排除测试程序集、生成代码和第三方程序集，并在汇总页展示分项目及合并行覆盖率
-4. 汇总测试结果，写入 commit status `ci-check/pre-publish-tests`
+4. 常规测试全部通过后，运行 `test/VirtualPaper.UIOperationTest` 中的真实 WinUI 交互测试
+5. 汇总常规测试及 WinUI 交互测试结果，写入 commit status `ci-check/pre-publish-tests`
 
 Core 测试中的 `Workflow` 分类覆盖配置落盘、壁纸入库应用删除及近期功能的业务集成链路。
+WinUI 操作测试包含特效页面组件用例，以及真实 Core + UI 的导航动画设置用例：
+经跨进程 UI Automation 修改开关，验证后台 RPC/JSON 保存、UI 进程重开回显及正常退出。
+各进程共用隔离的测试会话、配置与通信名称；测试日志随报告保留。
+以 JSON 上传 `test-results-ui-operation`，不计入七项常规测试的覆盖率。
+它需要可用的 Windows 图形会话，失败或缺失结果都会阻断最终检查；不能静默跳过。
 
 常规 ML job 排除需要真实模型推理的 `Integration` 分类。
 

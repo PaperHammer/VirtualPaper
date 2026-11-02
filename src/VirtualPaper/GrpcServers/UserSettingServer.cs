@@ -157,7 +157,8 @@ namespace VirtualPaper.GrpcServers {
             if (request.IsAutoStart != _userSetting.Settings.IsAutoStart) {
                 _userSetting.Settings.IsAutoStart = request.IsAutoStart;
                 try {
-                    _ = WindowsAutoStart.SetAutoStart(_userSetting.Settings.IsAutoStart);
+                    if (!Common.TestProcessEnvironment.IsEnabled)
+                        _ = WindowsAutoStart.SetAutoStart(_userSetting.Settings.IsAutoStart);
                 }
                 catch (Exception e) {
                     App.Log.Error(e);

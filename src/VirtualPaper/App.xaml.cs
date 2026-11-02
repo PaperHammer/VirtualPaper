@@ -66,6 +66,7 @@ namespace VirtualPaper {
         }
 
         public App() {
+            TestProcessEnvironment.ConfigureLogging("Core");
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例
@@ -149,7 +150,8 @@ namespace VirtualPaper {
             ChangeLanguage(UserSettings.Settings.Language);
 
             // 检查是否有未完成的插件更新（异步，不阻塞 UI 线程）
-            _ = ((IPluginsUpdateServiceInit)Services.GetRequiredService<IPluginsUpdateService>()).InitAsync();
+            if (!TestProcessEnvironment.IsEnabled)
+                _ = ((IPluginsUpdateServiceInit)Services.GetRequiredService<IPluginsUpdateService>()).InitAsync();
 
             UserSettings.Save<ISettings>();
             #endregion
@@ -414,7 +416,7 @@ namespace VirtualPaper {
                 ((ServiceProvider)Services)?.Dispose();
                 ((App)Current)._grpcServer?.Kill();
                 ((App)Current)._grpcServer?.Dispose();
-                ToastNotificationManagerCompat.Uninstall();
+                if (!TestProcessEnvironment.IsEnabled) ToastNotificationManagerCompat.Uninstall();
 
                 if (UserSettings.Settings.IsUpdated) {
                     UserSettings.Settings.IsUpdated = false;

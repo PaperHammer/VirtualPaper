@@ -33,4 +33,5 @@ Image and depth-image effect configs are refreshed repeatedly, applied, stopped,
 and reopened after deleting preview caches. Missing/locked configs must fail.
 
 These workflows do not launch real XAML pages or verify rendered pixels. Desktop
-UI interaction and rendering/performance acceptance require separate validation.
+UI interaction is covered separately by [UIOperationTest](../../../test/README.md).
+Rendering/performance acceptance still requires separate validation.

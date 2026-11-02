@@ -13,14 +13,14 @@ namespace VirtualPaper.Common {
         /// <summary>
         /// 避免在测试环境中使用真实的 AppData 目录，防止污染用户数据
         /// </summary>
-        public static bool IsTestMode { get; set; } = false;
+        public static bool IsTestMode { get; set; } = TestProcessEnvironment.IsEnabled;
 
         public static class Runtime {
             public static nint MainWindowHwnd { get; set; }
         }
 
         public static class CommonPaths {
-            public static string TestRootDir { get; set; } = Path.Combine(Path.GetTempPath(), $"VirtualPaper_Test_{Guid.NewGuid():N}");
+            public static string TestRootDir { get; set; } = TestProcessEnvironment.DataRoot ?? Path.Combine(Path.GetTempPath(), $"VirtualPaper_Test_{Guid.NewGuid():N}");
             private static string RootDir =>
                 IsTestMode
                     ? TestRootDir
@@ -137,8 +137,9 @@ namespace VirtualPaper.Common {
             public static string DraftFileVersion => "D18";
             public static string GrpcPipeServerName => "Grpc_" + PipeServerName;
             public static string PipeServerName => UniqueAppUid + Environment.UserName;
-            public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM";
-            public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM";
+            public static string UniqueAppUid => "Virtual:WALLPAPERSYSTEM" + TestSessionSuffix;
+            public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM" + TestSessionSuffix;
+            private static string TestSessionSuffix => TestProcessEnvironment.IsEnabled ? ":" + TestProcessEnvironment.SessionId : string.Empty;
             public static string AppBuildFile => "app_build.json";
         }
 

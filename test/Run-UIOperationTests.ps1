@@ -1,0 +1,101 @@
+#requires -Version 7.2
+param(
+    [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
+    [string]$ReportPath = (Join-Path $env:TEMP ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
+    [string]$CoreExe,
+    [switch]$NoBuild
+)
+$ErrorActionPreference = 'Stop'
+$projectPath = Join-Path $PSScriptRoot 'VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
+$repositoryRoot = Split-Path -Parent $PSScriptRoot
+$reportFullPath = [IO.Path]::GetFullPath($ReportPath)
+if (Test-Path -LiteralPath $reportFullPath) { throw 'Report path must be new to avoid reading stale results' }
+$artifactPath = $reportFullPath + '.artifacts'
+if (Test-Path -LiteralPath $artifactPath) { throw 'Artifact directory must be new to avoid mixing runs' }
+New-Item -ItemType Directory -Path $artifactPath -Force | Out-Null
+if (-not $NoBuild) {
+    $msbuild = Get-Command msbuild.exe -ErrorAction SilentlyContinue
+    $msbuildPath = if ($msbuild) { $msbuild.Source } else {
+        & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+    }
+    if (-not $msbuildPath) { throw 'Visual Studio MSBuild is required to build Core, UI and the test host' }
+    $buildLog = Join-Path $artifactPath 'build.log'
+    & $msbuildPath (Join-Path $repositoryRoot 'src/VirtualPaper.sln') /t:Build /restore "/p:Configuration=$Configuration" '/p:Platform=Any CPU' /m /v:minimal /nologo *> $buildLog
+    if ($LASTEXITCODE -ne 0) { Get-Content -LiteralPath $buildLog -Tail 25; throw 'Application/test build failed' }
+}
+if (-not $CoreExe) { $CoreExe = Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.exe" }
+$CoreExe = [IO.Path]::GetFullPath($CoreExe)
+if (-not (Test-Path -LiteralPath $CoreExe)) { throw "Core executable not found: $CoreExe" }
+if (-not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $CoreExe) 'Plugins/UI/VirtualPaper.UI.exe'))) {
+    throw 'Production UI executable is missing next to Core'
+}
+$targetDll = (dotnet msbuild $projectPath -getProperty:TargetPath "-p:Configuration=$Configuration" -p:Platform=x64 | Select-Object -Last 1).Trim()
+if ($LASTEXITCODE -ne 0) { throw 'Cannot locate UI operation test host' }
+$targetExe = [IO.Path]::ChangeExtension($targetDll, '.exe')
+if (-not (Test-Path -LiteralPath $targetExe)) { throw "Host not found: $targetExe" }
+$hostCommonPath = Join-Path (Split-Path -Parent $targetExe) 'VirtualPaper.Common.dll'
+$hostCommonHash = (Get-FileHash -LiteralPath $hostCommonPath -Algorithm SHA256).Hash
+foreach ($applicationDirectory in @((Split-Path -Parent $CoreExe), (Join-Path (Split-Path -Parent $CoreExe) 'Plugins/UI'))) {
+    $applicationCommonPath = Join-Path $applicationDirectory 'VirtualPaper.Common.dll'
+    if ((Get-FileHash -LiteralPath $applicationCommonPath -Algorithm SHA256).Hash -ne $hostCommonHash) {
+        throw "Application and test isolation binaries differ; rebuild the complete solution: $applicationCommonPath"
+    }
+}
+$startInfo = [Diagnostics.ProcessStartInfo]::new($targetExe)
+$startInfo.UseShellExecute = $false
+$startInfo.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
+$startInfo.WorkingDirectory = [IO.Path]::GetDirectoryName($targetExe)
+$startInfo.ArgumentList.Add('--report')
+$startInfo.ArgumentList.Add($reportFullPath)
+$sessionId = [guid]::NewGuid().ToString('N')
+$sessionRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
+New-Item -ItemType Directory -Path $sessionRoot | Out-Null
+$startInfo.Environment['VIRTUALPAPER_TEST_SESSION'] = $sessionId
+$startInfo.Environment['VIRTUALPAPER_TEST_DATA_ROOT'] = $sessionRoot
+$startInfo.Environment['VIRTUALPAPER_TEST_CORE_EXE'] = $CoreExe
+$process = $null
+try {
+    $process = [Diagnostics.Process]::Start($startInfo)
+    if (-not $process.WaitForExit(60000)) {
+        $process.Kill($true)
+        throw 'UI operation tests timed out after 60 seconds'
+    }
+    if (-not (Test-Path -LiteralPath $reportFullPath)) { throw "Host exited without a report (exit $($process.ExitCode))" }
+    $report = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
+    $actualNames = @($report.Results | ForEach-Object { $_.Name })
+    $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
+    if ($process.ExitCode -ne 0 -or $report.Passed -ne $true -or
+        $report.ExpectedCount -lt 1 -or @($report.Results).Count -ne $report.ExpectedCount -or
+        @($report.Results | Where-Object { $_.Passed -ne $true }).Count -gt 0 -or
+        @($actualNames | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0 -or
+        @($actualNames | Sort-Object -Unique).Count -ne $actualNames.Count -or $applicationRuns.Count -lt 1 -or
+        @($applicationRuns | Where-Object { $_.Evidence.CoreProcessId -lt 1 -or @($_.Evidence.UiProcessIds).Count -lt 1 -or $_.Evidence.ProcessesExitedNormally -ne $true }).Count -gt 0) {
+        throw "UI operation tests failed: $($report | ConvertTo-Json -Depth 5)"
+    }
+    $report.Results | Format-Table Name, Passed, DurationMilliseconds
+    foreach ($applicationRun in $applicationRuns) {
+        if (@($applicationRun.Evidence.RuntimeErrors).Count -gt 0) {
+            Write-Warning "$($applicationRun.Name): runtime error logs were captured; see report Evidence.RuntimeErrors and application logs."
+        }
+    }
+    Write-Output "Report: $reportFullPath"
+}
+finally {
+    if ($null -ne $process) {
+        if (-not $process.HasExited) { $process.Kill($true); $process.WaitForExit(5000) | Out-Null }
+        $process.Dispose()
+    }
+    # Preserve only this isolated run's logs/config for diagnostics, then remove its temporary root.
+    if (Test-Path -LiteralPath (Join-Path $sessionRoot 'logs')) {
+        Copy-Item -LiteralPath (Join-Path $sessionRoot 'logs') -Destination $artifactPath -Recurse
+    }
+    if (Test-Path -LiteralPath (Join-Path $sessionRoot 'user_settings.json')) {
+        Copy-Item -LiteralPath (Join-Path $sessionRoot 'user_settings.json') -Destination $artifactPath
+    }
+    $expectedRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
+    if ($sessionRoot -ne $expectedRoot -or -not $sessionRoot.StartsWith([IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Unexpected test session cleanup path'
+    }
+    Remove-Item -LiteralPath $sessionRoot -Recurse -Force
+    Write-Output "Artifacts: $artifactPath"
+}

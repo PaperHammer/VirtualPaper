@@ -44,6 +44,10 @@ dotnet test src/VirtualPaper.ReleaseBuildData.Test/VirtualPaper.ReleaseBuildData
 
 若先完成完整 Release 构建，可像 CI 一样增加 `--no-build`。ML 测试可能依赖模型或本机运行时资源；WinUI 测试也可能受 Windows App SDK 环境影响。
 
+真实 WinUI 交互测试位于独立的物理 `test` 目录，包含组件宿主和真实 Core + UI 进程用例。
+运行 `./test/Run-UIOperationTests.ps1 -Configuration Release`；用例范围及运行要求见 [test/README.md](../test/README.md)。
+CI 在七项常规测试全部通过后运行该阶段。
+
 ## 推荐阅读顺序
 
 1. 根目录 `README.md`：确认产品能力。

@@ -416,10 +416,74 @@ jobs:
         path: TestResults/Shader/
         retention-days: 7
 
+  test-ui-operation:
+    name: WinUI Operation Tests
+    runs-on: windows-latest
+    needs: [build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Download prerequisite test results
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        path: PrerequisiteTestResults/
+
+    - name: Verify prerequisite test host health
+      shell: pwsh
+      run: |
+        $reports = @(Get-ChildItem -LiteralPath PrerequisiteTestResults -Filter '*.trx' -Recurse)
+        if ($reports.Count -ne 8) { throw 'Expected the seven regular test reports plus build artifact validation.' }
+        foreach ($file in $reports) {
+          [xml]$report = Get-Content -LiteralPath $file.FullName -Raw
+          $summary = $report.TestRun.ResultSummary
+          $output = [string]$summary.Output.StdOut + [string]$summary.Output.StdErr
+          if ([int]$summary.Counters.failed -gt 0 -or [int]$summary.Counters.aborted -gt 0 -or
+              $output -match '(?im)^Unhandled exception\.') {
+            throw "Test host did not finish cleanly: $($file.FullName)"
+          }
+        }
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Run real WinUI interaction tests
+      shell: pwsh
+      run: ./test/Run-UIOperationTests.ps1 -Configuration Release -ReportPath TestResults/UIOperation/ui-operation-results.json
+
+    - name: Upload WinUI operation results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-ui-operation
+        path: TestResults/UIOperation/
+        if-no-files-found: error
+        retention-days: 7
+
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader]
+    needs: [build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader, test-ui-operation]
     # build 被 skip（[skip ci]）或任意 job 被 cancel 时，整条链跳过
     if: |
       always() &&
@@ -458,6 +522,29 @@ jobs:
           echo -e "\033[0;32m[OK]\033[0m All test result files present"
           echo "TEST_RESULTS_VALID=true" >> $GITHUB_ENV
         fi
+
+    - name: Verify WinUI operation results
+      shell: pwsh
+      run: |
+        $path = 'TestResults/test-results-ui-operation/ui-operation-results.json'
+        $valid = $false
+        if (Test-Path -LiteralPath $path) {
+          $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+          $names = @($report.Results | ForEach-Object { $_.Name })
+          $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
+          $valid = $report.Passed -eq $true -and $report.ExpectedCount -gt 0 -and
+            @($report.Results).Count -eq $report.ExpectedCount -and
+            @($report.Results | Where-Object { $_.Passed -ne $true }).Count -eq 0 -and
+            @($names | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -eq 0 -and
+            @($names | Sort-Object -Unique).Count -eq $names.Count -and $applicationRuns.Count -gt 0 -and
+            @($applicationRuns | Where-Object { $_.Evidence.ProcessesExitedNormally -ne $true }).Count -eq 0
+          '### WinUI operation tests' >> $env:GITHUB_STEP_SUMMARY
+          foreach ($result in $report.Results) {
+            "- $($result.Name): passed=$($result.Passed), $($result.DurationMilliseconds) ms" >> $env:GITHUB_STEP_SUMMARY
+          }
+        }
+        "UI_OPERATION_RESULTS_VALID=$($valid.ToString().ToLowerInvariant())" >> $env:GITHUB_ENV
+        if (-not $valid) { throw 'WinUI operation results are missing, incomplete or failed.' }
 
     - name: Summarize code coverage
       shell: pwsh
@@ -517,7 +604,7 @@ jobs:
         ALL_RESULTS="${{ join(needs.*.result, ' ') }}"
         echo "Job results: $ALL_RESULTS"
 
-        if echo "$ALL_RESULTS" | grep -qE 'failure|cancelled' || [ "${TEST_RESULTS_VALID:-false}" != "true" ]; then
+        if echo "$ALL_RESULTS" | grep -qE 'failure|cancelled' || [ "${TEST_RESULTS_VALID:-false}" != "true" ] || [ "${UI_OPERATION_RESULTS_VALID:-false}" != "true" ]; then
           echo "TEST_STATUS=failure" >> $GITHUB_ENV
           echo "TEST_DESCRIPTION=Some tests failed or results missing [FAILED]" >> $GITHUB_ENV
         else

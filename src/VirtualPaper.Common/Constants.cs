@@ -11,9 +11,9 @@ namespace VirtualPaper.Common {
         //}
 
         /// <summary>
-        /// 避免在测试环境中使用真实的 AppData 目录，防止污染用户数据
+        /// 单元测试使用替代行为。真实进程测试仅隔离数据目录，不启用这些替代行为。
         /// </summary>
-        public static bool IsTestMode { get; set; } = TestProcessEnvironment.IsEnabled;
+        public static bool IsTestMode { get; set; }
 
         public static class Runtime {
             public static nint MainWindowHwnd { get; set; }
@@ -21,14 +21,14 @@ namespace VirtualPaper.Common {
 
         public static class CommonPaths {
             public static string TestRootDir { get; set; } = TestProcessEnvironment.DataRoot ?? Path.Combine(Path.GetTempPath(), $"VirtualPaper_Test_{Guid.NewGuid():N}");
-            private static string RootDir =>
+            private static string RootDir => TestProcessEnvironment.DataRoot ?? (
                 IsTestMode
                     ? TestRootDir
-                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper");
-            public static string LocalApplicationData =>
+                    : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "VirtualPaper"));
+            public static string LocalApplicationData => TestProcessEnvironment.DataRoot ?? (
                 IsTestMode
                     ? TestRootDir
-                    : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                    : Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData));
 
             /// <summary>
             /// 数据存储根目录

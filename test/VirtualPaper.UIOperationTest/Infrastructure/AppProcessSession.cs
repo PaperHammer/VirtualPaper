@@ -26,6 +26,9 @@ internal sealed class AppProcessSession : IAsyncDisposable {
 
     public AppProcessSession() {
         if (!TestProcessEnvironment.IsEnabled) throw new InvalidOperationException("A process test session is required.");
+        UiTestContext.Check(!Constants.IsTestMode, "Real UI process tests must not enable unit-test behavior overrides.");
+        UiTestContext.Check(string.Equals(Constants.CommonPaths.AppDataDir, TestProcessEnvironment.DataRoot,
+            StringComparison.OrdinalIgnoreCase), "Real UI process tests must retain the isolated data root.");
         _previousLogLines = Directory.Exists(Constants.CommonPaths.LogDir)
             ? Directory.EnumerateFiles(Constants.CommonPaths.LogDir, "*.txt", SearchOption.AllDirectories)
                 .ToDictionary(path => path, path => File.ReadLines(path).Count())
@@ -160,6 +163,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         context.Evidence["UiProcessIds"] = UiIds.ToArray();
         context.Evidence["ShowUiRequests"] = _showUiRequests;
         context.Evidence["ProcessesExitedNormally"] = true;
+        context.Evidence["UnitTestBehaviorOverridesEnabled"] = Constants.IsTestMode;
         context.Evidence["RuntimeErrors"] = Directory.EnumerateFiles(Constants.CommonPaths.LogDir, "*.txt", SearchOption.AllDirectories)
             .SelectMany(path => File.ReadLines(path).Skip(_previousLogLines.GetValueOrDefault(path)))
             .Where(line => line.Contains("|ERROR|", StringComparison.Ordinal)).Distinct().ToArray();

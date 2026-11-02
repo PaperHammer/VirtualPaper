@@ -38,82 +38,89 @@ namespace VirtualPaper.Services {
 
         public async Task ShowUIAsync() {
             await UpdateLock.WaitAllAsync();
+            lock (_processLock) {
+                if (_isDisposed || App.IsShuttingDown) return;
+                if (_processUI?.HasExited == true) ReleaseProcess();
+                if (_processUI != null) {
+                    try {
+                        ArcLog.GetLogger<UIRunnerService>().Warn("UI is already running");
+                        UISendCmd?.Invoke(this, MessageType.cmd_active);
+                        //_processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
+                    }
+                    catch (Exception e) {
+                        ArcLog.GetLogger<UIRunnerService>().Error(e);
+                    }
+                }
+                else {
+                    try {
+                        _processUI = new Process {
+                            StartInfo = new ProcessStartInfo {
+                                FileName = _fileName,
+                                RedirectStandardInput = true,
+                                RedirectStandardOutput = false,
+                                RedirectStandardError = false,
+                                UseShellExecute = false,
+                                WorkingDirectory = _workingDir,
+                            },
+                            EnableRaisingEvents = true
+                        };
+                        _processUI.Exited += Proc_UI_Exited;
+                        _processUI.OutputDataReceived += Proc_OutputDataReceived;
+                        _processUI.Start();
+                        _jobService.AddProcess(_processUI.Id, PluginName.UI);
 
-            if (_processUI != null) {
-                try {
-                    ArcLog.GetLogger<UIRunnerService>().Warn("UI is already running");
-                    UISendCmd?.Invoke(this, MessageType.cmd_active);
-                    //_processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
-                }
-                catch (Exception e) {
-                    ArcLog.GetLogger<UIRunnerService>().Error(e);
-                }
-            }
-            else {
-                try {
-                    _processUI = new Process {
-                        StartInfo = new ProcessStartInfo {
-                            FileName = _fileName,
-                            RedirectStandardInput = true,
-                            RedirectStandardOutput = false,
-                            RedirectStandardError = false,
-                            UseShellExecute = false,
-                            WorkingDirectory = _workingDir,
-                        },
-                        EnableRaisingEvents = true
-                    };
-                    _processUI.Exited += Proc_UI_Exited;
-                    _processUI.OutputDataReceived += Proc_OutputDataReceived;
-                    _processUI.Start();
-                    App.Jobs.AddProcess(_processUI.Id, PluginName.UI);
-
-                    //winui writing debug information into output stream :/
-                    //_processUI.BeginOutputReadLine();
-                    //_processUI.BeginErrorReadLine();
-                }
-                catch (Exception e) {
-                    ArcLog.GetLogger<UIRunnerService>().Error(e);
-                    _processUI = null;
-                    _ = MessageBox.Show(
-                        $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
-                        LanguageManager.Instance["Common_TextError"],
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                        //winui writing debug information into output stream :/
+                        //_processUI.BeginOutputReadLine();
+                        //_processUI.BeginErrorReadLine();
+                    }
+                    catch (Exception e) {
+                        ArcLog.GetLogger<UIRunnerService>().Error(e);
+                        _processUI = null;
+                        _ = MessageBox.Show(
+                            $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
+                            LanguageManager.Instance["Common_TextError"],
+                            MessageBoxButton.OK,
+                            MessageBoxImage.Error);
+                    }
                 }
             }
         }
 
         public void RestartUI() {
-            if (_processUI != null) {
-                try {
-                    _processUI.Exited -= Proc_UI_Exited;
-                    _processUI.OutputDataReceived -= Proc_OutputDataReceived;
-                    if (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(500)) {
-                        _processUI.Kill();
+            lock (_processLock) {
+                if (_isDisposed || App.IsShuttingDown) return;
+                if (_processUI != null) {
+                    try {
+                        _processUI.Exited -= Proc_UI_Exited;
+                        _processUI.OutputDataReceived -= Proc_OutputDataReceived;
+                        if (!_processUI.HasExited && (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(500))) {
+                            _processUI.Kill();
+                        }
                     }
-                    _processUI.Dispose();
-                }
-                catch (Exception e) {
-                    ArcLog.GetLogger<UIRunnerService>().Error(e);
-                }
-                finally {
-                    _processUI = null;
+                    catch (Exception e) {
+                        ArcLog.GetLogger<UIRunnerService>().Error(e);
+                    }
+                    finally {
+                        ReleaseProcess();
+                    }
                 }
             }
             _ = ShowUIAsync();
         }
 
         public void CloseUI() {
-            if (_processUI == null)
-                return;
+            lock (_processLock) {
+                if (_processUI == null || _processUI.HasExited)
+                    return;
 
-            try {
-                if (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(3500)) {
-                    _processUI.Kill();
+                try {
+                    if (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(3500)) {
+                        _processUI.Kill();
+                    }
                 }
-            }
-            catch (Exception e) {
-                ArcLog.GetLogger<UIRunnerService>().Error(e);
+                catch (Exception e) {
+                    ArcLog.GetLogger<UIRunnerService>().Error(e);
+                }
             }
         }
 
@@ -131,14 +138,16 @@ namespace VirtualPaper.Services {
         }
 
         public nint GetUIHwnd() {
-            if (_processUI == null) {
-                return default;
-            }
+            lock (_processLock) {
+                if (_processUI == null || _processUI.HasExited) {
+                    return default;
+                }
 
-            return _processUI.MainWindowHandle;
+                return _processUI.MainWindowHandle;
+            }
         }
 
-        public bool IsVisibleUI => _processUI != null && Native.IsWindowVisible(_processUI.MainWindowHandle);
+        public bool IsVisibleUI => Native.IsWindowVisible(GetUIHwnd());
 
         private void Proc_OutputDataReceived(object sender, DataReceivedEventArgs e) {
             //When the redirected stream is closed, a null line is sent to the event handler.
@@ -149,29 +158,30 @@ namespace VirtualPaper.Services {
         }
 
         private void Proc_UI_Exited(object? sender, EventArgs e) {
-            if (_processUI == null) return;
+            lock (_processLock) {
+                // An exit callback may already be queued when RestartUI detaches
+                // the handler. It must never clear or stop the replacement process.
+                if (sender is not Process process || !ReferenceEquals(process, _processUI)) return;
 
-            var pid = _processUI.Id;
-            _processUI.Exited -= Proc_UI_Exited;
-            _processUI.OutputDataReceived -= Proc_OutputDataReceived;
-            _processUI.Dispose();
-            _processUI = null;
+                var pid = process.Id;
+                ReleaseProcess();
 
-            if (App.IsShuttingDown) return;
+                if (_isDisposed || App.IsShuttingDown) return;
 
-            App.Jobs.StopPlugin(pid);
+                _jobService.StopPlugin(pid);
 
-            // Check for pending plugin update when UI exits normally
-            // (not during an update - UpdateLock would be set in that case)
-            // Installer update is handled in App.ShutDownAsync()
-            if (!UpdateLock.IsAnyLocked) {
-                var pluginFlagPath =Constants.CommonPaths.UpdateFlagPath;
-                if (File.Exists(pluginFlagPath)) {
-                    _jobService.PluginsUpdateFinishedEvent += (s, e) => {
-                        _ = ShowUIAsync();
-                    };
-                    var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
-                    _ = restartService.ExecutePendingPluginUpdateWithWindowAsync();
+                // Check for pending plugin update when UI exits normally
+                // (not during an update - UpdateLock would be set in that case)
+                // Installer update is handled in App.ShutDownAsync()
+                if (!UpdateLock.IsAnyLocked) {
+                    var pluginFlagPath =Constants.CommonPaths.UpdateFlagPath;
+                    if (File.Exists(pluginFlagPath)) {
+                        _jobService.PluginsUpdateFinishedEvent += (s, e) => {
+                            _ = ShowUIAsync();
+                        };
+                        var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
+                        _ = restartService.ExecutePendingPluginUpdateWithWindowAsync();
+                    }
                 }
             }
         }
@@ -179,24 +189,27 @@ namespace VirtualPaper.Services {
         #region dispose
         private bool _isDisposed;
         protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
-                if (disposing) {
-                    try {
-                        if (_processUI != null) {
-                            // If a pending restart update exists, close UI gracefully so
-                            // Proc_UI_Exited fires and triggers ExecutePendingUpdateAsync.
-                            var flagPath = VirtualPaper.Common.Constants.CommonPaths.UpdateFlagPath;
-                            if (File.Exists(flagPath)) {
-                                CloseUI();
-                            }
-                            else {
-                                _processUI.Kill();
+            lock (_processLock) {
+                if (!_isDisposed) {
+                    _isDisposed = true;
+                    if (disposing) {
+                        try {
+                            if (_processUI != null) {
+                                // Prefer a normal close when a pending update exists,
+                                // but never start another UI after this service is disposed.
+                                var flagPath = VirtualPaper.Common.Constants.CommonPaths.UpdateFlagPath;
+                                if (File.Exists(flagPath)) {
+                                    CloseUI();
+                                }
+                                else {
+                                    _processUI.Kill();
+                                }
                             }
                         }
+                        catch { }
+                        finally { ReleaseProcess(); }
                     }
-                    catch { }
                 }
-                _isDisposed = true;
             }
         }
 
@@ -206,6 +219,16 @@ namespace VirtualPaper.Services {
         }
         #endregion
 
+        private void ReleaseProcess() {
+            var process = _processUI;
+            _processUI = null;
+            if (process == null) return;
+            process.Exited -= Proc_UI_Exited;
+            process.OutputDataReceived -= Proc_OutputDataReceived;
+            process.Dispose();
+        }
+
+        private readonly object _processLock = new();
         private Process? _processUI;
         private readonly string _fileName, _workingDir;
         private readonly IJobService _jobService;

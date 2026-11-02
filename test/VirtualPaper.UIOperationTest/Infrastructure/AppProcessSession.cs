@@ -197,8 +197,16 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             var entry = new ProcessEntry { Size = (uint)Marshal.SizeOf<ProcessEntry>() };
             if (!Process32First(snapshot, ref entry)) return null;
             do {
-                if (entry.ParentId == parentId && entry.Exe.Equals(executable, StringComparison.OrdinalIgnoreCase))
-                    return Process.GetProcessById((int)entry.Id);
+                if (entry.ParentId == parentId && entry.Exe.Equals(executable, StringComparison.OrdinalIgnoreCase)) {
+                    try {
+                        var process = Process.GetProcessById((int)entry.Id);
+                        _ = process.Handle;
+                        if (!process.HasExited) return process;
+                        process.Dispose();
+                    }
+                    catch (ArgumentException) { } // It exited after the process snapshot was taken.
+                    catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 87) { }
+                }
             } while (Process32Next(snapshot, ref entry));
             return null;
         }

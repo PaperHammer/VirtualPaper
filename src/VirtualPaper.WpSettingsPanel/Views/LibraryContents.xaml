@@ -185,6 +185,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem 
                 Tag="Apply" 
+                AutomationProperties.AutomationId="Library.Item.Apply"
                 Text="{markup:I18n Key=Text_Apply}"
                 Click="ContextMenu_Click" >
                 <MenuFlyoutItem.Icon>
@@ -209,6 +210,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="RemoveFromLib"
+                AutomationProperties.AutomationId="Library.Item.Delete"
                 Text="{markup:I18n Key=Text_RemoveFromLib}"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
@@ -226,6 +228,9 @@
             Orientation="Vertical"
             Spacing="8">
             <GridView x:Name="wallpapersLibView"
+                AutomationProperties.AutomationId="Library.Items"
+                ContainerContentChanging="WallpapersLibView_ContainerContentChanging"
+                ContextRequested="WallpapersLibView_ContextRequested"
                 Margin="0 0 -12 0"
                 SizeChanged="WallpapersLibView_SizeChanged"
                 DataContext="{x:Bind _viewModel}"

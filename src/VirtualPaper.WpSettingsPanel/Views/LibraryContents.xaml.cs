@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
@@ -85,6 +86,13 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 var ctx = ArcPageContextManager.GetContext<WpSettings>();
                 await _viewModel.PreviewAsync(data, ctx);
             }
+        }
+
+        private void WallpapersLibView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args) {
+            var data = args.InRecycleQueue ? null : args.Item as IWpBasicData;
+            AutomationProperties.SetAutomationId(args.ItemContainer, data == null ? string.Empty : "Library.Item." + data.WallpaperUid);
+            AutomationProperties.SetName(args.ItemContainer, data == null ? string.Empty :
+                string.IsNullOrWhiteSpace(data.Title) ? System.IO.Path.GetFileName(data.FilePath) : data.Title);
         }
 
         public void EnterSelectionMode() {
@@ -235,7 +243,29 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void WallpapersLibView_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
-            e.Handled = true;
+            e.Handled = e.Key is not (Windows.System.VirtualKey.F10 or Windows.System.VirtualKey.Application);
+        }
+
+        private void WallpapersLibView_ContextRequested(UIElement sender, ContextRequestedEventArgs args) {
+            // Mouse requests use the existing tile ContextFlyout. Keyboard
+            // requests originate at the focused container, outside that grid.
+            if (args.TryGetPosition(wallpapersLibView, out _)) return;
+            if (FocusManager.GetFocusedElement(XamlRoot) is not DependencyObject focused) return;
+            while (focused is not GridViewItem && focused != wallpapersLibView) {
+                focused = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(focused);
+                if (focused == null) return;
+            }
+            var container = focused as GridViewItem;
+            if (container?.Content is not IWpBasicData data) return;
+            var flyout = (MenuFlyout)Resources["WallpaperContextFlyout"];
+            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.DataContext = data;
+            void Closed(object? source, object e) {
+                flyout.Closed -= Closed;
+                foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.ClearValue(FrameworkElement.DataContextProperty);
+            }
+            flyout.Closed += Closed;
+            flyout.ShowAt(container);
+            args.Handled = true;
         }
 
         private void WallpapersLibView_SizeChanged(object sender, SizeChangedEventArgs e) {

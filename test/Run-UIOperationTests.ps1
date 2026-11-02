@@ -3,6 +3,8 @@ param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
     [string]$ReportPath = (Join-Path $env:TEMP ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
     [string]$CoreExe,
+    [ValidatePattern('^[A-Za-z]+$')][string]$Module,
+    [ValidateRange(30, 900)][int]$TimeoutSeconds = 180,
     [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
@@ -47,6 +49,10 @@ $startInfo.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
 $startInfo.WorkingDirectory = [IO.Path]::GetDirectoryName($targetExe)
 $startInfo.ArgumentList.Add('--report')
 $startInfo.ArgumentList.Add($reportFullPath)
+if ($Module) {
+    $startInfo.ArgumentList.Add('--module')
+    $startInfo.ArgumentList.Add($Module)
+}
 $sessionId = [guid]::NewGuid().ToString('N')
 $sessionRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
 New-Item -ItemType Directory -Path $sessionRoot | Out-Null
@@ -56,9 +62,12 @@ $startInfo.Environment['VIRTUALPAPER_TEST_CORE_EXE'] = $CoreExe
 $process = $null
 try {
     $process = [Diagnostics.Process]::Start($startInfo)
-    if (-not $process.WaitForExit(60000)) {
-        $process.Kill($true)
-        throw 'UI operation tests timed out after 60 seconds'
+    $runTimer = [Diagnostics.Stopwatch]::StartNew()
+    while (-not $process.WaitForExit(1000)) {
+        if ($runTimer.Elapsed.TotalSeconds -ge $TimeoutSeconds) {
+            $process.Kill($true)
+            throw "UI operation tests timed out after $TimeoutSeconds seconds"
+        }
     }
     if (-not (Test-Path -LiteralPath $reportFullPath)) { throw "Host exited without a report (exit $($process.ExitCode))" }
     $report = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
@@ -96,6 +105,15 @@ finally {
     if ($sessionRoot -ne $expectedRoot -or -not $sessionRoot.StartsWith([IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Unexpected test session cleanup path'
     }
-    Remove-Item -LiteralPath $sessionRoot -Recurse -Force
+    # WebView2 can release its cache after the player/Core has exited. Wait for
+    # that release instead of touching any unrelated browser or application.
+    $cleanupTimer = [Diagnostics.Stopwatch]::StartNew()
+    while (Test-Path -LiteralPath $sessionRoot) {
+        try { Remove-Item -LiteralPath $sessionRoot -Recurse -Force; break }
+        catch [IO.IOException] {
+            if ($cleanupTimer.Elapsed.TotalSeconds -ge 15) { throw }
+            Start-Sleep -Milliseconds 200
+        }
+    }
     Write-Output "Artifacts: $artifactPath"
 }

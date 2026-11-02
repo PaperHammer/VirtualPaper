@@ -47,6 +47,7 @@
         </Grid>
         <StackPanel Grid.Row="1" Spacing="8">
             <Button x:Name="AddFilesButton" Style="{StaticResource ImportChoiceStyle}"
+                AutomationProperties.AutomationId="Library.Import.Files"
                 Command="{x:Bind _viewModel.HandleAddFilesCommand}"
                 ToolTipService.ToolTip="{markup:I18n Key=Add_To_Lib_SelectFiles_Explain}">
                 <Grid ColumnSpacing="10">

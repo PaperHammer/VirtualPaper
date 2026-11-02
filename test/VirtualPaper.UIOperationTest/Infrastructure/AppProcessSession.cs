@@ -21,6 +21,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
     public int CoreId => _core!.Id;
     public IReadOnlyList<int> UiIds => _uiIds;
     public string SettingsPath => Constants.CommonPaths.UserSettingsPath;
+    public Process? FindChild(string executable) => FindChild(_core!.Id, executable);
 
     public AppProcessSession() {
         if (!TestProcessEnvironment.IsEnabled) throw new InvalidOperationException("A process test session is required.");
@@ -65,7 +66,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         await _commands.ShowUIAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(10));
         await WaitAsync(() => {
             if (_core!.HasExited) throw new InvalidOperationException("Core exited before UI became ready.");
-            _ui ??= FindUiChild(_core.Id);
+            _ui ??= FindChild(_core.Id, "VirtualPaper.UI.exe");
             if (_ui == null) return Task.FromResult(false);
             if (_ui.HasExited) throw new InvalidOperationException($"UI exited during startup: {_ui.ExitCode}");
             _ui.Refresh();
@@ -151,14 +152,14 @@ internal sealed class AppProcessSession : IAsyncDisposable {
     }
 
     // Select only a direct child of the Core process started by this session, never by name alone.
-    private static Process? FindUiChild(int parentId) {
+    private static Process? FindChild(int parentId, string executable) {
         nint snapshot = CreateToolhelp32Snapshot(2, 0);
         if (snapshot == -1) throw new System.ComponentModel.Win32Exception();
         try {
             var entry = new ProcessEntry { Size = (uint)Marshal.SizeOf<ProcessEntry>() };
             if (!Process32First(snapshot, ref entry)) return null;
             do {
-                if (entry.ParentId == parentId && entry.Exe.Equals("VirtualPaper.UI.exe", StringComparison.OrdinalIgnoreCase))
+                if (entry.ParentId == parentId && entry.Exe.Equals(executable, StringComparison.OrdinalIgnoreCase))
                     return Process.GetProcessById((int)entry.Id);
             } while (Process32Next(snapshot, ref entry));
             return null;

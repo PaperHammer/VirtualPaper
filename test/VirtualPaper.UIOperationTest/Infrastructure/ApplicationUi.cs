@@ -1,18 +1,112 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Windows.Automation;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
 namespace VirtualPaper.UIOperationTest.Infrastructure;
 
 internal static class ApplicationUi {
-    public static AutomationElement Find(AutomationElement root, string id) {
+    public static IDisposable Foreground(nint window) => new ForegroundLease(window);
+
+    private sealed class ForegroundLease : IDisposable {
+        private readonly nint _window;
+        private readonly bool _wasTopmost;
+        public ForegroundLease(nint window) {
+            _window = window;
+            _wasTopmost = (GetWindowLongPtr(window, -20).ToInt64() & 8) != 0;
+            Check(SetWindowPos(window, -1, 0, 0, 0, 0, 3), "Could not raise the owned test window above desktop overlays");
+        }
+        public void Dispose() {
+            if (!_wasTopmost) SetWindowPos(_window, -2, 0, 0, 0, 0, 0x13);
+        }
+    }
+
+    public static void Invoke(AutomationElement element) {
+        BringIntoView(element);
+        ((InvokePattern)element.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+    }
+
+    public static void SetText(AutomationElement element, string value) {
+        BringIntoView(element);
+        if (element.Current.ControlType != ControlType.Edit)
+            element = element.FindFirst(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit)) ?? element;
+        if (!element.TryGetCurrentPattern(ValuePattern.Pattern, out var pattern)) {
+            element = element.FindFirst(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit))
+                ?? throw new InvalidOperationException("No editable text control");
+            pattern = element.GetCurrentPattern(ValuePattern.Pattern);
+        }
+        ((ValuePattern)pattern).SetValue(value);
+    }
+
+    public static void OpenContextMenu(nint ownerWindow, AutomationElement element) {
+        BringIntoView(element);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the test UI");
+        element.SetFocus();
+        keybd_event(0x10, 0, 0, 0);
+        try {
+            keybd_event(0x79, 0, 0, 0);
+            keybd_event(0x79, 0, 2, 0);
+        }
+        finally { keybd_event(0x10, 0, 2, 0); }
+    }
+
+    public static void DismissFlyout(nint ownerWindow) {
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the test UI");
+        keybd_event(0x1B, 0, 0, 0);
+        keybd_event(0x1B, 0, 2, 0);
+    }
+
+    public static void SubmitText(AutomationElement edit) {
+        edit.SetFocus();
+        keybd_event(0x0D, 0, 0, 0);
+        keybd_event(0x0D, 0, 2, 0);
+    }
+
+    public static void WaitUntilGone(AutomationElement root, string id) {
+        var timer = Stopwatch.StartNew();
+        while (timer.Elapsed < TimeSpan.FromSeconds(5)) {
+            try {
+                if (Matches(root, id, includePopups: true).All(element => element.Current.IsOffscreen)) return;
+            }
+            catch (ElementNotAvailableException) { }
+            Thread.Sleep(100);
+        }
+        throw new TimeoutException($"UI element did not close: {id}");
+    }
+
+    [DllImport("user32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool SetForegroundWindow(nint hwnd);
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] private static extern nint GetWindowLongPtr(nint hwnd, int index);
+    [DllImport("user32.dll")] private static extern bool SetWindowPos(nint hwnd, nint after, int x, int y, int width, int height, uint flags);
+    [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern void keybd_event(byte key, byte scan, uint flags, nuint extraInfo);
+
+    public static AutomationElement Find(AutomationElement root, string id, bool visible = false) {
         var timer = Stopwatch.StartNew();
         while (timer.Elapsed < TimeSpan.FromSeconds(10)) {
-            var element = root.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, id));
-            if (element != null && element.Current.IsEnabled) return element;
+            try {
+                var element = Matches(root, id, includePopups: visible).FirstOrDefault(item => item.Current.IsEnabled && (!visible || !item.Current.IsOffscreen));
+                if (element != null) return element;
+            }
+            catch (ElementNotAvailableException) { }
             Thread.Sleep(100);
         }
         throw new TimeoutException($"UI Automation element not found: {id}");
+    }
+
+    private static IEnumerable<AutomationElement> Matches(AutomationElement root, string id, bool includePopups) {
+        var condition = new PropertyCondition(AutomationElement.AutomationIdProperty, id);
+        foreach (AutomationElement element in root.FindAll(TreeScope.Descendants, condition)) yield return element;
+        if (!includePopups) yield break;
+        // WinUI can expose a flyout as a separate top-level automation window,
+        // especially after another flyout has reused its popup host. Stay within
+        // this exact UI process; never search other running application instances.
+        foreach (AutomationElement window in AutomationElement.RootElement.FindAll(TreeScope.Children,
+            new PropertyCondition(AutomationElement.ProcessIdProperty, root.Current.ProcessId))) {
+            if (window.Equals(root)) continue;
+            foreach (AutomationElement element in window.FindAll(TreeScope.Descendants, condition)) yield return element;
+        }
     }
 
     public static void Select(AutomationElement element) {

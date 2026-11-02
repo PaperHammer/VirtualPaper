@@ -25,6 +25,8 @@ test/
 
 ```powershell
 ./test/Run-UIOperationTests.ps1 -Configuration Release
+# 单独验证一个应用模块；CI 默认执行全部用例。
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module WallpaperLibrary
 ```
 
 默认使用 Visual Studio MSBuild 构建完整解决方案，再启动测试；已构建时可以加 `-NoBuild`。
@@ -32,6 +34,7 @@ test/
 也可用 `-CoreExe` 指定另一个完整构建中的 Core（同目录必须有生产 UI 插件）。通过 `-ReportPath` 指定新的 JSON
 结果路径，默认写入系统临时目录。脚本检查进程退出码、计划用例数及结果完整性；失败时抛出错误，
 超时会终止本次启动的宿主及其子进程。不要用 `dotnet test` 运行这个 WinUI 可执行项目。
+默认总超时 180 秒，可用 `-TimeoutSeconds` 调整。
 报告旁的 `.artifacts` 目录保留隔离配置和前后台日志，临时运行目录会清理。
 
 ## 当前覆盖
@@ -57,6 +60,23 @@ test/
 逐项操作真实下拉框或开关，等待后台 RPC 确认，检查 JSON 落盘，再重开 UI 核对 7 个控件的回显。
 这覆盖设置保存链路；没有模拟电池/远程桌面状态，也未验收壁纸实际暂停或静音行为。
 
+`Application.WallpaperLibrary.ImportApplyCloseDelete` 验证壁纸库最小闭环：
+
+1. 创建独立 PNG，经实际添加按钮、系统文件选择器导入，检查元数据、缩略图和源文件哈希。
+2. 操作搜索框，验证无匹配时隐藏、清空后恢复。普通图片初始标题允许为空，本用例不代表非空标题匹配验收。
+3. 聚焦真实卡片，经 Shift+F10 打开正式菜单，验证取消删除保留文件，再确认普通图片应用。
+4. 检查真实布局 JSON、Core 直接创建的 PlayerWeb PID，以及播放器窗口的实际 WorkerW 父窗口。
+5. 重开真实 UI，确认条目仍存在；经显示控制关闭壁纸，核对布局清空和该播放器进程退出。
+6. 确认删除，检查目录和列表移除；再次重开 UI 检查空列表，输入 PNG 保持不变。
+
+卡片容器按壁纸 UID 提供 AutomationId；键盘菜单与鼠标菜单共用生产处理逻辑。
+原生键盘输入只用于所属测试窗口，必要时临时置顶并恢复；不会关闭桌面上的其他应用。
+系统选图必须实际提交成功，不替换存储选择器。菜单定位失败时保存所属窗口截图到报告 artifacts。
+WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试目录。
+
+当前播放器有时记录 `Failed to retrieve GetCefD3DRenderingSubProcessId`，报告保留该 ERROR。
+普通图片窗口挂载与关闭断言通过不代表 D3D 子进程识别、3D 暂停或画质验收通过。
+
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。
 
@@ -69,7 +89,8 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 [Microsoft UI Automation 线程说明](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-threading)。
 新增模块时在 `Cases` 中实现用例，并在 `App.xaml.cs` 注册；脚本及 CI 不需要维护用例名称或数量。
 组件用例的效果服务和应用回调使用记录实现；应用设置用例不替代前后台服务。
-本轮未启动壁纸播放器，不覆盖系统级鼠标键盘输入、桌面挂载、WebView 渲染画质或 AI 推理。
+壁纸库用例启动真实播放器并验证桌面挂载；其余现有用例仍按上述边界执行。
+当前不覆盖 WebView 渲染画质、多屏布局、视频播放策略或 AI 推理。
 
 现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC
 业务集成测试，不作为真实 UI 交互用例迁入本项目。

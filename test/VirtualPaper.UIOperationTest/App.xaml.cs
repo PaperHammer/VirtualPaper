@@ -16,7 +16,8 @@ public partial class App : Application {
 
     protected override async void OnLaunched(LaunchActivatedEventArgs args) {
         var commandLine = Environment.GetCommandLineArgs();
-        if (commandLine.Length != 3 || commandLine[1] != "--report") {
+        if ((commandLine.Length != 3 && commandLine.Length != 5) || commandLine[1] != "--report"
+            || (commandLine.Length == 5 && commandLine[3] != "--module")) {
             Environment.ExitCode = 2;
             Exit();
             return;
@@ -28,8 +29,11 @@ public partial class App : Application {
             new UiTestCase("GeneralEffect.RImage3D.EditRestoreSaveAndReopen",
                 context => GeneralEffectTests.EditRestoreSaveAndReopenAsync(context, RuntimeType.RImage3D)),
             new UiTestCase("Application.NavigationSettings.SaveAndReopen", NavigationSettingsTests.SaveAndReopenAsync),
-            new UiTestCase("Application.PerformanceSettings.SaveAndReopen", PerformanceSettingsTests.SaveAndReopenAsync)
+            new UiTestCase("Application.PerformanceSettings.SaveAndReopen", PerformanceSettingsTests.SaveAndReopenAsync),
+            new UiTestCase("Application.WallpaperLibrary.ImportApplyCloseDelete", WallpaperLibraryTests.ImportApplyCloseDeleteAsync)
         };
+        if (commandLine.Length == 5)
+            cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
         var results = new List<UiTestResult>();
         try {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());

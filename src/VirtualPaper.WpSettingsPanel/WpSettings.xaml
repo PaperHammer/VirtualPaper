@@ -63,6 +63,7 @@
                         <StackPanel x:Name="LibraryBrowseTools" Orientation="Horizontal" Spacing="8"
                             HorizontalAlignment="Left" VerticalAlignment="Center">
                             <AutoSuggestBox x:Name="tbSearchName"
+                                AutomationProperties.AutomationId="Library.Search"
                                 Style="{StaticResource ArcSearchBoxStyle}"
                                 Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
                                 Width="260"
@@ -160,6 +161,7 @@
                         HorizontalAlignment="Right" VerticalAlignment="Center">
                         <StackPanel x:Name="LibraryActionButtons" Orientation="Horizontal" Spacing="4">
                             <Button x:Name="AddToLib" Style="{StaticResource ToolbarButtonStyle}"
+                                AutomationProperties.AutomationId="Library.Import"
                                 ToolTipService.ToolTip="{markup:I18n Key=WpLib_AddWallpaper}"
                                 AutomationProperties.Name="{markup:I18n Key=WpLib_AddWallpaper}"
                                 Command="{x:Bind _viewModel.AddToLibCommand}">
@@ -200,6 +202,7 @@
                             </ToggleButton>
                         </StackPanel>
                         <Button x:Name="ControlCenter" Style="{StaticResource ToolbarButtonStyle}"
+                            AutomationProperties.AutomationId="Library.DisplayControls"
                             ToolTipService.ToolTip="{markup:I18n Key=WpLib_DisplayControls}"
                             AutomationProperties.Name="{markup:I18n Key=WpLib_DisplayControls}">
                             <Viewbox Width="24" Height="24">
@@ -222,6 +225,7 @@
                                         HorizontalAlignment="Stretch">
                                         <StackPanel Orientation="Horizontal"  Spacing="8">
                                             <input:ArcButton x:Name="BtnClose"
+                                                AutomationProperties.AutomationId="Library.CloseWallpaper"
                                                 Height="33"
                                                 MinWidth="66"
                                                 Content="{markup:I18n Key=Text_Close}"

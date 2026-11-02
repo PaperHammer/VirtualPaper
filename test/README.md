@@ -18,6 +18,7 @@ test/
       Application/ScreenFitTests.cs           高清适屏选图预览、取消及实际应用验证
       Application/WallpaperEffectsTests.cs    已应用壁纸的正式调整窗口保存重开验证
       Application/GeneralSettingsTests.cs     主题、材质、语言与设置子页保存重开验证
+      Application/SystemSettingsTests.cs      系统页取消保存、日志 ZIP 导出及内容验证
     Infrastructure/
       UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
       AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
@@ -94,8 +95,8 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 
 启用屏保必须等待设置保存完成后再发送启动 RPC，避免后台仍读取旧的关闭值。
 白名单程序路径通过 gRPC 的新增字段往返；屏保通知管道也带测试会话后缀。
-选择器经明确的打开控件提交；部分 Windows 将其暴露为没有 UIA 模式的 Pane，
-此时仅对所属选择器内、类名和原生 ID 已核对的 Button 发送点击，不发送全局回车。
+选择器经明确的原生按钮提交；仅对所属选择器内、类名和原生 ID 已核对的 Button
+投递异步点击，不发送全局回车。这样也避免另存为校验期间 UIA 同步调用导致的 COM 错误。
 本用例使用较长等待时间且保持锁屏选项关闭，不验证真实空闲触发、屏保进程启动或系统锁屏。
 
 `Application.ScreenFit.PreviewCancelApplyAndReopen` 验证高清适屏的基础交互：
@@ -126,6 +127,14 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 4. 再手动关闭并重开 UI，核对中文通用标签、中文材质选项、语言和开机启动开关；最后恢复英语和关闭开机启动偏好。
 
 显式测试会话不注册系统开机启动。本用例不验证实际系统注册、材质像素、About 图片解码或更新下载。
+
+`Application.SystemSettings.ExportLogsAndCancel` 验证系统页日志导出：
+
+1. 经正式保存选择器取消导出，然后再次导出 ZIP 到本用例临时目录。
+2. 等待 ZIP 完整可读，核对设置内容与当前会话 JSON 一致、布局存在、Core／UI 日志非空。
+3. 检查压缩包条目路径安全，重开 UI 确认系统页仍可使用，前后台正常退出。
+
+本用例只导出隔离会话的诊断数据，不包含用户生产日志，不打开后台调试窗口。
 
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。

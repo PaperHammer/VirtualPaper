@@ -9,8 +9,10 @@ namespace VirtualPaper.Cores.Players.Web {
         IWpPlayerData Data,
         bool IsPreview,
         string? WpBasicDataFilePath = null,
-        Dictionary<string, object>? ExtraFields = null) {
+        Dictionary<string, object>? ExtraFields = null,
+        ISettings? Settings = null) {
         public string ToJson() {
+            var settings = Settings ?? App.UserSettings.Settings;
             var args = new StartArgsWeb() {
                 IsPreview = this.IsPreview,
 
@@ -29,9 +31,9 @@ namespace VirtualPaper.Cores.Players.Web {
 
                 RuntimeType = Data.RType.ToString(),
 
-                SystemBackdrop = App.UserSettings.Settings.SystemBackdrop,
-                ApplicationTheme = App.UserSettings.Settings.ApplicationTheme,
-                Language = App.UserSettings.Settings.Language,
+                SystemBackdrop = settings.SystemBackdrop,
+                ApplicationTheme = settings.ApplicationTheme,
+                Language = settings.Language,
 
                 Extra = JsonSerializer.Serialize(ExtraFields),
                 IsDebug = false,

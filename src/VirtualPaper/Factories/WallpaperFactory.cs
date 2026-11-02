@@ -3,9 +3,15 @@ using VirtualPaper.Cores;
 using VirtualPaper.Cores.Players.Web;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Services.Interfaces;
 
 namespace VirtualPaper.Factories {
     public class WallpaperFactory : IWallpaperFactory {
+        private readonly IUserSettingsService? _userSettings;
+
+        public WallpaperFactory(IUserSettingsService? userSettings = null) {
+            _userSettings = userSettings;
+        }
         public IWpPlayer CreatePlayer(IWpPlayerData data, IMonitor? monitor, bool isPreview = false) {
             switch (data.RType) {
                 case RuntimeType.RImage:
@@ -113,7 +119,7 @@ namespace VirtualPaper.Factories {
             string? wpBasicDataFilePath = null) {
             return data.RType switch {
                 RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb =>
-                    new PlayerWebSrartArgs(data, isPreview, wpBasicDataFilePath).ToJson(),
+                    new PlayerWebSrartArgs(data, isPreview, wpBasicDataFilePath, Settings: _userSettings?.Settings).ToJson(),
                 _ => null
             };
         }

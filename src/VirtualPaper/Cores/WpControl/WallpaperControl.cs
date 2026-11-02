@@ -311,7 +311,7 @@ namespace VirtualPaper.Cores.WpControl {
                             CloseWallpaper(instance.Monitor);
                             isStarted = await instance.ShowAsync(token);
 
-                            if (isStarted && !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
+                            if (!isStarted || !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
                                 isStarted = false;
                                 instance.Close();
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
@@ -341,8 +341,9 @@ namespace VirtualPaper.Cores.WpControl {
                             CloseAllWallpapers();
                             isStarted = await instance.ShowAsync(token);
 
-                            if (isStarted && !TrySetWallpaperSpanMonitor(instance.ProcWindowHandle)) {
+                            if (!isStarted || !TrySetWallpaperSpanMonitor(instance.ProcWindowHandle)) {
                                 isStarted = false;
+                                instance.Close();
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
                                 ArcLog.GetLogger<WallpaperControl>().Error("Failed to set wallpaper as child of WorkerW");
 
@@ -371,8 +372,9 @@ namespace VirtualPaper.Cores.WpControl {
                                 IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item);
                                 isStarted = await instance.ShowAsync(token);
 
-                                if (isStarted && !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
+                                if (!isStarted || !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
                                     isStarted = false;
+                                    instance.Close();
                                     _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
                                     ArcLog.GetLogger<WallpaperControl>().Error("Failed to set wallpaper as child of WorkerW");
 

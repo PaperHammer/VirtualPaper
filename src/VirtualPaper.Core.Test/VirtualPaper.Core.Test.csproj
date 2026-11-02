@@ -16,6 +16,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper\VirtualPaper.csproj" />
 		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
 	</ItemGroup>
 
 	<PropertyGroup>

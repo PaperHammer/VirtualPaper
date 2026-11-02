@@ -40,13 +40,14 @@ internal sealed class WorkflowEnvironment : IDisposable {
         Monitors.Setup(m => m.MonitorExists(It.IsAny<VirtualPaper.Models.Cores.Interfaces.IMonitor>())).Returns(true);
     }
 
-    public void StartSettingsServer() {
+    public void StartSettingsServer(Action<NamedPipeServer>? bindServices = null) {
         _server?.Kill();
         _server?.Dispose();
         Settings = new UserSettingsService(Monitors.Object, new JsonSaverWrapper(), _ => { });
         _server = new NamedPipeServer(PipeName);
         Grpc_UserSettingsService.BindService(_server.ServiceBinder,
             new UserSettingServer(Monitors.Object, Settings, UiRunner.Object));
+        bindServices?.Invoke(_server);
         _server.Start();
     }
 

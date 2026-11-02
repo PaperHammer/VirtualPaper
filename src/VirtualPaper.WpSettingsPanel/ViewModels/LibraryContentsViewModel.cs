@@ -27,6 +27,8 @@ using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Adapter;
+using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using VirtualPaper.UIComponent.Utils.PanelBus.WpSettingsArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using VirtualPaper.WpSettingsPanel.Utils;
@@ -49,11 +51,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
             WpSettingsViewModel wpSettingsViewModel,
-            IWallpaperIndexService wallpaperIndexService) {
+            IWallpaperIndexService wallpaperIndexService,
+            IGlobalDialogService? dialogService = null) {
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
             _wpSettingsViewModel = wpSettingsViewModel;
             _wallpaperIndexService = wallpaperIndexService;
+            _dialogService = dialogService ?? new GlobalDialogService();
 
             InitColletions();
             InitOthers();
@@ -366,7 +370,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 string message = uniqueItems.Count == 1
                     ? LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
                     : LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDeleteMany);
-                var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
+                var dialogRes = await _dialogService.ShowDialogAsync(
                     message,
                     title,
                     LanguageUtil.GetI18n(Constants.I18n.Text_Delete),
@@ -741,6 +745,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly WpSettingsViewModel _wpSettingsViewModel;
         private readonly IWallpaperIndexService _wallpaperIndexService;
+        private readonly IGlobalDialogService _dialogService;
         private List<string> _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
         private readonly Dictionary<string, ArcWindow> _edits = [];

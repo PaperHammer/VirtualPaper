@@ -20,8 +20,10 @@ namespace VirtualPaper.Grpc.Client {
         public Version AssemblyVersion { get; private set; }
         public string BaseDirectory { get; private set; } = string.Empty;
 
-        public WallpaperControlClient() {
-            _channel = new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName);
+        public WallpaperControlClient() : this(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName)) { }
+
+        public WallpaperControlClient(NamedPipeChannel channel) {
+            _channel = channel;
             _client = new Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient(_channel);
 
             Task.Run(async () => {

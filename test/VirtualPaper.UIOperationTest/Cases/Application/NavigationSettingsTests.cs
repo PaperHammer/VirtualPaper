@@ -22,7 +22,8 @@ internal static class NavigationSettingsTests {
             var settings = await session.Settings.GetSettingsAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(1));
             return !settings.NavigationAnimationsEnabled;
         }, "UI change persisted in Core");
-        var saved = JsonNode.Parse(await File.ReadAllTextAsync(session.SettingsPath))!;
+        var saved = await AppProcessSession.WaitForJsonAsync(session.SettingsPath,
+            json => json["NavigationAnimationsEnabled"]?.GetValue<bool>() == false);
         Check(saved["NavigationAnimationsEnabled"]!.GetValue<bool>() == false, "Core JSON did not persist the UI change");
 
         await session.CloseUiAsync();

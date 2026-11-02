@@ -240,8 +240,8 @@ namespace VirtualPaper.UI {
             };
         }
 
-        public static void ShutDown() {
-            ((ServiceProvider)AppServiceLocator.Services)?.Dispose();
+        public static async Task ShutDownAsync() {
+            await ((ServiceProvider)AppServiceLocator.Services).DisposeAsync();
             ArcLog.GetLogger<App>().Info("UI was closed");
             Application.Current.Exit();
         }

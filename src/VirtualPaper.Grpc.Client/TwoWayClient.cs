@@ -1,61 +1,77 @@
 using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.TwoWay;
 
 namespace VirtualPaper.Grpc.Client {
-    public class TwoWayClient : ITwoWayClient {
+    public class TwoWayClient : ITwoWayClient, IAsyncDisposable {
         public event EventHandler<TwoWayMessage>? MessageReceived;
 
-        public TwoWayClient() {
-            _client = new Grpc_TwoWayService.Grpc_TwoWayServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
-            _cts = new CancellationTokenSource();
-            _ = StartStreamAsync();
+        public TwoWayClient() : this(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName)) { }
+
+        internal TwoWayClient(NamedPipeChannel channel) {
+            var client = new Grpc_TwoWayService.Grpc_TwoWayServiceClient(channel);
+            _call = client.TwoWayStream(cancellationToken: _cts.Token);
+            _receiveTask = Task.Run(ReceiveAsync);
         }
 
-        private async Task StartStreamAsync() {
-            _call = _client.TwoWayStream(cancellationToken: _cts.Token);
-
-            // 启动接收消息的任务
-            _ = Task.Run(async () => {
-                try {
-                    await foreach (var message in _call.ResponseStream.ReadAllAsync(_cts.Token)) {
-                        MessageReceived?.Invoke(this, message);
-                    }
+        private async Task ReceiveAsync() {
+            try {
+                await foreach (var message in _call.ResponseStream.ReadAllAsync(_cts.Token).ConfigureAwait(false)) {
+                    MessageReceived?.Invoke(this, message);
                 }
-                catch (Exception ex) when (ex is OperationCanceledException || ex is RpcException) {
-                    // 正常取消或连接关闭
-                }
-            });
+            }
+            catch (Exception ex) when (ex is OperationCanceledException or RpcException) {
+                // Cancellation or a disconnected backend ends the stream.
+            }
         }
 
         public async Task SendMessageAsync(TwoWayMessage message) {
-            if (_call != null) {
-                await _call.RequestStream.WriteAsync(message);
+            await _writeLock.WaitAsync().ConfigureAwait(false);
+            try {
+                ObjectDisposedException.ThrowIf(_isDisposed != 0, this);
+                await _call.RequestStream.WriteAsync(message).ConfigureAwait(false);
             }
+            finally { _writeLock.Release(); }
         }
 
         #region dispose
-        private bool _isDisposed;
-        protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
-                if (disposing) {
-                    _cts?.Cancel();
-                    _cts?.Dispose();
-                }
-                _isDisposed = true;
+        private int _isDisposed;
+        public async ValueTask DisposeAsync() {
+            if (Interlocked.Exchange(ref _isDisposed, 1) != 0) return;
+            MessageReceived = null;
+            try {
+                // Half-close first, allowing the server to remove this client and send
+                // its trailers before the pipe disappears. Cancellation alone races
+                // the server's completion write with transport disposal.
+                await _writeLock.WaitAsync().ConfigureAwait(false);
+                try { await _call.RequestStream.CompleteAsync().WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false); }
+                finally { _writeLock.Release(); }
+                await _receiveTask.WaitAsync(TimeSpan.FromSeconds(2)).ConfigureAwait(false);
             }
+            catch (Exception ex) when (ex is RpcException or OperationCanceledException or TimeoutException) {
+                ArcLog.GetLogger<TwoWayClient>().Warn($"Two-way stream could not close gracefully: {ex.Message}");
+            }
+            finally {
+                _cts.Cancel();
+                _call.Dispose();
+                // Always observe completion, including a handler failure during shutdown.
+                try { await _receiveTask.ConfigureAwait(false); }
+                finally { _cts.Dispose(); }
+            }
+            GC.SuppressFinalize(this);
         }
 
         public void Dispose() {
-            Dispose(true);
-            GC.SuppressFinalize(this);
+            DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
         #endregion
 
-        private readonly Grpc_TwoWayService.Grpc_TwoWayServiceClient _client;
-        private readonly CancellationTokenSource _cts;
-        private AsyncDuplexStreamingCall<TwoWayMessage, TwoWayMessage>? _call;
+        private readonly CancellationTokenSource _cts = new();
+        private readonly SemaphoreSlim _writeLock = new(1, 1);
+        private readonly AsyncDuplexStreamingCall<TwoWayMessage, TwoWayMessage> _call;
+        private readonly Task _receiveTask;
     }
 }

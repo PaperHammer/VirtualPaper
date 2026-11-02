@@ -77,8 +77,8 @@ namespace VirtualPaper.UI {
             WindowConsts.WindowHandle = WindowNative.GetWindowHandle(this);
         }
 
-        private void MainWindow_Closed(object sender, WindowEventArgs args) {
-            App.ShutDown();
+        private async void MainWindow_Closed(object sender, WindowEventArgs args) {
+            await App.ShutDownAsync();
         }
 
         #region ipc

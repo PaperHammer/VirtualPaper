@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
@@ -97,6 +98,21 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             if (timer.Elapsed > TimeSpan.FromSeconds(15)) throw new TimeoutException(operation);
             await Task.Delay(100);
         }
+    }
+
+    public static async Task<JsonNode> WaitForJsonAsync(string path, Func<JsonNode, bool> matches) {
+        JsonNode? saved = null;
+        await WaitAsync(async () => {
+            try {
+                saved = JsonNode.Parse(await File.ReadAllTextAsync(path));
+                return saved != null && matches(saved);
+            }
+            // The RPC can expose the in-memory change before its save has finished.
+            // Retry a locked or incomplete file, but still require the persisted values.
+            catch (IOException) { return false; }
+            catch (JsonException) { return false; }
+        }, $"Persisted JSON: {path}");
+        return saved!;
     }
 
     public void RecordEvidence(UiTestContext context) {

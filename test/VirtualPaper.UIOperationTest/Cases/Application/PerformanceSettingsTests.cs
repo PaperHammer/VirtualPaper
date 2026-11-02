@@ -45,7 +45,9 @@ internal static class PerformanceSettingsTests {
         await AppProcessSession.WaitAsync(async () => (await session.Settings.GetSettingsAsync(
             new Empty(), deadline: DateTime.UtcNow.AddSeconds(1))).IsAudioOnlyOnDesktop, "Persist audio policy in Core");
 
-        var saved = JsonNode.Parse(await File.ReadAllTextAsync(session.SettingsPath))!;
+        var saved = await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
+            json["IsAudioOnlyOnDesktop"]?.GetValue<bool>() == true && Rules.All(rule =>
+                json[rule.JsonProperty]?.GetValue<string>() == Enum.GetName(rule.JsonEnum ?? typeof(AppWpRunRulesEnum), expected[rule.Id])));
         foreach (var rule in Rules)
             Check(saved[rule.JsonProperty]!.GetValue<string>() == Enum.GetName(rule.JsonEnum ?? typeof(AppWpRunRulesEnum), expected[rule.Id]),
                 $"Core JSON did not save {rule.Id}");

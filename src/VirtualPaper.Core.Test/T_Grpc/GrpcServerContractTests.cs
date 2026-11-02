@@ -7,6 +7,7 @@ using VirtualPaper.Cores.ScreenSaver;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.TwoWay;
+using VirtualPaper.Grpc.Client;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.Models.Events;
 using VirtualPaper.Services.Interfaces;
@@ -16,6 +17,34 @@ namespace VirtualPaper.Core.Test.T_Grpc;
 [TestClass]
 [DoNotParallelize]
 public class GrpcServerContractTests {
+    [TestMethod]
+    public async Task TwoWayClient_DisposeCompletesServerStreamBeforeReturning() {
+        var implementation = new TrackingTwoWayServer();
+        string pipeName = $"VirtualPaper.Test.{Guid.NewGuid():N}";
+        using var pipeServer = new NamedPipeServer(pipeName);
+        Grpc_TwoWayService.BindService(pipeServer.ServiceBinder, implementation);
+        pipeServer.Start();
+        using var client = new TwoWayClient(new NamedPipeChannel(".", pipeName));
+        await implementation.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+        await client.DisposeAsync();
+
+        Assert.IsTrue(implementation.Completed.Task.IsCompletedSuccessfully,
+            "Client closed its pipe before the server finished the request stream");
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(() => client.SendMessageAsync(new TwoWayMessage()));
+    }
+
+    private sealed class TrackingTwoWayServer : TwoWayServer {
+        public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public TaskCompletionSource Completed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public override async Task TwoWayStream(global::Grpc.Core.IAsyncStreamReader<TwoWayMessage> requestStream,
+            global::Grpc.Core.IServerStreamWriter<TwoWayMessage> responseStream, global::Grpc.Core.ServerCallContext context) {
+            Started.SetResult();
+            await base.TwoWayStream(requestStream, responseStream, context);
+            Completed.SetResult();
+        }
+    }
+
     [TestMethod]
     [DoNotParallelize]
     public async Task CommandsService_NamedPipeRoundTripInvokesServer() {

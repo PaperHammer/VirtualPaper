@@ -31,6 +31,7 @@ internal static class SystemSettingsTests {
         string[] entries = [];
         await AppProcessSession.WaitAsync(() => {
             try {
+                if (!File.Exists(output) || new FileInfo(output).Length < 22) return Task.FromResult(false);
                 using var archive = ZipFile.OpenRead(output);
                 entries = archive.Entries.Select(entry => entry.FullName).ToArray();
                 return Task.FromResult(entries.Length > 0);

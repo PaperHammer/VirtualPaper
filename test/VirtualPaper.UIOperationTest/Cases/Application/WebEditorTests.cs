@@ -72,7 +72,7 @@ internal static class WebEditorTests {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "Project.File.Save", visible: true));
         });
         try {
-            await AppProcessSession.WaitAsync(async () => (await File.ReadAllTextAsync(Path.Combine(folder, "index.html"))).Contains(Marker,
+            await AppProcessSession.WaitAsync(async () => (await AppProcessSession.ReadTextSharedAsync(Path.Combine(folder, "index.html"))).Contains(Marker,
                 StringComparison.Ordinal), "Monaco UI edit saved to entry file");
         }
         catch {
@@ -107,6 +107,9 @@ internal static class WebEditorTests {
         });
         await AppProcessSession.WaitAsync(() => {
             try {
+                // SaveFilePicker creates an empty destination first. Do not lock
+                // that placeholder while the exporter deletes and recreates it.
+                if (!File.Exists(output) || new FileInfo(output).Length < 22) return Task.FromResult(false);
                 using var archive = ZipFile.OpenRead(output);
                 var entry = archive.GetEntry("index.html");
                 if (entry == null) return Task.FromResult(false);

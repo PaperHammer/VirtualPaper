@@ -111,6 +111,7 @@ internal static class StaticEditorTests {
 
     private static bool IsCompleteFile(string path, int minimumLength) {
         try {
+            if (!File.Exists(path) || new FileInfo(path).Length <= minimumLength) return false;
             using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
             return file.Length > minimumLength;
         }

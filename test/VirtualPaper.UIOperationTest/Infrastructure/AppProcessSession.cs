@@ -145,7 +145,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         JsonNode? saved = null;
         await WaitAsync(async () => {
             try {
-                saved = JsonNode.Parse(await File.ReadAllTextAsync(path));
+                saved = JsonNode.Parse(await ReadTextSharedAsync(path));
                 return saved != null && matches(saved);
             }
             // The RPC can expose the in-memory change before its save has finished.
@@ -154,6 +154,13 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             catch (JsonException) { return false; }
         }, $"Persisted JSON: {path}");
         return saved!;
+    }
+
+    public static async Task<string> ReadTextSharedAsync(string path) {
+        // Observe atomic saves without preventing the application from replacing the file.
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        using var reader = new StreamReader(stream);
+        return await reader.ReadToEndAsync();
     }
 
     public void RecordEvidence(UiTestContext context) {

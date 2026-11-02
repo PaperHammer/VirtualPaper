@@ -50,11 +50,11 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
             }
         }
 
-        private async void SourceImageBorder_Tapped(object sender, TappedRoutedEventArgs e) {
+        private async void SourceImageButton_Click(object sender, RoutedEventArgs e) {
             await _viewModel.SelectSourceImageAsync();
         }
 
-        private async void StyleImageBorder_Tapped(object sender, TappedRoutedEventArgs e) {
+        private async void StyleImageButton_Click(object sender, RoutedEventArgs e) {
             await _viewModel.SelectStyleImageAsync();
         }
 

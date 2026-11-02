@@ -53,7 +53,7 @@
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Intelligent">
+                    <NavigationViewItem x:Name="Nav_Intelligent" AutomationProperties.AutomationId="App.Navigation.Intelligent">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" Margin="-10,4,0,4">

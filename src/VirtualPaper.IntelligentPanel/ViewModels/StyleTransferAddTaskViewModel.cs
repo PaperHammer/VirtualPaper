@@ -178,7 +178,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             StyleOptions[^1].ImagePath = filePath;
             StyleOptions[^1].FileSize = FileUtil.GetFileSize(filePath);
             StyleOptions[^1].FileExt = Path.GetExtension(filePath)?.ToLower();
-            IsNextEnable = SelectedStyle != null && SelectedStyle.ImagePath != null;
+            IsNextEnable = !string.IsNullOrEmpty(SourceFilePath) && !string.IsNullOrEmpty(SelectedStyle?.ImagePath);
         }
 
         internal async Task SelectSourceImageAsync() {

@@ -37,7 +37,8 @@ public partial class App : Application {
             new UiTestCase("Application.GeneralSettings.SaveLanguageThemeAndReopen", GeneralSettingsTests.SaveLanguageThemeAndReopenAsync),
             new UiTestCase("Application.SystemSettings.ExportLogsAndCancel", SystemSettingsTests.ExportLogsAndCancelAsync),
             new UiTestCase("Application.StaticEditor.RotateCancelSaveReopenAndExport", StaticEditorTests.RotateCancelSaveReopenAndExportAsync),
-            new UiTestCase("Application.WebEditor.CreateFilesSaveReopenAndExport", WebEditorTests.CreateFilesSaveReopenAndExportAsync)
+            new UiTestCase("Application.WebEditor.CreateFilesSaveReopenAndExport", WebEditorTests.CreateFilesSaveReopenAndExportAsync),
+            new UiTestCase("Application.Intelligent.ConfigureCancelAndReopen", IntelligentTests.ConfigureCancelAndReopenAsync)
         };
         if (commandLine.Length == 5)
             cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();

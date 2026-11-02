@@ -36,6 +36,13 @@ namespace VirtualPaper.Sandbox.WinUI.Preview {
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args) {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());
 
+            var commandLine = System.Environment.GetCommandLineArgs();
+            if (commandLine.Length == 3 && commandLine[1] == "--verify-general-effect") {
+                await GeneralEffectWorkflow.RunAsync(commandLine[2]);
+                Exit();
+                return;
+            }
+
             if (Constants.ApplicationType.IsMSIX) {
                 await LanguageUtil.InitializeLocalizerForPackaged("zh-CN");
             }

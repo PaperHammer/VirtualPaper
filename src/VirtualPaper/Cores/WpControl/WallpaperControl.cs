@@ -286,7 +286,11 @@ namespace VirtualPaper.Cores.WpControl {
 
                 bool isStarted = false;
                 if (isFromPreview) {
-                    _ = await GetAndSaveTempRuntimeDataAsync(data, monitor.Content);
+                    if (!File.Exists(data.WpEffectFilePathUsing)) {
+                        throw new FileNotFoundException("Preview effect configuration is missing.", data.WpEffectFilePathUsing);
+                    }
+                    var runtimeData = await GetAndSaveTempRuntimeDataAsync(data, monitor.Content);
+                    DataAssist.FromRuntimeDataGetPlayerData(data, runtimeData);
                 }
                 // restore 时避免覆盖已有的自定义配置
                 else if (data.WpEffectFilePathUsing == string.Empty) {
@@ -395,6 +399,7 @@ namespace VirtualPaper.Cores.WpControl {
                 }
             }
             catch (Win32Exception ex) {
+                response.IsFinished = false;
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
                 if (ex.NativeErrorCode == 2) //ERROR_FILE_NOT_FOUND
                     WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex.Message));
@@ -402,6 +407,7 @@ namespace VirtualPaper.Cores.WpControl {
                     WallpaperError?.Invoke(this, ex);
             }
             catch (Exception ex) {
+                response.IsFinished = false;
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
                 WallpaperError?.Invoke(this, ex);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);

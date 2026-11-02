@@ -71,7 +71,7 @@ internal sealed class WallpaperWorkflowEnvironment : IDisposable {
         Client = new WallpaperControlClient(Environment.CreateChannel());
         SettingsClient = new UserSettingsClient(Environment.CreateChannel());
         MonitorClient.SetupGet(m => m.PrimaryMonitor).Returns(Monitor);
-        MonitorClient.SetupGet(m => m.Monitors).Returns(Environment.Monitors.Object.Monitors.Cast<IMonitor>().ToList().AsReadOnly());
+        MonitorClient.SetupGet(m => m.Monitors).Returns(() => Environment.Monitors.Object.Monitors.Cast<IMonitor>().ToList().AsReadOnly());
         Dialog.Setup(d => d.ShowDialogAsync(It.IsAny<object>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
             .Returns(() => Task.FromResult(DialogResult));
         SourcePath = Path.Combine(Environment.Root, "source.png");

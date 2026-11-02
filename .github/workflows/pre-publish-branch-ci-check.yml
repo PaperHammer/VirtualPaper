@@ -78,6 +78,18 @@ jobs:
       # 与 auto-version-release.yml 保持工具链一致。
       run: msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /restore /m
 
+    - name: Verify effect panel component workflow
+      shell: pwsh
+      run: ./src/VirtualPaper.Sandbox.WinUI.Preview/Verify-GeneralEffect.ps1 -Configuration Release -ReportPath TestResults/EffectUi/result.json
+
+    - name: Upload effect panel component results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-effect-ui
+        path: TestResults/EffectUi/
+        retention-days: 7
+
     - name: Validate Build Artifacts
       # 在产物就地校验：主 exe / Plugin exe / 核心 dll 存在且非空。
       # 通过后才上传 artifact，确保下游 job 拿到的是健康的构建产物。

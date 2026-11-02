@@ -62,7 +62,10 @@ internal static class ApplicationUi {
         BringIntoView(control);
         Check(SetForegroundWindow(window) || GetForegroundWindow() == window, "Could not activate the input window");
         control.SetFocus();
-        Check(control.Current.HasKeyboardFocus, "The input control did not receive keyboard focus");
+        var timer = Stopwatch.StartNew();
+        while (!control.Current.HasKeyboardFocus && timer.Elapsed < TimeSpan.FromSeconds(2)) Thread.Sleep(20);
+        Check(GetForegroundWindow() == window && control.Current.HasKeyboardFocus,
+            "The input control did not receive keyboard focus in the active input window");
         keybd_event(0x0D, 0, 0, 0);
         keybd_event(0x0D, 0, 2, 0);
     }

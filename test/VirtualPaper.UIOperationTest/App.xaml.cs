@@ -31,7 +31,8 @@ public partial class App : Application {
             new UiTestCase("Application.NavigationSettings.SaveAndReopen", NavigationSettingsTests.SaveAndReopenAsync),
             new UiTestCase("Application.PerformanceSettings.SaveAndReopen", PerformanceSettingsTests.SaveAndReopenAsync),
             new UiTestCase("Application.WallpaperLibrary.ImportApplyCloseDelete", WallpaperLibraryTests.ImportApplyCloseDeleteAsync),
-            new UiTestCase("Application.ScreenSaver.SettingsAndWhitelist", ScreenSaverTests.SettingsAndWhitelistAsync)
+            new UiTestCase("Application.ScreenSaver.SettingsAndWhitelist", ScreenSaverTests.SettingsAndWhitelistAsync),
+            new UiTestCase("Application.ScreenFit.PreviewCancelApplyAndReopen", ScreenFitTests.PreviewCancelApplyAndReopenAsync)
         };
         if (commandLine.Length == 5)
             cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();

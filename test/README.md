@@ -15,6 +15,7 @@ test/
       Application/PerformanceSettingsTests.cs 性能设置的保存与重开验证
       Application/WallpaperLibraryTests.cs    真实壁纸库、桌面播放器及删除验证
       Application/ScreenSaverTests.cs         屏保设置与白名单保存重开验证
+      Application/ScreenFitTests.cs           高清适屏选图预览、取消及实际应用验证
     Infrastructure/
       UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
       AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
@@ -93,6 +94,16 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 白名单程序路径通过 gRPC 的新增字段往返；屏保通知管道也带测试会话后缀。
 原生键盘输入前检查所属窗口已激活、目标控件已有焦点。
 本用例使用较长等待时间且保持锁屏选项关闭，不验证真实空闲触发、屏保进程启动或系统锁屏。
+
+`Application.ScreenFit.PreviewCancelApplyAndReopen` 验证高清适屏的基础交互：
+
+1. 经正式系统选择器选择竖图，等待示例预览消失，切换包含／覆盖，检查可视区域提示变化。
+2. 取消后确认没有导入、布局或播放器；重开对话框必须重新选图才能应用。
+3. 保持超分关闭，以包含方式实际应用，核对原图哈希、目标屏幕及三份效果 JSON 的 Scaling。
+4. 验证 PlayerWeb 窗口挂载到 WorkerW；重开 UI，检查壁纸条目、当前壁纸预览及设置持久化。
+5. 经正式 UI 关闭播放器、删除测试壁纸，确认源文件保持不变并正常退出前后台。
+
+本用例不运行超分模型，不代表推理、预览像素画质、多屏切换或覆盖方式实际渲染验收。
 
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。

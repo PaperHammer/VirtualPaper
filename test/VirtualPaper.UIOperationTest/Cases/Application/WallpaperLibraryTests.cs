@@ -117,7 +117,7 @@ internal static class WallpaperLibraryTests {
         context.Evidence["ImportSearchApplyReopenCloseCancelDeleteAndDeleteVerified"] = true;
     }
 
-    private static AutomationElement FindItem(AutomationElement root, string uid) {
+    internal static AutomationElement FindItem(AutomationElement root, string uid) {
         AutomationElement? item = null;
         var timer = Stopwatch.StartNew();
         while (item == null && timer.Elapsed < TimeSpan.FromSeconds(10)) {
@@ -131,7 +131,7 @@ internal static class WallpaperLibraryTests {
         throw new TimeoutException($"Wallpaper card not found: {uid}\n{string.Join("\n", children)}");
     }
 
-    private static void OpenItemMenu(nint ownerWindow, AutomationElement root, string uid, string action) {
+    internal static void OpenItemMenu(nint ownerWindow, AutomationElement root, string uid, string action) {
         using var foreground = ApplicationUi.Foreground(ownerWindow);
         ApplicationUi.OpenContextMenu(ownerWindow, FindItem(root, uid));
         try { ApplicationUi.Invoke(ApplicationUi.Find(root, action, visible: true)); }
@@ -145,8 +145,8 @@ internal static class WallpaperLibraryTests {
         ApplicationUi.Find(root, "Library.Items").FindAll(TreeScope.Descendants,
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem)).Count == count), $"Library displays {count} items");
 
-    private static void WriteImage(string path) {
-        byte[] pixels = new byte[256 * 144 * 4];
+    internal static void WriteImage(string path, int width = 256, int height = 144) {
+        byte[] pixels = new byte[width * height * 4];
         for (int i = 0; i < pixels.Length; i += 4) {
             pixels[i] = (byte)(i / 4 % 256);
             pixels[i + 1] = 90;
@@ -154,7 +154,7 @@ internal static class WallpaperLibraryTests {
             pixels[i + 3] = 255;
         }
         var encoder = new PngBitmapEncoder();
-        encoder.Frames.Add(BitmapFrame.Create(BitmapSource.Create(256, 144, 96, 96, PixelFormats.Bgra32, null, pixels, 256 * 4)));
+        encoder.Frames.Add(BitmapFrame.Create(BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, pixels, width * 4)));
         using var stream = File.Create(path);
         encoder.Save(stream);
     }

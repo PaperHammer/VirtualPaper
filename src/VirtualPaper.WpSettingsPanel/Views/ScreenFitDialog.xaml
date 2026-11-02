@@ -22,7 +22,7 @@
             <StackPanel Spacing="12">
                 <Grid ColumnSpacing="12">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <Button x:Name="SelectImageButton" Content="{markup:I18n Key=ScreenFit_SelectImage}" Click="SelectImage_Click"/>
+                    <Button x:Name="SelectImageButton" AutomationProperties.AutomationId="ScreenFit.SelectImage" Content="{markup:I18n Key=ScreenFit_SelectImage}" Click="SelectImage_Click"/>
                     <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SourcePath, Mode=OneWay}" VerticalAlignment="Center"
                         TextTrimming="CharacterEllipsis" MaxLines="1" ToolTipService.ToolTip="{x:Bind ViewModel.SourcePath, Mode=OneWay}"/>
                 </Grid>
@@ -30,10 +30,10 @@
                     <StackPanel Spacing="12">
                         <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                            <ComboBox Header="{markup:I18n Key=ScreenFit_Monitor}" HorizontalAlignment="Stretch"
+                            <ComboBox AutomationProperties.AutomationId="ScreenFit.Monitor" Header="{markup:I18n Key=ScreenFit_Monitor}" HorizontalAlignment="Stretch"
                                 ItemsSource="{x:Bind ViewModel.Monitors}" DisplayMemberPath="Label"
                                 SelectedItem="{x:Bind ViewModel.SelectedMonitor, Mode=TwoWay}"/>
-                            <ComboBox Grid.Column="1" Header="{markup:I18n Key=ScreenFit_Mode}" HorizontalAlignment="Stretch"
+                            <ComboBox Grid.Column="1" AutomationProperties.AutomationId="ScreenFit.Mode" Header="{markup:I18n Key=ScreenFit_Mode}" HorizontalAlignment="Stretch"
                                 SelectedIndex="{x:Bind ViewModel.FitIndex, Mode=TwoWay}">
                                 <ComboBoxItem Content="{markup:I18n Key=ScreenFit_Contain}"/>
                                 <ComboBoxItem Content="{markup:I18n Key=ScreenFit_Cover}"/>
@@ -63,16 +63,16 @@
                                         </Viewbox>
                                         <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12"
                                             Padding="8 4" CornerRadius="4" Background="#99000000">
-                                            <TextBlock Text="{markup:I18n Key=ScreenFit_PreviewSample}" FontSize="12" Foreground="White"/>
+                                            <TextBlock AutomationProperties.AutomationId="ScreenFit.Sample" Text="{markup:I18n Key=ScreenFit_PreviewSample}" FontSize="12" Foreground="White"/>
                                         </Border>
                                     </Grid>
-                                    <Image x:Name="PreviewImage" Stretch="{x:Bind ViewModel.PreviewStretch, Mode=OneWay}"/>
+                                    <Image x:Name="PreviewImage" AutomationProperties.AutomationId="ScreenFit.Preview" AutomationProperties.Name="{markup:I18n Key=ScreenFit_Preview}" Stretch="{x:Bind ViewModel.PreviewStretch, Mode=OneWay}"/>
                                 </Grid>
                             </Border>
                         </Viewbox>
-                        <TextBlock Text="{x:Bind ViewModel.PlanText, Mode=OneWay}" TextWrapping="Wrap"
+                        <TextBlock AutomationProperties.AutomationId="ScreenFit.Plan" Text="{x:Bind ViewModel.PlanText, Mode=OneWay}" TextWrapping="Wrap"
                             Visibility="{x:Bind ViewModel.PlanText, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}"/>
-                        <CheckBox Content="{markup:I18n Key=ScreenFit_Enhance}" IsChecked="{x:Bind ViewModel.UseEnhancement, Mode=TwoWay}"
+                        <CheckBox AutomationProperties.AutomationId="ScreenFit.Enhance" Content="{markup:I18n Key=ScreenFit_Enhance}" IsChecked="{x:Bind ViewModel.UseEnhancement, Mode=TwoWay}"
                             IsEnabled="{x:Bind ViewModel.NeedsEnhancement, Mode=OneWay}"/>
                         <TextBlock Text="{x:Bind ViewModel.EnhancementText, Mode=OneWay}" TextWrapping="Wrap" FontSize="12"
                             Visibility="{x:Bind ViewModel.EnhancementText, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}"/>

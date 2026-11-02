@@ -175,6 +175,7 @@
                                 </Viewbox>
                             </Button>
                             <Button x:Name="ScreenFitButton" Style="{StaticResource ToolbarButtonStyle}"
+                                AutomationProperties.AutomationId="Library.ScreenFit"
                                 ToolTipService.ToolTip="{markup:I18n Key=ScreenFit_Title}"
                                 AutomationProperties.Name="{markup:I18n Key=ScreenFit_Title}"
                                 Click="ScreenFit_Click">

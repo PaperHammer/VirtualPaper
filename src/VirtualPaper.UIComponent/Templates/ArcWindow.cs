@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Windowing;
@@ -33,6 +34,11 @@ namespace VirtualPaper.UIComponent.Templates {
 
             this.Activated += ArcWindow_Activated;
             this.AppWindow.Closing += AppWindow_Closing;
+            this.Closed += (_, _) => {
+                _isClosed = true;
+                _isLoaded = false;
+                _themeVersion++;
+            };
         }
 
         private void ArcWindow_Activated(object sender, WindowActivatedEventArgs args) {
@@ -89,14 +95,17 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         public async Task SetThemeAsync() {
-            if (!_isLoaded || _compositor == null || this.ContentHost.AppRoot == null || this.ContentHost.AppRoot.ActualWidth <= 0 || this.ContentHost.AppRoot.ActualHeight <= 0)
+            if (_isClosed || !_isLoaded || _compositor == null || this.ContentHost.AppRoot == null || this.ContentHost.AppRoot.ActualWidth <= 0 || this.ContentHost.AppRoot.ActualHeight <= 0)
                 return;
+            int version = ++_themeVersion;
 
             UpdateThemeIcon();
 
             // 捕获当前界面图像
             var bitmap = new RenderTargetBitmap();
-            await bitmap.RenderAsync(this.ContentHost.AppRoot);
+            try { await bitmap.RenderAsync(this.ContentHost.AppRoot); }
+            catch (COMException) when (_isClosed) { return; }
+            if (_isClosed || version != _themeVersion) return;
             this.ContentHost.AppThemeTransitionImage.Source = bitmap;
             this.ContentHost.AppThemeTransitionImage.Visibility = Visibility.Visible;
             this.ContentHost.AppThemeTransitionImage.Opacity = 1.0;
@@ -113,6 +122,7 @@ namespace VirtualPaper.UIComponent.Templates {
 
             await Task.Delay(600);
 
+            if (_isClosed || version != _themeVersion) return;
             this.ContentHost.AppThemeTransitionImage.Visibility = Visibility.Collapsed;
             this.ContentHost.AppThemeTransitionImage.Source = null;
         }
@@ -121,6 +131,8 @@ namespace VirtualPaper.UIComponent.Templates {
             ArcThemeUtil.ApplyTheme(this.ContentHost.AppRoot);
             ArcWindowManager.UpdateWindowVisualState(this);
         }
+        private bool _isClosed;
+        private int _themeVersion;
         #endregion
 
         #region window property

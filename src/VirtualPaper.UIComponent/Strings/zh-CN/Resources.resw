@@ -170,10 +170,10 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>该文件可执行更新以适应新特性,是否更新?</value>
   </data>
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
-    <value>是否删除该文件？</value>
+    <value>将从壁纸库中删除此壁纸及其文件，此操作无法撤销。</value>
   </data>
   <data name="Dialog_Content_LibraryDeleteMany" xml:space="preserve">
-    <value>是否删除选中的 {0} 个文件？</value>
+    <value>将从壁纸库中删除选中的壁纸及其文件，此操作无法撤销。</value>
   </data>
   <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
     <value>仅支持以下文件类型：
@@ -188,6 +188,30 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   </data>
   <data name="Dialog_Title_Prompt" xml:space="preserve">
     <value>提示</value>
+  </data>
+  <data name="Dialog_Title_LibraryDelete" xml:space="preserve">
+    <value>删除壁纸？</value>
+  </data>
+  <data name="Dialog_Title_LibraryDeleteMany" xml:space="preserve">
+    <value>删除这 {0} 张壁纸？</value>
+  </data>
+  <data name="Dialog_Title_LibraryUpgrade" xml:space="preserve">
+    <value>升级壁纸数据？</value>
+  </data>
+  <data name="Dialog_Title_RecentProjectMissing" xml:space="preserve">
+    <value>移除失效记录？</value>
+  </data>
+  <data name="Text_Create" xml:space="preserve">
+    <value>创建</value>
+  </data>
+  <data name="Text_RemoveRecord" xml:space="preserve">
+    <value>移除记录</value>
+  </data>
+  <data name="Text_Rename" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="Text_Upgrade" xml:space="preserve">
+    <value>升级</value>
   </data>
   <data name="InfobarMsg_Cancel" xml:space="preserve">
     <value>操作已取消</value>
@@ -268,7 +292,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>更新配置</value>
   </data>
   <data name="ScreenSaver_Add" xml:space="preserve">
-    <value>添加</value>
+    <value>添加应用</value>
   </data>
   <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
     <value>屏幕保护动态效果</value>
@@ -283,22 +307,22 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>为了您的设备数据安全，建议开启此选项</value>
   </data>
   <data name="ScreenSaver_SeekFromList" xml:space="preserve">
-    <value>名单中搜索</value>
+    <value>搜索应用</value>
   </data>
   <data name="ScreenSaver_Server" xml:space="preserve">
-    <value>是否开启屏幕保护</value>
+    <value>启用屏幕保护</value>
   </data>
   <data name="ScreenSaver_ServerExplain" xml:space="preserve">
-    <value>将主显示器在 Virtual Paper 中正在使用的壁纸作为屏保背景</value>
+    <value>将主显示器正在使用的壁纸作为屏保背景。</value>
   </data>
   <data name="ScreenSaver_WaitingTime" xml:space="preserve">
-    <value>等待的分钟数：</value>
+    <value>等待时间（分钟）</value>
   </data>
   <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
-    <value>列表中的应用在最前台运行时，将不会触发屏幕保护</value>
+    <value>以下应用在前台运行时，不会触发屏幕保护。</value>
   </data>
   <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
-    <value>白名单</value>
+    <value>应用白名单</value>
   </data>
   <data name="ScreenSaver__effectBubble" xml:space="preserve">
     <value>气泡</value>
@@ -1896,4 +1920,9 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>首版仅支持独立显示。请先在显示器控制中切换为独立显示，再打开此功能。</value></data>
   <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>启用导航动画</value></data>
   <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>切换页面时显示过渡动画，需同时开启 Windows 辅助功能中的“动画效果”。</value></data>
+  <data name="ScreenSaver_Remove" xml:space="preserve"><value>从白名单移除</value></data>
+  <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>尚未添加应用</value></data>
+  <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>添加应用后，该应用在前台运行时将不会触发屏保。</value></data>
+  <data name="ScreenSaver_WhiteListNoResults" xml:space="preserve"><value>没有匹配的应用</value></data>
+  <data name="ScreenSaver_WhiteListNoResultsDescription" xml:space="preserve"><value>请尝试其他应用名称，或清空搜索条件。</value></data>
 </root>

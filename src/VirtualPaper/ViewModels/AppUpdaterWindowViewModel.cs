@@ -141,12 +141,20 @@ namespace VirtualPaper.ViewModels {
         }
 
         public async Task<bool> ShowCancelDialogAsync() {
+            var (titleKey, contentKey, primaryButtonKey) = CurrentState switch {
+                DownloadState.Downloading => ("AppUpdater_Close_Downloading_Title", "AppUpdater_Close_Downloading_Content", "AppUpdater_Close_StopDownload"),
+                DownloadState.Paused => ("AppUpdater_Close_Paused_Title", "AppUpdater_Close_Paused_Content", "AppUpdater_Close_DiscardDownload"),
+                DownloadState.Verifying => ("AppUpdater_Close_Verifying_Title", "AppUpdater_Close_Verifying_Content", "AppUpdater_Close_StopVerification"),
+                DownloadState.DownloadFailed => ("AppUpdater_Close_Title", "AppUpdater_Close_DownloadFailed_Content", "AppUpdater_Close_Window"),
+                DownloadState.VerifyFailed => ("AppUpdater_Close_Title", "AppUpdater_Close_VerifyFailed_Content", "AppUpdater_Close_Window"),
+                _ => ("AppUpdater_Close_Title", "AppUpdater_Close_Content", "AppUpdater_Close_Window"),
+            };
             var res = await _dialogPresenter(
                 new SimpleContentDialogCreateOptions() {
-                    Title = LanguageManager.Instance["AppUpdater_Update_TitleCancelQuestion"],
-                    Content = CurrentState == DownloadState.Downloading ? LanguageManager.Instance["AppUpdater_Update_DescriptionCancelQuestion_ForDownloading"] : LanguageManager.Instance["AppUpdater_Update_DescriptionCancelQuestion_ForCompleted"],
-                    PrimaryButtonText = LanguageManager.Instance["Common_TextConfirm"],
-                    CloseButtonText = LanguageManager.Instance["Common_TextCancel"],
+                    Title = LanguageManager.Instance[titleKey],
+                    Content = LanguageManager.Instance[contentKey],
+                    PrimaryButtonText = LanguageManager.Instance[primaryButtonKey],
+                    CloseButtonText = LanguageManager.Instance["AppUpdater_Close_BackToUpdate"],
                 }
             );
 
@@ -261,7 +269,7 @@ namespace VirtualPaper.ViewModels {
         private void UpdateSpeedInfo(float speed, long receivedBytes, long totalBytes, TimeSpan remaining) {
             SpeedValue = $"{speed:F2} MB/s";
             SizeText = totalBytes > 0 ? $"{FileUtil.SizeSuffix(receivedBytes)} / {FileUtil.SizeSuffix(totalBytes)}" : string.Empty;
-            RemainingText = $"{LanguageManager.Instance[nameof(Constants.I18n.AppUpdater_SpeedText_Ready)]}：{remaining:hh\\:mm\\:ss}";
+            RemainingText = $"{LanguageManager.Instance[Constants.I18n.AppUpdater_SpeedText_Ready]}：{remaining:hh\\:mm\\:ss}";
         }
 
         private void ClearSpeedInfo() {
@@ -305,16 +313,16 @@ namespace VirtualPaper.ViewModels {
                     break;
 
                 case DownloadState.Completed:
-                    ActionButtonText = LanguageManager.Instance["Common_TextConfirm"];
+                    ActionButtonText = LanguageManager.Instance["Common_TextGotIt"];
                     StatusText = LanguageManager.Instance["AppUpdater_StatusText_Completed"];
                     ClearSpeedInfo();
                     _ = _dialogPresenter(
                         new SimpleContentDialogCreateOptions() {
-                            Title = LanguageManager.Instance["PluginsUpdate_Close"],
+                            Title = LanguageManager.Instance["AppUpdater_UpdateReady_Title"],
                             Content = IsPluginsUpdate
                                 ? LanguageManager.Instance["PluginsUpdate_PostponeTip"]
                                 : LanguageManager.Instance["InstallerUpdate_PostponeTip"],
-                            CloseButtonText = LanguageManager.Instance["Common_TextConfirm"],
+                            CloseButtonText = LanguageManager.Instance["Common_TextGotIt"],
                         }
                     );
                     RequestFlashTaskbar?.Invoke();

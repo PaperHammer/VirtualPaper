@@ -85,9 +85,9 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         private LayerItem? _rightTappedItem;
-        private readonly string _SIG_Text_AddLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_AddLayer)); // 新增图层
-        private readonly string _SIG_Text_CopyLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_CopyLayer)); // 复制图层
-        private readonly string _SIG_Text_RenameLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_RenameLayer)); // 删除图层
-        private readonly string _SIG_Text_DeleteLayer = LanguageUtil.GetI18n(nameof(Constants.I18n.SIG_Text_DeleteLayer)); // 重命名图层
+        private readonly string _SIG_Text_AddLayer = LanguageUtil.GetI18n(Constants.I18n.SIG_Text_AddLayer); // 新增图层
+        private readonly string _SIG_Text_CopyLayer = LanguageUtil.GetI18n(Constants.I18n.SIG_Text_CopyLayer); // 复制图层
+        private readonly string _SIG_Text_RenameLayer = LanguageUtil.GetI18n(Constants.I18n.SIG_Text_RenameLayer); // 删除图层
+        private readonly string _SIG_Text_DeleteLayer = LanguageUtil.GetI18n(Constants.I18n.SIG_Text_DeleteLayer); // 重命名图层
     }
 }

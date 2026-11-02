@@ -364,7 +364,7 @@ namespace VirtualPaper {
                         var isRestart = updater.LastReleaseInfo?.IsPluginsUpdate == true;
                         var toastKey = isRestart
                             ? Constants.I18n.Find_New_Version_Restart
-                            : nameof(Constants.I18n.Settings_General_Version_FindNew);
+                            : Constants.I18n.Settings_General_Version_FindNew;
 
                         new ToastContentBuilder()
                             .AddText(LanguageManager.Instance[toastKey])

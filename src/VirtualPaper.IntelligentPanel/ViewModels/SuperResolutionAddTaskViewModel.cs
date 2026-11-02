@@ -27,8 +27,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         public void UpdateCardComponentUI() {
-            PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel));
-            NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+            PreviousStepBtnText = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
+            NextStepBtnText = LanguageUtil.GetI18n(Constants.I18n.Text_Confirm);
 
             BtnVisible = true;
             CardUIStateChanged?.Invoke();
@@ -234,7 +234,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             string filePath = storage[0].Path;
 
             if (FileFilter.GetFileTypeFroImageAI(filePath) != FileType.FImageAI) {
-                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Error_InvalidFile)));
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(Constants.I18n.Text_Error_InvalidFile));
                 return;
             }            
 

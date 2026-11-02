@@ -130,12 +130,12 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         public void RestoreCurrentSize() => ResetToOriginalValues();
 
         private static void CloseSizeIllegalMsg() {
-            GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
+            GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.StaticImg_CanvasSizeInput_Illegal);
         }
 
         private void ShowSizeIllegalMsg(int maximumEdge) {
             string messageTemplate = LanguageUtil.GetI18n(
-                nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal));
+                Constants.I18n.StaticImg_CanvasSizeInput_Illegal);
             string message = string.Format(
                 messageTemplate,
                 maximumEdge,
@@ -146,7 +146,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
             CloseSizeIllegalMsg();
             GlobalMessageUtil.ShowError(
                 message: message,
-                key: nameof(Constants.I18n.StaticImg_CanvasSizeInput_Illegal),
+                key: Constants.I18n.StaticImg_CanvasSizeInput_Illegal,
                 isNeedLocalizer: false);
         }
 

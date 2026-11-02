@@ -130,8 +130,8 @@ namespace VirtualPaper.EditPanel.ViewModels {
         }
 
         public void UpdateCardComponentUI() {
-            PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_DeployNewDraft_PreviousStep));
-            NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+            PreviousStepBtnText = LanguageUtil.GetI18n(Constants.I18n.Project_DeployNewDraft_PreviousStep);
+            NextStepBtnText = LanguageUtil.GetI18n(Constants.I18n.Text_Confirm);
             BtnVisible = true;
             CardUIStateChanged?.Invoke();
         }

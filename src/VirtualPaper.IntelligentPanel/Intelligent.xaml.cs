@@ -9,7 +9,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
-using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
@@ -79,7 +79,7 @@ namespace VirtualPaper.IntelligentPanel {
             Payload?.Set(NaviPayloadKey.SelectedIntelliPageIdx, currentSelectedIndex);
             var slideNavigationTransitionEffect = currentSelectedIndex - _previousSelectedIndex > 0 ? SlideNavigationTransitionEffect.FromRight : SlideNavigationTransitionEffect.FromLeft;
 
-            ContentFrame.Navigate(pageType, Payload, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<ISettings>(), slideNavigationTransitionEffect));
+            ContentFrame.Navigate(pageType, Payload, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings, slideNavigationTransitionEffect));
 
             _previousSelectedIndex = currentSelectedIndex;
             _viewModel.SelectedIntelliPage = ContentFrame.Content as IIntelligentPage;
@@ -101,7 +101,7 @@ namespace VirtualPaper.IntelligentPanel {
                     
                     var res = _viewModel.AddTask(result);
                     if (res) {
-                        GlobalMessageUtil.ShowAutoCloseMessage(LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_AddTask)), InfoBarSeverity.Success, autoCloseDelay: 3000);
+                        GlobalMessageUtil.ShowAutoCloseMessage(LanguageUtil.GetI18n(Constants.I18n.Intelligent_AddTask), InfoBarSeverity.Success, autoCloseDelay: 3000);
 
                         if (overlayFrame.Content is IIntelligentAddTask ida) {
                             ida.ClearAddTask();
@@ -117,7 +117,7 @@ namespace VirtualPaper.IntelligentPanel {
 
         public void ShowOverlayPage(Type pageType, object? parameter) {
             maskGrid.Visibility = Visibility.Visible;
-            overlayFrame.Navigate(pageType, parameter, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<ISettings>()));
+            overlayFrame.Navigate(pageType, parameter, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings));
         }
 
         public void HideOverlayPage() {

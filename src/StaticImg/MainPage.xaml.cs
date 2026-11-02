@@ -202,7 +202,7 @@ namespace Workloads.Creation.StaticImg {
                 }
 
                 if (success) {
-                    GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(nameof(Constants.I18n.Add_To_Lib_Success)));
+                    GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(Constants.I18n.Add_To_Lib_Success));
                     return true;
                 }
 

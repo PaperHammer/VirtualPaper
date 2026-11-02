@@ -163,6 +163,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
+        public string NavigationAnimationsStatus => LanguageUtil.GetI18n(
+            NavigationAnimationsEnabled ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
+
         public bool NavigationAnimationsEnabled {
             get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
             set {
@@ -170,6 +173,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
                 UpdateSettingsConfigFile();
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(NavigationAnimationsStatus));
             }
         }
 
@@ -339,12 +343,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     CurrentVersionState = VersionState.FindNew;
                     break;
                 case AppUpdateStatus.InstallerReady:
-                    Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_InstallerReady));
+                    Text_UpdateReady = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_InstallerReady);
                     CurrentVersionState = VersionState.InstallReady;
                     IsInstallBtnEnable = true;
                     break;
                 case AppUpdateStatus.PluginsReady:
-                    Text_UpdateReady = LanguageUtil.GetI18n(nameof(Constants.I18n.Settings_General_Version_PluginsReady));
+                    Text_UpdateReady = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_PluginsReady);
                     CurrentVersionState = VersionState.InstallReady;
                     IsInstallBtnEnable = true;
                     break;

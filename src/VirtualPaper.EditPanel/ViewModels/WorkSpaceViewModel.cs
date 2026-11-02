@@ -259,7 +259,7 @@ namespace VirtualPaper.EditPanel.ViewModels {
         private async Task<bool> InitRuntimeWithFileAsync(string filePath) {
             if (!FileUtil.IsValidFilePath(filePath)) {
                 GlobalMessageUtil.ShowError(
-                    message: nameof(Constants.I18n.Project_FileLoad_Failed),
+                    message: Constants.I18n.Project_FileLoad_Failed,
                     isNeedLocalizer: true,
                     extraMsg: filePath);
                 return false;

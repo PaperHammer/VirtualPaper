@@ -313,4 +313,55 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Startup_CoreRuntimeFailed" xml:space="preserve">
     <value>Core runtime initialization failed. Please restart or reinstall Virtual Paper.&#x0A;{0}</value>
   </data>
+  <data name="AppUpdater_Close_Downloading_Title" xml:space="preserve">
+    <value>Stop downloading the update?</value>
+  </data>
+  <data name="AppUpdater_Close_Downloading_Content" xml:space="preserve">
+    <value>The update is downloading. Stop the download and close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_StopDownload" xml:space="preserve">
+    <value>Stop download and close</value>
+  </data>
+  <data name="AppUpdater_Close_Paused_Title" xml:space="preserve">
+    <value>Discard this download?</value>
+  </data>
+  <data name="AppUpdater_Close_Paused_Content" xml:space="preserve">
+    <value>The update download is paused. Discard this download and close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_DiscardDownload" xml:space="preserve">
+    <value>Discard download and close</value>
+  </data>
+  <data name="AppUpdater_Close_Verifying_Title" xml:space="preserve">
+    <value>Stop verifying the update?</value>
+  </data>
+  <data name="AppUpdater_Close_Verifying_Content" xml:space="preserve">
+    <value>The update files are being verified. Stop verification and close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_StopVerification" xml:space="preserve">
+    <value>Stop verification and close</value>
+  </data>
+  <data name="AppUpdater_Close_Title" xml:space="preserve">
+    <value>Close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_Content" xml:space="preserve">
+    <value>Close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_Window" xml:space="preserve">
+    <value>Close window</value>
+  </data>
+  <data name="AppUpdater_Close_DownloadFailed_Content" xml:space="preserve">
+    <value>The update download failed. You can close this window and try updating again later.</value>
+  </data>
+  <data name="AppUpdater_Close_VerifyFailed_Content" xml:space="preserve">
+    <value>Update file verification failed. You can close this window and download the update again later.</value>
+  </data>
+  <data name="AppUpdater_Close_BackToUpdate" xml:space="preserve">
+    <value>Back to update</value>
+  </data>
+  <data name="AppUpdater_UpdateReady_Title" xml:space="preserve">
+    <value>Update ready</value>
+  </data>
+  <data name="Common_TextGotIt" xml:space="preserve">
+    <value>Got it</value>
+  </data>
 </root>

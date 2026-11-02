@@ -188,7 +188,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 StopPlugins(updatingPlugins);
 
                 // Step: Backup current plugins
-                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.BackingUp, 0, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_BackingUp)]));
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.BackingUp, 0, LanguageManager.Instance[Constants.I18n.PluginsUpdate_Stage_BackingUp]));
                 var backupDir = Constants.CommonPaths.UpdateBackupDir;
                 FileUtil.RemoveDirectory(backupDir);
                 Directory.CreateDirectory(backupDir);
@@ -213,7 +213,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 await SaveUpdateFlagAsync(flag, token);
 
                 // Step: Replace plugins sequentially (avoid IO contention on Windows)
-                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, 0, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Replacing)]));
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, 0, LanguageManager.Instance[Constants.I18n.PluginsUpdate_Stage_Replacing]));
                 int totalPlugins = flag.Plugins.Count;
                 int replacedCount = 0;
 
@@ -259,7 +259,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                     }
 
                     replacedCount++;
-                    progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, (float)replacedCount / totalPlugins * 100, string.Format(LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_ReplacedPlugin)], pluginName)));
+                    progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, (float)replacedCount / totalPlugins * 100, string.Format(LanguageManager.Instance[Constants.I18n.PluginUpdate_ReplacedPlugin], pluginName)));
                 }
 
                 // Step: Copy app_comp_manifest.json from extracted patch to both BaseDirectory and AppDataDir
@@ -289,11 +289,11 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 FileUtil.RemoveDirectory(backupDir);
 
                 result.Success = true;
-                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Completed, 100, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Completed)]));
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Completed, 100, LanguageManager.Instance[Constants.I18n.PluginsUpdate_Stage_Completed]));
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Plugins update failed", ex);
-                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Failed, 100, LanguageManager.Instance[nameof(Constants.I18n.PluginsUpdate_Stage_Failed)]));
+                progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Failed, 100, LanguageManager.Instance[Constants.I18n.PluginsUpdate_Stage_Failed]));
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
 

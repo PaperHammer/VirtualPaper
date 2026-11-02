@@ -28,19 +28,19 @@ namespace VirtualPaper.EditPanel.Services {
 
         private Task<DialogResult> ShowUnsavedDialogAsync(IRuntime runtime) {
             return _globalDialogService.ShowDialogAsync(
-                content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
-                title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
-                primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
-                secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}");
+                content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(Constants.I18n.Project_Unsave_Intercept_Content)}",
+                title: $"{LanguageUtil.GetI18n(Constants.I18n.Project_Unsave_Intercept_Title)}",
+                primaryBtnText: $"{LanguageUtil.GetI18n(Constants.I18n.Text_Save)}",
+                secondaryBtnText: $"{LanguageUtil.GetI18n(Constants.I18n.Text_Unsave)}");
         }
 
         private Task<DialogResult> ShowUnsavedDialogWithCancelAsync(IRuntime runtime) {
             return _globalDialogService.ShowDialogAsync(
-                content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Content))}",
-                title: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Unsave_Intercept_Title))}",
-                primaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Save))}",
-                secondaryBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Unsave))}",
-                closeBtnText: $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))}");
+                content: $"\"{runtime.FileName}\" {LanguageUtil.GetI18n(Constants.I18n.Project_Unsave_Intercept_Content)}",
+                title: $"{LanguageUtil.GetI18n(Constants.I18n.Project_Unsave_Intercept_Title)}",
+                primaryBtnText: $"{LanguageUtil.GetI18n(Constants.I18n.Text_Save)}",
+                secondaryBtnText: $"{LanguageUtil.GetI18n(Constants.I18n.Text_Unsave)}",
+                closeBtnText: $"{LanguageUtil.GetI18n(Constants.I18n.Text_Cancel)}");
         }
     }
 }

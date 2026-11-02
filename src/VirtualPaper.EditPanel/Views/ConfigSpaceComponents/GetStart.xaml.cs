@@ -65,10 +65,11 @@ namespace VirtualPaper.EditPanel.Views.ConfigSpaceComponents {
         private async void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
             if (e.ClickedItem is RecentUsed ru) {
                 if (!Path.Exists(ru.FilePath)) {
-                    var diaRes = await GlobalDialogUtils.ShowDialogWithoutTitleAsync(
-                        LanguageUtil.GetI18n(nameof(Constants.I18n.Project_SI_FileNotFound)),
-                        LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm)),
-                        LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))
+                    var diaRes = await GlobalDialogUtils.ShowDialogAsync(
+                        LanguageUtil.GetI18n(Constants.I18n.Project_SI_FileNotFound),
+                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_RecentProjectMissing),
+                        LanguageUtil.GetI18n(Constants.I18n.Text_RemoveRecord),
+                        LanguageUtil.GetI18n(Constants.I18n.Text_Cancel)
                     );
                     if (diaRes == DialogResult.Primary) {
                         _viewModel.RemoveFromListCommand?.Execute(e.ClickedItem);
@@ -122,7 +123,7 @@ namespace VirtualPaper.EditPanel.Views.ConfigSpaceComponents {
                 }
                 else {
                     GlobalMessageUtil.ShowWarning(
-                        message: nameof(Constants.I18n.Project_Drops_Contains_Invalid_FIles),
+                        message: Constants.I18n.Project_Drops_Contains_Invalid_FIles,
                         isNeedLocalizer: true);
                 }
             }

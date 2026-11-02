@@ -3,208 +3,123 @@
     x:Class="VirtualPaper.AppSettingsPanel.Views.OthersSetting"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VirtualPaper.AppSettingsPanel.Views"
-    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
-    mc:Ignorable="d"
     NavigationCacheMode="Enabled">
+    <Page.Resources>
+        <Style x:Key="OtherLinkCardStyle" TargetType="HyperlinkButton">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="MinHeight" Value="90"/>
+            <Setter Property="Padding" Value="20 12"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Background" Value="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}"/>
+        </Style>
+        <Style x:Key="OtherLinkDescriptionStyle" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}"/>
+        </Style>
+    </Page.Resources>
 
     <ScrollView>
-        <StackPanel Margin="15 0 15 15" Orientation="Vertical">
-            <StackPanel x:Name="Abount" Orientation="Vertical">
+        <StackPanel Margin="16 12 16 16" Spacing="16">
+            <StackPanel x:Name="Abount" Spacing="8">
                 <TextBlock x:Name="AbountHeader"
-                    Margin="0 10"
-                    Text="{markup:I18n Key=Settings_Others_Text_About}"   
-                    FontWeight="Bold"/>
-
-                <Grid x:Name="Basic" Margin="0 5">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Border Margin="0 0 10 0" CornerRadius="20">
-                        <Image
-                            Width="120"
-                            Height="120"
+                    Text="{markup:I18n Key=Settings_Others_Text_About}" FontWeight="Bold"/>
+                <Border x:Name="Basic" Padding="20" CornerRadius="12"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    <Grid ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image x:Name="AboutLogo" Width="96" Height="96" VerticalAlignment="Top"
+                            Stretch="Uniform" AutomationProperties.Name="Virtual Paper"
                             Source="ms-appx:///Assets/splashCol_1400x1400_with_round40.png"/>
-                    </Border>
-
-                    <TextBlock 
-                        Grid.Column="1"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        TextWrapping="Wrap"
-                        Text="{markup:I18n Key=Settings_Others_About_Basic}"/>
-                </Grid>
+                        <StackPanel Grid.Column="1" Spacing="8" VerticalAlignment="Center">
+                            <TextBlock Text="Virtual Paper" FontSize="20" FontWeight="SemiBold"/>
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_About_Basic}"
+                                TextWrapping="Wrap" LineHeight="22"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </StackPanel>
 
-            <StackPanel x:Name="More"
-                Margin="0 20 0 0"
-                Orientation="Vertical">
-
+            <StackPanel x:Name="More" Spacing="8">
                 <TextBlock x:Name="MoreHeader"
-                    Margin="0 10"
-                    Text="{markup:I18n Key=Settings_Others_Text_More}"   
-                    FontWeight="Bold"/>
-
-                <HyperlinkButton
-                    Padding="0"
-                    Margin="0 5"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
+                    Text="{markup:I18n Key=Settings_Others_Text_More}" FontWeight="Bold"/>
+                <HyperlinkButton Style="{StaticResource OtherLinkCardStyle}"
                     NavigateUri="https://github.com/PaperHammer/virtualpaper/wiki">
-                    <HyperlinkButton.Content>
-                        <Grid x:Name="Document"
-                            Height="90"
-                            Padding="20 0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <FontIcon Glyph="&#xE736;"/>
-
-                            <Grid
-                                Grid.Column="1"
-                                Margin="20 0 0 0"
-                                VerticalAlignment="Center">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
-                                    <RowDefinition Height="auto"/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_Document}"/>
-                                <TextBlock 
-                                    Grid.Row="1" 
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{markup:I18n Key=Settings_Others_More_DocumentExplain}"/>
-                            </Grid>
-
-                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
-                        </Grid>
-                    </HyperlinkButton.Content>
+                    <Grid x:Name="Document" ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE736;" FontSize="20"/>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_Document}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_DocumentExplain}"
+                                Style="{StaticResource OtherLinkDescriptionStyle}"/>
+                        </StackPanel>
+                        <FontIcon Grid.Column="2" Glyph="&#xE8A7;" FontSize="16"/>
+                    </Grid>
                 </HyperlinkButton>
-
-                <HyperlinkButton
-                    Margin="0 5"
-                    Padding="0"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
+                <HyperlinkButton Style="{StaticResource OtherLinkCardStyle}"
                     NavigateUri="https://github.com/PaperHammer/virtualpaper">
-                    <HyperlinkButton.Content>
-                        <Grid x:Name="SourceCode"
-                            Height="90"
-                            Padding="20 0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <FontIcon Glyph="&#xE716;"/>
-
-                            <Grid
-                                Grid.Column="1"
-                                Margin="20 0 0 0"
-                                VerticalAlignment="Center">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
-                                    <RowDefinition Height="auto"/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_SourceCode}"/>
-                                
-                                <TextBlock 
-                                    Grid.Row="1" 
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{markup:I18n Key=Settings_Others_More_SourceCodeExplain}"/>
-                            </Grid>
-
-                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
-                        </Grid>
-                    </HyperlinkButton.Content>
+                    <Grid x:Name="SourceCode" ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xE716;" FontSize="20"/>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_SourceCode}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_SourceCodeExplain}"
+                                Style="{StaticResource OtherLinkDescriptionStyle}"/>
+                        </StackPanel>
+                        <FontIcon Grid.Column="2" Glyph="&#xE8A7;" FontSize="16"/>
+                    </Grid>
                 </HyperlinkButton>
-
-                <HyperlinkButton
-                    Margin="0 5"
-                    Padding="0"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
+                <HyperlinkButton Style="{StaticResource OtherLinkCardStyle}"
                     NavigateUri="{x:Bind _viewModel.More_RequestFunc_Link}">
-                    <HyperlinkButton.Content>
-                        <Grid x:Name="RequestFunc"
-                            Height="90"
-                            Padding="20 0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <FontIcon Glyph="&#xF4a5;"/>
-
-                            <Grid
-                                Grid.Column="1"
-                                Margin="20 0 0 0"
-                                VerticalAlignment="Center">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
-                                    <RowDefinition Height="auto"/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_RequestFunc}"/>
-                                
-                                <TextBlock 
-                                    Grid.Row="1" 
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{markup:I18n Key=Settings_Others_More_RequestFuncExplain}"/>
-                            </Grid>
-
-                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
-                        </Grid>
-                    </HyperlinkButton.Content>
+                    <Grid x:Name="RequestFunc" ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xF4A5;" FontSize="20"/>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_RequestFunc}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_RequestFuncExplain}"
+                                Style="{StaticResource OtherLinkDescriptionStyle}"/>
+                        </StackPanel>
+                        <FontIcon Grid.Column="2" Glyph="&#xE8A7;" FontSize="16"/>
+                    </Grid>
                 </HyperlinkButton>
-
-                <HyperlinkButton
-                    Margin="0 5"
-                    Padding="0"
-                    HorizontalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
+                <HyperlinkButton Style="{StaticResource OtherLinkCardStyle}"
                     NavigateUri="https://github.com/PaperHammer/virtualpaper/issues">
-                    <HyperlinkButton.Content>
-                        <Grid x:Name="ReportBug"
-                            Height="90"
-                            Padding="20 0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <FontIcon Glyph="&#xEBE8;"/>
-
-                            <Grid
-                                Grid.Column="1"
-                                Margin="20 0 0 0"
-                                VerticalAlignment="Center">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="auto"/>
-                                    <RowDefinition Height="auto"/>
-                                </Grid.RowDefinitions>
-
-                                <TextBlock Text="{markup:I18n Key=Settings_Others_More_ReportBug}"/>
-                                
-                                <TextBlock 
-                                    Grid.Row="1" 
-                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                    Text="{markup:I18n Key=Settings_Others_More_ReportBugExplain}"/>
-                            </Grid>
-
-                            <FontIcon Grid.Column="2" Glyph="&#xE8A7;" />
-                        </Grid>
-                    </HyperlinkButton.Content>
+                    <Grid x:Name="ReportBug" ColumnSpacing="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Glyph="&#xEBE8;" FontSize="20"/>
+                        <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_ReportBug}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{markup:I18n Key=Settings_Others_More_ReportBugExplain}"
+                                Style="{StaticResource OtherLinkDescriptionStyle}"/>
+                        </StackPanel>
+                        <FontIcon Grid.Column="2" Glyph="&#xE8A7;" FontSize="16"/>
+                    </Grid>
                 </HyperlinkButton>
             </StackPanel>
         </StackPanel>

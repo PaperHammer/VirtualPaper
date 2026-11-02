@@ -158,9 +158,9 @@ namespace VirtualPaper.UIComponent.Utils {
 
         public static void ShowCanceled(ArcWindow? arcWindow = null) {
             AddMsg(arcWindow, new GlobalMsgInfo(
-                key: nameof(Constants.I18n.InfobarMsg_Cancel),
+                key: Constants.I18n.InfobarMsg_Cancel,
                 isNeedLocalizer: true,
-                msgOri18nKey: nameof(Constants.I18n.InfobarMsg_Cancel),
+                msgOri18nKey: Constants.I18n.InfobarMsg_Cancel,
                 extraMsg: null,
                 infoBarSeverity: InfoBarSeverity.Informational));
         }

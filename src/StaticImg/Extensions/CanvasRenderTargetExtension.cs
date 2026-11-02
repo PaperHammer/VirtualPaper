@@ -42,12 +42,12 @@ namespace Workloads.Creation.StaticImg.Extensions {
             ExportDataStaticImg data,
             CancellationToken cancellationToken = default) {
             if (renderTarget == null) {
-                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_InternalError)));
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(Constants.I18n.Project_Export_InternalError));
                 return null;
             }
 
             if (string.IsNullOrWhiteSpace(data.Path)) {
-                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_PathNotBeNone)));
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(Constants.I18n.Project_Export_PathNotBeNone));
                 return null;
             }
 
@@ -109,17 +109,17 @@ namespace Workloads.Creation.StaticImg.Extensions {
                 await randomAccessStream.FlushAsync().AsTask(cancellationToken);
 
                 GlobalMessageUtil.ShowSuccess(
-                    $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {data.Path}",
+                    $"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Success)} {data.Path}",
                     LanguageUtil.GetI18n(Constants.I18n.Text_ShowOnDisk),
                     () => _ = FileUtil.OpenFolderAsync(data.Path),
                     replaceExisting: true,
-                    key: nameof(Constants.I18n.Project_Export_Success));
+                    key: Constants.I18n.Project_Export_Success);
 
                 return data.Path;
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Failed))}");
-                ArcLog.GetLogger<CanvasRenderTarget>().Error($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Failed))}", ex);
+                GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Failed)}");
+                ArcLog.GetLogger<CanvasRenderTarget>().Error($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Failed)}", ex);
             }
 
             return null;

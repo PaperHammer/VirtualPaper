@@ -55,18 +55,18 @@ namespace VirtualPaper.Views {
 
                 if (progress.Stage == PluginsUpdateStage.Completed) {
                     TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
-                    TitleText.Text = LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_Title_Completed)];
+                    TitleText.Text = LanguageManager.Instance[Constants.I18n.PluginUpdate_Title_Completed];
                 }
                 else if (progress.Stage == PluginsUpdateStage.Failed) {
                     TaskbarItemInfo.ProgressState = TaskbarItemProgressState.None;
-                    TitleText.Text = LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_Title_Failed)];
+                    TitleText.Text = LanguageManager.Instance[Constants.I18n.PluginUpdate_Title_Failed];
                 }
             });
         }
 
         public void ShowError(string message) {
             Dispatcher.Invoke(() => {
-                TitleText.Text = LanguageManager.Instance[nameof(Constants.I18n.PluginUpdate_Title_Failed)];
+                TitleText.Text = LanguageManager.Instance[Constants.I18n.PluginUpdate_Title_Failed];
                 StatusText.Text = message;
                 UpdateProgressBar.IsIndeterminate = false;
                 UpdateProgressBar.Value = 100;

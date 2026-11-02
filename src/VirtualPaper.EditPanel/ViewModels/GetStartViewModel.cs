@@ -67,7 +67,7 @@ namespace VirtualPaper.EditPanel.ViewModels {
         internal void UpdateCardComponentUI() {
             BtnVisible = IsFromWorkSpaceForAddProj;
             PreviousStepBtnText = BtnVisible
-                ? LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel))
+                ? LanguageUtil.GetI18n(Constants.I18n.Text_Cancel)
                 : string.Empty;
             CardUIStateChanged?.Invoke();
         }

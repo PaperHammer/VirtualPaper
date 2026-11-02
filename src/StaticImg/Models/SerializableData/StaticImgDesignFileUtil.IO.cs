@@ -37,7 +37,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 }
                 catch (EndOfStreamException) {
                     GlobalMessageUtil.ShowWarning(
-                        message: nameof(Constants.I18n.Project_FileLoad_FileCorrupted),
+                        message: Constants.I18n.Project_FileLoad_FileCorrupted,
                         isNeedLocalizer: true,
                         extraMsg: filePath);
                     return null;
@@ -60,8 +60,8 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         public async Task<(FileHeader? fileHeader, BusinessData? businessData, List<Layer>? layers)> LoadAsync(InkProjectSession session) {
             if (!IsValidVpdFile) {
                 GlobalMessageUtil.ShowError(
-                    message: nameof(Constants.I18n.Project_FileLoad_Failed),
-                    key: nameof(Constants.I18n.Project_FileLoad_Failed),
+                    message: Constants.I18n.Project_FileLoad_Failed,
+                    key: Constants.I18n.Project_FileLoad_Failed,
                     isNeedLocalizer: true,
                     extraMsg: FilePath);
                 return (null, null, null);

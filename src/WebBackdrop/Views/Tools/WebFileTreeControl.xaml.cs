@@ -646,14 +646,16 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             var item = GetMenuItemTarget(sender);
             if (item == null) return;
 
-            await _viewModel.CreateFileAsync(item.FilePath, GetAddFileOrFolderItemPathAsync);
+            await _viewModel.CreateFileAsync(item.FilePath,
+                path => GetAddFileOrFolderItemPathAsync(path, "WebBackdrop_NewFile"));
         }
 
         private async void NewFolderMenuItem_Click(object sender, RoutedEventArgs e) {
             var item = GetMenuItemTarget(sender);
             if (item == null) return;
 
-            await _viewModel.CreateFolderAsync(item.FilePath, GetAddFileOrFolderItemPathAsync);
+            await _viewModel.CreateFolderAsync(item.FilePath,
+                path => GetAddFileOrFolderItemPathAsync(path, "WebBackdrop_NewFolder"));
         }
 
         private async void AddItemsMenuItem_Click(object sender, RoutedEventArgs e) {
@@ -1006,15 +1008,15 @@ namespace Workloads.Creation.WebBackdrop.Views.Tools {
             item.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private async Task<string?> GetAddFileOrFolderItemPathAsync(string path) {
+        private async Task<string?> GetAddFileOrFolderItemPathAsync(string path, string titleKey) {
             var defaultPath = FileUtil.NextAvailablePath(path);
             var defaultName = Path.GetFileName(defaultPath);
             var viewModel = new AddFileItemViewModel(defaultName, 255, false);
             var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                 new AddFileItemView(viewModel),
-                "Add",
-                "Confirm",
-                "Cancel");
+                LanguageUtil.GetI18n(titleKey),
+                LanguageUtil.GetI18n(Constants.I18n.Text_Create),
+                LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
 
             if (dialogRes != DialogResult.Primary
                 || !ComplianceUtil.IsValidPathSegmentName(viewModel.NewName)) {

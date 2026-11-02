@@ -270,7 +270,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var response = await _wpControlClient.RestartAllWallpapersAsync();
                         if (response.IsFinished != true) {
                             GlobalMessageUtil.ShowError(
-                                message: nameof(Constants.I18n.Dialog_Content_ApplyError),
+                                message: Constants.I18n.Dialog_Content_ApplyError,
                                 isNeedLocalizer: true);
                             // 恢复
                             SelectedWpArrangementsIndex = (int)oldType;
@@ -310,8 +310,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             InitMonitors();
             GlobalMessageUtil.ShowInfo(
-                message: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
-                key: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
+                message: Constants.I18n.Dialog_Content_GetMonitorsAsync,
+                key: Constants.I18n.Dialog_Content_GetMonitorsAsync,
                 isNeedLocalizer: true,
                 extraMsg: $" {Monitors.Count}");
             await (cooldown ?? Task.Delay(3000));

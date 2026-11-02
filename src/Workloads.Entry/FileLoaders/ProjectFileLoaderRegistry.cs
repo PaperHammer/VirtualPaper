@@ -16,7 +16,7 @@ namespace Workloads.Entry.FileLoaders {
             var loader = _loaders.FirstOrDefault(x => x.CanLoad(fileType));
             if (loader == null) {
                 GlobalMessageUtil.ShowError(
-                    message: nameof(Constants.I18n.Project_FileLoad_Failed),
+                    message: Constants.I18n.Project_FileLoad_Failed,
                     isNeedLocalizer: true,
                     extraMsg: filePath);
                 return null;
@@ -25,7 +25,7 @@ namespace Workloads.Entry.FileLoaders {
             var result = await loader.LoadAsync(filePath, fileType);
             if (result == null) {
                 GlobalMessageUtil.ShowError(
-                    message: nameof(Constants.I18n.Project_FileLoad_Failed),
+                    message: Constants.I18n.Project_FileLoad_Failed,
                     isNeedLocalizer: true,
                     extraMsg: filePath);
             }

@@ -170,10 +170,10 @@ The file cannot be imported: </value>
     <value>The file can be updated to accommodate new features, is it updated?</value>
   </data>
   <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
-    <value>Do you want to delete this file?</value>
+    <value>This will delete the wallpaper and its files from your library. This cannot be undone.</value>
   </data>
   <data name="Dialog_Content_LibraryDeleteMany" xml:space="preserve">
-    <value>Do you want to delete the {0} selected files?</value>
+    <value>This will delete the selected wallpapers and their files from your library. This cannot be undone.</value>
   </data>
   <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
     <value>Only the following file types are supported:
@@ -188,6 +188,30 @@ The file cannot be imported: </value>
   </data>
   <data name="Dialog_Title_Prompt" xml:space="preserve">
     <value>Prompt</value>
+  </data>
+  <data name="Dialog_Title_LibraryDelete" xml:space="preserve">
+    <value>Delete wallpaper?</value>
+  </data>
+  <data name="Dialog_Title_LibraryDeleteMany" xml:space="preserve">
+    <value>Delete these {0} wallpapers?</value>
+  </data>
+  <data name="Dialog_Title_LibraryUpgrade" xml:space="preserve">
+    <value>Upgrade wallpaper data?</value>
+  </data>
+  <data name="Dialog_Title_RecentProjectMissing" xml:space="preserve">
+    <value>Remove missing project entry?</value>
+  </data>
+  <data name="Text_Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Text_RemoveRecord" xml:space="preserve">
+    <value>Remove entry</value>
+  </data>
+  <data name="Text_Rename" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="Text_Upgrade" xml:space="preserve">
+    <value>Upgrade</value>
   </data>
   <data name="InfobarMsg_Cancel" xml:space="preserve">
     <value>The operation has been canceled</value>
@@ -268,7 +292,7 @@ The file cannot be imported: </value>
     <value>Update config</value>
   </data>
   <data name="ScreenSaver_Add" xml:space="preserve">
-    <value>Add to list</value>
+    <value>Add app</value>
   </data>
   <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
     <value>Screen saver dynamic effects</value>
@@ -283,22 +307,22 @@ The file cannot be imported: </value>
     <value>For the security of your device data, it is recommended to turn on this option</value>
   </data>
   <data name="ScreenSaver_SeekFromList" xml:space="preserve">
-    <value>Search in the list</value>
+    <value>Search apps</value>
   </data>
   <data name="ScreenSaver_Server" xml:space="preserve">
-    <value>Whether to turn on screen saver</value>
+    <value>Enable screen saver</value>
   </data>
   <data name="ScreenSaver_ServerExplain" xml:space="preserve">
-    <value>Use the wallpaper that your primary display is using in Virtual Paper as the screensaver background</value>
+    <value>Use the wallpaper on your primary display as the screen saver background.</value>
   </data>
   <data name="ScreenSaver_WaitingTime" xml:space="preserve">
-    <value>Minutes waited:</value>
+    <value>Idle time (minutes)</value>
   </data>
   <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
-    <value>Any app in the list won't trigger a screen saver when it's running in the foreground</value>
+    <value>The screen saver won't start while an app in this list is in the foreground.</value>
   </data>
   <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
-    <value>App White List</value>
+    <value>App whitelist</value>
   </data>
   <data name="ScreenSaver__effectBubble" xml:space="preserve">
     <value>Bubble</value>
@@ -1896,4 +1920,9 @@ The following words cannot be used as usernames:
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>This version supports independent displays. Switch to Per display in display controls, then reopen this tool.</value></data>
   <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Enable navigation animations</value></data>
   <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Animate page changes. Also requires Animation effects in Windows accessibility settings.</value></data>
+  <data name="ScreenSaver_Remove" xml:space="preserve"><value>Remove from whitelist</value></data>
+  <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>No apps added yet</value></data>
+  <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Add apps to prevent the screen saver from starting while they are in the foreground.</value></data>
+  <data name="ScreenSaver_WhiteListNoResults" xml:space="preserve"><value>No matching apps</value></data>
+  <data name="ScreenSaver_WhiteListNoResultsDescription" xml:space="preserve"><value>Try another app name or clear the search.</value></data>
 </root>

@@ -39,7 +39,7 @@ namespace Workloads.Creation.StaticImg.Models {
             set {
                 if (_isVisible == value) return;
                 _isVisible = value;
-                if (value) GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), nameof(Constants.I18n.Draft_SI_LayerLocked));
+                if (value) GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Draft_SI_LayerLocked);
                 OnPropertyChanged();
             }
         }

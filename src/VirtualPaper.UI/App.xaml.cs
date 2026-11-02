@@ -27,7 +27,6 @@ using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution;
 using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.Models.AppUpdate;
-using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter;
@@ -126,7 +125,6 @@ namespace VirtualPaper.UI {
 
                 .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
-                .AddTransient<ISettings>(services => services.GetRequiredService<IUserSettingsClient>().Settings)
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()

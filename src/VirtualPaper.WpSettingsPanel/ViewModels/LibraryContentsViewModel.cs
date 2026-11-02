@@ -358,16 +358,19 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     .ToList();
                 if (uniqueItems.Count == 0) return;
 
+                string title = uniqueItems.Count == 1
+                    ? LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_LibraryDelete)
+                    : string.Format(
+                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_LibraryDeleteMany),
+                        uniqueItems.Count);
                 string message = uniqueItems.Count == 1
                     ? LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
-                    : string.Format(
-                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDeleteMany),
-                        uniqueItems.Count);
+                    : LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDeleteMany);
                 var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
-                    message
-                    , LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                    , LanguageUtil.GetI18n(Constants.I18n.Text_Confirm)
-                    , LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
+                    message,
+                    title,
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Delete),
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes != DialogResult.Primary) return;
 
                 await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
@@ -553,8 +556,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             if (data.AppInfo.FileVersion != _userSettingsClient.Settings.FileVersion) {
                 var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_NeedUpdate),
-                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt),
-                    LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
+                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_LibraryUpgrade),
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Upgrade),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes == DialogResult.Primary)
                     await UpdateAsync(data);

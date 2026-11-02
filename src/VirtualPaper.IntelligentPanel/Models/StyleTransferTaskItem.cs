@@ -52,12 +52,12 @@ namespace VirtualPaper.IntelligentPanel.Models {
         }
 
         public string StatusText => Status switch {
-            TaskStatus.Created => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Completed)),
-            TaskStatus.WaitingToRun => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Queue)),
-            TaskStatus.Running => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Processing)),
-            TaskStatus.RanToCompletion => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Completed)),
-            TaskStatus.Faulted => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Failed)),
-            _ => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Unknown))
+            TaskStatus.Created => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
+            TaskStatus.WaitingToRun => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Queue),
+            TaskStatus.Running => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Processing),
+            TaskStatus.RanToCompletion => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
+            TaskStatus.Faulted => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Failed),
+            _ => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Unknown)
         };
 
         public bool IsPending => Status is TaskStatus.Created or TaskStatus.WaitingToRun;

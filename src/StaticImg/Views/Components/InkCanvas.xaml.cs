@@ -874,8 +874,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.Data.SelectedLayer.RenderData == null ||
                 _viewModel.Data.SelectedLayer.RenderData.RenderTarget == null) {
                 GlobalMessageUtil.ShowError(
-                    message: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
-                    key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
+                    message: Constants.I18n.Draft_SI_LayerNotAvailable,
+                    key: Constants.I18n.Draft_SI_LayerNotAvailable,
                     isNeedLocalizer: true);
                 return;
             }
@@ -883,8 +883,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             RenderBase? nextTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
             if (!_viewModel.Data.SelectedLayer.IsVisible && nextTool is not CropTool) {
                 GlobalMessageUtil.ShowWarning(
-                    message: nameof(Constants.I18n.Draft_SI_LayerLocked),
-                    key: nameof(Constants.I18n.Draft_SI_LayerLocked),
+                    message: Constants.I18n.Draft_SI_LayerLocked,
+                    key: Constants.I18n.Draft_SI_LayerLocked,
                     isNeedLocalizer: true);
                 return;
             }

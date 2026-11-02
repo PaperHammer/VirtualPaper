@@ -42,7 +42,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
                 if (value == null) return;
                 SeletcedLayerChanged?.Invoke(this, EventArgs.Empty);
-                if (value.IsVisible) GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), nameof(Constants.I18n.Draft_SI_LayerLocked));
+                if (value.IsVisible) GlobalMessageUtil.CloseAndRemoveMsg(ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main)), Constants.I18n.Draft_SI_LayerLocked);
             }
         }
 
@@ -58,7 +58,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
             var layer = new LayerInfo {
                 Name = name ??
-                    $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerNew))} " +
+                    $"{LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_LayerNew)} " +
                     $"{++_newLayerCount}",
                 RenderData = new InkRenderData(_session, CanvasSize, isBackground),
                 IsDeleted = false,
@@ -93,7 +93,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             // 计算插入位置：原图层的正上方 (Index + 1)
             int insertIndex = _layers.IndexOf(originalLayer) + 1;
             var layer = new LayerInfo {
-                Name = $"{originalLayer.Name} {LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_LayerCopy))} {++_copyLayerCount}",
+                Name = $"{originalLayer.Name} {LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_LayerCopy)} {++_copyLayerCount}",
                 IsVisible = originalLayer.IsVisible,
                 RenderData = originalLayer.RenderData.Clone(),
                 ZIndex = insertIndex,
@@ -164,8 +164,8 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 var viewModel = new RenameViewModel(oldName, 30, true);
                 var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                     new RenameView(viewModel),
-                    LanguageUtil.GetI18n(nameof(Constants.I18n.Dialog_Title_Rename)),
-                    LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
+                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Rename),
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Rename),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes != DialogResult.Primary
                     || !ComplianceUtil.IsValidValueOnlyLength(viewModel.NewName)

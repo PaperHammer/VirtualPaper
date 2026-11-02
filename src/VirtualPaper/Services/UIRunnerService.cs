@@ -158,10 +158,19 @@ namespace VirtualPaper.Services {
         }
 
         private void Proc_UI_Exited(object? sender, EventArgs e) {
+            // Process invokes Exited under its own monitor. Never wait for
+            // _processLock here: another lifecycle operation can hold it while
+            // Process.Dispose waits for that same monitor.
+            if (sender is Process process) {
+                ThreadPool.QueueUserWorkItem(_ => HandleUiExited(process));
+            }
+        }
+
+        private void HandleUiExited(Process process) {
             lock (_processLock) {
                 // An exit callback may already be queued when RestartUI detaches
                 // the handler. It must never clear or stop the replacement process.
-                if (sender is not Process process || !ReferenceEquals(process, _processUI)) return;
+                if (!ReferenceEquals(process, _processUI)) return;
 
                 var pid = process.Id;
                 ReleaseProcess();

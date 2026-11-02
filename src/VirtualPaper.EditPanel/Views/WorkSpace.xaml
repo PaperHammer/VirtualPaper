@@ -47,7 +47,7 @@
                     <MenuFlyoutItem x:Name="ExportBmpMenuItem" Text="BMP" Tag="Bmp" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportJpegMenuItem" Text="JPEG" Tag="Jpeg" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportJpegXrMenuItem" Text="JPEG XR" Tag="JpegXR" Click="OnExportMenuItemClick"/>
-                    <MenuFlyoutItem x:Name="ExportFullZipMenuItem" Text="{markup:I18n Key=WebBackdrop_FullProjectArchive}" Tag="FullZip" Click="OnExportMenuItemClick"/>
+                    <MenuFlyoutItem x:Name="ExportFullZipMenuItem" AutomationProperties.AutomationId="Project.File.ExportFullZip" Text="{markup:I18n Key=WebBackdrop_FullProjectArchive}" Tag="FullZip" Click="OnExportMenuItemClick"/>
                     <MenuFlyoutItem x:Name="ExportZipMenuItem" Text="{markup:I18n Key=WebBackdrop_WebWallpaperPackage}" Tag="Zip" Click="OnExportMenuItemClick"/>
                 </MenuFlyoutSubItem>
                 <MenuFlyoutItem Text="{markup:I18n Key=Text_ImportLib}" Click="OnAddToLibraryMenuItemClick"/>

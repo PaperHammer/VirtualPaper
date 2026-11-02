@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -80,7 +81,8 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
         public static readonly DependencyProperty FilePathProperty =
             DependencyProperty.Register(nameof(FilePath), typeof(string), typeof(MonacoEditor),
-                new PropertyMetadata(string.Empty));
+                new PropertyMetadata(string.Empty, (sender, _) =>
+                    AutomationProperties.SetItemStatus(((MonacoEditor)sender).codeSurface, string.Empty)));
 
         public MonacoEditor() {
             InitializeComponent();
@@ -216,6 +218,10 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 : null;
             var canUndo = rootElement.TryGetProperty("canUndo", out var canUndoElement) && canUndoElement.GetBoolean();
             var canRedo = rootElement.TryGetProperty("canRedo", out var canRedoElement) && canRedoElement.GetBoolean();
+            if (IsSameFilePath(filePath, FilePath)) {
+                AutomationProperties.SetItemStatus(codeSurface,
+                    LanguageUtil.GetI18n(isSaved ? "WebBackdrop_Saved" : "WebBackdrop_Unsaved"));
+            }
             EditorStateChanged?.Invoke(this, new MonacoEditorState(
                 isSaved, lineEnding, encoding, indent, filePath, canUndo, canRedo));
             return Task.CompletedTask;

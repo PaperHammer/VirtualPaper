@@ -56,8 +56,8 @@
                 Visibility="{x:Bind IsVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                 <collection:ArcTreeViewItem.ContextFlyout>
                     <MenuFlyout Opening="FolderMenuFlyout_Opening" Closed="ContextMenuFlyout_Closed">
-                        <MenuFlyoutItem x:Name="folderNewFileMenuItem" Text="{markup:I18n Key=WebBackdrop_NewFile}" Tag="{x:Bind}" Click="NewFileMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="folderNewFolderMenuItem" Text="{markup:I18n Key=WebBackdrop_NewFolder}" Tag="{x:Bind}" Click="NewFolderMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderNewFileMenuItem" AutomationProperties.AutomationId="WebEditor.NewFile" Text="{markup:I18n Key=WebBackdrop_NewFile}" Tag="{x:Bind}" Click="NewFileMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="folderNewFolderMenuItem" AutomationProperties.AutomationId="WebEditor.NewFolder" Text="{markup:I18n Key=WebBackdrop_NewFolder}" Tag="{x:Bind}" Click="NewFolderMenuItem_Click"/>
                         <MenuFlyoutItem x:Name="folderAddItemsMenuItem" Text="{markup:I18n Key=WebBackdrop_AddItems}" Tag="{x:Bind}" Click="AddItemsMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="folderEditSeparator1"/>
                         <MenuFlyoutItem x:Name="folderCutMenuItem" Text="{markup:I18n Key=WebBackdrop_Cut}" KeyboardAcceleratorTextOverride="Ctrl+X" Tag="{x:Bind}" Click="CutMenuItem_Click"/>
@@ -159,7 +159,7 @@
                         <MenuFlyoutItem x:Name="fileCopyRelativePathMenuItem" Text="{markup:I18n Key=WebBackdrop_CopyRelativePath}" KeyboardAcceleratorTextOverride="Ctrl+Shift+C" Tag="{x:Bind}" Click="CopyRelativePathMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileEditSeparator"/>
                         <MenuFlyoutItem x:Name="fileRenameMenuItem" Text="{markup:I18n Key=WebBackdrop_Rename}" KeyboardAcceleratorTextOverride="F2" Tag="{x:Bind}" Click="RenameMenuItem_Click"/>
-                        <MenuFlyoutItem x:Name="fileDeleteMenuItem" Text="{markup:I18n Key=WebBackdrop_Delete}" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
+                        <MenuFlyoutItem x:Name="fileDeleteMenuItem" AutomationProperties.AutomationId="WebEditor.DeleteFile" Text="{markup:I18n Key=WebBackdrop_Delete}" KeyboardAcceleratorTextOverride="Del" Tag="{x:Bind}" Click="DeleteMenuItem_Click"/>
                         <MenuFlyoutSeparator x:Name="fileExplorerSeparator"/>
                         <MenuFlyoutItem x:Name="fileRevealMenuItem" Text="{markup:I18n Key=WebBackdrop_RevealInExplorer}" Tag="{x:Bind}" Click="RevealInExplorerMenuItem_Click"/>
                     </MenuFlyout>
@@ -379,7 +379,7 @@
             IsHitTestVisible="False"
             Visibility="{x:Bind _viewModel.IsSearching, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
         
-        <collection:ArcTreeView x:Name="fileTreeView"
+        <collection:ArcTreeView x:Name="fileTreeView" AutomationProperties.AutomationId="WebEditor.Files"
             Grid.Row="2"
             Padding="4 0 0 48"
             CancelSelectionEnable="False"

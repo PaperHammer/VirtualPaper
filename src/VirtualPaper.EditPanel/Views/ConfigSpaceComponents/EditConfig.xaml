@@ -69,6 +69,7 @@
                     TextChanged="OnFilterChanged"/>
 
                 <ListView x:Name="templateListView"
+                    AutomationProperties.AutomationId="Projects.Templates"
                     Grid.Row="1"
                     Margin="0 20 0 0"                    
                     ItemsSource="{x:Bind _viewModel.AvailableTemplates}"
@@ -113,6 +114,7 @@
                         <TextBlock Text="{markup:I18n Key=Project_NewProjectName}" FontSize="12"/>
 
                         <TextBox x:Name="tbProjName"
+                            AutomationProperties.AutomationId="Projects.Name"
                             IsSpellCheckEnabled="False"
                             Text="{x:Bind _viewModel.ProjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                             PlaceholderText="{markup:I18n Key=Project_NewProjectName_Placeholder}"
@@ -150,7 +152,7 @@
                                 <ColumnDefinition Width="auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBox
+                            <TextBox AutomationProperties.AutomationId="Projects.Location"
                                 IsSpellCheckEnabled="False"
                                 Text="{x:Bind _viewModel.ProjectLocation, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                 FontSize="12"/>

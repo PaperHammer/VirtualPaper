@@ -108,6 +108,7 @@
                 </Grid.ColumnDefinitions>
 
                 <input:ArcButton x:Name="btnStartupNew"
+                    AutomationProperties.AutomationId="Projects.New"
                     Content="{markup:I18n Key=Project_Create_New}"
                     HorizontalAlignment="Stretch"
                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"

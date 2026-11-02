@@ -24,7 +24,7 @@
                 FontWeight="Bold"
                 FontSize="16"/>
 
-            <TextBox
+            <TextBox AutomationProperties.AutomationId="Dialog.ItemName"
                 IsSpellCheckEnabled="False"
                 Text="{x:Bind _viewModel.NewName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 FontSize="16"

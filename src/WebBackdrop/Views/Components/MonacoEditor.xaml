@@ -16,7 +16,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid x:Name="codeSurface" AutomationProperties.AutomationId="WebEditor.CodeSurface"
+        AutomationProperties.Name="{x:Bind FilePath, Mode=OneWay}">
         <WebView2 x:Name="monacoWebView"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"

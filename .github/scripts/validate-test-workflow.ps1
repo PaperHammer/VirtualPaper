@@ -50,7 +50,7 @@ if ($buildJob -match 'dotnet test |node .github/scripts/test-') {
     throw 'Runtime regression tests must not execute in the build prerequisite before smoke.'
 }
 $regularNeeds = 'needs: [build, smoke-test, test-release-build, ' + (($tests.Id) -join ', ') + ']'
-$summaryNeeds = 'needs: [build, smoke-test, test-release-build, ' + (($tests.Id) -join ', ') + ', test-ui-operation]'
+$summaryNeeds = 'needs: [approval, build, smoke-test, test-release-build, ' + (($tests.Id) -join ', ') + ', test-ui-operation]'
 if (-not $workflow.Contains($summaryNeeds)) {
     throw 'test-summary must include smoke, artifact checks, seven regular test jobs and WinUI operation tests.'
 }
@@ -79,6 +79,23 @@ if (-not $workflow.Contains('Assert-SmokeReportPassed $report') -or
     throw 'Final status must require a passing install/launch/uninstall report.'
 }
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../workflows/auto-version-release.yml') -Raw
+foreach ($spec in @(
+    @{ Text = $workflow; Environment = 'ci-check-approval'; FirstJob = 'build' },
+    @{ Text = $releaseWorkflow; Environment = 'publish-approval'; FirstJob = 'prepare' }
+)) {
+    $approval = [regex]::Match($spec.Text, '(?ms)^  approval:\r?\n.*?(?=^  [\w-]+:|\z)').Value
+    $firstJob = [regex]::Match($spec.Text, "(?ms)^  $($spec.FirstJob):\r?\n.*?(?=^  [\w-]+:|\z)").Value
+    if (-not $approval.Contains("environment: $($spec.Environment)") -or
+        $firstJob -notmatch '(?m)^    needs: approval\s*$') {
+        throw "The $($spec.FirstJob) job must wait for the $($spec.Environment) approval environment."
+    }
+    if ($approval -match 'actions/checkout|secrets\.|contents: write' -or $spec.Text -match '(?m)^  workflow_dispatch:') {
+        throw 'Approval must precede repository work, and event-triggered runs must remain visible while awaiting review.'
+    }
+    if (-not $approval.Contains("rule.type === 'required_reviewers' && rule.reviewers?.length > 0")) {
+        throw 'Missing reviewer rules must block execution, rather than silently allowing an unprotected environment.'
+    }
+}
 if (-not $releaseWorkflow.Contains('./test/Run-SmokeTests.ps1')) {
     throw 'Release and pre-publish workflows must share the installer smoke runner.'
 }

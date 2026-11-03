@@ -1,5 +1,5 @@
 name: Pre-publish Branch CI Check
-run-name: "[Auto] CI Check | ${{ github.ref_name }} | ${{ github.event.head_commit.message || github.event.pull_request.title }}"
+run-name: "[Approval] CI Check | ${{ github.ref_name }} | ${{ github.event.head_commit.message || github.event.pull_request.title }}"
 
 on:
   push:
@@ -24,9 +24,37 @@ permissions:
   pull-requests: write
 
 jobs:
+  approval:
+    name: Await CI Approval
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request' &&
+       !contains(github.event.pull_request.title, '[skip ci]')) ||
+      (github.event_name == 'push' &&
+       !contains(github.event.head_commit.message, '[skip ci]'))
+    # Required reviewers must be configured for this environment in repository Settings.
+    environment: ci-check-approval
+    permissions:
+      contents: read
+      actions: read
+    steps:
+    - name: Verify approval protection
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const environment_name = 'ci-check-approval';
+          const { data } = await github.request('GET /repos/{owner}/{repo}/environments/{environment_name}', {
+            ...context.repo, environment_name
+          });
+          if (!data.protection_rules?.some(rule => rule.type === 'required_reviewers' && rule.reviewers?.length > 0)) {
+            throw new Error(`Configure Required reviewers for ${environment_name} in Settings > Environments before running CI.`);
+          }
+          core.info('CI approval received; starting the test pipeline.');
+
   build:
     name: Build Solution
     runs-on: windows-latest
+    needs: approval
     # push 事件：跳过含 [skip ci] 的 commit
     # pull_request 事件：跳过标题或正文含 [skip ci] 的 PR
     if: |
@@ -558,11 +586,11 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [build, smoke-test, test-release-build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader, test-ui-operation]
-    # build 被 skip（[skip ci]）或任意 job 被 cancel 时，整条链跳过
+    needs: [approval, build, smoke-test, test-release-build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader, test-ui-operation]
+    # [skip ci] 或取消时跳过；拒绝审批仍记录最终失败状态。
     if: |
       always() &&
-      needs.build.result != 'skipped' &&
+      needs.approval.result != 'skipped' &&
       !contains(needs.*.result, 'cancelled')
     
     steps:

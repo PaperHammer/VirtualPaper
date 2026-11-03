@@ -4,9 +4,9 @@
 
 | 文件                                | 触发时机                              | 职责                                 |
 | ----------------------------------- | ------------------------------------- | ------------------------------------ |
-| `pre-publish-branch-ci-check.yml` | push / PR → dev · release · bugfix | 安装冒烟 → 并行单元测试 → 真实 UI 测试 |
+| `pre-publish-branch-ci-check.yml` | push / PR → dev · release · bugfix，等待人工批准 | 安装冒烟 → 并行单元测试 → 真实 UI 测试 |
 | `branch-protection.yml`           | PR → main                            | 校验源分支合法性                     |
-| `auto-version-release.yml`        | PR 合并到 main                        | 版本递增 · 打包 · 冒烟测试 · 发布 |
+| `auto-version-release.yml`        | PR 合并到 main，等待人工批准              | 版本递增 · 打包 · 冒烟测试 · 发布 |
 | `manual-ml-integration.yml`       | 手动触发                              | ML 模型集成测试                    |
 
 ---
@@ -21,23 +21,45 @@
  bugfix    ──────────── ┘
                         │
                         ▼
-                       main  ──►  自动构建打包  ──►  草稿 Release
+                       main  ──►  批准后构建打包  ──►  草稿 Release
                                                          │
                                                     人工验证后发布
 ```
 
 ---
 
+## 人工批准入口与一次性配置
+
+提交／PR 更新和合并仍会自动生成 workflow run，但第一个 job 会等待人工批准。无需填写 PR 编号或点击 `Run workflow`。
+
+仓库管理员需要在 [Settings → Environments](https://github.com/PaperHammer/VirtualPaper/settings/environments) 创建两个环境：
+
+| Environment | 用途 | Required reviewers |
+| --- | --- | --- |
+| `ci-check-approval` | CI 构建和全部测试开始前批准 | 添加 `PaperHammer` |
+| `publish-approval` | 发布版本准备、构建与打包开始前批准 | 添加 `PaperHammer` |
+
+在每个环境勾选 **Required reviewers**，添加审批人并点击 **Save protection rules**。保留 **Prevent self-review** 为未勾选，否则不能批准自己触发的流程。
+不要只创建空环境：GitHub 的环境审批规则配置在仓库设置中，YAML 不能直接声明审批人。若环境未配置审批人，工作流会明确失败，不进入构建或发布。
+
+日常操作：打开本次 Actions 运行 → **Review deployments** → 勾选对应环境 → **Approve and deploy**。拒绝审批会阻断后续流程；等待期间不占用构建 runner。提交新代码仍会按原并发规则取消旧 CI，最新运行需要重新批准。
+发布批准仅放行构建和草稿创建；正式发布仍需在 Releases 中人工操作。
+如果发布等待期间 `main` 已有新提交，旧发布运行在批准后会阻断，请批准最新合并 PR 对应的运行，避免用旧快照更新分支版本。
+
+参见 [GitHub 环境配置](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments) 与 [审批入口说明](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments)。
+
+---
+
 ## 工作流一：Pre-publish CI
 
 > **文件：** `pre-publish-branch-ci-check.yml`
-> **触发：** push 或 PR 到 `dev` / `release` / `bugfix`
+> **触发：** push 或 PR 到 `dev` / `release` / `bugfix`，在 `Await CI Approval` 等待批准
 
 对预发布分支进行持续集成，确保代码在合并到 main 之前质量达标。
 
 **执行内容：**
 
-构建整个解决方案（Release 配置）作为准备步骤，之后三个测试阶段严格串行：
+人工批准后构建整个解决方案（Release 配置），之后三个测试阶段严格串行：
 
 1. **Smoke：安装 → 拉起 → 卸载。** 编译真实 Inno Setup 安装包，静默安装到临时目录，启动 Core 并通过正式 `ShowUI` RPC 拉起稳定的 UI 窗口，最后静默卸载并检查进程与文件残留。
 2. **并行单元测试。** 保留 7 项常规测试独立并行：Core · UI · StaticImg · WebBackdrop · UIComponent · ML · Shader；产物完整性校验另行并行，Web 播放器脚本检查随 UI 单元测试运行。
@@ -80,7 +102,7 @@ WinUI 操作测试包含特效页面组件用例，以及真实 Core + UI 的导
 ## 工作流三：自动发布
 
 > **文件：** `auto-version-release.yml`
-> **触发：** PR 成功合并到 `main`（标题不含 `[skip ci]`）
+> **触发：** PR 成功合并到 `main`（标题不含 `[skip ci]`），在 `Await Publish Approval` 等待批准
 
 ### 更新类型判定
 
@@ -94,6 +116,9 @@ WinUI 操作测试包含特效页面组件用例，以及真实 Core + UI 的导
 ### 执行流程
 
 ```
+approval
+  │  等待 publish-approval 的 Required reviewers 批准
+  ▼
 prepare
   │  计算新版本号，记录各分支 SHA，捕获 PR 标题和正文
   ▼
@@ -137,6 +162,7 @@ release（草稿）
 
 | 阶段                       | 常规安装式更新           | 重启式更新                |
 | -------------------------- | ------------------------ | ------------------------- |
+| `approval`               | 等待人工批准             | 等待人工批准              |
 | `prepare`                | ✅ 始终执行              | ✅ 始终执行               |
 | `build`                  | ✅ 始终执行              | ✅ 始终执行               |
 | `package`                | ✅ 始终执行              | ✅ 始终执行               |
@@ -173,9 +199,9 @@ release（草稿）
 
 ```
 1. 在 dev / release / bugfix 分支完成开发
-2. 确认 CI 全绿（ci-check/pre-publish-tests）
+2. 在 Actions 批准 CI，确认全绿（ci-check/pre-publish-tests）
 3. 创建 PR → main，等待审核通过并合并
-4. CI 自动完成：构建 → 打包 → 冒烟测试 → 提交版本号 → 创建草稿 Release
+4. 在 Actions 批准发布，然后流程执行：构建 → 打包 → 冒烟测试 → 提交版本号 → 创建草稿 Release
 5. 在 GitHub Releases 页面下载草稿附件，本地安装验证
 6. 确认无误后点击 Edit → Publish release 正式发布
 ```

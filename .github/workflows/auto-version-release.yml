@@ -1,5 +1,5 @@
 name: Auto Sync and Publish
-run-name: "[Auto] Publish | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
+run-name: "[Approval] Publish | ${{ github.event.pull_request.head.ref }} -> main | ${{ github.event.pull_request.title }}"
 
 on:
   pull_request:
@@ -17,6 +17,34 @@ permissions:
   statuses: write
 
 jobs:
+  approval:
+    name: Await Publish Approval
+    runs-on: ubuntu-latest
+    if: |
+      github.event.pull_request.merged == true &&
+      !contains(github.event.pull_request.title, '[skip ci]')
+    # Required reviewers must be configured for this environment in repository Settings.
+    environment: publish-approval
+    permissions:
+      contents: read
+      actions: read
+    steps:
+    - name: Verify approval protection
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const environment_name = 'publish-approval';
+          const { data } = await github.request('GET /repos/{owner}/{repo}/environments/{environment_name}', {
+            ...context.repo, environment_name
+          });
+          if (!data.protection_rules?.some(rule => rule.type === 'required_reviewers' && rule.reviewers?.length > 0)) {
+            throw new Error(`Configure Required reviewers for ${environment_name} in Settings > Environments before publishing.`);
+          }
+          const { data: mainRef } = await github.rest.git.getRef({ ...context.repo, ref: 'heads/main' });
+          if (mainRef.object.sha !== context.sha) {
+            throw new Error('main changed while this run was waiting. Approve the latest merged PR workflow instead.');
+          }
+          core.info('Publish approval received; starting version preparation and packaging.');
 
   # ─────────────────────────────────────────────────────────────
   # Job 1: 准备阶段 - 记录 SHA、确定分支、计算新版本号
@@ -24,6 +52,7 @@ jobs:
   prepare:
     name: Prepare - Version & Metadata
     runs-on: windows-latest
+    needs: approval
     if: |
       github.event.pull_request.merged == true &&
       !contains(github.event.pull_request.title, '[skip ci]')

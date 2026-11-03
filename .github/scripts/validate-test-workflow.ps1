@@ -51,6 +51,12 @@ if (-not $operationJob.Contains('./test/Run-UIOperationTests.ps1') -or
     -not $workflow.Contains('UI_OPERATION_RESULTS_VALID:-false')) {
     throw 'WinUI operation results must be executed and required by the final status check.'
 }
+if (-not $workflow.Contains('. ./test/UIOperationTestSupport.ps1') -or
+    -not $workflow.Contains('Get-UIOperationReportOutcome $report') -or
+    -not $workflow.Contains('Regular tests passed; WinUI skipped [SKIPPED]')) {
+    throw 'Environment skips must be validated and reported distinctly from passing WinUI acceptance.'
+}
+& (Join-Path $repositoryRoot 'test/Test-UIOperationTestSupport.ps1')
 if ($workflow -match '(?m)^\s*matrix\s*:') {
     throw 'The regular test workflow must keep explicit jobs and must not use a matrix.'
 }
@@ -69,4 +75,4 @@ if (-not $workflow.Contains("-notmatch '[\\/]In[\\/]'")) {
     throw 'Coverage summary must exclude the test platform In staging copies.'
 }
 
-Write-Host '[OK] Seven regular test projects are wired; WinUI operation tests run after them and gate the final status.'
+Write-Host '[OK] Regular test jobs are wired; WinUI requires either passing acceptance or an explicit valid environment skip.'

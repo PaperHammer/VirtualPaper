@@ -1,13 +1,14 @@
 #requires -Version 7.2
 param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
-    [string]$ReportPath = (Join-Path $env:TEMP ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
+    [string]$ReportPath = (Join-Path ([IO.Path]::GetTempPath()) ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
     [string]$CoreExe,
     [ValidatePattern('^[A-Za-z]+$')][string]$Module,
     [ValidateRange(30, 900)][int]$TimeoutSeconds = 180,
     [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
 $projectPath = Join-Path $PSScriptRoot 'VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $reportFullPath = [IO.Path]::GetFullPath($ReportPath)
@@ -15,6 +16,18 @@ if (Test-Path -LiteralPath $reportFullPath) { throw 'Report path must be new to 
 $artifactPath = $reportFullPath + '.artifacts'
 if (Test-Path -LiteralPath $artifactPath) { throw 'Artifact directory must be new to avoid mixing runs' }
 New-Item -ItemType Directory -Path $artifactPath -Force | Out-Null
+$environment = Get-UIOperationEnvironment
+$environment | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $artifactPath 'environment.json') -Encoding utf8
+if (-not $environment.Available) {
+    [ordered]@{
+        Status = 'Skipped'; Passed = $false; Skipped = $true; SkipReason = $environment.ReasonCode
+        ExpectedCount = 0; Results = @(); Environment = $environment
+    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFullPath -Encoding utf8
+    Write-Warning "WinUI acceptance SKIPPED [$($environment.ReasonCode)]: $($environment.Reason)"
+    Write-Output "Report: $reportFullPath"
+    Write-Output "Artifacts: $artifactPath"
+    exit 0
+}
 if (-not $NoBuild) {
     $msbuild = Get-Command msbuild.exe -ErrorAction SilentlyContinue
     $msbuildPath = if ($msbuild) { $msbuild.Source } else {
@@ -71,14 +84,8 @@ try {
     }
     if (-not (Test-Path -LiteralPath $reportFullPath)) { throw "Host exited without a report (exit $($process.ExitCode))" }
     $report = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
-    $actualNames = @($report.Results | ForEach-Object { $_.Name })
     $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
-    if ($process.ExitCode -ne 0 -or $report.Passed -ne $true -or
-        $report.ExpectedCount -lt 1 -or @($report.Results).Count -ne $report.ExpectedCount -or
-        @($report.Results | Where-Object { $_.Passed -ne $true }).Count -gt 0 -or
-        @($actualNames | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0 -or
-        @($actualNames | Sort-Object -Unique).Count -ne $actualNames.Count -or $applicationRuns.Count -lt 1 -or
-        @($applicationRuns | Where-Object { $_.Evidence.CoreProcessId -lt 1 -or @($_.Evidence.UiProcessIds).Count -lt 1 -or $_.Evidence.ProcessesExitedNormally -ne $true }).Count -gt 0) {
+    if ($process.ExitCode -ne 0 -or (Get-UIOperationReportOutcome $report) -ne 'Passed') {
         throw "UI operation tests failed: $($report | ConvertTo-Json -Depth 5)"
     }
     $report.Results | Format-Table Name, Passed, DurationMilliseconds

@@ -48,7 +48,9 @@ WinUI 操作测试包含特效页面组件用例，以及真实 Core + UI 的导
 经跨进程 UI Automation 修改开关，验证后台 RPC/JSON 保存、UI 进程重开回显及正常退出。
 各进程共用隔离的测试会话、配置与通信名称；测试日志随报告保留。
 以 JSON 上传 `test-results-ui-operation`，不计入七项常规测试的覆盖率。
-它需要可用的 Windows 图形会话，失败或缺失结果都会阻断最终检查；不能静默跳过。
+它需要可用的 Windows 图形会话；脚本在启动测试前检查会话、输入桌面、显示区域及 Explorer 桌面。
+不满足时生成明确的 `Skipped` 报告，CI 允许继续，最终状态注明 `Regular tests passed; WinUI skipped [SKIPPED]`。
+跳过不计为 UI 验收通过。报告缺失、不完整及测试启动后的失败、超时仍阻断最终检查。
 
 常规 ML job 排除需要真实模型推理的 `Integration` 分类。
 

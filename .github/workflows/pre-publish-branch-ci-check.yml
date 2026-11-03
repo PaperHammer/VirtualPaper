@@ -491,6 +491,9 @@ jobs:
       !contains(needs.*.result, 'cancelled')
     
     steps:
+    - name: Checkout report validation code
+      uses: actions/checkout@v4
+
     - name: Download all test results
       uses: actions/download-artifact@v4
       with:
@@ -526,25 +529,22 @@ jobs:
     - name: Verify WinUI operation results
       shell: pwsh
       run: |
+        . ./test/UIOperationTestSupport.ps1
         $path = 'TestResults/test-results-ui-operation/ui-operation-results.json'
-        $valid = $false
-        if (Test-Path -LiteralPath $path) {
-          $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-          $names = @($report.Results | ForEach-Object { $_.Name })
-          $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
-          $valid = $report.Passed -eq $true -and $report.ExpectedCount -gt 0 -and
-            @($report.Results).Count -eq $report.ExpectedCount -and
-            @($report.Results | Where-Object { $_.Passed -ne $true }).Count -eq 0 -and
-            @($names | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -eq 0 -and
-            @($names | Sort-Object -Unique).Count -eq $names.Count -and $applicationRuns.Count -gt 0 -and
-            @($applicationRuns | Where-Object { $_.Evidence.ProcessesExitedNormally -ne $true }).Count -eq 0
-          '### WinUI operation tests' >> $env:GITHUB_STEP_SUMMARY
+        if (-not (Test-Path -LiteralPath $path)) { throw 'WinUI operation report is missing.' }
+        $report = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        $outcome = Get-UIOperationReportOutcome $report
+        '### WinUI operation tests' >> $env:GITHUB_STEP_SUMMARY
+        if ($outcome -eq 'Skipped') {
+          "- **Skipped** [$($report.SkipReason)]: $($report.Environment.Reason)" >> $env:GITHUB_STEP_SUMMARY
+          '- No real UI acceptance was executed; this is not a passing UI result.' >> $env:GITHUB_STEP_SUMMARY
+        } else {
           foreach ($result in $report.Results) {
             "- $($result.Name): passed=$($result.Passed), $($result.DurationMilliseconds) ms" >> $env:GITHUB_STEP_SUMMARY
           }
         }
-        "UI_OPERATION_RESULTS_VALID=$($valid.ToString().ToLowerInvariant())" >> $env:GITHUB_ENV
-        if (-not $valid) { throw 'WinUI operation results are missing, incomplete or failed.' }
+        'UI_OPERATION_RESULTS_VALID=true' >> $env:GITHUB_ENV
+        "UI_OPERATION_OUTCOME=$outcome" >> $env:GITHUB_ENV
 
     - name: Summarize code coverage
       shell: pwsh
@@ -609,7 +609,11 @@ jobs:
           echo "TEST_DESCRIPTION=Some tests failed or results missing [FAILED]" >> $GITHUB_ENV
         else
           echo "TEST_STATUS=success" >> $GITHUB_ENV
-          echo "TEST_DESCRIPTION=All tests passed [OK]" >> $GITHUB_ENV
+          if [ "${UI_OPERATION_OUTCOME:-}" = "Skipped" ]; then
+            echo "TEST_DESCRIPTION=Regular tests passed; WinUI skipped [SKIPPED]" >> $GITHUB_ENV
+          else
+            echo "TEST_DESCRIPTION=All tests passed [OK]" >> $GITHUB_ENV
+          fi
         fi
 
     - name: Create Status Check

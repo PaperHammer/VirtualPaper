@@ -144,7 +144,15 @@ internal static class WebEditorTests {
     private static void OpenItemMenu(AutomationElement root, nint ownerWindow, string name, string action) {
         using var foreground = ApplicationUi.Foreground(ownerWindow);
         ApplicationUi.OpenPointerContextMenu(ownerWindow, FindItem(root, name));
-        ApplicationUi.Invoke(ApplicationUi.Find(root, action, visible: true));
+        try { ApplicationUi.Invoke(ApplicationUi.Find(root, action, visible: true)); }
+        catch {
+            string path = Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "web-file-menu");
+            WindowSnapshot.Save(ownerWindow, path + ".png");
+            File.WriteAllLines(path + ".txt", root.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
+                .Where(item => !item.Current.IsOffscreen)
+                .Select(item => $"{item.Current.ControlType.ProgrammaticName} {item.Current.AutomationId} {item.Current.Name} {item.Current.BoundingRectangle}"));
+            throw;
+        }
     }
 
     private static AutomationElement FindItem(AutomationElement root, string name) {

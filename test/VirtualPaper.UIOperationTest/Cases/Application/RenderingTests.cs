@@ -43,6 +43,8 @@ internal static class RenderingTests {
         using var owned = player!;
         context.Evidence["PlayerProcessId"] = owned.Id;
         await Task.Run(() => {
+            using var foreground = ApplicationUi.Foreground(fixture.Ui.MainWindowHandle);
+            fixture.Root.SetFocus();
             ApplicationUi.Invoke(ApplicationUi.Find(fixture.Root, "Library.DisplayControls"));
             var adjustButton = ApplicationUi.Find(fixture.Root, "Library.AdjustWallpaper", visible: true);
             adjustButton.SetFocus();

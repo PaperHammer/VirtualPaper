@@ -134,8 +134,9 @@ namespace VirtualPaper {
 
             #region 用户配置
             SplashWindow? spl = null;
-            if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
-                spl = UserSettings.Settings.IsFirstRun ? new SplashWindow(0, 500) : null;
+            bool isFirstRun = UserSettings.Settings.IsFirstRun;
+            if (UserSettings.Settings.IsUpdated || isFirstRun) {
+                spl = isFirstRun ? new SplashWindow(0, 500) : null;
                 spl?.Show();
                 UserSettings.Settings.IsFirstRun = false;
                 UserSettings.Save<ISettings>();
@@ -191,7 +192,7 @@ namespace VirtualPaper {
                 }
 
                 //first run Setup-Wizard show..
-                if (UserSettings.Settings.IsFirstRun) {
+                if (isFirstRun) {
                     _ = Services.GetRequiredService<IUIRunnerService>().ShowUIAsync();
                 }
             }

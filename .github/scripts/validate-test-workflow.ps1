@@ -1,121 +1,128 @@
 $ErrorActionPreference = 'Stop'
-
 $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
-$solutionPath = Join-Path $repositoryRoot 'src/VirtualPaper.sln'
-$workflowPath = Join-Path $repositoryRoot '.github/workflows/pre-publish-branch-ci-check.yml'
+. (Join-Path $repositoryRoot 'test/TestReportSupport.ps1')
+$workflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/pre-merge-check.yml') -Raw
+$releaseWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/pre-release.yml') -Raw
+$action = Get-Content -LiteralPath (Join-Path $repositoryRoot 'test/actions/run-project/action.yml') -Raw
+$solution = Get-Content -LiteralPath (Join-Path $repositoryRoot 'src/VirtualPaper.sln') -Raw
+$specs = @(Get-ProjectTestSpecs)
 
-$solution = Get-Content -LiteralPath $solutionPath -Raw
-$workflow = Get-Content -LiteralPath $workflowPath -Raw
-$tests = @(
-    @{ Id = 'test-core'; Project = 'VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj'; Result = 'core-tests.trx' },
-    @{ Id = 'test-ui'; Project = 'VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj'; Result = 'ui-tests.trx' },
-    @{ Id = 'test-static-img'; Project = 'StaticImg.Test/StaticImg.Test.csproj'; Result = 'static-img-tests.trx' },
-    @{ Id = 'test-web-backdrop'; Project = 'WebBackdrop.Test/WebBackdrop.Test.csproj'; Result = 'web-backdrop-tests.trx' },
-    @{ Id = 'test-ui-component'; Project = 'VirtualPaper.UIComponent.Test/VirtualPaper.UIComponent.Test.csproj'; Result = 'ui-component-tests.trx' },
-    @{ Id = 'test-ml'; Project = 'VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj'; Result = 'ml-tests.trx' },
-    @{ Id = 'test-shader'; Project = 'VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj'; Result = 'shader-tests.trx' }
-)
+function Get-WorkflowJob([string]$Id, [string]$Text = $workflow) {
+    $match = [regex]::Match($Text, "(?ms)^  $([regex]::Escape($Id)):\r?\n.*?(?=^  [\w-]+:|\z)")
+    if (-not $match.Success) { throw "Missing workflow job: $Id" }
+    $match.Value
+}
+function Assert-JobNeeds([string]$Id, [string[]]$Expected, [string]$Text = $workflow) {
+    $job = Get-WorkflowJob $Id $Text
+    # Parse the scalar/flow-list needs value and compare sets, independent of ordering or spacing.
+    $match = [regex]::Match($job, '(?ms)^    needs:\s*(\[[^\]]*\]|[\w-]+)')
+    $actual = @([regex]::Matches($match.Groups[1].Value, '[\w-]+') | ForEach-Object Value)
+    if (@(Compare-Object ($actual | Sort-Object -Unique) ($Expected | Sort-Object -Unique)).Count -gt 0 -or
+        $actual.Count -ne $Expected.Count) {
+        throw "Invalid dependencies for $Id. Expected: $($Expected -join ', '); actual: $($actual -join ', ')."
+    }
+}
+$gates = @('validate-pr', 'build-solution', 'test-installer')
+Assert-JobNeeds 'build-solution' @('validate-pr')
+Assert-JobNeeds 'test-installer' @('validate-pr', 'build-solution')
+foreach ($spec in $specs) {
+    $project = "src/$($spec.Project)/$($spec.Project).csproj"
+    if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $project)) -or
+        -not $solution.Contains("$($spec.Project)\$($spec.Project).csproj")) {
+        throw "Test project is missing from source or solution: $project"
+    }
+    Assert-JobNeeds $spec.Id $gates
+    $job = Get-WorkflowJob $spec.Id
+    if ($job -match '(?m)^    if:' -or -not $job.Contains('uses: ./test/actions/run-project') -or
+        $job -notmatch "(?m)^        job-id:\s*$([regex]::Escape($spec.Id))\s*$") {
+        throw "$($spec.Id) must run unconditionally after installer acceptance through the shared project action."
+    }
+}
+Assert-JobNeeds 'test-winui' ($gates + $specs.Id)
+Assert-JobNeeds 'summarize-tests' ($gates + $specs.Id + 'test-winui')
+$operation = Get-WorkflowJob 'test-winui'
+$build = Get-WorkflowJob 'build-solution'
+$summary = Get-WorkflowJob 'summarize-tests'
+if ($operation -match '(?m)^    if:' -or -not $operation.Contains('Get-ProjectTestReports -Root PrerequisiteTestResults') -or
+    $operation -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b' -or $operation -notmatch '-HostExe\s+test/VirtualPaper.UIOperationTest/bin/') {
+    throw 'WinUI must validate prerequisite reports and execute the prebuilt host without rebuilding.'
+}
+if (-not $build.Contains('test/VirtualPaper.UIOperationTest/bin/x64/Release/') -or
+    -not $build.Contains('test/VirtualPaper.InstallerTest/bin/Release/') -or
+    -not $build.Contains('test/actions/run-project/action.yml') -or -not $build.Contains('test/TestReportSupport.ps1')) {
+    throw 'The root-layout build artifact must include the shared action, runners and both test hosts.'
+}
+if (-not (Get-WorkflowJob 'test-installer').Contains('./test/Run-InstallerTests.ps1') -or
+    $releaseWorkflow.Contains('test-installer') -or $releaseWorkflow.Contains('./test/Run-InstallerTests.ps1')) {
+    throw 'Installer lifecycle acceptance belongs to Pre-merge Check, not Pre-release.'
+}
+if (-not $summary.Contains('./test/Summarize-TestResults.ps1') -or -not $summary.Contains('name: test-summary-') -or
+    -not $summary.Contains('UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}')) {
+    throw 'The final status must require validated raw reports; the summary bundle must use its own prefix.'
+}
+if ($build -match 'dotnet test |node .github/scripts/test-') { throw 'Application tests must run after installer acceptance.' }
+foreach ($text in @($workflow, $releaseWorkflow)) {
+    if ($text -notmatch '(?m)^  workflow_dispatch:' -or $text -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|schedule|workflow_call):') {
+        throw 'Both workflows must be manually dispatched without automatic triggers.'
+    }
+    if ($text -match '(?m)^    environment:' -or $text -match '(?m)^  approval:' -or -not $text.Contains('pr_number:')) {
+        throw 'Manual PR selection replaces the former environment approval layer.'
+    }
+}
+foreach ($text in @($workflow, $releaseWorkflow, $action)) {
+    foreach ($upload in [regex]::Matches($text, '(?ms)uses: actions/upload-artifact@v4\r?\n.*?(?=^ {2,4}- |^  [\w-]+:|\z)')) {
+        if ($upload.Value -notmatch '(?m)^\s+overwrite:\s*true\s*$') { throw 'Workflow artifact uploads must allow retries.' }
+    }
+}
+if (-not $workflow.Contains("context: 'pre-merge-check'") -or -not $releaseWorkflow.Contains("check?.state !== 'success'")) {
+    throw 'Pre-merge must report the PR head status that Pre-release requires.'
+}
+$workflowFiles = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot '.github/workflows') -File |
+    Where-Object Extension -In @('.yml', '.yaml') | ForEach-Object Name | Sort-Object)
+if (($workflowFiles -join ',') -ne 'pre-merge-check.yml,pre-release.yml') { throw 'Only two workflow files should remain.' }
+if ($releaseWorkflow -match 'force-with-lease|reset --hard|git merge origin/main') { throw 'Publishing must synchronize only version fields.' }
+if ($workflow -match '(?m)^\s*matrix\s*:') { throw 'Keep explicit parallel test jobs.' }
+$releasePrepare = Get-WorkflowJob 'prepare-metadata' $releaseWorkflow
+$releaseBuild = Get-WorkflowJob 'build-release' $releaseWorkflow
+$releasePackage = Get-WorkflowJob 'package-release' $releaseWorkflow
+$releaseSync = Get-WorkflowJob 'sync-versions' $releaseWorkflow
+$releaseDraft = Get-WorkflowJob 'draft-release' $releaseWorkflow
+Assert-JobNeeds 'build-release' @('prepare-metadata') $releaseWorkflow
+Assert-JobNeeds 'package-release' @('prepare-metadata', 'build-release') $releaseWorkflow
+Assert-JobNeeds 'sync-versions' @('prepare-metadata', 'package-release') $releaseWorkflow
+Assert-JobNeeds 'draft-release' @('prepare-metadata', 'package-release', 'sync-versions') $releaseWorkflow
+if ($releaseWorkflow -match '(?m)^  (package-installer|package-plugins|release-summary):' -or
+    -not $releasePackage.Contains('name: Build plugin package') -or
+    -not $releasePackage.Contains('name: Upload installer package') -or
+    -not $releaseDraft.Contains('$env:GITHUB_STEP_SUMMARY')) {
+    throw 'Release packaging must share one job, with the summary in the draft job.'
+}
+if (-not $releaseBuild.Contains('path: ${{ env.RELEASE_BIN_DIR }}') -or
+    -not $releasePackage.Contains('path: ${{ env.RELEASE_BIN_DIR }}') -or
+    $releaseBuild -match '(?m)^        path: src/\s*$') {
+    throw 'Release build uploads and packaging downloads must share the application output directory.'
+}
+if (-not $releasePrepare.Contains('Assert-ReleaseTagAvailable') -or
+    -not (Get-WorkflowJob 'build-release' $releaseWorkflow).Contains('needs: prepare-metadata') -or
+    $releaseSync.IndexOf('Assert-ReleaseTagAvailable') -lt 0 -or
+    $releaseSync.IndexOf('Assert-ReleaseTagAvailable') -gt $releaseSync.IndexOf('Sync-ReleaseVersion')) {
+    throw 'Release conflicts must be checked before building and rechecked before version synchronization.'
+}
+$manifestDownload = [regex]::Match($releaseDraft, '(?ms)^    - name: Download component manifest\r?\n.*?(?=^    - name:|\z)').Value
+if (-not $manifestDownload.Contains('name: app-comp-manifest') -or $manifestDownload -match '(?m)^      if:' -or
+    -not $releaseDraft.Contains('-AllowDraftRetry')) {
+    throw 'Every release must attach the manifest and allow only matching draft retries.'
+}
+foreach ($step in [regex]::Matches($releaseWorkflow, '(?ms)^    - name:.*?(?=^    - name:|^  [\w-]+:|\z)')) {
+    if ($step.Value -match 'Get-ReleaseHistory|Get-ReleaseBaseline|Assert-ReleaseTagAvailable') {
+        if (-not $step.Value.Contains('GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}')) { throw 'Release API steps require authentication.' }
+    }
+}
 
-foreach ($test in $tests) {
-    $solutionProject = $test.Project.Replace('/', '\')
-    if (-not $solution.Contains($solutionProject)) {
-        throw "Test project is missing from solution: $($test.Project)"
-    }
-    if ($workflow -notmatch "(?m)^  $([regex]::Escape($test.Id)):\s*$") {
-        throw "Test job is missing from workflow: $($test.Id)"
-    }
-    if (-not $workflow.Contains("src/$($test.Project)")) {
-        throw "Test project is not invoked by workflow: $($test.Project)"
-    }
-    if (-not $workflow.Contains($test.Result)) {
-        throw "Test result is missing from workflow summary: $($test.Result)"
-    }
-    $job = [regex]::Match($workflow, "(?ms)^  $([regex]::Escape($test.Id)):\r?\n.*?(?=^  [\w-]+:|\z)").Value
-    if (-not $job.Contains('needs: [build, smoke-test]') -or $job -match '(?m)^    if:') {
-        throw "$($test.Id) must wait for successful smoke, without dependencies on sibling regular tests."
-    }
-}
-
-$smokeJob = [regex]::Match($workflow, '(?ms)^  smoke-test:\r?\n.*?(?=^  [\w-]+:|\z)').Value
-if ($smokeJob -notmatch '(?m)^    needs: build\s*$' -or $smokeJob -match '(?m)^    if:' -or
-    -not $smokeJob.Contains('./test/Run-SmokeTests.ps1')) {
-    throw 'Installer smoke must run after build and block all regular tests on failure.'
-}
-$artifactJob = [regex]::Match($workflow, '(?ms)^  test-release-build:\r?\n.*?(?=^  [\w-]+:|\z)').Value
-if (-not $artifactJob.Contains('needs: [build, smoke-test]') -or $artifactJob -match '(?m)^    if:') {
-    throw 'Build artifact tests must run in the parallel regular-test phase after smoke.'
-}
-$buildJob = [regex]::Match($workflow, '(?ms)^  build:\r?\n.*?(?=^  [\w-]+:|\z)').Value
-if ($buildJob -match 'dotnet test |node .github/scripts/test-') {
-    throw 'Runtime regression tests must not execute in the build prerequisite before smoke.'
-}
-$regularNeeds = 'needs: [build, smoke-test, test-release-build, ' + (($tests.Id) -join ', ') + ']'
-$summaryNeeds = 'needs: [approval, build, smoke-test, test-release-build, ' + (($tests.Id) -join ', ') + ', test-ui-operation]'
-if (-not $workflow.Contains($summaryNeeds)) {
-    throw 'test-summary must include smoke, artifact checks, seven regular test jobs and WinUI operation tests.'
-}
-$operationJob = [regex]::Match($workflow, '(?ms)^  test-ui-operation:\r?\n.*?(?=^  [\w-]+:|\z)').Value
-if (-not $operationJob.Contains($regularNeeds) -or $operationJob -match '(?m)^    if:') {
-    throw 'WinUI operation tests must run only after smoke and all parallel regular test jobs succeed.'
-}
-$operationProject = 'test/VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
-if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $operationProject)) -or
-    -not $solution.Contains($operationProject.Replace('/', '\'))) {
-    throw 'WinUI operation test project must exist and be included in the solution.'
-}
-if (-not $operationJob.Contains('./test/Run-UIOperationTests.ps1') -or
-    -not $operationJob.Contains('Verify prerequisite test host health') -or
-    -not $workflow.Contains('UI_OPERATION_RESULTS_VALID:-false')) {
-    throw 'WinUI operation results must be executed and required by the final status check.'
-}
-if (-not $workflow.Contains('. ./test/UIOperationTestSupport.ps1') -or
-    -not $workflow.Contains('Get-UIOperationReportOutcome $report') -or
-    -not $workflow.Contains('Regular tests passed; WinUI skipped [SKIPPED]')) {
-    throw 'Environment skips must be validated and reported distinctly from passing WinUI acceptance.'
-}
 & (Join-Path $repositoryRoot 'test/Test-UIOperationTestSupport.ps1')
-if (-not $workflow.Contains('Assert-SmokeReportPassed $report') -or
-    -not $workflow.Contains('SMOKE_RESULTS_VALID:-false')) {
-    throw 'Final status must require a passing install/launch/uninstall report.'
-}
-$releaseWorkflow = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../workflows/auto-version-release.yml') -Raw
-foreach ($spec in @(
-    @{ Text = $workflow; Environment = 'ci-check-approval'; FirstJob = 'build' },
-    @{ Text = $releaseWorkflow; Environment = 'publish-approval'; FirstJob = 'prepare' }
-)) {
-    $approval = [regex]::Match($spec.Text, '(?ms)^  approval:\r?\n.*?(?=^  [\w-]+:|\z)').Value
-    $firstJob = [regex]::Match($spec.Text, "(?ms)^  $($spec.FirstJob):\r?\n.*?(?=^  [\w-]+:|\z)").Value
-    if (-not $approval.Contains("environment: $($spec.Environment)") -or
-        $firstJob -notmatch '(?m)^    needs: approval\s*$') {
-        throw "The $($spec.FirstJob) job must wait for the $($spec.Environment) approval environment."
-    }
-    if ($approval -match 'actions/checkout|secrets\.|contents: write' -or $spec.Text -match '(?m)^  workflow_dispatch:') {
-        throw 'Approval must precede repository work, and event-triggered runs must remain visible while awaiting review.'
-    }
-    if (-not $approval.Contains("rule.type === 'required_reviewers' && rule.reviewers?.length > 0")) {
-        throw 'Missing reviewer rules must block execution, rather than silently allowing an unprotected environment.'
-    }
-}
-if (-not $releaseWorkflow.Contains('./test/Run-SmokeTests.ps1')) {
-    throw 'Release and pre-publish workflows must share the installer smoke runner.'
-}
-& (Join-Path $repositoryRoot 'test/Test-SmokeTestSupport.ps1')
-if ($workflow -match '(?m)^\s*matrix\s*:') {
-    throw 'The regular test workflow must keep explicit jobs and must not use a matrix.'
-}
-$redundantCoverageCommands = [regex]::Matches($workflow, '--collect:"Code Coverage;Format=Cobertura"').Count
-if ($redundantCoverageCommands -ne 0) {
-    throw 'The shared runsettings already enables Code Coverage; command-line --collect is redundant.'
-}
-$coverageSettings = [regex]::Matches($workflow, '--settings src/test\.runsettings').Count
-if ($coverageSettings -ne $tests.Count) {
-    throw "Expected the shared coverage settings in every regular test job; found $coverageSettings."
-}
-if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot 'src/test.runsettings'))) {
-    throw 'Shared test/coverage settings file is missing: src/test.runsettings'
-}
-if (-not $workflow.Contains("-notmatch '[\\/]In[\\/]'")) {
-    throw 'Coverage summary must exclude the test platform In staging copies.'
-}
-
-Write-Host '[OK] Install/launch/uninstall -> parallel regular tests -> real UI; failures block later phases, and UI environment skips stay explicit.'
+& (Join-Path $repositoryRoot 'test/Test-InstallerTestSupport.ps1')
+& (Join-Path $repositoryRoot 'test/Test-InstallerProcessSupport.ps1')
+& (Join-Path $repositoryRoot 'test/Test-ReportSupport.ps1')
+& (Join-Path $repositoryRoot 'test/Test-ReleaseVersion.ps1')
+& (Join-Path $repositoryRoot 'test/Test-ReleaseMetadata.ps1')
+Write-Host '[OK] Manual PR checks -> build -> installer lifecycle -> parallel project tests -> prebuilt WinUI acceptance -> validated summary.'

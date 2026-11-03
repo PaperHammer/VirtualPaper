@@ -15,7 +15,7 @@
               </Include>
               <Exclude>
                 <ModulePath>.*\.Test\.dll$</ModulePath>
-                <ModulePath>.*VirtualPaper\.SmokeTest\.dll$</ModulePath>
+                <ModulePath>.*VirtualPaper\.InstallerTest\.dll$</ModulePath>
               </Exclude>
             </ModulePaths>
             <Attributes>

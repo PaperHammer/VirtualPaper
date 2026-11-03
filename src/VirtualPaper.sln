@@ -65,7 +65,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.ReleaseBuildDa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebBackdrop", "WebBackdrop\WebBackdrop.csproj", "{E6144434-C2DC-4211-8EA3-44B60F66F3A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.SmokeTest", "VirtualPaper.SmokeTest\VirtualPaper.SmokeTest.csproj", "{36103086-08D6-4289-8969-20B957F6ACB5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VirtualPaper.InstallerTest", "..\test\VirtualPaper.InstallerTest\VirtualPaper.InstallerTest.csproj", "{36103086-08D6-4289-8969-20B957F6ACB5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workloads.Entry", "Workloads.Entry\Workloads.Entry.csproj", "{48C9A207-DC97-430D-94F8-E7AA52ACDC9B}"
 EndProject

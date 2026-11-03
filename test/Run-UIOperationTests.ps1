@@ -3,6 +3,7 @@ param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
     [string]$ReportPath = (Join-Path ([IO.Path]::GetTempPath()) ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
     [string]$CoreExe,
+    [string]$HostExe,
     [ValidatePattern('^[A-Za-z]+$')][string]$Module,
     [ValidateRange(30, 900)][int]$TimeoutSeconds = 180,
     [switch]$NoBuild
@@ -44,9 +45,13 @@ if (-not (Test-Path -LiteralPath $CoreExe)) { throw "Core executable not found: 
 if (-not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $CoreExe) 'Plugins/UI/VirtualPaper.UI.exe'))) {
     throw 'Production UI executable is missing next to Core'
 }
-$targetDll = (dotnet msbuild $projectPath -getProperty:TargetPath "-p:Configuration=$Configuration" -p:Platform=x64 | Select-Object -Last 1).Trim()
-if ($LASTEXITCODE -ne 0) { throw 'Cannot locate UI operation test host' }
-$targetExe = [IO.Path]::ChangeExtension($targetDll, '.exe')
+if ($HostExe) {
+    $targetExe = [IO.Path]::GetFullPath($HostExe)
+} else {
+    $targetDll = (dotnet msbuild $projectPath -getProperty:TargetPath "-p:Configuration=$Configuration" -p:Platform=x64 | Select-Object -Last 1).Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot locate UI operation test host' }
+    $targetExe = [IO.Path]::ChangeExtension($targetDll, '.exe')
+}
 if (-not (Test-Path -LiteralPath $targetExe)) { throw "Host not found: $targetExe" }
 $hostCommonPath = Join-Path (Split-Path -Parent $targetExe) 'VirtualPaper.Common.dll'
 $hostCommonHash = (Get-FileHash -LiteralPath $hostCommonPath -Algorithm SHA256).Hash

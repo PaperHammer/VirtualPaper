@@ -237,17 +237,21 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC
 业务集成测试，不作为真实 UI 交互用例迁入本项目。
 
-CI 顺序为：构建准备 → **安装／拉起／卸载 smoke** → **七项常规测试并行** → **WinUI 环境预检／操作测试** → 汇总。
+CI 顺序为：构建准备 → **安装生命周期验收** → **七项常规测试并行** → **WinUI 环境预检／操作测试** → 汇总。
 三个测试阶段串行：任一阶段失败，后续阶段不运行。产物完整性测试与七项常规测试并行，Web 播放器脚本检查随 UI 单元测试执行。
-预发布和发布共用 `Run-SmokeTests.ps1`，主程序经正式 `ShowUI` RPC 拉起稳定的 UI 窗口，不再直接启动 UI.exe 兜底，也不在 smoke 中运行下载、单例、播放器或屏保检查。
-smoke 使用唯一临时安装目录和隔离应用数据；启动失败仍尝试卸载，卸载残留也判失败，报告包含 Install／Launch／Uninstall 三项。
-安装包测试会进行实际系统安装／卸载，应在可丢弃的 Windows CI 机器上运行；本机仍遵守不执行注册表修改测试的约束。
+Pre-merge Check 使用 `Run-InstallerTests.ps1`，从安装目录启动主程序，由首次运行逻辑自行打开 UI；验证窗口持续响应三秒，再通过窗口关闭和正式退出 RPC 正常结束前后台。强制清理仅用于失败恢复，不能算验收通过。Pre-release 不执行安装生命周期验收。
+安装验收使用唯一临时安装目录和隔离应用数据；启动失败仍尝试卸载，卸载残留也判失败，报告包含 Install／Open／Uninstall 三项。
+有交互桌面时，测试操作真实英文安装向导：接受许可、下一步、安装、完成；卸载时确认移除、保留用户数据并确认完成。仅操作当前安装程序及其子进程的窗口，未知弹窗或超时判失败。没有交互桌面时使用静默安装和卸载，Open 明确记为 Skipped；不会把未打开的 UI 记为通过。
+安装后检查 Core／UI 必要文件、包与程序版本一致、开始菜单快捷方式及卸载注册信息；卸载后检查文件、进程、快捷方式和注册信息残留。两种模式均保留三阶段报告和安装日志；有桌面时另有向导操作记录。
+安装包测试会进行实际系统安装／卸载，应在可丢弃的 Windows CI 机器上运行；发现同 AppId 的已有安装或开始菜单快捷方式会拒绝执行。本机仍遵守不执行注册表修改测试的约束。
 
 ```powershell
 # 在可丢弃的 Windows 安装验收机器上执行：
-./test/Run-SmokeTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Smoke/smoke-results.json
+./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
 # 以下只验证阶段顺序、失败阻断和报告契约，不安装、不启动 UI、不写注册表：
-./test/Test-SmokeTestSupport.ps1
+./test/Test-InstallerTestSupport.ps1
+# 有桌面时，用不修改系统的临时向导验证 UIA 操作、子进程接管和超时恢复：
+./test/Test-InstallerWizard.ps1
 ./.github/scripts/validate-test-workflow.ps1
 ```
 

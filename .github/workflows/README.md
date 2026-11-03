@@ -1,222 +1,120 @@
-# CI/CD 工作流说明
+# CI/CD 工作流
 
-## 文件总览
+只保留两个工作流，均仅使用 `workflow_dispatch`。提交代码、创建或更新 PR、增删标签、合并 PR 都不会自动创建运行。
 
-| 文件                                | 触发时机                              | 职责                                 |
-| ----------------------------------- | ------------------------------------- | ------------------------------------ |
-| `pre-publish-branch-ci-check.yml` | push / PR → dev · release · bugfix，等待人工批准 | 安装冒烟 → 并行单元测试 → 真实 UI 测试 |
-| `branch-protection.yml`           | PR → main                            | 校验源分支合法性                     |
-| `auto-version-release.yml`        | PR 合并到 main，等待人工批准              | 版本递增 · 打包 · 冒烟测试 · 发布 |
-| `manual-ml-integration.yml`       | 手动触发                              | ML 模型集成测试                    |
-
----
-
-## 整体流程
-
-```
- feature/* ──►  dev  ──┐
-                        │  CI 通过后创建 PR → main
- release   ──────────── ┤
-                        │
- bugfix    ──────────── ┘
-                        │
-                        ▼
-                       main  ──►  批准后构建打包  ──►  草稿 Release
-                                                         │
-                                                    人工验证后发布
-```
-
----
-
-## 人工批准入口与一次性配置
-
-提交／PR 更新和合并仍会自动生成 workflow run，但第一个 job 会等待人工批准。无需填写 PR 编号或点击 `Run workflow`。
-
-仓库管理员需要在 [Settings → Environments](https://github.com/PaperHammer/VirtualPaper/settings/environments) 创建两个环境：
-
-| Environment | 用途 | Required reviewers |
+| 文件 | 手动输入 | 职责 |
 | --- | --- | --- |
-| `ci-check-approval` | CI 构建和全部测试开始前批准 | 添加 `PaperHammer` |
-| `publish-approval` | 发布版本准备、构建与打包开始前批准 | 添加 `PaperHammer` |
+| `pre-merge-check.yml` | 未合并的 PR 编号；是否包含模型集成测试 | 检查来源与版本标签 → 构建 → 安装生命周期验收 → 并行测试 → 真实 UI 验收 → 回写 PR 状态 |
+| `pre-release.yml` | 已合并的 `dev → main` PR 编号 | 验证检查结果 → 计算版本 → 构建打包 → 同步版本字段 → 生成 Draft Release |
 
-在每个环境勾选 **Required reviewers**，添加审批人并点击 **Save protection rules**。保留 **Prevent self-review** 为未勾选，否则不能批准自己触发的流程。
-不要只创建空环境：GitHub 的环境审批规则配置在仓库设置中，YAML 不能直接声明审批人。若环境未配置审批人，工作流会明确失败，不进入构建或发布。
+## 日常操作
 
-日常操作：打开本次 Actions 运行 → **Review deployments** → 勾选对应环境 → **Approve and deploy**。拒绝审批会阻断后续流程；等待期间不占用构建 runner。提交新代码仍会按原并发规则取消旧 CI，最新运行需要重新批准。
-发布批准仅放行构建和草稿创建；正式发布仍需在 Releases 中人工操作。
-如果发布等待期间 `main` 已有新提交，旧发布运行在批准后会阻断，请批准最新合并 PR 对应的运行，避免用旧快照更新分支版本。
+1. 功能／修复分支向 `dev` 创建 PR。
+2. Actions → **Pre-merge Check** → **Run workflow**，填写 PR 编号。
+3. 检查成功后合入 `dev`。
+4. 创建 `dev → main` PR，选择一个版本标签，再手动运行 **Pre-merge Check**。
+5. 检查成功后合入 `main`。
+6. Actions → **Pre-release** → **Run workflow**，填写刚合并的 PR 编号。
+7. 下载 Draft Release 附件验证，再手动正式发布。
 
-参见 [GitHub 环境配置](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/manage-environments) 与 [审批入口说明](https://docs.github.com/en/actions/how-tos/deploy/configure-and-manage-deployments/review-deployments)。
+`Run workflow` 表单中的分支用于选择工作流定义；测试和发布内容由填写的 PR 编号决定，不会把表单分支的 HEAD 误当作被测提交。建议从默认分支运行。
+不再使用 `ci-check-approval`、`publish-approval` Environment，也无需再批准 Deployment。
 
----
+工作流文件必须先进入默认分支，GitHub 才会显示手动入口。首次迁移时需由管理员安排旧必需检查与新检查的切换，避免等待已删除的检查。
+参见 [GitHub 手动运行工作流](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)。
 
-## 工作流一：Pre-publish CI
+## Pre-merge Check
 
-> **文件：** `pre-publish-branch-ci-check.yml`
-> **触发：** push 或 PR 到 `dev` / `release` / `bugfix`，在 `Await CI Approval` 等待批准
+仅支持同仓库 PR：
 
-对预发布分支进行持续集成，确保代码在合并到 main 之前质量达标。
+- 合入 `main`：只接受 `dev`，四个版本标签必须恰好选择一个。
+- 合入 `dev`：接受 `main`、`dev` 以外的功能／修复分支，不要求版本标签。
+- 其他目标分支和 fork PR 拒绝执行。
 
-**执行内容：**
+每次手动运行都重新读取来源、标签、PR head 和目标分支，验证 GitHub 的合并快照对应双方当前提交。所有构建和测试固定使用这份合并快照。
 
-人工批准后构建整个解决方案（Release 配置），之后三个测试阶段严格串行：
+测试阶段严格串行：
 
-1. **Smoke：安装 → 拉起 → 卸载。** 编译真实 Inno Setup 安装包，静默安装到临时目录，启动 Core 并通过正式 `ShowUI` RPC 拉起稳定的 UI 窗口，最后静默卸载并检查进程与文件残留。
-2. **并行单元测试。** 保留 7 项常规测试独立并行：Core · UI · StaticImg · WebBackdrop · UIComponent · ML · Shader；产物完整性校验另行并行，Web 播放器脚本检查随 UI 单元测试运行。
-3. **真实 UI 测试。** 前两阶段全部成功后，运行 `test/VirtualPaper.UIOperationTest` 中的真实 WinUI 交互测试。
+1. **安装生命周期验收**：使用实际安装包安装 → 从安装目录启动 Core，由首次运行自动打开 UI → 正常关闭 UI 和退出 Core → 运行实际卸载程序。恢复时强杀、文件或进程残留均判失败。 有桌面时操作真实安装／卸载向导；无桌面时静默验收文件、版本、快捷方式、注册信息和卸载结果，窗口打开明确跳过。
+2. **并行测试**：Core、UI、StaticImg、WebBackdrop、UIComponent、ML、Shader 七个独立 job；构建产物检查另行并行，Web 播放器脚本检查随 UI job 执行。
+3. **真实 UI 交互**：前两阶段全部通过后，运行 `test/VirtualPaper.UIOperationTest`。会启动真实前后台进程；无可用交互桌面时明确标为 `Skipped`，不冒充 UI 验收通过。锁屏、注册表修改测试保持跳过。
 
-任一阶段失败，后续测试阶段不启动。smoke 的卸载属于必要清理，即使安装／拉起失败也会尝试执行；三个步骤的结果都写入 `test-results-smoke`。不再在 smoke 中运行下载、单例、独立 UI 守卫、播放器或屏保测试，也不直接启动 UI.exe 来掩盖前后台链路失败。
+任一阶段失败，后续测试阶段不启动。报告仍会收集；缺失、零执行、失败、中止或异常的报告会使最终检查失败。普通单元测试继续保留七份 Cobertura 覆盖率。
 
-七项常规测试使用共享 `src/test.runsettings` 生成 Cobertura 覆盖率数据。汇总始终检查安装冒烟、常规 TRX 和 UI 报告，写入 commit status `ci-check/pre-publish-tests`；失败后的报告收集不属于后续测试阶段。
+八个项目 job 共用 `test/actions/run-project` 和 `test/Run-ProjectTests.ps1`，项目与报告映射由 `test/TestReportSupport.ps1` 维护，继续独立并行。汇总由 `test/Summarize-TestResults.ps1` 完成，各项目与最终汇总复用同一份 TRX 校验逻辑。
 
-Core 测试中的 `Workflow` 分类覆盖配置落盘、壁纸入库应用删除及近期功能的业务集成链路。
-WinUI 操作测试包含特效页面组件用例，以及真实 Core + UI 的导航动画设置用例：
-经跨进程 UI Automation 修改开关，验证后台 RPC/JSON 保存、UI 进程重开回显及正常退出。
-各进程共用隔离的测试会话、配置与通信名称；测试日志随报告保留。
-以 JSON 上传 `test-results-ui-operation`，不计入七项常规测试的覆盖率。
-它需要可用的 Windows 图形会话；脚本在启动测试前检查会话、输入桌面、显示区域及 Explorer 桌面。
-不满足时生成明确的 `Skipped` 报告，CI 允许继续，最终状态注明 `Regular tests passed; WinUI skipped [SKIPPED]`。
-跳过不计为 UI 验收通过。报告缺失、不完整及测试启动后的失败、超时仍阻断最终检查。
+`build-output` 保留仓库根目录下的 `src/`、共享测试入口及 WinUI 宿主的 Release 产物，所有消费端下载到仓库根目录。真实 UI 阶段使用 `-NoBuild -HostExe` 运行这批宿主与应用二进制，不再重新构建解决方案。
 
-常规 ML job 排除需要真实模型推理的 `Integration` 分类。
+原始报告保持 `test-results-*` 前缀，汇总包改为 `test-summary-*`；下载原始报告时不会再次下载汇总包。上传明确设置 `overwrite: true`，支持在同一次运行中重跑已上传过报告的 job；汇总只读取各项目的指定报告路径，不递归吞入其他包。
 
-该 status 是合并到 main 的**必需检查项**之一。
+默认排除 ML 的 `Integration` 分类。勾选 **Also run real model inference tests** 可合并执行；需要对应模型文件，模型缺失时由现有测试明确跳过，不自动下载。
+也可本地单独运行：
 
----
-
-## 工作流二：分支保护
-
-> **文件：** `branch-protection.yml`
-> **触发：** 创建 / 更新 PR → `main`
-
-只允许 `dev`、`release`、`bugfix` 三个分支向 main 发起 PR，其他分支一律拦截。
-
-| 源分支      | 版本变化    | 说明               |
-| ----------- | ----------- | ------------------ |
-| `release` | Minor +1    | 0.4.x.x → 0.5.0.0 |
-| `dev`     | Build +1    | 0.5.2.x → 0.5.3.0 |
-| `bugfix`  | Revision +1 | 0.5.3.0 → 0.5.3.1 |
-
----
-
-## 工作流三：自动发布
-
-> **文件：** `auto-version-release.yml`
-> **触发：** PR 成功合并到 `main`（标题不含 `[skip ci]`），在 `Await Publish Approval` 等待批准
-
-### 更新类型判定
-
-工作流根据 PR 标签自动区分两种更新类型：
-
-| 类型                     | 判定条件                    | 版本号变化                                                   |
-| ------------------------ | --------------------------- | ------------------------------------------------------------ |
-| **常规安装式更新** | 无 `update-plugin-*` 标签 | 按分支递增（feature→minor, daily→build, bugfix→revision） |
-| **重启式更新**     | 含 `update-plugin-*` 标签 | 版本号不变，打包插件                                         |
-
-### 执行流程
-
-```
-approval
-  │  等待 publish-approval 的 Required reviewers 批准
-  ▼
-prepare
-  │  计算新版本号，记录各分支 SHA，捕获 PR 标题和正文
-  ▼
-build
-  │  MSBuild Release 构建，产物上传为 Artifact
-  ▼
-package
-  │  InnoSetup 编译安装包，上传为 Artifact（保留 30 天）
-  ▼
-smoke_test
-  │  与预发布 CI 共用 test/Run-SmokeTests.ps1
-  │  静默安装 → Core 经正式 RPC 拉起稳定的 UI → 静默卸载／残留检查
-  │  启动失败也尝试卸载；三个步骤全部成功才允许后续发布
-  │  输出结构化 JSON、安装／卸载日志和隔离应用数据
-  ▼
- ┌─────────────────────────────────────────────────────────────┐
- │  以下阶段根据更新类型和测试结果有条件执行（见下表）            │
- └─────────────────────────────────────────────────────────────┘
-  ▼
-package_restart_update （仅重启式更新）
-  │  打包插件 zip + manifest，上传为 Artifact
-  ▼
-bump （仅常规安装式更新）
-  │  更新 csproj / InnoSetup / README badge 版本号并提交到 main
-  ▼
-sync （仅常规安装式更新）
-  │  将版本文件同步到 release / dev / bugfix 分支
-  ▼
-summary
-  │  打印构建摘要
-  ▼
-release（草稿）
-     创建 Draft GitHub Release
-     - Tag 和标题：v{版本号}
-     - 正文：本次 PR 的描述
-     - 附件：安装包 exe（+ 插件包，如有）
-     - 状态：草稿，不公开，等待人工验证后发布
+```powershell
+dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --filter "TestCategory=Integration" --settings src/test.runsettings
 ```
 
-### 各阶段执行条件
+输入已关闭／已合并 PR 或 fork PR 时直接拒绝，不修改此前检查状态。合法开放 PR 开始检查时，在 PR head SHA 上写入 `pre-merge-check: pending`；最终重新核对 PR 提交、目标分支和版本标签，再写入成功／失败。
+该结果属于 PR 提交，不属于手动表单所选分支。[GitHub commit status API](https://docs.github.com/en/rest/commits/statuses) 支持以 SHA 和 context 记录该检查。
 
-| 阶段                       | 常规安装式更新           | 重启式更新                |
-| -------------------------- | ------------------------ | ------------------------- |
-| `approval`               | 等待人工批准             | 等待人工批准              |
-| `prepare`                | ✅ 始终执行              | ✅ 始终执行               |
-| `build`                  | ✅ 始终执行              | ✅ 始终执行               |
-| `package`                | ✅ 始终执行              | ✅ 始终执行               |
-| `smoke_test`             | ✅ 始终执行              | ✅ 始终执行               |
-| `package_restart_update` | ❌ 始终跳过              | ✅ smoke_test 通过时执行  |
-| `bump`                   | ✅ smoke_test 通过时执行 | ❌ 始终跳过               |
-| `sync`                   | ✅ bump 成功时执行       | ❌ 始终跳过               |
-| `summary`                | ✅ 全部成功时执行        | ✅ 全部成功时执行         |
-| `release`                | ✅ summary 成功时执行    | ✅ summary 成功时执行     |
-| `rollback`               | ✅ sync 阶段失败时触发   | ❌ 始终跳过（无版本同步） |
+更新 PR 提交后必须手动重跑，原提交的通过结果不能满足新提交的必需检查。增删标签不自动创建运行，也不会自动撤销同一提交已有的通过结果，因此修改标签后也必须手动重跑；发布入口会再次校验当前标签。
+测试进行期间若 PR 内容、目标提交或版本选择发生变化，本轮不能通过。手动取消后的 pending 结果同样不能用于合并，需要重新运行。
 
-### 失败处理
+## 版本标签
 
-| 失败阶段                   | 常规安装式更新                                                  | 重启式更新                       |
-| -------------------------- | --------------------------------------------------------------- | -------------------------------- |
-| `build` / `package`    | 流程终止，无后续操作                                            | 流程终止，无后续操作             |
-| `smoke_test`             | 流程终止，不触发版本同步和 draft                                | 流程终止，不触发插件打包和 draft |
-| `bump`                   | 流程终止，不触发 sync                                           | —                               |
-| `sync`                   | **触发 rollback**，回滚 main + 三个预发布分支到 CI 前 SHA | —                               |
-| `package_restart_update` | —                                                              | 流程终止，不触发 draft           |
+| 标签 | 增长位置，右侧归零 | 从 `0.5.2.0` 得到 |
+| --- | --- | --- |
+| `version:major` | 第一位 | `1.0.0.0` |
+| `version:minor` | 第二位 | `0.6.0.0` |
+| `version:build` | 第三位 | `0.5.3.0` |
+| `version:revision` | 第四位 | `0.5.2.1` |
 
----
+这些标签用于产品四段版本。无标签或多个标签均拒绝发布，不再按来源分支计算增长位。
+独立插件更新继续使用 `update-plugins` 或 `update-plugin-ui/playerweb/scrsaver/ml/shaders`，沿用现有插件 build number 与客户端兼容的 tag 格式。
+带插件更新标签时产品版本保持不变、不提交产品版本同步；`dev → main` PR 仍需通过四选一版本标签校验。
 
-## 工作流四：手动 ML 集成测试
+## Pre-release
 
-> **文件：** `manual-ml-integration.yml`
-> **触发：** GitHub Actions 页面手动运行
+只接受已合并的同仓库 `dev → main` PR，要求其 head 已有对应本 PR 和当前版本标签的成功 `pre-merge-check` 状态，且 `main` 仍指向该 PR 的合并提交。仅关闭未合并、旧 PR、测试未通过或版本标签不合法均阻断。
 
-使用仓库内模型运行 `TestCategory=Integration` 测试。测试结果、TRX 与覆盖率文件保留 7 天，不阻塞常规分支 CI。
+1. 从固定合并提交的 `AssemblyVersion` 和所选标签计算目标版本；插件更新保持产品版本不变。读取已发布 Release 的组件清单，结合历史 Release 标题／插件 Tag 中的构建号计算新的 `YYMMRxx`；Draft 中已使用的编号也保留。构建前检查目标 Tag 和 Release 是否冲突。
+2. 编译前临时修改 `VirtualPaper.csproj` 的版本，制作安装包前临时修改 `InnoSetup/setup.iss` 的版本。产物使用目标版本。
+3. 校验构建产物，制作安装包；需要插件包时生成现有插件补丁包和 manifest。发布流程不执行安装／打开／卸载，安装生命周期验收保留在 Pre-merge Check。
+4. 版本同步前再次检查目标 Tag 和 Release。常规发布只更新 `main`、`dev` 的以下字段，使用 `git push --atomic` 同时提交两个分支；任一分支推送被拒绝则两者都不更新：
+   - `src/VirtualPaper/VirtualPaper.csproj`：`AssemblyVersion`
+   - `InnoSetup/setup.iss`：`MyAppVersion`、`MyAppVersionText`
+   - `README.md`：版本徽章
+5. 全部成功后创建 Draft Release，正文沿用 PR 描述，所有发布均附带安装包和完整 `app_comp_manifest.json`；插件发布额外附带插件补丁。Tag 指向实际同步后的 `main` 提交；插件更新指向原合并提交。正式发布仍需人工完成。
 
----
+工作流保留五个 job：`prepare-metadata → build-release → package-release → sync-versions → draft-release`。插件发布跳过版本同步，打包成功后直接进入 Draft；安装包和可选插件包共用同一个打包 job。构建仍独立，打包失败可单独重跑，无需重新编译。汇总写入 Draft job 的 Actions Summary，不再单独启动 job。
 
-## 发版操作步骤
+构建 artifact 仅包含主程序 Release 输出目录（含所有插件），打包 job 下载到相同目录；不再上传整个 `src/`。组件清单生成一次，发布附件与插件补丁均复用同一份文件。
 
+组件清单通过 `GITHUB_TOKEN` 认证读取，网络、权限、下载或解析失败均停止发布。普通发布为所有随安装包交付的插件更新构建号；插件发布只更新选中插件，其余沿用上个正式发布的清单。历史 Release 缺少清单时，若标题／插件 Tag 留有构建号，可先做一次完整发布建立基线；不能直接发插件补丁。若构建号也无法确认，需补齐历史原始清单，避免猜测版本。
+
+构建号保持两位月内序号，达到 `R99` 后本月停止继续分配，避免旧客户端按字符串比较时把 `R100` 误判为更旧；跨月重新从 `R01` 开始。构建机时间落后于历史编号也会报错。
+
+版本同步保留 `dev` 在打包期间新增的业务代码和文档；不再全量合并 `main`，也不强制重置、覆盖分支。若远端出现并发提交、版本字段异常或推送权限不足，停止同步和 Draft 创建。
+`.sln` 中没有产品版本，不需要修改。`app_comp_manifest.json` 属于生成产物。
+
+若同步成功但后续 Draft 创建失败，使用原运行的 **Re-run failed jobs** 继续；整个流程重新运行会被“main 已推进”的检查阻断，避免二次递增。上传 artifact 支持覆盖同次运行的旧产物；组件清单和发布包保留 30 天，完整编译产物保留 1 天。已有 Tag 或不匹配的 Release 会阻断；上传中断留下的 Draft 仅在 Tag、标题和目标提交均匹配时允许续传。检查与远端写入之间仍不是原子事务，期间请勿手动创建相同 Tag 或发布该 Draft。
+不再提供自动强制回滚或独立手动回滚 workflow。
+
+## 仓库配置
+
+以下是需要在 GitHub 设置中完成的配置，本地 YAML 修改不会自动替你修改远端规则：
+
+- `main`、`dev` 启用 **Require a pull request before merging**，必需状态统一选择 `pre-merge-check`。
+- 移除旧必需检查 `Check Source Branch`、`ci-check/pre-publish-tests`，否则新流程不会提供它们，PR 会一直等待。
+- 建议要求分支与目标分支保持最新，目标分支变化后重新运行检查。
+- `RELEASE_PAT` 用于机器人提交版本字段，需要能按仓库规则更新 `main`、`dev`。没有权限时同步会失败，不会强推绕过保护。
+- 四个固定 `version:*` 标签需在仓库创建一次。
+- `release`、`bugfix` 等旧远端分支不会被此次本地修改删除，可确认无未合并内容后另行清理。
+
+## 本地验证
+
+```powershell
+pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1
 ```
-1. 在 dev / release / bugfix 分支完成开发
-2. 在 Actions 批准 CI，确认全绿（ci-check/pre-publish-tests）
-3. 创建 PR → main，等待审核通过并合并
-4. 在 Actions 批准发布，然后流程执行：构建 → 打包 → 冒烟测试 → 提交版本号 → 创建草稿 Release
-5. 在 GitHub Releases 页面下载草稿附件，本地安装验证
-6. 确认无误后点击 Edit → Publish release 正式发布
-```
 
----
-
-## 分支保护规则（需手动配置）
-
-> Settings → Branches → Add branch protection rule → `main`
-
-```
-☑ Require a pull request before merging
-☑ Require status checks to pass before merging
-    必需检查：
-    - ci-check/pre-publish-tests
-    - Check Source Branch
-☑ Include administrators
-```
+包含工作流依赖、共享测试入口、TRX／覆盖率校验、重跑报告隔离、UI 环境跳过、安装生命周期验收报告、发布元数据和版本同步契约检查；使用隔离 Git 仓库及模拟 GitHub 响应，不安装应用、不锁屏、不修改注册表、不推送远端仓库。

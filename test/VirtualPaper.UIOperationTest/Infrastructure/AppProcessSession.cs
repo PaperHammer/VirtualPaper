@@ -47,6 +47,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             NavigationAnimationsEnabled = true, Language = "en-US"
         };
         configure?.Invoke(settings);
+        UiTestContext.Check(!settings.IsRunningLock, "Desktop locking is excluded from process tests.");
         Directory.CreateDirectory(settings.WallpaperDir);
         File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, SettingsContext.Default.Settings));
         File.WriteAllText(Constants.CommonPaths.AppRulesPath, "[]");
@@ -189,6 +190,10 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         context.Evidence["ShowUiRequests"] = _showUiRequests;
         context.Evidence["ProcessesExitedNormally"] = true;
         context.Evidence["UnitTestBehaviorOverridesEnabled"] = Constants.IsTestMode;
+        context.Evidence["SkippedSystemOperations"] = new[] {
+            "Session locking: excluded by user",
+            "Registry writes, startup registration and persisted system wallpaper refresh: excluded by user"
+        };
         context.Evidence["RuntimeErrors"] = Directory.EnumerateFiles(Constants.CommonPaths.LogDir, "*.txt", SearchOption.AllDirectories)
             .SelectMany(path => File.ReadLines(path).Skip(_previousLogLines.GetValueOrDefault(path)))
             .Where(line => line.Contains("|ERROR|", StringComparison.Ordinal)).Distinct().ToArray();

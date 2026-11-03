@@ -89,7 +89,8 @@ internal static class NativeFileDialog {
                 if (FindFilename(dialog) == null) return;
             }
             catch (ElementNotAvailableException) { return; }
-            catch (COMException ex) when (ex.HResult == unchecked((int)0x80010012) && pickerWindow != 0) {
+            catch (COMException ex) when (pickerWindow != 0 &&
+                (ex.HResult == unchecked((int)0x80010012) || ex.HResult == unchecked((int)0x80010108))) {
                 // The picker broker can exit while UIA traverses its retiring
                 // provider. Still require its actual native window to close.
             }

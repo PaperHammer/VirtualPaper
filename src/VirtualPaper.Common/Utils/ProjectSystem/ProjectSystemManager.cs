@@ -12,14 +12,14 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
 
         public string ProjectRoot { get; }
         public ProjectTree Tree { get; }
-        public DocumentManager Documents { get; }
+        public DocumentManager OpenDocuments { get; }
         public ProjectWatcher Watcher { get; }
 
         public ProjectSystemManager(string root) {
             ProjectRoot = root;
 
             Tree = new ProjectTree(root);
-            Documents = new DocumentManager();
+            OpenDocuments = new DocumentManager();
             Watcher = new ProjectWatcher(root);
             Watcher.Created += OnCreated;
             Watcher.Deleted += OnDeleted;
@@ -53,10 +53,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
         internal void OnRenamed(string oldPath, string newPath) {
             Tree.Rename(oldPath, newPath);
 
-            // A rename notification can arrive after the destination has already been
-            // deleted or renamed again. Keep the tree notification but skip its stamp.
-            try { Documents.Rename(oldPath, newPath); }
-            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { }
+            OpenDocuments.Rename(oldPath, newPath);
 
             Raise(ProjectChangeType.Renamed, newPath, oldPath);
         }
@@ -70,7 +67,7 @@ namespace VirtualPaper.Common.Utils.ProjectSystem {
         }
 
         private void ProcessModified(string path) {
-            var document = Documents.Get(path);
+            var document = OpenDocuments.Get(path);
 
             /*
              * 文件没有打开

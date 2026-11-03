@@ -120,7 +120,7 @@ public class ProjectSystemTests {
         string path = Path.Combine(_testRoot, "open.txt");
         File.WriteAllText(path, "old");
         var manager = new ProjectSystemManager(_testRoot);
-        Document document = manager.Documents.Open(path);
+        Document document = manager.OpenDocuments.Open(path);
         ProjectChangedEvent? change = null;
         manager.Changed += value => change = value;
         File.WriteAllText(path, "new-content");
@@ -137,7 +137,7 @@ public class ProjectSystemTests {
         string path = Path.Combine(_testRoot, "open.txt");
         File.WriteAllText(path, "disk-old");
         var manager = new ProjectSystemManager(_testRoot);
-        Document document = manager.Documents.Open(path);
+        Document document = manager.OpenDocuments.Open(path);
         document.Text = "editor-change";
         document.IsDirty = true;
         ProjectChangedEvent? change = null;
@@ -157,7 +157,7 @@ public class ProjectSystemTests {
         string newPath = Path.Combine(_testRoot, "new.txt");
         File.WriteAllText(oldPath, "text");
         var manager = new ProjectSystemManager(_testRoot);
-        Document document = manager.Documents.Open(oldPath);
+        Document document = manager.OpenDocuments.Open(oldPath);
         ProjectChangedEvent? change = null;
         manager.Changed += value => change = value;
         File.Move(oldPath, newPath);
@@ -166,9 +166,54 @@ public class ProjectSystemTests {
 
         Assert.IsNull(manager.Tree.Find(oldPath));
         Assert.IsNotNull(manager.Tree.Find(newPath));
-        Assert.AreSame(document, manager.Documents.Get(newPath));
+        Assert.AreSame(document, manager.OpenDocuments.Get(newPath));
         Assert.AreEqual(ProjectChangeType.Renamed, change!.Type);
         Assert.AreEqual(oldPath, change.OldPath);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void ProjectSystem_LateRenamesKeepDirtyDocumentTracked(bool removeIntermediateFolder) {
+        string oldPath = Path.Combine(_testRoot, "a.txt");
+        string intermediateFolder = removeIntermediateFolder
+            ? Directory.CreateDirectory(Path.Combine(_testRoot, "intermediate")).FullName : _testRoot;
+        string intermediatePath = Path.Combine(intermediateFolder, "b.txt");
+        string finalPath = Path.Combine(_testRoot, "c.txt");
+        File.WriteAllText(oldPath, "disk content");
+        using var manager = new ProjectSystemManager(_testRoot);
+        Document document = manager.OpenDocuments.Open(oldPath);
+        document.Text = "unsaved edits";
+        document.IsDirty = true;
+        FileStamp originalStamp = document.DiskStamp;
+        var changes = new List<ProjectChangedEvent>();
+        manager.Changed += changes.Add;
+        File.Move(oldPath, intermediatePath);
+        File.Move(intermediatePath, finalPath);
+        if (removeIntermediateFolder) Directory.Delete(intermediateFolder);
+
+        manager.OnRenamed(oldPath, intermediatePath);
+
+        Assert.IsNull(manager.OpenDocuments.Get(oldPath));
+        Assert.AreSame(document, manager.OpenDocuments.Get(intermediatePath));
+        Assert.AreEqual(intermediatePath, document.Path);
+        Assert.AreEqual(originalStamp, document.DiskStamp);
+
+        manager.OnRenamed(intermediatePath, finalPath);
+
+        Assert.IsNull(manager.OpenDocuments.Get(intermediatePath));
+        Assert.AreSame(document, manager.OpenDocuments.Get(finalPath));
+        Assert.AreEqual(finalPath, document.Path);
+        Assert.AreEqual(FileStamp.Create(finalPath), document.DiskStamp);
+        Assert.HasCount(2, changes);
+        Assert.IsTrue(changes.All(change => change.Type == ProjectChangeType.Renamed));
+
+        File.WriteAllText(finalPath, "external content with a different length");
+        manager.OnModified(finalPath);
+
+        Assert.AreEqual(ProjectChangeType.Conflict, changes[^1].Type);
+        Assert.AreEqual("unsaved edits", document.Text);
+        Assert.IsTrue(document.IsDirty);
     }
 
     [TestMethod]
@@ -176,7 +221,7 @@ public class ProjectSystemTests {
         string path = Path.Combine(_testRoot, "deleted.txt");
         File.WriteAllText(path, "keep in memory");
         using var manager = new ProjectSystemManager(_testRoot);
-        Document document = manager.Documents.Open(path);
+        Document document = manager.OpenDocuments.Open(path);
         var changes = new List<ProjectChangedEvent>();
         manager.Changed += changes.Add;
         File.Delete(path);

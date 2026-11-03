@@ -30,8 +30,8 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Documents {
             if (!_documents.TryGetValue(oldPath, out var doc))
                 return;
 
-            _documents.Remove(oldPath);
             doc.Rename(newPath);
+            _documents.Remove(oldPath);
             _documents[newPath] = doc;
         }
         

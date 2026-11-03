@@ -133,15 +133,15 @@ public class ProjectFileManagerTests {
         _manager.UpdateSnapshot(path);
 
         _manager.SetDirty(path, true);
-        Assert.IsTrue(_manager.ProjectSystem.Documents.Get(path)!.IsDirty);
+        Assert.IsTrue(_manager.ProjectSystem.OpenDocuments.Get(path)!.IsDirty);
 
         File.WriteAllText(path, "second");
         _manager.NotifySaved(path);
-        Assert.IsFalse(_manager.ProjectSystem.Documents.Get(path)!.IsDirty);
-        Assert.IsFalse(_manager.ProjectSystem.Documents.Get(path)!.IsDiskChanged());
+        Assert.IsFalse(_manager.ProjectSystem.OpenDocuments.Get(path)!.IsDirty);
+        Assert.IsFalse(_manager.ProjectSystem.OpenDocuments.Get(path)!.IsDiskChanged());
 
         _manager.CloseDocument(path);
-        Assert.IsFalse(_manager.ProjectSystem.Documents.IsOpen(path));
+        Assert.IsFalse(_manager.ProjectSystem.OpenDocuments.IsOpen(path));
     }
 
     private void Raise(ProjectChangeType type, string path) =>

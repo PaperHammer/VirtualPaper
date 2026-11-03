@@ -38,18 +38,18 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         public void Stop() => ProjectSystem.Stop();
 
         public void UpdateSnapshot(string filePath) {
-            ProjectSystem.Documents.Open(filePath);
+            ProjectSystem.OpenDocuments.Open(filePath);
         }
 
         public void NotifySaved(string filePath) {
-            ProjectSystem.Documents.Get(filePath)?.RefreshDiskStamp();
+            ProjectSystem.OpenDocuments.Get(filePath)?.RefreshDiskStamp();
         }
 
         /// <summary>
         /// 同步编辑器脏状态到文档跟踪器，使“外部修改 + 未保存编辑”能正确触发冲突而非静默覆盖。
         /// </summary>
         public void SetDirty(string filePath, bool isDirty) {
-            var document = ProjectSystem.Documents.Get(filePath);
+            var document = ProjectSystem.OpenDocuments.Get(filePath);
             if (document != null) {
                 document.IsDirty = isDirty;
             }
@@ -75,7 +75,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         public void CloseDocument(string filePath) {
-            ProjectSystem.Documents.Close(filePath);
+            ProjectSystem.OpenDocuments.Close(filePath);
         }
 
         // FileSystemWatcher 一次保存常会产生多次 Modified/Reloaded，合并后避免重复清单处理、UI 刷新与文件冲突提示

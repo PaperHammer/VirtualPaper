@@ -55,8 +55,13 @@ namespace VirtualPaper.Common.Utils.ProjectSystem.Documents {
         }
 
         public void Rename(string newPath) {
+            var stamp = DiskStamp;
+            // A queued rename may refer to a destination already moved or deleted.
+            // Still rebind the document so later notifications can find it.
+            try { stamp = FileStamp.Create(newPath); }
+            catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException) { }
             Path = newPath;
-            DiskStamp = FileStamp.Create(newPath);
+            DiskStamp = stamp;
         }
 
         private static string ReadAllText(string path) {

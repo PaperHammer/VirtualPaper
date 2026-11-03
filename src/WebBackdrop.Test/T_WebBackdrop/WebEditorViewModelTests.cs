@@ -47,7 +47,7 @@ public class WebEditorViewModelTests {
         Assert.AreSame(first, _viewModel.ActiveFile);
         Assert.AreEqual("in-memory", _viewModel.ActiveFile!.Content);
         Assert.HasCount(1, _viewModel.CachedFiles);
-        Assert.IsTrue(_session.FileManager.ProjectSystem.Documents.IsOpen(path));
+        Assert.IsTrue(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(path));
     }
 
     [TestMethod]
@@ -95,7 +95,7 @@ public class WebEditorViewModelTests {
 
         Assert.IsFalse(saved);
         CollectionAssert.AreEqual(new byte[] { 1, 2, 3 }, File.ReadAllBytes(path));
-        Assert.IsFalse(_session.FileManager.ProjectSystem.Documents.IsOpen(path));
+        Assert.IsFalse(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(path));
     }
 
     [TestMethod]
@@ -112,12 +112,12 @@ public class WebEditorViewModelTests {
         Assert.AreSame(file, rebound);
         Assert.AreSame(file, _viewModel.GetOpenFile(newPath));
         Assert.IsNull(_viewModel.GetOpenFile(oldPath));
-        Assert.IsTrue(_session.FileManager.ProjectSystem.Documents.IsOpen(newPath));
+        Assert.IsTrue(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(newPath));
 
         _viewModel.CloseOpenFile(newPath);
         Assert.IsNull(_viewModel.ActiveFile);
         Assert.IsEmpty(_viewModel.CachedFiles);
-        Assert.IsFalse(_session.FileManager.ProjectSystem.Documents.IsOpen(newPath));
+        Assert.IsFalse(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(newPath));
     }
 
     [TestMethod]

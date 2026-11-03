@@ -38,10 +38,13 @@ public partial class App : Application {
             new UiTestCase("Application.SystemSettings.ExportLogsAndCancel", SystemSettingsTests.ExportLogsAndCancelAsync),
             new UiTestCase("Application.StaticEditor.RotateCancelSaveReopenAndExport", StaticEditorTests.RotateCancelSaveReopenAndExportAsync),
             new UiTestCase("Application.WebEditor.CreateFilesSaveReopenAndExport", WebEditorTests.CreateFilesSaveReopenAndExportAsync),
-            new UiTestCase("Application.Intelligent.ConfigureCancelAndReopen", IntelligentTests.ConfigureCancelAndReopenAsync)
+            new UiTestCase("Application.Intelligent.ConfigureCancelAndReopen", IntelligentTests.ConfigureCancelAndReopenAsync),
+            new UiTestCase("Application.ModelInference.SuperResolutionQueueCancelSaveAndImport", ModelInferenceTests.RunAsync, true)
         };
         if (commandLine.Length == 5)
             cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
+        else
+            cases = cases.Where(test => !test.RequiresIntegrationEnvironment).ToArray();
         var results = new List<UiTestResult>();
         try {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());
@@ -84,6 +87,6 @@ public partial class App : Application {
         }
     }
 
-    private sealed record UiTestCase(string Name, Func<UiTestContext, Task> Run);
+    private sealed record UiTestCase(string Name, Func<UiTestContext, Task> Run, bool RequiresIntegrationEnvironment = false);
     private sealed record UiTestResult(string Name, bool Passed, long DurationMilliseconds, string? Error, Dictionary<string, object?> Evidence);
 }

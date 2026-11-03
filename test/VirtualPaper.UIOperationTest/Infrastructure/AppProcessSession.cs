@@ -133,10 +133,10 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         UiTestContext.Check(_core.ExitCode == 0, $"Core exited abnormally: {_core.ExitCode}");
     }
 
-    public static async Task WaitAsync(Func<Task<bool>> condition, string operation) {
+    public static async Task WaitAsync(Func<Task<bool>> condition, string operation, TimeSpan? timeout = null) {
         var timer = Stopwatch.StartNew();
         while (!await condition()) {
-            if (timer.Elapsed > TimeSpan.FromSeconds(15)) throw new TimeoutException(operation);
+            if (timer.Elapsed > (timeout ?? TimeSpan.FromSeconds(15))) throw new TimeoutException(operation);
             await Task.Delay(100);
         }
     }

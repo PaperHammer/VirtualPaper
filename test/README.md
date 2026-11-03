@@ -34,6 +34,8 @@ test/
 ./test/Run-UIOperationTests.ps1 -Configuration Release
 # 单独验证一个应用模块；CI 默认执行全部用例。
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module WallpaperLibrary
+# 显式集成测试：需要安装目录中已有 Real-ESRGAN 模型，不自动下载。
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```
 
 默认使用 Visual Studio MSBuild 构建完整解决方案，再启动测试；已构建时可以加 `-NoBuild`。
@@ -165,6 +167,16 @@ WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试�
 
 这条用例不提交推理任务、不下载模型；报告明确记录 `ModelInferenceAndQueueTested=false`。
 队列、运行中取消、模型推理与结果导入／导出需要另外验证，不能由配置用例代替。
+
+`Application.ModelInference.SuperResolutionQueueCancelSaveAndImport` 是显式运行的模型集成用例：
+
+1. 使用安装目录中的真实 Real-ESRGAN ONNX 模型，经正式 UI 连续提交三项任务。
+2. 确认第三项排队、第二项运行，然后分别取消，保留第一项完成真实推理。
+3. 经系统保存选择器导出 PNG，检查 2× 输出尺寸；经正式入库按钮导入，核对导出与入库图片哈希。
+4. 删除完成任务、重开 UI，确认入库条目仍在，源图不变，前后台正常退出且没有 ERROR。
+
+该用例不进入默认 CI 集合；只有显式指定模块才执行，缺少模型会失败，不会静默跳过。
+它验证实际 CPU ONNX 推理与队列基础链路，不代表画质评分、全部模型或长期压力测试。
 
 `Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查。
 `Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。

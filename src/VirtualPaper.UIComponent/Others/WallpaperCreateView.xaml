@@ -15,6 +15,11 @@
         CornerRadius="5"
         ItemsSource="{Binding WallpaperCategoriesFiltered}"
         SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
+        <ListView.ItemContainerStyle>
+            <Style TargetType="ListViewItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            </Style>
+        </ListView.ItemContainerStyle>
         <ListView.ItemTemplate>
             <DataTemplate>
                 <Grid>
@@ -43,6 +48,8 @@
                         <TextBlock
                             Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                             Text="{Binding Description}" 
+                            MaxLines="2"
+                            TextTrimming="CharacterEllipsis"
                             TextWrapping="Wrap"/>
                     </StackPanel>
                 </Grid>

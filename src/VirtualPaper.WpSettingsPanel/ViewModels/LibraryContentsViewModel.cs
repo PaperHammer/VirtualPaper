@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -535,12 +536,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 case FileType.FImage:
                 case FileType.FGif:
                     var wpCreateDialogViewModel = new WallpaperCreateViewModel();
-                    var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
+                    var dialog = GlobalDialogUtils.CreateDialog(
                         new WallpaperCreateView(wpCreateDialogViewModel),
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_CreateType),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
-                        LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
-                    if (dialogRes != DialogResult.Primary) return RuntimeType.RUnknown;
+                        LanguageUtil.GetI18n(Constants.I18n.Text_Cancel))!;
+                    dialog.DialogWidth = 480;
+                    dialog.DialogMaxWidth = 480;
+                    var dialogRes = await dialog.ShowAsync();
+                    if (dialogRes != ContentDialogResult.Primary) return RuntimeType.RUnknown;
 
                     return wpCreateDialogViewModel.SelectedItem.CreateType switch {
                         WallpaperCreateType.Img => RuntimeType.RImage,

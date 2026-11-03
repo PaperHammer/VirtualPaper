@@ -51,19 +51,6 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
-    - name: Check web player lifecycle
-      shell: pwsh
-      run: |
-        node .github/scripts/test-atmosphere.cjs
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        node .github/scripts/test-depth-player.cjs
-        exit $LASTEXITCODE
-
     - name: Cache NuGet packages
       uses: actions/cache@v4
       with:
@@ -78,9 +65,88 @@ jobs:
       # 与 auto-version-release.yml 保持工具链一致。
       run: msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /restore /m
 
+    - name: Upload build output
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-output
+        retention-days: 7
+        path: src/
+
+  # Test phases are sequential: installer smoke -> parallel regular tests -> real UI.
+  smoke-test:
+    name: Install, Launch and Uninstall
+    runs-on: windows-latest
+    needs: build
+    timeout-minutes: 20
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Install Inno Setup 6.7.1
+      shell: pwsh
+      run: choco install innosetup --version=6.7.1 --no-progress -y
+
+    - name: Compile installer
+      shell: pwsh
+      run: |
+        & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" InnoSetup/setup.iss
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Install, launch and uninstall
+      shell: pwsh
+      run: |
+        $installers = @(Get-ChildItem -LiteralPath InnoSetup/Output -Filter '*.exe' -File)
+        if ($installers.Count -ne 1) { throw 'Expected exactly one installer.' }
+        ./test/Run-SmokeTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -ReportPath TestResults/Smoke/smoke-results.json
+
+    - name: Upload smoke test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results-smoke
+        path: TestResults/Smoke/
+        if-no-files-found: warn
+        retention-days: 7
+
+  test-release-build:
+    name: Build Artifact Tests
+    runs-on: windows-latest
+    needs: [build, smoke-test]
+
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: src/
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
     - name: Validate Build Artifacts
       # 在产物就地校验：主 exe / Plugin exe / 核心 dll 存在且非空。
-      # 通过后才上传 artifact，确保下游 job 拿到的是健康的构建产物。
+      # 与七个常规项目并行，失败同样阻断真实 UI 阶段。
       env:
         RELEASE_BIN_DIR: ${{ github.workspace }}/src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0
       run: dotnet test src/VirtualPaper.ReleaseBuildData.Test/VirtualPaper.ReleaseBuildData.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=release-build-tests.trx" --results-directory TestResults/ReleaseBuild
@@ -94,17 +160,10 @@ jobs:
         path: TestResults/ReleaseBuild/
         retention-days: 7
 
-    - name: Upload build output
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-output
-        retention-days: 7
-        path: src/
-
   test-core:
     name: Core Tests
     runs-on: windows-latest
-    needs: build
+    needs: [build, smoke-test]
     
     steps:
     - name: Download build output
@@ -149,9 +208,12 @@ jobs:
   test-ui:
     name: UI Tests
     runs-on: windows-latest
-    needs: build
+    needs: [build, smoke-test]
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Download build output
       uses: actions/download-artifact@v4
       with:
@@ -169,6 +231,19 @@ jobs:
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Check web player lifecycle
+      shell: pwsh
+      run: |
+        node .github/scripts/test-atmosphere.cjs
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        node .github/scripts/test-depth-player.cjs
+        exit $LASTEXITCODE
 
     - name: Run UI Tests
       run: dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj --configuration Release --no-build --verbosity normal --settings src/test.runsettings --logger "trx;LogFileName=ui-tests.trx" --results-directory TestResults/UI
@@ -194,7 +269,7 @@ jobs:
   test-static-img:
     name: StaticImg Tests
     runs-on: windows-latest
-    needs: build
+    needs: [build, smoke-test]
 
     steps:
     - name: Download build output
@@ -239,7 +314,7 @@ jobs:
   test-web-backdrop:
     name: WebBackdrop Tests
     runs-on: windows-latest
-    needs: build
+    needs: [build, smoke-test]
 
     steps:
     - name: Download build output
@@ -284,7 +359,7 @@ jobs:
   test-ui-component:
     name: UIComponent Tests
     runs-on: windows-latest
-    needs: build
+    needs: [build, smoke-test]
 
     steps:
     - name: Download build output
@@ -329,7 +404,7 @@ jobs:
   test-ml:
     name: ML Tests
     runs-on: windows-latest
-    needs: build
+    needs: [build, smoke-test]
     
     steps:
     - name: Download build output
@@ -374,7 +449,7 @@ jobs:
   test-shader:
     name: Shader Tests
     runs-on: windows-latest
-    needs: build
+    needs: [build, smoke-test]
     
     steps:
     - name: Download build output
@@ -419,7 +494,7 @@ jobs:
   test-ui-operation:
     name: WinUI Operation Tests
     runs-on: windows-latest
-    needs: [build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader]
+    needs: [build, smoke-test, test-release-build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader]
 
     steps:
     - name: Checkout code
@@ -483,7 +558,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader, test-ui-operation]
+    needs: [build, smoke-test, test-release-build, test-core, test-ui, test-static-img, test-web-backdrop, test-ui-component, test-ml, test-shader, test-ui-operation]
     # build 被 skip（[skip ci]）或任意 job 被 cancel 时，整条链跳过
     if: |
       always() &&
@@ -525,6 +600,14 @@ jobs:
           echo -e "\033[0;32m[OK]\033[0m All test result files present"
           echo "TEST_RESULTS_VALID=true" >> $GITHUB_ENV
         fi
+
+    - name: Verify installer smoke results
+      shell: pwsh
+      run: |
+        . ./test/SmokeTestSupport.ps1
+        $report = Get-Content -LiteralPath TestResults/test-results-smoke/smoke-results.json -Raw | ConvertFrom-Json
+        Assert-SmokeReportPassed $report
+        'SMOKE_RESULTS_VALID=true' >> $env:GITHUB_ENV
 
     - name: Verify WinUI operation results
       shell: pwsh
@@ -604,7 +687,7 @@ jobs:
         ALL_RESULTS="${{ join(needs.*.result, ' ') }}"
         echo "Job results: $ALL_RESULTS"
 
-        if echo "$ALL_RESULTS" | grep -qE 'failure|cancelled' || [ "${TEST_RESULTS_VALID:-false}" != "true" ] || [ "${UI_OPERATION_RESULTS_VALID:-false}" != "true" ]; then
+        if echo "$ALL_RESULTS" | grep -qE 'failure|cancelled' || [ "${SMOKE_RESULTS_VALID:-false}" != "true" ] || [ "${TEST_RESULTS_VALID:-false}" != "true" ] || [ "${UI_OPERATION_RESULTS_VALID:-false}" != "true" ]; then
           echo "TEST_STATUS=failure" >> $GITHUB_ENV
           echo "TEST_DESCRIPTION=Some tests failed or results missing [FAILED]" >> $GITHUB_ENV
         else

@@ -4,7 +4,7 @@
 
 | 文件                                | 触发时机                              | 职责                                 |
 | ----------------------------------- | ------------------------------------- | ------------------------------------ |
-| `pre-publish-branch-ci-check.yml` | push / PR → dev · release · bugfix | 构建 + 单元测试                      |
+| `pre-publish-branch-ci-check.yml` | push / PR → dev · release · bugfix | 安装冒烟 → 并行单元测试 → 真实 UI 测试 |
 | `branch-protection.yml`           | PR → main                            | 校验源分支合法性                     |
 | `auto-version-release.yml`        | PR 合并到 main                        | 版本递增 · 打包 · 冒烟测试 · 发布 |
 | `manual-ml-integration.yml`       | 手动触发                              | ML 模型集成测试                    |
@@ -37,11 +37,15 @@
 
 **执行内容：**
 
-1. 构建整个解决方案（Release 配置）
-2. 并行运行 7 项常规测试：Core · UI · StaticImg · WebBackdrop · UIComponent · ML · Shader
-3. 各测试项目使用共享 `src/test.runsettings` 生成 Cobertura 覆盖率数据，排除测试程序集、生成代码和第三方程序集，并在汇总页展示分项目及合并行覆盖率
-4. 常规测试全部通过后，运行 `test/VirtualPaper.UIOperationTest` 中的真实 WinUI 交互测试
-5. 汇总常规测试及 WinUI 交互测试结果，写入 commit status `ci-check/pre-publish-tests`
+构建整个解决方案（Release 配置）作为准备步骤，之后三个测试阶段严格串行：
+
+1. **Smoke：安装 → 拉起 → 卸载。** 编译真实 Inno Setup 安装包，静默安装到临时目录，启动 Core 并通过正式 `ShowUI` RPC 拉起稳定的 UI 窗口，最后静默卸载并检查进程与文件残留。
+2. **并行单元测试。** 保留 7 项常规测试独立并行：Core · UI · StaticImg · WebBackdrop · UIComponent · ML · Shader；产物完整性校验另行并行，Web 播放器脚本检查随 UI 单元测试运行。
+3. **真实 UI 测试。** 前两阶段全部成功后，运行 `test/VirtualPaper.UIOperationTest` 中的真实 WinUI 交互测试。
+
+任一阶段失败，后续测试阶段不启动。smoke 的卸载属于必要清理，即使安装／拉起失败也会尝试执行；三个步骤的结果都写入 `test-results-smoke`。不再在 smoke 中运行下载、单例、独立 UI 守卫、播放器或屏保测试，也不直接启动 UI.exe 来掩盖前后台链路失败。
+
+七项常规测试使用共享 `src/test.runsettings` 生成 Cobertura 覆盖率数据。汇总始终检查安装冒烟、常规 TRX 和 UI 报告，写入 commit status `ci-check/pre-publish-tests`；失败后的报告收集不属于后续测试阶段。
 
 Core 测试中的 `Workflow` 分类覆盖配置落盘、壁纸入库应用删除及近期功能的业务集成链路。
 WinUI 操作测试包含特效页面组件用例，以及真实 Core + UI 的导航动画设置用例：
@@ -100,11 +104,10 @@ package
   │  InnoSetup 编译安装包，上传为 Artifact（保留 30 天）
   ▼
 smoke_test
-  │  静默安装 → 启动主程序 → 等待 UI 被拉起（最多 10s）
-  │  若未自动拉起：兜底手动启动 UI
-  │  再次尝试启动 UI → 断言只有 1 个 UI 进程（单例验证）
-  │  验证 UI 无法在无主进程时独立运行（MessageBox 守卫）
-  │  输出结构化 JSON 结果并执行静默卸载/残留检查
+  │  与预发布 CI 共用 test/Run-SmokeTests.ps1
+  │  静默安装 → Core 经正式 RPC 拉起稳定的 UI → 静默卸载／残留检查
+  │  启动失败也尝试卸载；三个步骤全部成功才允许后续发布
+  │  输出结构化 JSON、安装／卸载日志和隔离应用数据
   ▼
  ┌─────────────────────────────────────────────────────────────┐
  │  以下阶段根据更新类型和测试结果有条件执行（见下表）            │

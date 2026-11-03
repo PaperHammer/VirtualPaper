@@ -237,7 +237,20 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC
 业务集成测试，不作为真实 UI 交互用例迁入本项目。
 
-CI 顺序为：构建 → 七项常规测试并行 → WinUI 环境预检／操作测试 → 汇总。
+CI 顺序为：构建准备 → **安装／拉起／卸载 smoke** → **七项常规测试并行** → **WinUI 环境预检／操作测试** → 汇总。
+三个测试阶段串行：任一阶段失败，后续阶段不运行。产物完整性测试与七项常规测试并行，Web 播放器脚本检查随 UI 单元测试执行。
+预发布和发布共用 `Run-SmokeTests.ps1`，主程序经正式 `ShowUI` RPC 拉起稳定的 UI 窗口，不再直接启动 UI.exe 兜底，也不在 smoke 中运行下载、单例、播放器或屏保检查。
+smoke 使用唯一临时安装目录和隔离应用数据；启动失败仍尝试卸载，卸载残留也判失败，报告包含 Install／Launch／Uninstall 三项。
+安装包测试会进行实际系统安装／卸载，应在可丢弃的 Windows CI 机器上运行；本机仍遵守不执行注册表修改测试的约束。
+
+```powershell
+# 在可丢弃的 Windows 安装验收机器上执行：
+./test/Run-SmokeTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Smoke/smoke-results.json
+# 以下只验证阶段顺序、失败阻断和报告契约，不安装、不启动 UI、不写注册表：
+./test/Test-SmokeTestSupport.ps1
+./.github/scripts/validate-test-workflow.ps1
+```
+
 WinUI 失败或结果缺失不能让最终 CI 检查通过；只有预检明确记录的环境跳过允许继续，并在最终状态注明 `[SKIPPED]`。
 进入 WinUI 阶段前还会检查常规 TRX 的未处理异常，防止“断言全通过、testhost 仍崩溃”的假绿。
 

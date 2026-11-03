@@ -30,16 +30,33 @@ foreach ($test in $tests) {
     if (-not $workflow.Contains($test.Result)) {
         throw "Test result is missing from workflow summary: $($test.Result)"
     }
+    $job = [regex]::Match($workflow, "(?ms)^  $([regex]::Escape($test.Id)):\r?\n.*?(?=^  [\w-]+:|\z)").Value
+    if (-not $job.Contains('needs: [build, smoke-test]') -or $job -match '(?m)^    if:') {
+        throw "$($test.Id) must wait for successful smoke, without dependencies on sibling regular tests."
+    }
 }
 
-$regularNeeds = 'needs: [build, ' + (($tests.Id) -join ', ') + ']'
-$summaryNeeds = 'needs: [build, ' + (($tests.Id) -join ', ') + ', test-ui-operation]'
+$smokeJob = [regex]::Match($workflow, '(?ms)^  smoke-test:\r?\n.*?(?=^  [\w-]+:|\z)').Value
+if ($smokeJob -notmatch '(?m)^    needs: build\s*$' -or $smokeJob -match '(?m)^    if:' -or
+    -not $smokeJob.Contains('./test/Run-SmokeTests.ps1')) {
+    throw 'Installer smoke must run after build and block all regular tests on failure.'
+}
+$artifactJob = [regex]::Match($workflow, '(?ms)^  test-release-build:\r?\n.*?(?=^  [\w-]+:|\z)').Value
+if (-not $artifactJob.Contains('needs: [build, smoke-test]') -or $artifactJob -match '(?m)^    if:') {
+    throw 'Build artifact tests must run in the parallel regular-test phase after smoke.'
+}
+$buildJob = [regex]::Match($workflow, '(?ms)^  build:\r?\n.*?(?=^  [\w-]+:|\z)').Value
+if ($buildJob -match 'dotnet test |node .github/scripts/test-') {
+    throw 'Runtime regression tests must not execute in the build prerequisite before smoke.'
+}
+$regularNeeds = 'needs: [build, smoke-test, test-release-build, ' + (($tests.Id) -join ', ') + ']'
+$summaryNeeds = 'needs: [build, smoke-test, test-release-build, ' + (($tests.Id) -join ', ') + ', test-ui-operation]'
 if (-not $workflow.Contains($summaryNeeds)) {
-    throw 'test-summary must include the seven regular test jobs and WinUI operation tests.'
+    throw 'test-summary must include smoke, artifact checks, seven regular test jobs and WinUI operation tests.'
 }
 $operationJob = [regex]::Match($workflow, '(?ms)^  test-ui-operation:\r?\n.*?(?=^  [\w-]+:|\z)').Value
 if (-not $operationJob.Contains($regularNeeds) -or $operationJob -match '(?m)^    if:') {
-    throw 'WinUI operation tests must run only after build and all seven regular test jobs succeed.'
+    throw 'WinUI operation tests must run only after smoke and all parallel regular test jobs succeed.'
 }
 $operationProject = 'test/VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
 if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $operationProject)) -or
@@ -57,6 +74,15 @@ if (-not $workflow.Contains('. ./test/UIOperationTestSupport.ps1') -or
     throw 'Environment skips must be validated and reported distinctly from passing WinUI acceptance.'
 }
 & (Join-Path $repositoryRoot 'test/Test-UIOperationTestSupport.ps1')
+if (-not $workflow.Contains('Assert-SmokeReportPassed $report') -or
+    -not $workflow.Contains('SMOKE_RESULTS_VALID:-false')) {
+    throw 'Final status must require a passing install/launch/uninstall report.'
+}
+$releaseWorkflow = Get-Content -LiteralPath (Join-Path $PSScriptRoot '../workflows/auto-version-release.yml') -Raw
+if (-not $releaseWorkflow.Contains('./test/Run-SmokeTests.ps1')) {
+    throw 'Release and pre-publish workflows must share the installer smoke runner.'
+}
+& (Join-Path $repositoryRoot 'test/Test-SmokeTestSupport.ps1')
 if ($workflow -match '(?m)^\s*matrix\s*:') {
     throw 'The regular test workflow must keep explicit jobs and must not use a matrix.'
 }
@@ -75,4 +101,4 @@ if (-not $workflow.Contains("-notmatch '[\\/]In[\\/]'")) {
     throw 'Coverage summary must exclude the test platform In staging copies.'
 }
 
-Write-Host '[OK] Regular test jobs are wired; WinUI requires either passing acceptance or an explicit valid environment skip.'
+Write-Host '[OK] Install/launch/uninstall -> parallel regular tests -> real UI; failures block later phases, and UI environment skips stay explicit.'

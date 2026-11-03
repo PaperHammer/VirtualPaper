@@ -10,7 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\VirtualPaper\VirtualPaper.csproj" />
+    <ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+    <ProjectReference Include="..\VirtualPaper.Grpc.Service\VirtualPaper.Grpc.Service.csproj" />
+    <PackageReference Include="GrpcDotNetNamedPipes" Version="3.0.0" />
   </ItemGroup>
 
 </Project>

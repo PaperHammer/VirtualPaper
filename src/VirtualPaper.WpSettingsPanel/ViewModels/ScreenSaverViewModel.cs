@@ -34,7 +34,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 OnPropertyChanged();
                 ScreenSaverStatu = LanguageUtil.GetI18n(value ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
                 if (_userSettingsClient.Settings.IsScreenSaverOn == value) {
-                    ChangeScreenSaverStatu(value);
                     return;
                 }
 

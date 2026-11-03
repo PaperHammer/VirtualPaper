@@ -54,6 +54,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
             try {
                 _isRunningLock = _userSettings.Settings.IsRunningLock;
                 StartTimerTask();
+                ArcLog.GetLogger<ScrControl>().Info("ScreenSaver idle timer enabled.");
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<ScrControl>().Error("ScreenSaver started Error: " + ex.Message);
@@ -62,6 +63,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         public void Stop() {
             StopTimerTask();
+            ArcLog.GetLogger<ScrControl>().Info("ScreenSaver idle timer disabled.");
         }
 
         public void ChangeLockStatu(bool isLock) {
@@ -123,6 +125,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         // -------------------------------------------------------------------------
 
         private void DispatcherTimer_Tick(object? sender, EventArgs e) {
+            ArcLog.GetLogger<ScrControl>().Info("ScreenSaver idle interval elapsed.");
             // 计时结束，先停掉计时器再启动屏保
             StopTimerTask();
 
@@ -229,7 +232,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
         private void CleanupProc() {
             try {
                 _processLauncher.Kill();
-                _processLauncher.Dispose();
                 ArcLog.GetLogger<ScrControl>().Info("ScreenSaver process cleaned up.");
             }
             catch (Exception ex) {
@@ -348,13 +350,18 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         protected virtual void Dispose(bool disposing) {
             if (_isDisposed) return;
+            _isDisposed = true;
+
+            StopTimerTask();
+            _processLauncher.OutputDataReceived -= Proc_OutputDataReceived;
+            _processLauncher.Exited -= Proc_Exited;
+            _processLauncher.Kill();
+            _processLauncher.Dispose();
 
             _msgWindow.MouseMoveRaw -= MsgWindow_MouseMoveRaw;
             _msgWindow.MouseDownRaw -= MsgWindow_MouseDownRaw;
             _msgWindow.MouseUpRaw -= MsgWindow_MouseUpRaw;
             _msgWindow.KeyboardClickRaw -= MsgWindow_KeyboardClickRaw;
-
-            _isDisposed = true;
         }
 
         public void Dispose() {

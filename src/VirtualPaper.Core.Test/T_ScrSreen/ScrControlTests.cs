@@ -404,16 +404,19 @@ namespace VirtualPaper.Core.Test.T_ScrSreen {
         }
 
         [TestMethod]
-        [Description("When process exits, it should be disposed")]
-        public void ProcessExited_ShouldDisposeProcess() {
+        [Description("Process exit must not permanently dispose the launcher needed for the next idle cycle")]
+        public void ProcessExited_KeepsLauncherReusableUntilServiceDisposes() {
             _sut.StartAsync();
             FireTick();
             SimulateWpLoaded();
 
             SimulateProcessExited();
 
-            _launcher.Verify(l => l.Dispose(), Times.Once,
-                "Process should be disposed after exit");
+            _launcher.Verify(l => l.Dispose(), Times.Never);
+            FireTick();
+            _launcher.Verify(l => l.Launch(It.IsAny<ProcessStartInfo>()), Times.Exactly(2));
+            _sut.Dispose();
+            _launcher.Verify(l => l.Dispose(), Times.Once);
         }
 
         // ----------------------------------------------------------------

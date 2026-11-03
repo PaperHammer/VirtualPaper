@@ -64,6 +64,17 @@ internal static class ApplicationUi {
         ClickPointer(ownerWindow, element, 0x0002, 0x0004);
     }
 
+    public static void MovePointerOverOwnedWindow(nint ownerWindow) {
+        using var foreground = Foreground(ownerWindow);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the owned screen saver");
+        var bounds = AutomationElement.FromHandle(ownerWindow).Current.BoundingRectangle;
+        var point = new NativePoint { X = (int)(bounds.Left + bounds.Width / 2), Y = (int)(bounds.Top + bounds.Height / 2) };
+        Check(GetAncestor(WindowFromPoint(point), 2) == ownerWindow, "Screen saver wake target is covered by another window");
+        Check(GetCursorPos(out var previous) && SetCursorPos(point.X, point.Y), "Could not position wake pointer");
+        try { mouse_event(0x0001, 1, 0, 0, 0); }
+        finally { SetCursorPos(previous.X, previous.Y); }
+    }
+
     private static void ClickPointer(nint ownerWindow, AutomationElement element, uint down, uint up) {
         BringIntoView(element);
         Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the test UI");

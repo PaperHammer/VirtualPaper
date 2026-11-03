@@ -218,6 +218,15 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module Rendering -TimeoutSeconds 300
 ```
 
+`Application.ScreenSaverIdle.RealIdleInputWakeAndRepeat` 真实等待一分钟空闲，验证屏保加载、鼠标唤醒、正常退出，再重复第二轮。
+输入转发的“始终移动”关闭，屏保仍应接收活动通知；使用自身屏保窗口的可见 HWND，兼容 WPF 隐藏 owner。
+每轮最多等待两分钟，真实键鼠活动会重置计时，报告保留观察到的 OS 空闲秒数用于识别环境干扰。
+本用例只运行非锁屏屏保；锁屏、开机自启注册和持久化系统设置写入均跳过。
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module ScreenSaverIdle -TimeoutSeconds 300
+```
+
 现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC
 业务集成测试，不作为真实 UI 交互用例迁入本项目。
 

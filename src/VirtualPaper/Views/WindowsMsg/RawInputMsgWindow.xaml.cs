@@ -214,6 +214,7 @@ namespace VirtualPaper.Views.WindowsMsg {
         //    }
         //}
         private void RawInput_MouseMoveRaw(int x, int y) {
+            MouseMoveRaw?.Invoke(this, new MouseRawArgs(x, y));
             if (_userSettings.Settings.InputForward == InputForwardMode.off ||
                 !IsDesktop() && !_userSettings.Settings.MouseInputMovAlways)
                 return;
@@ -240,7 +241,6 @@ namespace VirtualPaper.Views.WindowsMsg {
                 }
 
                 ForwardMouseToWallpapers(x, y, InputUtil.MouseMove);
-                MouseMoveRaw?.Invoke(this, new MouseRawArgs(x, y));
             }
             catch (Exception e) {
                 ArcLog.GetLogger<RawInputMsgWindow>().Error("Mouse Move Forwarding Error: " + e.Message);
@@ -248,6 +248,7 @@ namespace VirtualPaper.Views.WindowsMsg {
         }
 
         private void RawInput_MouseDownRaw(int x, int y, RawInputMouseBtn btn) {
+            MouseDownRaw?.Invoke(this, new MouseClickRawArgs(x, y, btn));
             if (_userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
                 return;
 
@@ -265,7 +266,6 @@ namespace VirtualPaper.Views.WindowsMsg {
                         // 桌面右键已有系统上下文菜单，不额外转发右键 Down
                         break;
                 }
-                MouseDownRaw?.Invoke(this, new MouseClickRawArgs(x, y, btn));
             }
             catch (Exception e) {
                 ArcLog.GetLogger<RawInputMsgWindow>().Error("Mouse Down Forwarding Error: " + e.Message);
@@ -273,6 +273,7 @@ namespace VirtualPaper.Views.WindowsMsg {
         }
 
         private void RawInput_MouseUpRaw(int x, int y, RawInputMouseBtn btn) {
+            MouseUpRaw?.Invoke(this, new MouseClickRawArgs(x, y, btn));
             if (_userSettings.Settings.InputForward == InputForwardMode.off || !IsDesktop())
                 return;
 
@@ -289,7 +290,6 @@ namespace VirtualPaper.Views.WindowsMsg {
                             ForwardMouseToWallpapers(x, y, InputUtil.MouseLeftButtonUp);
                         break;
                 }
-                MouseUpRaw?.Invoke(this, new MouseClickRawArgs(x, y, btn));
             }
             catch (Exception e) {
                 ArcLog.GetLogger<RawInputMsgWindow>().Error("Mouse Up Forwarding Error: " + e.Message);

@@ -91,6 +91,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm.IsScreenSaverOn = false; // 与 Settings 相同
 
             _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Never);
+            _scrCommandsClient.Verify(client => client.Start(), Times.Never);
+            _scrCommandsClient.Verify(client => client.Stop(), Times.Never);
         }
 
         [TestMethod]

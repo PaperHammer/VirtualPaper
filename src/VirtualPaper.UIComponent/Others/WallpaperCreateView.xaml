@@ -10,6 +10,7 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <ListView
+        AutomationProperties.AutomationId="Wallpaper.CreateType"
         Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
         CornerRadius="5"
         ItemsSource="{Binding WallpaperCategoriesFiltered}"

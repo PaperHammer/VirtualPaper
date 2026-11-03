@@ -206,6 +206,15 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 
 应用关闭超过 10 秒时，保留所属窗口的可见控件及截图；仍判失败，不延长超时来掩盖问题。
 
+`Application.Rendering.DepthInferenceDrawPauseAndResume` 使用真实选图／3D 类型选择和已安装的 Depth Anything V2：
+核对深度缓存，启用自动镜头，通过正式截图 RPC 捕获 WebView 渲染内容，检查测试景物颜色、运动帧差、暂停静止和恢复运动。
+截图取自测试所属播放器，不截取用户其他窗口；保留在报告旁的 `logs/UIOperation/rendering`。
+缺少深度模型会失败；不会自动下载。该用例验证基本渲染正确性，不代替主观画质评分、多显卡／多屏或第三方 Web 壁纸暂停验收。
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module Rendering -TimeoutSeconds 300
+```
+
 现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC
 业务集成测试，不作为真实 UI 交互用例迁入本项目。
 

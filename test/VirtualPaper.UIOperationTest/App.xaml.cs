@@ -40,7 +40,8 @@ public partial class App : Application {
             new UiTestCase("Application.WebEditor.CreateFilesSaveReopenAndExport", WebEditorTests.CreateFilesSaveReopenAndExportAsync),
             new UiTestCase("Application.Intelligent.ConfigureCancelAndReopen", IntelligentTests.ConfigureCancelAndReopenAsync),
             new UiTestCase("Application.ModelInference.SuperResolutionQueueCancelSaveAndImport", ModelInferenceTests.RunAsync, true),
-            new UiTestCase("Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen", ScreenSaverLifecycleTests.RunAsync, true)
+            new UiTestCase("Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen", ScreenSaverLifecycleTests.RunAsync, true),
+            new UiTestCase("Application.Rendering.DepthInferenceDrawPauseAndResume", RenderingTests.RunAsync, true)
         };
         if (commandLine.Length == 5)
             cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();

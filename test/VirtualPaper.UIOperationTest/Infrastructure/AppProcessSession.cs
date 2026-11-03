@@ -159,7 +159,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         }
     }
 
-    public static async Task<JsonNode> WaitForJsonAsync(string path, Func<JsonNode, bool> matches) {
+    public static async Task<JsonNode> WaitForJsonAsync(string path, Func<JsonNode, bool> matches, TimeSpan? timeout = null) {
         JsonNode? saved = null;
         await WaitAsync(async () => {
             try {
@@ -170,7 +170,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             // Retry a locked or incomplete file, but still require the persisted values.
             catch (IOException) { return false; }
             catch (JsonException) { return false; }
-        }, $"Persisted JSON: {path}");
+        }, $"Persisted JSON: {path}", timeout);
         return saved!;
     }
 

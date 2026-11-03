@@ -125,7 +125,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
         // -------------------------------------------------------------------------
 
         private void DispatcherTimer_Tick(object? sender, EventArgs e) {
-            ArcLog.GetLogger<ScrControl>().Info("ScreenSaver idle interval elapsed.");
             // 计时结束，先停掉计时器再启动屏保
             StopTimerTask();
 
@@ -133,7 +132,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 // 检查壁纸
                 var (filePath, runtimeType) = _wpControl.GetPrimaryWpFilePathRType();
                 if (filePath == null) {
-                    ArcLog.GetLogger<ScrControl>().Info("Primary wallpaper was none, reset timer.");
                     RestartTimer();
                     return;
                 }
@@ -145,7 +143,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_BUSY:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_PRESENTATION_MODE:
-                            ArcLog.GetLogger<ScrControl>().Info($"System notification state [{state}], reset timer.");
                             RestartTimer();
                             return;
                     }
@@ -156,7 +153,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 _nativeService.GetWindowThreadProcessId(hwnd, out int processId);
                 string procName = _nativeService.GetProcessNameById(processId);
                 if (_scrWhiteListProcState.ContainsKey(procName)) {
-                    ArcLog.GetLogger<ScrControl>().Info($"Whitelisted process [{procName}] is active, reset timer.");
                     RestartTimer();
                     return;
                 }

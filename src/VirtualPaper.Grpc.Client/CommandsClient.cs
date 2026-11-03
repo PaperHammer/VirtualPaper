@@ -25,6 +25,11 @@ namespace VirtualPaper.Grpc.Client {
             await _client.CloseUIAsync(new Empty());
         }
 
+        public async Task NotifyUIClosingAsync() {
+            await _client.NotifyUIClosingAsync(new Grpc_UIClosing { ProcessId = Environment.ProcessId },
+                deadline: DateTime.UtcNow.AddSeconds(2));
+        }
+
         public async Task RequestInstallAsync() {
             await _client.RequestInstallAsync(new Empty());
         }

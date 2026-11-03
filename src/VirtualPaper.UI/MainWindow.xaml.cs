@@ -62,14 +62,42 @@ namespace VirtualPaper.UI {
             try {
                 bool canClose = await NaviContent.CheckAllPagesCanCloseAsync();
                 if (canClose) {
-                    _isSafeToClose = true;
-                    this.Hide(); // todo 优化：当前点击关闭会卡住一段时间
-                    this.Close();
+                    await CloseConfirmedAsync();
                 }
             }
             finally {
                 Interlocked.Exchange(ref _isCheckingClose, 0);
             }
+        }
+
+        private int _isClosing;
+        private async Task CloseConfirmedAsync(TwoWayMessage? closeResult = null) {
+            bool initiateClose = Interlocked.Exchange(ref _isClosing, 1) == 0;
+            if (initiateClose) {
+                try {
+                    // Arm Core's timeout only after all pages have agreed to close.
+                    await _commandsClient.NotifyUIClosingAsync();
+                }
+                catch (Exception ex) {
+                    // Core may already be stopping. A failed notification must not prevent closing.
+                    ArcLog.GetLogger<MainWindow>().Warn($"Could not notify Core that UI is closing: {ex.Message}");
+                }
+            }
+            if (closeResult != null) {
+                try {
+                    // The response stream must not prevent an approved close forever.
+                    await _twoWayClient.SendMessageAsync(closeResult).WaitAsync(TimeSpan.FromSeconds(2));
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<MainWindow>().Warn($"Could not send UI close result: {ex.Message}");
+                }
+            }
+            if (!initiateClose) return;
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                _isSafeToClose = true;
+                this.Hide();
+                this.Close();
+            });
         }
 
         private void InitWindowConst() {
@@ -92,19 +120,17 @@ namespace VirtualPaper.UI {
                     case "REQUEST_CLOSE":
                         var canClose = await NaviContent.CheckAllPagesCanCloseAsync();
                         
-                        // 先发送关闭结果回 core（在关闭窗口前，因为关闭后 RPC 通道会断开）
-                        await _twoWayClient.SendMessageAsync(new TwoWayMessage {
+                        var closeResult = new TwoWayMessage {
                             Type = "UI_CLOSE_RESULT",
                             RequestId = e.RequestId,
                             Payload = canClose.ToString()
-                        });
+                        };
                         
                         if (canClose) {
-                            CrossThreadInvoker.InvokeOnUIThread(() => {
-                                _isSafeToClose = true;
-                                this.Close();
-                            });
+                            // Arm the watchdog before sending the result or disposing the stream.
+                            await CloseConfirmedAsync(closeResult);
                         }
+                        else await _twoWayClient.SendMessageAsync(closeResult);
                         break;
                 }
             }
@@ -119,6 +145,7 @@ namespace VirtualPaper.UI {
                 switch (messageType) {
                     case MessageType.cmd_active:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
+                            if (Volatile.Read(ref _isClosing) != 0) return;
                             var hwnd = WindowConsts.WindowHandle;
                             Native.ShowWindow(hwnd, (uint)Native.SHOWWINDOW.SW_RESTORE);
                             _ = Native.SetForegroundWindow(hwnd);
@@ -127,10 +154,7 @@ namespace VirtualPaper.UI {
                     case MessageType.cmd_close:
                         var canClose = await NaviContent.CheckAllPagesCanCloseAsync();
                         if (canClose) {
-                            CrossThreadInvoker.InvokeOnUIThread(() => {
-                                _isSafeToClose = true;
-                                this.Close();
-                            });
+                            await CloseConfirmedAsync();
                         }
                         break;
                     default:

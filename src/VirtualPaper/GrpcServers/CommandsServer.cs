@@ -23,6 +23,11 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Empty());
         }
 
+        public override Task<Empty> NotifyUIClosing(Grpc_UIClosing request, ServerCallContext context) {
+            _runner.NotifyUIClosing(request.ProcessId);
+            return Task.FromResult(new Empty());
+        }
+
         public override Task<Empty> RestartUI(Empty _, ServerCallContext context) {
             _runner.RestartUI();
             return Task.FromResult(new Empty());

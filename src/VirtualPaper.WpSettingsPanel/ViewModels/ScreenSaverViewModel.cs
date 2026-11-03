@@ -209,18 +209,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public async Task UpdateScrSettginsAsync() {
-            try {
-                _isLoading = true;
-                await _userSettingsClient.LoadAsync<ISettings>();
-                CrossThreadInvoker.InvokeOnUIThread(() => {
-                    IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
-                    IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
-                    SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
-                });
-            }
-            finally {
-                _isLoading = false;
-            }
+            await _userSettingsClient.LoadAsync<ISettings>();
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
+                IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
+                SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
+            });
         }
 
         private async Task PreAddToWhiteListAsync() {
@@ -231,7 +225,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     string procPath = files[0].Path;
                     string procName = Path.GetFileNameWithoutExtension(procPath);
 
-                    using System.Drawing.Image img = Win32Util.GetIconByFileName("FILE", procPath).ToBitmap();
+                    using var icon = Win32Util.GetIconByFileName("FILE", procPath)
+                        ?? (System.Drawing.Icon)System.Drawing.SystemIcons.Application.Clone();
+                    using System.Drawing.Image img = icon.ToBitmap();
                     string iconPath = Path.Combine(Constants.CommonPaths.ExeIconDir, procName) + ".png";
                     img.Save(iconPath);
 
@@ -291,6 +287,5 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
         public List<ProcInfo> _whiteListScr = [];
-        private bool _isLoading = false;
     }
 }

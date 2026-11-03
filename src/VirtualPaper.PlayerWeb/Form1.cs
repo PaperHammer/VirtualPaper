@@ -164,6 +164,8 @@ namespace VirtualPaper.PlayerWeb {
             _webView2.CoreWebView2.ProcessFailed += CoreWebView2_ProcessFailed;
             _webView2.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
             _webView2.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
+
+            #region devtools protocol
             var exceptions = _webView2.CoreWebView2.GetDevToolsProtocolEventReceiver("Runtime.exceptionThrown");
             exceptions.DevToolsProtocolEventReceived += (_, args) => Program.WriteToParent(new VirtualPaperMessageConsole {
                 MsgType = ConsoleMessageType.Error, Message = "Browser script exception: " + args.ParameterObjectAsJson
@@ -178,6 +180,7 @@ namespace VirtualPaper.PlayerWeb {
                     });
             };
             await _webView2.CoreWebView2.CallDevToolsProtocolMethodAsync("Log.enable", "{}");
+            #endregion
 
             string playingFile = GetPlayingFile();
             string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile);

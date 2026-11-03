@@ -61,8 +61,10 @@ public class GrpcServerContractTests {
                 new NamedPipeChannel(".", pipeName));
 
             await client.ShowUIAsync(new Empty());
+            await client.NotifyUIClosingAsync(new Grpc_UIClosing { ProcessId = 1234 });
 
             runner.Verify(x => x.ShowUIAsync(), Times.Once);
+            runner.Verify(x => x.NotifyUIClosing(1234), Times.Once);
         }
         finally {
             pipeServer.Kill();

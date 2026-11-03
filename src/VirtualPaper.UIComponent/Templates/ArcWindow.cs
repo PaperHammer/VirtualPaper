@@ -37,7 +37,7 @@ namespace VirtualPaper.UIComponent.Templates {
             this.Closed += (_, _) => {
                 _isClosed = true;
                 _isLoaded = false;
-                _themeVersion++;
+                unchecked { _themeVersion++; }
             };
         }
 
@@ -97,7 +97,7 @@ namespace VirtualPaper.UIComponent.Templates {
         public async Task SetThemeAsync() {
             if (_isClosed || !_isLoaded || _compositor == null || this.ContentHost.AppRoot == null || this.ContentHost.AppRoot.ActualWidth <= 0 || this.ContentHost.AppRoot.ActualHeight <= 0)
                 return;
-            int version = ++_themeVersion;
+            int version = unchecked(++_themeVersion);
 
             UpdateThemeIcon();
 

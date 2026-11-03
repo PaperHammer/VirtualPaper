@@ -18,8 +18,11 @@ namespace VirtualPaper.Services {
     public partial class UIRunnerService : IUIRunnerService {
         public event EventHandler<MessageType>? UISendCmd;
 
-        public UIRunnerService(IJobService jobService) {
+        public UIRunnerService(IJobService jobService) : this(jobService, TimeSpan.FromSeconds(5)) { }
+
+        internal UIRunnerService(IJobService jobService, TimeSpan uiExitTimeout) {
             _jobService = jobService;
+            _uiExitTimeout = uiExitTimeout;
 
             if (UAC.IsElevated) {
                 ArcLog.GetLogger<UIRunnerService>().Warn("Process is running elevated, UI may not work properly.");
@@ -37,53 +40,120 @@ namespace VirtualPaper.Services {
         }
 
         public async Task ShowUIAsync() {
-            await UpdateLock.WaitAllAsync();
-            lock (_processLock) {
-                if (_isDisposed || App.IsShuttingDown) return;
-                if (_processUI?.HasExited == true) ReleaseProcess();
-                if (_processUI != null) {
-                    try {
-                        ArcLog.GetLogger<UIRunnerService>().Warn("UI is already running");
-                        UISendCmd?.Invoke(this, MessageType.cmd_active);
-                        //_processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
+            while (true) {
+                await UpdateLock.WaitAllAsync();
+                Task<bool>? exitTask;
+                Task? updateTask;
+                lock (_processLock) {
+                    if (_isDisposed || App.IsShuttingDown) return;
+                    // Finish normal exit handling even if its queued callback has not run yet.
+                    // A pending update owns reopening the UI after it completes.
+                    if (_processUI is { HasExited: true } exitedProcess && HandleUiExited(exitedProcess)) return;
+                    updateTask = _uiUpdateTask is { IsCompleted: false } ? _uiUpdateTask : null;
+                    exitTask = _uiExitTask;
+                    if (updateTask == null && exitTask == null && _processUI != null) {
+                        try {
+                            ArcLog.GetLogger<UIRunnerService>().Warn("UI is already running");
+                            UISendCmd?.Invoke(this, MessageType.cmd_active);
+                            //_processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
+                        }
+                        catch (Exception e) {
+                            ArcLog.GetLogger<UIRunnerService>().Error(e);
+                        }
                     }
-                    catch (Exception e) {
-                        ArcLog.GetLogger<UIRunnerService>().Error(e);
+                    else if (updateTask == null && exitTask == null) {
+                        try {
+                            _processUI = new Process {
+                                StartInfo = new ProcessStartInfo {
+                                    FileName = _fileName,
+                                    RedirectStandardInput = true,
+                                    RedirectStandardOutput = false,
+                                    RedirectStandardError = false,
+                                    UseShellExecute = false,
+                                    WorkingDirectory = _workingDir,
+                                },
+                                EnableRaisingEvents = true
+                            };
+                            _processUI.Exited += Proc_UI_Exited;
+                            _processUI.OutputDataReceived += Proc_OutputDataReceived;
+                            _processUI.Start();
+                            _jobService.AddProcess(_processUI.Id, PluginName.UI);
+
+                            //winui writing debug information into output stream :/
+                            //_processUI.BeginOutputReadLine();
+                            //_processUI.BeginErrorReadLine();
+                        }
+                        catch (Exception e) {
+                            ArcLog.GetLogger<UIRunnerService>().Error(e);
+                            _processUI = null;
+                            _ = MessageBox.Show(
+                                $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
+                                LanguageManager.Instance["Common_TextError"],
+                                MessageBoxButton.OK,
+                                MessageBoxImage.Error);
+                        }
                     }
                 }
-                else {
-                    try {
-                        _processUI = new Process {
-                            StartInfo = new ProcessStartInfo {
-                                FileName = _fileName,
-                                RedirectStandardInput = true,
-                                RedirectStandardOutput = false,
-                                RedirectStandardError = false,
-                                UseShellExecute = false,
-                                WorkingDirectory = _workingDir,
-                            },
-                            EnableRaisingEvents = true
-                        };
-                        _processUI.Exited += Proc_UI_Exited;
-                        _processUI.OutputDataReceived += Proc_OutputDataReceived;
-                        _processUI.Start();
-                        _jobService.AddProcess(_processUI.Id, PluginName.UI);
+                if (updateTask != null) {
+                    await updateTask.ConfigureAwait(false);
+                    continue;
+                }
+                if (exitTask == null) return;
+                // Await outside the lock so the exit callback and watchdog can finish.
+                if (!await exitTask.ConfigureAwait(false))
+                    throw new InvalidOperationException("The previous UI process could not be stopped; a replacement was not started.");
+            }
+        }
 
-                        //winui writing debug information into output stream :/
-                        //_processUI.BeginOutputReadLine();
-                        //_processUI.BeginErrorReadLine();
+        public void NotifyUIClosing(int processId) {
+            lock (_processLock) {
+                if (_isDisposed || _processUI == null || _processUI.Id != processId
+                    || _processUI.HasExited || _uiExitTask != null) return;
+                _uiExitCancellation = new CancellationTokenSource();
+                // Never resume an opener inline inside ReleaseProcess/exit cleanup.
+                var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _uiExitTask = completion.Task;
+                _ = MonitorUiExitAsync(_processUI, _uiExitCancellation.Token, completion);
+            }
+        }
+
+        private async Task MonitorUiExitAsync(Process process, CancellationToken cancellationToken,
+            TaskCompletionSource<bool> completion) {
+            bool success = true;
+            try {
+                await Task.Delay(_uiExitTimeout, cancellationToken).ConfigureAwait(false);
+                lock (_processLock) {
+                    if (_isDisposed || !ReferenceEquals(process, _processUI)) return;
+                    if (!process.HasExited) {
+                        ArcLog.GetLogger<UIRunnerService>().Warn($"UI process {process.Id} did not exit within {_uiExitTimeout.TotalSeconds}s; terminating it.");
+                        if (!TryKillUiProcess(process)) {
+                            success = false;
+                            return;
+                        }
                     }
-                    catch (Exception e) {
-                        ArcLog.GetLogger<UIRunnerService>().Error(e);
-                        _processUI = null;
-                        _ = MessageBox.Show(
-                            $"{LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"]}\nEXCEPTION:\n{e.Message}",
-                            LanguageManager.Instance["Common_TextError"],
-                            MessageBoxButton.OK,
-                            MessageBoxImage.Error);
-                    }
+                    HandleUiExited(process);
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                // Normal exit or replacement cancels only this process's watchdog.
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<UIRunnerService>().Error(ex);
+                success = false;
+            }
+            finally { completion.TrySetResult(success); }
+        }
+
+        private static bool TryKillUiProcess(Process process) {
+            try {
+                if (!process.HasExited) process.Kill();
+                if (process.WaitForExit(2000)) return true;
+                ArcLog.GetLogger<UIRunnerService>().Error($"UI process {process.Id} did not exit after termination; retaining its tracking.");
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<UIRunnerService>().Error(ex);
+            }
+            return false;
         }
 
         public void RestartUI() {
@@ -91,17 +161,16 @@ namespace VirtualPaper.Services {
                 if (_isDisposed || App.IsShuttingDown) return;
                 if (_processUI != null) {
                     try {
-                        _processUI.Exited -= Proc_UI_Exited;
-                        _processUI.OutputDataReceived -= Proc_OutputDataReceived;
                         if (!_processUI.HasExited && (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(500))) {
-                            _processUI.Kill();
+                            if (!TryKillUiProcess(_processUI)) return;
                         }
+                        int pid = _processUI.Id;
+                        ReleaseProcess();
+                        _jobService.StopPlugin(pid);
                     }
                     catch (Exception e) {
                         ArcLog.GetLogger<UIRunnerService>().Error(e);
-                    }
-                    finally {
-                        ReleaseProcess();
+                        return;
                     }
                 }
             }
@@ -115,7 +184,7 @@ namespace VirtualPaper.Services {
 
                 try {
                     if (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(3500)) {
-                        _processUI.Kill();
+                        TryKillUiProcess(_processUI);
                     }
                 }
                 catch (Exception e) {
@@ -166,16 +235,17 @@ namespace VirtualPaper.Services {
             }
         }
 
-        private void HandleUiExited(Process process) {
+        // Returns true when a pending update takes over reopening the UI.
+        private bool HandleUiExited(Process process) {
             lock (_processLock) {
                 // An exit callback may already be queued when RestartUI detaches
                 // the handler. It must never clear or stop the replacement process.
-                if (!ReferenceEquals(process, _processUI)) return;
+                if (!ReferenceEquals(process, _processUI)) return false;
 
                 var pid = process.Id;
                 ReleaseProcess();
 
-                if (_isDisposed || App.IsShuttingDown) return;
+                if (_isDisposed || App.IsShuttingDown) return false;
 
                 _jobService.StopPlugin(pid);
 
@@ -189,9 +259,11 @@ namespace VirtualPaper.Services {
                             _ = ShowUIAsync();
                         };
                         var restartService = App.Services.GetRequiredService<IPluginsUpdateService>();
-                        _ = restartService.ExecutePendingPluginUpdateWithWindowAsync();
+                        _uiUpdateTask = restartService.ExecutePendingPluginUpdateWithWindowAsync();
+                        return true;
                     }
                 }
+                return false;
             }
         }
 
@@ -211,7 +283,7 @@ namespace VirtualPaper.Services {
                                     CloseUI();
                                 }
                                 else {
-                                    _processUI.Kill();
+                                    TryKillUiProcess(_processUI);
                                 }
                             }
                         }
@@ -229,6 +301,10 @@ namespace VirtualPaper.Services {
         #endregion
 
         private void ReleaseProcess() {
+            _uiExitCancellation?.Cancel();
+            _uiExitCancellation?.Dispose();
+            _uiExitCancellation = null;
+            _uiExitTask = null;
             var process = _processUI;
             _processUI = null;
             if (process == null) return;
@@ -241,5 +317,9 @@ namespace VirtualPaper.Services {
         private Process? _processUI;
         private readonly string _fileName, _workingDir;
         private readonly IJobService _jobService;
+        private readonly TimeSpan _uiExitTimeout;
+        private CancellationTokenSource? _uiExitCancellation;
+        private Task<bool>? _uiExitTask;
+        private Task? _uiUpdateTask;
     }
 }

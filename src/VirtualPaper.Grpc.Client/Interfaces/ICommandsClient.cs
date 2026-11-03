@@ -4,6 +4,7 @@ namespace VirtualPaper.Grpc.Client.Interfaces {
 
         Task ShowUIAsync();
         Task CloseUIAsync();
+        Task NotifyUIClosingAsync();
         Task RequestInstallAsync();
         Task RestartUIAsync();
         Task ShowDebugViewAsync();

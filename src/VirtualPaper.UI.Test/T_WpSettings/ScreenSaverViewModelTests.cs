@@ -339,6 +339,40 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         // ── StopListenForClients ──────────────────────────────────────
 
         [TestMethod]
+        public async Task ListenForClients_AfterStop_RecreatesPipeWithoutOverlappingPreviousServer() {
+            int active = 0, maximum = 0, created = 0;
+            var first = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var second = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _pipeServerFactory.Setup(factory => factory.Create(It.IsAny<string>(), null)).Returns(() => {
+                var server = new Mock<IPipeServer>();
+                server.Setup(pipe => pipe.WaitForConnectionAsync(It.IsAny<CancellationToken>()))
+                    .Returns<CancellationToken>(async token => {
+                        int count = Interlocked.Increment(ref active);
+                        maximum = Math.Max(maximum, count);
+                        if (Interlocked.Increment(ref created) == 1) first.TrySetResult();
+                        else second.TrySetResult();
+                        await Task.Delay(Timeout.Infinite, token);
+                    });
+                server.Setup(pipe => pipe.Dispose()).Callback(() => Interlocked.Decrement(ref active));
+                return server.Object;
+            });
+            Task old = _vm.ListenForClients();
+            await first.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.AreSame(old, _vm.ListenForClients(), "Duplicate load must share the current listener");
+            _vm.StopListenForClients();
+            Task restarted = _vm.ListenForClients();
+            await second.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            _vm.StopListenForClients();
+            await Task.WhenAll(old, restarted).WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.AreEqual(2, created);
+            Assert.AreEqual(1, maximum, "Old pipe must release its name before the next listener starts");
+            Assert.AreEqual(0, active);
+            _vm.Dispose();
+            await _vm.ListenForClients();
+            Assert.AreEqual(2, created, "Disposed view model must not create another pipe");
+        }
+
+        [TestMethod]
         public void StopListenForClients_WhenCalled_DoesNotThrow() {
             // 验证取消操作本身不抛出
             _vm.StopListenForClients();

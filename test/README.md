@@ -194,7 +194,17 @@ Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单�
 新增模块时在 `Cases` 中实现用例，并在 `App.xaml.cs` 注册；脚本及 CI 不需要维护用例名称或数量。
 组件用例的效果服务和应用回调使用记录实现；应用设置用例不替代前后台服务。
 壁纸库、高清适屏和壁纸效果用例启动真实播放器并验证桌面挂载；各用例按上述边界执行。
-当前不覆盖 WebView 渲染画质、多屏布局、视频播放策略或 AI 推理。
+默认集合不覆盖 WebView 渲染画质、多屏布局、视频播放策略或 AI 推理；实际推理需运行上述 ModelInference 模块。
+
+`Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen` 是显式压力回归：
+同一真实后台下启动、正常关闭 12 代 UI，每代进入屏保页两次，并经真实命名管道发送设置通知，要求 UI 日志确认接收。
+用于验证页面退出后监听可恢复及关闭生命周期，不模拟真实空闲或锁屏。
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module ScreenSaverLifecycle -TimeoutSeconds 300
+```
+
+应用关闭超过 10 秒时，保留所属窗口的可见控件及截图；仍判失败，不延长超时来掩盖问题。
 
 现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC
 业务集成测试，不作为真实 UI 交互用例迁入本项目。

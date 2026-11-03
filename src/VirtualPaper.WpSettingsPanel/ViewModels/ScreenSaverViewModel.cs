@@ -96,7 +96,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _scrCommandsClient = scrCommandsClient;
             _pipeServerFactory = pipeServerFactory;
             _storagePicker = storagePicker;
-            _ctsListen = new();
 
             InitText();
             InitCollections();
@@ -128,16 +127,30 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             ProcsFiltered = [.. _userSettingsClient.Settings.WhiteListScr];
         }
 
-        internal async Task ListenForClients() {
+        internal Task ListenForClients() {
+            lock (_listenLock) {
+                if (_isDisposed) return Task.CompletedTask;
+                if (_ctsListen is { IsCancellationRequested: false }) return _listenTask;
+                var previous = _listenTask;
+                var source = new CancellationTokenSource();
+                _ctsListen = source;
+                return _listenTask = ListenForClientsAsync(previous, source);
+            }
+        }
+
+        private async Task ListenForClientsAsync(Task previous, CancellationTokenSource source) {
+            // A re-entered page must wait for the old pipe to release its name.
+            await previous.ConfigureAwait(false);
+            CancellationToken token = source.Token;
             ArcLog.GetLogger<ScreenSaverViewModel>().Info("[PipeServer] Pipe Server is running...");
 
             try {
                 await Task.Run(async () => {
-                    while (!_ctsListen.IsCancellationRequested) {
+                    while (!token.IsCancellationRequested) {
                         using var server = _pipeServerFactory.Create(Constants.PipeControlField.TrayCmdPipeName);
-                        await server.WaitForConnectionAsync(_ctsListen.Token);
+                        await server.WaitForConnectionAsync(token);
                         using var reader = new StreamReader(server.GetStream());
-                        string? cmd = await reader.ReadLineAsync(_ctsListen.Token);
+                        string? cmd = await reader.ReadLineAsync(token);
                         ArcLog.GetLogger<ScreenSaverViewModel>().Info($"[PipeServer] Received command: {cmd}");
 
                         if (cmd == Constants.PipeControlField.CmdUpdateScrSettings) {
@@ -146,16 +159,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     }
                 });
             }
-            catch (OperationCanceledException) when (_ctsListen.IsCancellationRequested) {
+            catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 ArcLog.GetLogger<ScreenSaverViewModel>().Warn("[PipeServer] Listening was canceled.");
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<ScreenSaverViewModel>().Error($"[PipeServer] An Error occurred while waiting for or processing client connections: ${ex.Message}");
             }
+            finally {
+                lock (_listenLock) {
+                    if (ReferenceEquals(_ctsListen, source)) _ctsListen = null;
+                    source.Dispose();
+                }
+            }
         }
 
         public void StopListenForClients() {
-            _ctsListen?.Cancel();
+            lock (_listenLock) _ctsListen?.Cancel();
         }
 
         private void ChangeScreenSaverStatu(bool isScreenSaverOn) {
@@ -248,11 +267,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         #region Dispose
         private bool _isDisposed;
         protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
+            lock (_listenLock) {
+                if (_isDisposed) return;
+                _isDisposed = true;
                 if (disposing) {
                     _ctsListen?.Cancel();
                 }
-                _isDisposed = true;
             }
         }
 
@@ -262,7 +282,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
         #endregion
 
-        private readonly CancellationTokenSource _ctsListen;
+        private readonly object _listenLock = new();
+        private CancellationTokenSource? _ctsListen;
+        private Task _listenTask = Task.CompletedTask;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IScrCommandsClient _scrCommandsClient;
         private readonly IPipeServerFactory _pipeServerFactory;

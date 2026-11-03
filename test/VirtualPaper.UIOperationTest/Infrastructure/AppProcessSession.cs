@@ -98,7 +98,25 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         if (_ui == null) return;
         // The production UI handles WM_CLOSE, checks pages, then exits normally.
         UiTestContext.Check(_ui.CloseMainWindow(), "UI did not accept a window-close request");
-        await _ui.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+        try { await _ui.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10)); }
+        catch (TimeoutException) {
+            nint closingWindow = _ui.MainWindowHandle;
+            string diagnostic = Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "close-timeout-" + _ui.Id);
+            try {
+                await Task.Run(() => {
+                    var root = System.Windows.Automation.AutomationElement.FromHandle(closingWindow);
+                    var controls = root.FindAll(System.Windows.Automation.TreeScope.Descendants,
+                        System.Windows.Automation.Condition.TrueCondition).Cast<System.Windows.Automation.AutomationElement>()
+                        .Where(item => !item.Current.IsOffscreen)
+                        .Select(item => $"{item.Current.ControlType.ProgrammaticName} {item.Current.AutomationId}: {item.Current.Name}");
+                    Directory.CreateDirectory(Path.GetDirectoryName(diagnostic)!);
+                    File.WriteAllLines(diagnostic + ".txt", controls);
+                    WindowSnapshot.Save(closingWindow, diagnostic + ".png");
+                }).WaitAsync(TimeSpan.FromSeconds(2));
+            }
+            catch { /* Preserve the original timeout even when the UI provider is unresponsive. */ }
+            throw;
+        }
         UiTestContext.Check(_ui.ExitCode == 0, $"UI exited abnormally: {_ui.ExitCode}");
         _ui.Dispose();
         _ui = null;

@@ -150,7 +150,31 @@ internal sealed class AppProcessSession : IAsyncDisposable {
 
     public async Task StopAsync() {
         await CloseUiAsync();
+        await RequestShutdownAsync();
+        await WaitForShutdownAsync();
+    }
+
+    // Unlike StopAsync, leave editors open so Core must ask UI for permission.
+    public async Task RequestShutdownAsync() =>
         await _commands.ShutDownAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5));
+
+    public Task WaitForShutdownCancellationAsync(int count) => WaitAsync(async () => {
+        int cancellations = 0;
+        foreach (string path in Directory.EnumerateFiles(Constants.CommonPaths.LogDirCore, "*.txt")) {
+            string text = await ReadTextSharedAsync(path);
+            cancellations += text.Split('\n').Skip(_previousLogLines.GetValueOrDefault(path))
+                .Count(line => line.Contains("Shutdown cancelled by UI.", StringComparison.Ordinal));
+        }
+        return cancellations >= count;
+    }, "Core acknowledged shutdown cancellation");
+
+    public async Task WaitForShutdownAsync() {
+        if (_ui != null) {
+            await _ui.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            UiTestContext.Check(_ui.ExitCode == 0, $"UI exited abnormally: {_ui.ExitCode}");
+            _ui.Dispose();
+            _ui = null;
+        }
         await _core!.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
         UiTestContext.Check(_core.ExitCode == 0, $"Core exited abnormally: {_core.ExitCode}");
     }

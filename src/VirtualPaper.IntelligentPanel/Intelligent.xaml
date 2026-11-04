@@ -30,18 +30,23 @@
                 <Frame x:Name="ContentFrame" Grid.Row="1"/>
             </Grid>
 
-            <input:ArcButton x:Name="addTaskButton"
+            <Button x:Name="addTaskButton"
                 AutomationProperties.AutomationId="Intelligent.AddTask"
-                Width="56"
-                Height="56"
+                AutomationProperties.Name="{markup:I18n Key=Intelligent_AddTask}"
+                ToolTipService.ToolTip="{markup:I18n Key=Intelligent_AddTask}"
+                Style="{StaticResource AccentButtonStyle}"
+                Width="48"
+                Height="48"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Bottom"
                 Margin="0,0,24,24"
-                CornerRadius="28"
-                Background="LightBlue"
+                CornerRadius="14"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
                 Click="AddTaskButton_Click">
-                <FontIcon Glyph="&#xF8AA;" />
-            </input:ArcButton>
+                <FontIcon Glyph="&#xE710;" FontSize="20" />
+            </Button>
 
             <Grid x:Name="maskGrid" 
                 Background="#80000000" 

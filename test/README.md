@@ -40,7 +40,7 @@ Use `-ReportPath` to specify a new JSON report path; the default is in the syste
 
 The default overall timeout is 180 seconds, or 900 seconds for `-Suite Extended`. Set `-TimeoutSeconds` to a value from 30 to 900 as needed. The report's adjacent `.artifacts` directory retains isolated settings and Core/UI logs; temporary runtime directories are cleaned up.
 
-The standard suite contains 13 cases. The extended suite contains those cases plus real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
+The standard suite contains 16 cases. The extended suite contains those cases plus real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
 
 ### Machines without a usable desktop
 
@@ -142,6 +142,12 @@ Changes use production RPC/IPC while the player remains running. The case does n
 
 Explicit test sessions skip OS startup registration. This case does not validate real registration, backdrop pixels, About image decoding, or update downloads.
 
+### Main window and tray themes
+
+`Application.ThemeSync.MainWindowAndTray` cycles Light → Dark → Auto → Light → Dark through the real theme button. It checks RPC and JSON persistence, captures the real main window and the owned Core tray menu, and verifies their rendered background luminance. It then reopens UI and checks Dark again. Auto is checked against the current system preference; the test never changes the system theme or registry.
+
+The same case opens and cancels a new AI task in both Light and Dark, checks the button's accessible name, keyboard focus and hit target, and retains screenshots. Test sessions label their tray icon with the session ID so acceptance cannot click another running instance's icon.
+
 ### Log export
 
 `Application.SystemSettings.ExportLogsAndCancel` cancels the production save picker, then exports a ZIP to the case's temporary directory. It waits until the archive is fully readable and checks settings against the session JSON, the presence of layout data, nonempty Core/UI logs, and safe archive entry paths. It then reopens UI and checks normal shutdown.
@@ -169,6 +175,12 @@ This uses real Win2D and shader resources. Brushes, layer renaming, cross-DPI be
 4. Reopen UI and load the `.vpw` through the system picker. Check the tree and entry file, export the complete ZIP, and verify edited content, manifest, and deleted files.
 
 Context menus and keyboard input operate only on owned windows with foreground and obstruction checks. No DOM injection, test-only save endpoint, or substituted service is used. Preview quality, Save As, every editor command, OCR, and pixel-level rendering are outside this case.
+
+### Exit with unsaved editors
+
+`Application.EditorExit.ImageCancelSaveAndExit` and `Application.EditorExit.WebCancelSaveAndDiscard` leave real image/Web editors dirty and cancel a window-close prompt. They then request Core shutdown through the production RPC (image) or the actual tray Exit action (Web), cancel the real unsaved dialog, and confirm UI and Core remain usable.
+
+The image case also cancels the save picker, then requests exit again and saves a `.vpd`, checking its edited canvas dimensions. The Web case opens the session's actual tray menu, chooses Exit, discards the edit and checks the entry file remains unchanged. Both require normal UI/Core exit codes, unchanged source files, and no ERROR logs. Cancelled Core requests must finish before the next request. Dialog buttons are located inside the ContentDialog to avoid confusing Cancel with a TabView close button.
 
 ### Intelligent task configuration
 

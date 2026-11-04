@@ -155,7 +155,7 @@ internal static class WebEditorTests {
         }
     }
 
-    private static AutomationElement FindItem(AutomationElement root, string name) {
+    internal static AutomationElement FindItem(AutomationElement root, string name) {
         var timer = Stopwatch.StartNew();
         while (timer.Elapsed < TimeSpan.FromSeconds(10)) {
             var item = ApplicationUi.Find(root, "WebEditor.Files").FindAll(TreeScope.Descendants,
@@ -168,6 +168,6 @@ internal static class WebEditorTests {
         throw new TimeoutException("Web file tree item not found: " + name);
     }
 
-    private static Task WaitForEditorStatusAsync(AutomationElement root, string expected) => AppProcessSession.WaitAsync(() =>
+    internal static Task WaitForEditorStatusAsync(AutomationElement root, string expected) => AppProcessSession.WaitAsync(() =>
         Task.Run(() => ApplicationUi.Find(root, "WebEditor.CodeSurface", visible: true).Current.ItemStatus == expected), "Monaco status " + expected);
 }

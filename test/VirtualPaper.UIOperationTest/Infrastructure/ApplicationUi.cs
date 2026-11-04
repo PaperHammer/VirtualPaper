@@ -205,6 +205,21 @@ internal static class ApplicationUi {
         throw new TimeoutException($"Window in process {processId} with control {descendantId} not found");
     }
 
+    public static AutomationElement DialogButton(AutomationElement root, string id) {
+        // TabView also exposes a CloseButton. Wait for the real dialog and
+        // restrict lookup to it instead of accidentally closing an editor tab.
+        var parent = Find(root, "PrimaryButton", visible: true);
+        while ((parent = TreeWalker.RawViewWalker.GetParent(parent)) != null) {
+            var buttons = parent.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button))
+                .Cast<AutomationElement>().Where(e => !e.Current.IsOffscreen && e.Current.IsEnabled).ToArray();
+            if (!buttons.Any(e => e.Current.AutomationId == "SecondaryButton")) continue;
+            var matches = buttons.Where(e => e.Current.AutomationId == id).ToArray();
+            if (matches.Length == 1) return matches[0];
+        }
+        throw new InvalidOperationException("Unsaved dialog ancestor not found");
+    }
+
     private static IEnumerable<AutomationElement> Matches(AutomationElement root, string id, bool includePopups) {
         var condition = new PropertyCondition(AutomationElement.AutomationIdProperty, id);
         foreach (AutomationElement element in root.FindAll(TreeScope.Descendants, condition)) yield return element;

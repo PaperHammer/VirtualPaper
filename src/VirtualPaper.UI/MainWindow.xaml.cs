@@ -60,15 +60,29 @@ namespace VirtualPaper.UI {
             }
 
             try {
-                bool canClose = await NaviContent.CheckAllPagesCanCloseAsync();
+                bool canClose = await CheckCanCloseAsync();
                 if (canClose) {
                     await CloseConfirmedAsync();
                 }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainWindow>().Error(ex);
+                GlobalMessageUtil.ShowException(ex, arcWindow: this);
             }
             finally {
                 Interlocked.Exchange(ref _isCheckingClose, 0);
             }
         }
+
+        private Task<bool>? _closeCheckTask;
+        private Task<bool> CheckCanCloseAsync() => CrossThreadInvoker.InvokeOnUIThreadAsync(async () => {
+            // IPC arrives on a receive thread. All editor access and dialogs belong
+            // to the UI thread; concurrent exit requests share the same decision.
+            if (_closeCheckTask != null) return await _closeCheckTask;
+            _closeCheckTask = NaviContent.CheckAllPagesCanCloseAsync();
+            try { return await _closeCheckTask; }
+            finally { _closeCheckTask = null; }
+        });
 
         private int _isClosing;
         private async Task CloseConfirmedAsync(TwoWayMessage? closeResult = null) {
@@ -118,7 +132,7 @@ namespace VirtualPaper.UI {
             try {
                 switch (e.Type) {
                     case "REQUEST_CLOSE":
-                        var canClose = await NaviContent.CheckAllPagesCanCloseAsync();
+                        var canClose = await CheckCanCloseAsync();
                         
                         var closeResult = new TwoWayMessage {
                             Type = "UI_CLOSE_RESULT",
@@ -152,7 +166,7 @@ namespace VirtualPaper.UI {
                         });
                         break;
                     case MessageType.cmd_close:
-                        var canClose = await NaviContent.CheckAllPagesCanCloseAsync();
+                        var canClose = await CheckCanCloseAsync();
                         if (canClose) {
                             await CloseConfirmedAsync();
                         }

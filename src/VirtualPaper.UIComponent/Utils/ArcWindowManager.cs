@@ -68,7 +68,7 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         internal static void Cleanup() {
-            foreach (var window in _activeWindows.Values) {
+            foreach (var window in ActiveWindows) {
                 if (!window.IsMainWindow) {
                     window.Close();
                 }

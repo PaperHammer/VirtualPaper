@@ -33,11 +33,17 @@ namespace VirtualPaper.UIComponent.Templates {
             }
 
             this.Activated += ArcWindow_Activated;
-            this.AppWindow.Closing += AppWindow_Closing;
             this.Closed += (_, _) => {
                 _isClosed = true;
                 _isLoaded = false;
                 unchecked { _themeVersion++; }
+                this.Activated -= ArcWindow_Activated;
+                // A Closing event can be cancelled by an editor's save prompt.
+                // Only release shared window/theme state after the window closes.
+                if (IsMainWindow) {
+                    ArcWindowManager.Cleanup();
+                    ArcThemeUtil.Cleanup();
+                }
             };
         }
 
@@ -47,18 +53,6 @@ namespace VirtualPaper.UIComponent.Templates {
             _isActive = isActive;
 
             ArcWindowTitleBarUtil.UpdateTitleBar(this, ArcThemeUtil.GetFormatMainWindowTheme(), isActive);
-        }
-
-        private void AppWindow_Closing(AppWindow sender, AppWindowClosingEventArgs args) {
-            // 点击关闭按钮时，主窗口会卡住几秒，才关闭窗口 todo（优化）
-            //this.Hide();
-            // Window.Closed 的触发时机并不保证晚于 Activated/VisibilityChanged
-            this.Activated -= ArcWindow_Activated;
-            // 避免子窗口的关闭导致 ArcThemeUtil 清理
-            if (IsMainWindow) {
-                ArcWindowManager.Cleanup();
-                ArcThemeUtil.Cleanup();
-            }
         }
 
         private async void AppRoot_Loaded(object sender, RoutedEventArgs e) {

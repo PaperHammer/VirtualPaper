@@ -30,7 +30,7 @@ internal static class StaticEditorTests {
         await Task.Run(() => {
             Check(ui.CloseMainWindow(), "Editor did not accept the unsaved-close request");
             ApplicationUi.Find(root, "PrimaryButton", visible: true);
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "CloseButton", visible: true));
+            ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "CloseButton"));
             ApplicationUi.WaitUntilGone(root, "PrimaryButton");
             Check(!ui.HasExited, "Cancelling the unsaved dialog closed the editor UI");
             InvokeFileAction(root, "Project.File.Save");
@@ -86,7 +86,7 @@ internal static class StaticEditorTests {
         context.Evidence["BrushAndLayerRenameTested"] = false;
     }
 
-    private static AutomationElement OpenImage(System.Diagnostics.Process ui, nint ownerWindow, string path) {
+    internal static AutomationElement OpenImage(System.Diagnostics.Process ui, nint ownerWindow, string path) {
         var root = AutomationElement.FromHandle(ownerWindow);
         ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Projects"));
         ApplicationUi.Invoke(ApplicationUi.Find(root, "Projects.Open"));

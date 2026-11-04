@@ -27,7 +27,9 @@
             LeftDoubleClick="NotifyIcon_LeftDoubleClick"            
             TooltipText="Virtual Paper">
             <tray:NotifyIcon.Menu>
-                <ContextMenu>
+                <ContextMenu x:Name="trayMenu"
+                    AutomationProperties.AutomationId="Tray.Menu"
+                    Opened="TrayMenu_Opened">
                     <MenuItem MinWidth="200" Click="OpenAppMenuItem_Click">
                         <MenuItem.Icon>
                             <ui:SymbolIcon 
@@ -179,7 +181,8 @@
                         </MenuItem.Header>
                     </MenuItem>
 
-                    <MenuItem MinWidth="200" Click="ExitMenuItem_Click">
+                    <MenuItem AutomationProperties.AutomationId="Tray.Exit"
+                        MinWidth="200" Click="ExitMenuItem_Click">
                         <MenuItem.Icon>
                             <ui:SymbolIcon 
                                 Height="25"

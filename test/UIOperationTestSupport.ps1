@@ -88,6 +88,14 @@ namespace VirtualPaper {
     Resolve-UIOperationEnvironment ([VirtualPaper.TestDesktopProbe]::Read())
 }
 
+function New-UIOperationSkipReport($Environment) {
+    if ($Environment.Available -cne $false) { throw 'A UI skip requires an unavailable desktop.' }
+    [pscustomobject]@{
+        Status = 'Skipped'; Passed = $false; Skipped = $true; SkipReason = $Environment.ReasonCode
+        ExpectedCount = 0; Results = @(); Environment = $Environment
+    }
+}
+
 function Get-UIOperationReportOutcome($Report) {
     if ($Report.Skipped -eq $true -or $Report.Status -eq 'Skipped') {
         $environment = $Report.Environment

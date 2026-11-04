@@ -5,6 +5,7 @@ $workflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflo
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/pre-release.yml') -Raw
 $action = Get-Content -LiteralPath (Join-Path $repositoryRoot 'test/actions/run-project/action.yml') -Raw
 $solution = Get-Content -LiteralPath (Join-Path $repositoryRoot 'src/VirtualPaper.sln') -Raw
+$installerRunner = Get-Content -LiteralPath (Join-Path $repositoryRoot 'test/Run-InstallerTests.ps1') -Raw
 $specs = @(Get-ProjectTestSpecs)
 
 function Get-WorkflowJob([string]$Id, [string]$Text = $workflow) {
@@ -22,9 +23,8 @@ function Assert-JobNeeds([string]$Id, [string[]]$Expected, [string]$Text = $work
         throw "Invalid dependencies for $Id. Expected: $($Expected -join ', '); actual: $($actual -join ', ')."
     }
 }
-$gates = @('validate-pr', 'build-solution', 'test-installer')
+$gates = @('validate-pr', 'build-solution')
 Assert-JobNeeds 'build-solution' @('validate-pr')
-Assert-JobNeeds 'test-installer' @('validate-pr', 'build-solution')
 foreach ($spec in $specs) {
     $project = "src/$($spec.Project)/$($spec.Project).csproj"
     if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $project)) -or
@@ -35,33 +35,36 @@ foreach ($spec in $specs) {
     $job = Get-WorkflowJob $spec.Id
     if ($job -match '(?m)^    if:' -or -not $job.Contains('uses: ./test/actions/run-project') -or
         $job -notmatch "(?m)^        job-id:\s*$([regex]::Escape($spec.Id))\s*$") {
-        throw "$($spec.Id) must run unconditionally after installer acceptance through the shared project action."
+        throw "$($spec.Id) must reuse the build through the shared project action before installed acceptance."
     }
 }
-Assert-JobNeeds 'test-winui' ($gates + $specs.Id)
-Assert-JobNeeds 'summarize-tests' ($gates + $specs.Id + 'test-winui')
-$operation = Get-WorkflowJob 'test-winui'
+Assert-JobNeeds 'test-installed-app' ($gates + $specs.Id)
+Assert-JobNeeds 'summarize-tests' ($gates + $specs.Id + 'test-installed-app')
+$operation = Get-WorkflowJob 'test-installed-app'
 $build = Get-WorkflowJob 'build-solution'
 $summary = Get-WorkflowJob 'summarize-tests'
 if ($operation -match '(?m)^    if:' -or -not $operation.Contains('Get-ProjectTestReports -Root PrerequisiteTestResults') -or
-    $operation -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b' -or $operation -notmatch '-HostExe\s+test/VirtualPaper.UIOperationTest/bin/' -or
-    $operation -notmatch '-Suite\s+Extended\b') {
-    throw 'WinUI must validate prerequisite reports and execute the prebuilt host without rebuilding.'
+    $operation -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-RunUIOperationTests\b' -or
+    $operation -notmatch '-UIHostExe\s+test/VirtualPaper.UIOperationTest/bin/' -or
+    -not $operation.Contains('InnoSetup/setup.iss') -or -not $operation.Contains('name: test-installer-package') -or
+    $installerRunner -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-Suite\s+Extended\b' -or
+    -not $installerRunner.Contains("`$installedCore = Join-Path `$installDir 'VirtualPaper.exe'") -or
+    -not $installerRunner.Contains('-CoreExe $installedCore') -or -not $installerRunner.Contains('-UIOperation $uiOperation')) {
+    throw 'Installed acceptance must compile ISS, reuse both hosts and run extended UI against the installed Core before uninstall.'
 }
 if (-not $build.Contains('test/VirtualPaper.UIOperationTest/bin/x64/Release/') -or
     -not $build.Contains('test/VirtualPaper.InstallerTest/bin/Release/') -or
     -not $build.Contains('test/actions/run-project/action.yml') -or -not $build.Contains('test/TestReportSupport.ps1')) {
     throw 'The root-layout build artifact must include the shared action, runners and both test hosts.'
 }
-if (-not (Get-WorkflowJob 'test-installer').Contains('./test/Run-InstallerTests.ps1') -or
-    $releaseWorkflow.Contains('test-installer') -or $releaseWorkflow.Contains('./test/Run-InstallerTests.ps1')) {
-    throw 'Installer lifecycle acceptance belongs to Pre-merge Check, not Pre-release.'
+if ($workflow -match '(?m)^  (test-installer|test-winui):') {
+    throw 'Pre-merge installer and UI acceptance must share one installation job.'
 }
 if (-not $summary.Contains('./test/Summarize-TestResults.ps1') -or -not $summary.Contains('name: test-summary-') -or
     -not $summary.Contains('UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}')) {
     throw 'The final status must require validated raw reports; the summary bundle must use its own prefix.'
 }
-if ($build -match 'dotnet test |node .github/scripts/test-') { throw 'Application tests must run after installer acceptance.' }
+if ($build -match 'dotnet test |node .github/scripts/test-') { throw 'Application tests must remain separate from the shared build.' }
 foreach ($text in @($workflow, $releaseWorkflow)) {
     if ($text -notmatch '(?m)^  workflow_dispatch:' -or $text -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|schedule|workflow_call):') {
         throw 'Both workflows must be manually dispatched without automatic triggers.'
@@ -89,7 +92,17 @@ $releasePackage = Get-WorkflowJob 'package-release' $releaseWorkflow
 $releaseSync = Get-WorkflowJob 'sync-versions' $releaseWorkflow
 $releaseDraft = Get-WorkflowJob 'draft-release' $releaseWorkflow
 Assert-JobNeeds 'build-release' @('prepare-metadata') $releaseWorkflow
-Assert-JobNeeds 'package-release' @('prepare-metadata', 'build-release') $releaseWorkflow
+foreach ($spec in $specs) {
+    Assert-JobNeeds $spec.Id @('prepare-metadata', 'build-release') $releaseWorkflow
+    $job = Get-WorkflowJob $spec.Id $releaseWorkflow
+    if ($job -match '(?m)^    if:' -or -not $job.Contains('uses: ./test/actions/run-project') -or
+        -not $job.Contains('name: build-release-output') -or
+        -not $job.Contains("require-complete-execution: 'true'") -or
+        $job -notmatch "(?m)^        job-id:\s*$([regex]::Escape($spec.Id))\s*$") {
+        throw "Release $($spec.Id) must retest the shared release build through the same project action."
+    }
+}
+Assert-JobNeeds 'package-release' (@('prepare-metadata', 'build-release') + $specs.Id) $releaseWorkflow
 Assert-JobNeeds 'sync-versions' @('prepare-metadata', 'package-release') $releaseWorkflow
 Assert-JobNeeds 'draft-release' @('prepare-metadata', 'package-release', 'sync-versions') $releaseWorkflow
 if ($releaseWorkflow -match '(?m)^  (package-installer|package-plugins|release-summary):' -or
@@ -98,10 +111,29 @@ if ($releaseWorkflow -match '(?m)^  (package-installer|package-plugins|release-s
     -not $releaseDraft.Contains('$env:GITHUB_STEP_SUMMARY')) {
     throw 'Release packaging must share one job, with the summary in the draft job.'
 }
-if (-not $releaseBuild.Contains('path: ${{ env.RELEASE_BIN_DIR }}') -or
-    -not $releasePackage.Contains('path: ${{ env.RELEASE_BIN_DIR }}') -or
-    $releaseBuild -match '(?m)^        path: src/\s*$') {
-    throw 'Release build uploads and packaging downloads must share the application output directory.'
+if (-not $releaseBuild.Contains('          src/') -or
+    -not $releaseBuild.Contains('test/VirtualPaper.UIOperationTest/bin/x64/Release/') -or
+    -not $releaseBuild.Contains('test/VirtualPaper.InstallerTest/bin/Release/') -or
+    $releasePackage -notmatch 'name: build-release-output\r?\n        path: \.\s*\r?\n' -or
+    $releaseBuild.Contains('dotnet test ')) {
+    throw 'Release tests and packaging must reuse one root-layout build with both test hosts.'
+}
+if ($releasePackage -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-RunUIOperationTests\b' -or
+    $releasePackage -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-RequireFullAcceptance\b' -or
+    -not $releasePackage.Contains('Get-ProjectTestReports -Root TestResults -RequireCompleteExecution') -or
+    -not (Get-WorkflowJob 'test-ui-logic' $releaseWorkflow).Contains('node .github/scripts/test-depth-player.cjs') -or
+    -not (Get-WorkflowJob 'test-ml' $releaseWorkflow).Contains("include-ml-integration: 'true'")) {
+    throw 'Release must run Web checks, ML integration, installed UI and strict reports before synchronizing versions.'
+}
+if (-not $action.Contains('-RequireCompleteExecution:') -or $releasePackage.Contains('continue-on-error: true')) {
+    throw 'Release project and package gates must reject skips and must not ignore failures.'
+}
+$compileAt = $releasePackage.IndexOf('    - name: Compile installer')
+$verifyAt = $releasePackage.IndexOf('    - name: Verify installed release')
+$gateAt = $releasePackage.IndexOf('    - name: Validate full acceptance')
+$uploadAt = $releasePackage.IndexOf('    - name: Upload installer package')
+if ($compileAt -lt 0 -or $verifyAt -le $compileAt -or $gateAt -le $verifyAt -or $uploadAt -le $gateAt) {
+    throw 'Release package order must be compile -> install/startup/UI/uninstall -> strict gate -> upload.'
 }
 if (-not $releasePrepare.Contains('Assert-ReleaseTagAvailable') -or
     -not (Get-WorkflowJob 'build-release' $releaseWorkflow).Contains('needs: prepare-metadata') -or
@@ -126,4 +158,4 @@ foreach ($step in [regex]::Matches($releaseWorkflow, '(?ms)^    - name:.*?(?=^  
 & (Join-Path $repositoryRoot 'test/Test-ReportSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseVersion.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseMetadata.ps1')
-Write-Host '[OK] Manual PR checks -> build -> installer lifecycle -> parallel project tests -> prebuilt WinUI acceptance -> validated summary.'
+Write-Host '[OK] Both manual workflows reuse project and installed UI tests; release rejects skips before version synchronization/draft.'

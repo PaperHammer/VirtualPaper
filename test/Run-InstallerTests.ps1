@@ -5,6 +5,10 @@ param(
     [string] $ReportPath = 'TestResults/Installer/installer-results.json',
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
     [ValidateRange(10, 600)][int] $TimeoutSeconds = 120,
+    [switch] $RunUIOperationTests,
+    [string] $UIHostExe,
+    [string] $UIReportPath = 'TestResults/UIOperation/ui-operation-results.json',
+    [ValidateRange(30, 900)][int] $UITimeoutSeconds = 900,
     [switch] $NoBuild
 )
 $ErrorActionPreference = 'Stop'
@@ -26,6 +30,18 @@ if (-not $NoBuild) {
     if ($LASTEXITCODE -ne 0) { throw 'Installer lifecycle probe build failed; installation was not attempted.' }
 }
 if (-not (Test-Path -LiteralPath $probe)) { throw "Installer lifecycle probe not found: $probe" }
+if ($RunUIOperationTests) {
+    if (-not $UIHostExe -or -not (Test-Path -LiteralPath $UIHostExe -PathType Leaf)) {
+        throw 'Installed UI acceptance requires a prebuilt -UIHostExe.'
+    }
+    $UIHostExe = [IO.Path]::GetFullPath($UIHostExe)
+    $UIReportPath = [IO.Path]::GetFullPath($UIReportPath)
+    if (Test-Path -LiteralPath $UIReportPath) { throw "UI report already exists: $UIReportPath" }
+    if (Test-Path -LiteralPath "$UIReportPath.artifacts") { throw "UI artifacts already exist: $UIReportPath.artifacts" }
+    if ($UIReportPath -eq $ReportPath -or $UIReportPath.StartsWith("$artifacts\", [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Installer and UI reports must use separate artifact paths.'
+    }
+}
 
 # The production AppId is shared with a user's existing installation. Read all registry
 # views before installing, so this acceptance run cannot overwrite a daily installation.
@@ -58,6 +74,26 @@ $installedVersion = $null
 $environment = Get-UIOperationEnvironment
 $mode = if ($environment.Available) { 'InteractiveWizard' } else { 'Silent' }
 Write-Host "Installer acceptance mode: $mode"
+$uiOperation = $null
+if ($RunUIOperationTests) {
+    if (-not $environment.Available) {
+        # Preserve the same read-only preflight evidence as the skipped startup
+        # stage. Do not try to launch UI or retest the desktop after uninstall.
+        New-Item -ItemType Directory -Path "$UIReportPath.artifacts" -Force | Out-Null
+        $environment | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$UIReportPath.artifacts/environment.json" -Encoding utf8
+        New-UIOperationSkipReport $environment | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $UIReportPath -Encoding utf8
+    }
+    $uiOperation = {
+        $installedCore = Join-Path $installDir 'VirtualPaper.exe'
+        & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
+            -CoreExe $installedCore -HostExe $UIHostExe -ReportPath $UIReportPath -TimeoutSeconds $UITimeoutSeconds
+        if ($LASTEXITCODE -ne 0) { throw "Installed UI acceptance failed (exit $LASTEXITCODE)." }
+        $ui = Get-Content -LiteralPath $UIReportPath -Raw | ConvertFrom-Json
+        if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') {
+            throw 'The desktop became unavailable after startup; installed UI acceptance did not run.'
+        }
+    }
+}
 
 function Invoke-BoundedProcess([string] $Executable, [string] $Arguments) {
     $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -WindowStyle Hidden -PassThru
@@ -159,14 +195,15 @@ $report = Invoke-InstallerLifecycle -Install {
     if (@(Get-InstallRegistrations).Count) { $cleanupErrors.Add('Application uninstall registration remains after uninstall.') }
     if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) { $cleanupErrors.Add('Start menu shortcut remains after uninstall.') }
     if ($cleanupErrors.Count) { throw ($cleanupErrors -join [Environment]::NewLine) }
-} -Environment $environment
+} -UIOperation $uiOperation -Environment $environment
 $report | Add-Member NoteProperty InstallDir $installDir
 $report | Add-Member NoteProperty Mode $mode
 $report | Add-Member NoteProperty PackageVersion $packageVersion
 $report | Add-Member NoteProperty InstalledVersion $installedVersion
 $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8
 if ($env:GITHUB_STEP_SUMMARY) {
-    "### Installer lifecycle: install → open → uninstall`n`n| Stage | Result | Duration |`n| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
+    $sequence = $report.Checks.Name -join ' → '
+    "### Installed application: $sequence`n`n| Stage | Result | Duration |`n| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
     foreach ($check in $report.Checks) {
         "| $($check.Name) | $($check.Status) | $($check.DurationMilliseconds) ms |" >> $env:GITHUB_STEP_SUMMARY
     }

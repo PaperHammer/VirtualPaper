@@ -60,3 +60,38 @@ foreach ($mutation in @('MissingEnvironment', 'FalseEnvironment', 'InstallSkippe
     if ($accepted) { throw "Invalid headless report accepted: $mutation" }
 }
 Write-Host '[OK] Headless install/uninstall, explicit Open skip and forged-skip rejection.'
+
+foreach ($failure in @('', 'Install', 'Open', 'UIOperation', 'Uninstall')) {
+    $calls = [Collections.Generic.List[string]]::new()
+    $report = Invoke-InstallerLifecycle -Install {
+        $calls.Add('Install'); if ($failure -eq 'Install') { throw 'Expected install failure' }
+    } -Open {
+        $calls.Add('Open'); if ($failure -eq 'Open') { throw 'Expected startup failure' }
+    } -UIOperation {
+        $calls.Add('UIOperation'); if ($failure -eq 'UIOperation') { throw 'Expected UI failure' }
+    } -Uninstall {
+        $calls.Add('Uninstall'); if ($failure -eq 'Uninstall') { throw 'Expected uninstall failure' }
+    }
+    $expected = switch ($failure) {
+        Install { 'Install,Uninstall' }
+        Open { 'Install,Open,Uninstall' }
+        default { 'Install,Open,UIOperation,Uninstall' }
+    }
+    if (($calls -join ',') -cne $expected -or $report.UIOperationRequested -cne $true -or $report.Total -ne 4) {
+        throw "Incorrect installed UI lifecycle: $failure"
+    }
+    $accepted = $true
+    try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
+    if ($accepted -ne ($failure -eq '')) { throw "Incorrect installed UI result: $failure" }
+}
+$report = Invoke-InstallerLifecycle -Install {} -Open { throw 'No desktop' } -UIOperation { throw 'No desktop' } -Uninstall {} -Environment $headless
+if ((Get-InstallerReportOutcome $report) -cne 'OpenSkipped' -or $report.Skipped -ne 2 -or
+    ($report.Checks.Name -join ',') -cne 'Install,Open,UIOperation,Uninstall') {
+    throw 'Headless installed UI must explicitly skip both Open and UIOperation.'
+}
+$report.Checks = @($report.Checks | Where-Object Name -NE 'UIOperation')
+$report.Total = 3; $report.Skipped = 1
+$accepted = $true
+try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
+if ($accepted) { throw 'Requested UI stage must not be omitted from acceptance.' }
+Write-Host '[OK] Installed UI ordering, prerequisite failure gates, UI-failure cleanup and mandatory UI stage.'

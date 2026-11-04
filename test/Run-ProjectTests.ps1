@@ -1,7 +1,8 @@
 #requires -Version 7.2
 param(
     [Parameter(Mandatory)][string]$JobId,
-    [switch]$IncludeMLIntegration
+    [switch]$IncludeMLIntegration,
+    [switch]$RequireCompleteExecution
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'TestReportSupport.ps1')
@@ -26,7 +27,7 @@ try {
     }
     & dotnet @arguments
     if ($LASTEXITCODE -ne 0) { throw "$JobId failed (exit $LASTEXITCODE)." }
-    Assert-TrxReportPassed $reportPath | Format-Table Total, Executed, Passed
+    Assert-TrxReportPassed $reportPath -RequireCompleteExecution:$RequireCompleteExecution | Format-Table Total, Executed, Passed
 } finally {
     $env:RELEASE_BIN_DIR = $previousReleaseBin
     Pop-Location

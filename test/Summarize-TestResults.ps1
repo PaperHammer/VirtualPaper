@@ -1,14 +1,20 @@
 #requires -Version 7.2
-param([Parameter(Mandatory)][string]$Root)
+param([Parameter(Mandatory)][string]$Root, [switch]$RequireFullAcceptance)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'TestReportSupport.ps1')
 . (Join-Path $PSScriptRoot 'InstallerTestSupport.ps1')
 . (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
-$reports = @(Get-ProjectTestReports -Root $Root)
+$reports = @(Get-ProjectTestReports -Root $Root -RequireCompleteExecution:$RequireFullAcceptance)
 $installer = Get-Content -LiteralPath (Join-Path $Root 'test-results-installer/installer-results.json') -Raw | ConvertFrom-Json
 $installerOutcome = Get-InstallerReportOutcome $installer
+if ($installer.UIOperationRequested -cne $true) { throw 'CI must test UI inside the installer lifecycle before uninstall.' }
 $ui = Get-Content -LiteralPath (Join-Path $Root 'test-results-ui-operation/ui-operation-results.json') -Raw | ConvertFrom-Json
 $uiOutcome = Get-UIOperationReportOutcome $ui
+$uiStage = @($installer.Checks | Where-Object Name -EQ 'UIOperation')[0]
+if ($uiStage.Status -cne $uiOutcome) { throw 'Installer and UI reports disagree about the UI acceptance outcome.' }
+if ($RequireFullAcceptance -and ($installerOutcome -ne 'Passed' -or $uiOutcome -ne 'Passed')) {
+    throw 'Release acceptance requires every selected project test, startup, UI and uninstall to pass without skips.'
+}
 $coverage = @(Get-TestCoverageRows -Root $Root)
 $covered = ($coverage | Measure-Object Covered -Sum).Sum
 $valid = ($coverage | Measure-Object Valid -Sum).Sum

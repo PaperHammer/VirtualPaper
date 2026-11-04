@@ -163,6 +163,10 @@ jobs:
         ref: ${{ needs.prepare-metadata.outputs.main_sha }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Check workflow contracts
+      shell: pwsh
+      run: ./.github/scripts/validate-test-workflow.ps1
+
     - name: Set up .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -172,7 +176,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.nuget/packages
-        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'src/**/*.props') }}
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props') }}
         restore-keys: nuget-${{ runner.os }}-
 
     - name: Set application version
@@ -200,26 +204,21 @@ jobs:
         $json | Set-Content "$env:RELEASE_BIN_DIR/app_comp_manifest.json" -Encoding utf8NoBOM
         Copy-Item "$env:RELEASE_BIN_DIR/app_comp_manifest.json" app_comp_manifest.json
 
-    - name: Test build artifacts
-      run: dotnet test src/VirtualPaper.ReleaseBuildData.Test/VirtualPaper.ReleaseBuildData.Test.csproj --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=release-build-tests.trx" --results-directory TestResults/ReleaseBuild
-      shell: pwsh
-
-    - name: Upload artifact results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        overwrite: true
-        name: test-results-release-build
-        path: TestResults/ReleaseBuild/
-        retention-days: 1
-
     - name: Upload build output
       uses: actions/upload-artifact@v4
       with:
         overwrite: true
         name: build-release-output
-        path: ${{ env.RELEASE_BIN_DIR }}
-        retention-days: 1
+        path: |
+          src/
+          test/actions/run-project/action.yml
+          test/Run-ProjectTests.ps1
+          test/TestReportSupport.ps1
+          test/VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj
+          test/VirtualPaper.UIOperationTest/bin/x64/Release/
+          test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj
+          test/VirtualPaper.InstallerTest/bin/Release/
+        retention-days: 7
 
     - name: Upload component manifest
       uses: actions/upload-artifact@v4
@@ -229,10 +228,155 @@ jobs:
         path: app_comp_manifest.json
         retention-days: 30
 
-  package-release:
-    name: Package Release
+  test-artifacts:
+    name: Artifact Tests
     runs-on: windows-latest
     needs: [prepare-metadata, build-release]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-artifacts
+        require-complete-execution: 'true'
+
+  test-core:
+    name: Core Tests
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-core
+        require-complete-execution: 'true'
+
+  test-ui-logic:
+    name: UI Logic Tests
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
+        persist-credentials: false
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Test web players
+      run: |
+        node .github/scripts/test-atmosphere.cjs
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        node .github/scripts/test-depth-player.cjs
+        exit $LASTEXITCODE
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-ui-logic
+        require-complete-execution: 'true'
+
+  test-images:
+    name: Static Image Tests
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-images
+        require-complete-execution: 'true'
+
+  test-web-backdrop:
+    name: Web Backdrop Tests
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-web-backdrop
+        require-complete-execution: 'true'
+
+  test-ui-components:
+    name: UI Component Tests
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-ui-components
+        require-complete-execution: 'true'
+
+  test-ml:
+    name: ML Tests
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-ml
+        require-complete-execution: 'true'
+        include-ml-integration: 'true'
+
+  test-shader:
+    name: Shader Tests
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-shader
+        require-complete-execution: 'true'
+
+  package-release:
+    name: Package and Verify
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    timeout-minutes: 30
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -244,7 +388,24 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: build-release-output
-        path: ${{ env.RELEASE_BIN_DIR }}
+        path: .
+
+    - name: Download project reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        path: TestResults/
+
+    - name: Validate project reports
+      shell: pwsh
+      run: |
+        . ./test/TestReportSupport.ps1
+        Get-ProjectTestReports -Root TestResults -RequireCompleteExecution | Format-Table Total, Executed, Passed
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
 
     - name: Install Inno Setup 6.7.1
       shell: pwsh
@@ -288,6 +449,50 @@ jobs:
         $installer = $installers[0]
         (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content InnoSetup/Output/SHA256.txt -Encoding utf8NoBOM
         "installer_path=$($installer.FullName)" >> $env:GITHUB_OUTPUT
+
+    - name: Verify installed release
+      shell: pwsh
+      env:
+        INSTALLER_PATH: ${{ steps.installer-details.outputs.installer_path }}
+      run: |
+        ./test/Run-InstallerTests.ps1 -InstallerPath $env:INSTALLER_PATH -NoBuild -RunUIOperationTests `
+          -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
+          -ReportPath TestResults/test-results-installer/installer-results.json `
+          -UIReportPath TestResults/test-results-ui-operation/ui-operation-results.json
+
+    - name: Validate full acceptance
+      shell: pwsh
+      run: ./test/Summarize-TestResults.ps1 -Root TestResults -RequireFullAcceptance
+
+    - name: Upload installer results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        overwrite: true
+        name: test-results-installer
+        path: TestResults/test-results-installer/
+        if-no-files-found: warn
+        retention-days: 7
+
+    - name: Upload WinUI results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        overwrite: true
+        name: test-results-ui-operation
+        path: TestResults/test-results-ui-operation/
+        if-no-files-found: warn
+        retention-days: 7
+
+    - name: Upload release test summary
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        overwrite: true
+        name: release-test-summary
+        path: TestResults/
+        if-no-files-found: warn
+        retention-days: 30
 
     - name: Upload installer package
       uses: actions/upload-artifact@v4

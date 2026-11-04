@@ -256,13 +256,15 @@ The default suite does not validate WebView rendering quality, multi-monitor lay
 
 ## CI and installer acceptance
 
-CI runs **build preparation → installer acceptance → seven parallel regular test projects → WinUI preflight/operation tests → summary**. The three test phases are sequential: a failure prevents later phases from starting. Artifact integrity checks run alongside regular tests; Web player script checks run with the UI unit-test job.
+Pre-merge Check runs **build once → seven parallel regular test projects → compile ISS → install → first launch → installed UI tests → uninstall → summary**. Artifact integrity checks run alongside regular tests; Web player script checks run with the UI unit-test job. A failed prerequisite prevents packaging/installation. One acceptance job owns the installation through cleanup; there is no second installation for UI tests.
 
-Pre-merge Check uses `Run-InstallerTests.ps1` to install the actual package, launch Core from the installed location, let first-run behavior open UI, check that the window remains responsive for three seconds, then close UI and shut down Core through the production RPC. Forced cleanup is failure recovery, not a successful shutdown. Pre-release does not run installer acceptance.
+Pre-merge Check compiles `InnoSetup/setup.iss` from the shared build and retains the installer as `test-installer-package`. It uses `Run-InstallerTests.ps1` to install that package, launch Core from the installed location, let first-run behavior open UI, check that the window remains responsive for three seconds, then close UI and shut down Core through the production RPC. Next, the prebuilt UI host runs the extended suite with `-CoreExe <installation>/VirtualPaper.exe`; application cases start the installed Core/UI/player executables. The host stays outside the installation, and nothing is rebuilt. Forced cleanup is failure recovery, not a successful shutdown.
 
-Each installer run uses a unique temporary installation and isolated application data. An open failure still triggers uninstall; uninstall residue also fails. Reports contain Install, Open, and Uninstall results.
+Pre-release repeats these checks against its newly versioned build and actual release installer. It reuses the same project action, includes ML integration and Web player script tests, and runs the same extended installed-UI suite. `Summarize-TestResults.ps1 -RequireFullAcceptance` rejects skipped project tests or desktop-unavailable startup/UI skips as well as failures and missing reports. Only successful full acceptance permits version synchronization and draft creation, including for plugin releases (which skip product-version synchronization).
 
-With an interactive desktop, the test operates the real English installation wizard: accept the license, proceed, install, and finish. Uninstall confirms removal, preserves user data, and completes. Only the installer and its child-process windows are operated; unknown dialogs or timeouts fail. Without a desktop, install and uninstall run silently, and Open is explicitly `Skipped`.
+Each installer run uses a unique temporary installation and isolated application data. Startup failure skips UI tests. Install, startup, or UI failure still triggers uninstall; uninstall residue also fails. Combined reports contain Install, Open, UIOperation, and Uninstall results, alongside the detailed UI report. Standalone installation checks retain the three-stage report.
+
+With an interactive desktop, the test operates the real English installation wizard: accept the license, proceed, install, and finish. Uninstall confirms removal, preserves user data, and completes. Only the installer and its child-process windows are operated; unknown dialogs or timeouts fail. Without a desktop, install and uninstall run silently, and both Open and UIOperation are explicitly `Skipped`, with matching desktop evidence in the UI report.
 
 Both modes check required Core/UI files, package/program version agreement, Start menu shortcuts, and uninstall registration. After uninstall, they check file, process, shortcut, and registration residue. Reports and installer logs are retained; desktop runs also retain wizard traces.
 
@@ -271,6 +273,9 @@ Both modes check required Core/UI files, package/program version agreement, Star
 ```powershell
 # Disposable Windows installation-test machine only:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
+# Full acceptance, using a prebuilt UI host; always uninstalls after the UI stage:
+./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `
+  -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe
 # Contract checks only: no installation, UI startup, or registry writes.
 ./test/Test-InstallerTestSupport.ps1
 # On a desktop, validate UIA, child-process handoff, and timeout recovery with a temporary wizard fixture that does not modify system settings.
@@ -278,7 +283,7 @@ Both modes check required Core/UI files, package/program version agreement, Star
 ./.github/scripts/validate-test-workflow.ps1
 ```
 
-A WinUI failure or missing report fails the final CI check. Only an explicit environment skip from preflight may continue, with `[SKIPPED]` in the final status. Before WinUI starts, regular TRX reports are also checked for unhandled exceptions so passing assertions cannot hide a crashed testhost.
+A WinUI failure or missing report fails the final CI check. Pre-merge Check may accept an explicit environment skip from preflight, with `[SKIPPED]` in the final status; Pre-release rejects it and requires an interactive desktop. Before WinUI starts, regular TRX reports are also checked for unhandled exceptions so passing assertions cannot hide a crashed testhost.
 
 ## Adding coverage
 

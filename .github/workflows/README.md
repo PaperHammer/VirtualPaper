@@ -6,8 +6,8 @@ The repository has two workflows, both triggered only by `workflow_dispatch`. Co
 
 | File | Manual inputs | Purpose |
 | --- | --- | --- |
-| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → installer acceptance → parallel tests → real UI acceptance → report PR status |
-| `pre-release.yml` | Merged `dev → main` PR number | Verify checks → calculate versions → build and package → synchronize version fields → create a draft release |
+| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → ISS → install/startup/UI/uninstall → report PR status |
+| `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/install/startup/UI/uninstall → strict gate → sync versions → draft |
 
 ## Everyday workflow
 
@@ -35,15 +35,16 @@ Each manual run reads the current source, labels, PR head, and base branch, then
 
 The test phases run in sequence:
 
-1. **Installer acceptance**: install the real package → launch installed Core and let first-run behavior open UI → normally close UI and Core → run the real uninstaller. Forced recovery or leftover files/processes fail acceptance. Desktop runs operate the actual installation/uninstallation wizards. Headless runs silently check files, versions, shortcuts, registration, and removal; opening UI is explicitly skipped.
-2. **Parallel tests**: seven independent jobs for Core, UI, StaticImg, WebBackdrop, UIComponent, ML, and Shader. Artifact checks run in parallel; Web player script checks run with the UI job.
-3. **Real UI interaction**: after both earlier phases pass, run `test/VirtualPaper.UIOperationTest` with real Core and UI processes. Without a usable desktop, report `Skipped` rather than a UI pass. Locking and registry-modification test cases remain skipped.
+1. **Parallel tests**: seven independent jobs for Core, UI, StaticImg, WebBackdrop, UIComponent, ML, and Shader. Artifact checks run in parallel; Web player script checks run with the UI job.
+2. **Installed app acceptance**: after those tests and raw reports pass, compile `InnoSetup/setup.iss`, install once, and launch installed Core. First-run behavior must open a responding UI, and UI/Core must exit normally. The prebuilt `test/VirtualPaper.UIOperationTest` host then runs its extended suite against the installed executables. Finally, run the actual uninstaller, including after installation, startup or UI failures. Forced recovery or leftover files/processes fail acceptance.
+
+Desktop runs operate the actual installation/uninstallation wizards. Headless runs silently check files, versions, shortcuts, registration, and removal; startup and real UI interaction are explicitly `Skipped`, not passed. Locking and registry-modification UI test cases remain skipped. The test installer is retained as `test-installer-package`.
 
 Failure blocks later test phases. Reports are still collected; missing, empty, failed, aborted, or exceptional test results fail the final check. The seven regular test projects retain their separate Cobertura coverage reports.
 
 The eight project jobs share `test/actions/run-project` and `test/Run-ProjectTests.ps1`. `test/TestReportSupport.ps1` maps projects to reports, and `test/Summarize-TestResults.ps1` creates the summary. Project jobs and the summary use the same TRX validation logic.
 
-`build-output` preserves the repository-root `src/` layout, shared test entry points, and Release binaries for the WinUI host. Consumers download it to the repository root. Real UI acceptance uses `-NoBuild -HostExe` to run those host and application binaries without rebuilding the solution.
+`build-output` preserves the repository-root `src/` layout, shared test entry points, and Release binaries for both test hosts. Consumers download it to the repository root. Packaging uses this same build. The UI host stays outside the installation; its application cases receive `-CoreExe <installation>/VirtualPaper.exe` and run installed Core/UI/player binaries without rebuilding. Installer and detailed UI reports must agree before the summary can pass.
 
 Raw reports use `test-results-*`; combined summaries use `test-summary-*`, so raw-report downloads do not include earlier summaries. Uploads set `overwrite: true` to support rerunning jobs within the same run. The summary reads designated project report paths rather than recursively including other packages.
 
@@ -78,16 +79,17 @@ Only a merged, same-repository `dev → main` PR is accepted. Its head must have
 
 1. Calculate the target product version from `AssemblyVersion` at the fixed merge commit and the selected label. Plugin updates keep the product version. Read published component manifests and historical release titles/plugin tags to allocate the next `YYMMRxx` build number; numbers used by drafts are reserved too. Check target tag/release conflicts before building.
 2. Temporarily update `VirtualPaper.csproj` before compilation and `InnoSetup/setup.iss` before packaging so the binaries and installer use the target version.
-3. Validate build output and create the installer. When requested, create the existing plugin patch packages and manifest. This workflow does not install, open, or uninstall the application; installer acceptance belongs to Pre-merge Check.
-4. Recheck tag/release conflicts before version synchronization. For a regular release, update only these fields on `main` and `dev`, then push both atomically with `git push --atomic`. If either update is rejected, neither branch advances:
+3. Retest the new build through the same eight project jobs/actions as Pre-merge Check: artifact checks plus seven regular test projects. Release includes ML integration tests and Web player script checks. No test job rebuilds the application.
+4. Compile ISS and verify the actual release installer: install → first-run startup and normal exit → extended UI suite against installed executables → uninstall. Failures still trigger uninstall. Validate all raw reports using `Summarize-TestResults.ps1 -RequireFullAcceptance`: failed/missing reports, skipped project tests, unavailable-desktop startup/UI skips, or uninstall failures block progress. A usable interactive Windows runner is required for release acceptance. Then create any requested plugin patch packages.
+5. Recheck tag/release conflicts before version synchronization. For a regular release, update only these fields on `main` and `dev`, then push both atomically with `git push --atomic`. If either update is rejected, neither branch advances:
    - `src/VirtualPaper/VirtualPaper.csproj`: `AssemblyVersion`
    - `InnoSetup/setup.iss`: `MyAppVersion`, `MyAppVersionText`
    - `README.md`: release badge
-5. Create a draft release using the PR description. Every release includes the installer and complete `app_comp_manifest.json`; plugin releases also include patch packages. The tag targets the synchronized `main` commit, or the original merge commit for plugin updates. Publishing remains manual.
+6. Create a draft release using the PR description. Every release includes the installer and complete `app_comp_manifest.json`; plugin releases also include patch packages. The tag targets the synchronized `main` commit, or the original merge commit for plugin updates. Publishing remains manual.
 
-The five jobs are `prepare-metadata → build-release → package-release → sync-versions → draft-release`. Plugin releases skip synchronization and continue to the draft after packaging. Installer and optional plugin packaging share one job. Keeping compilation separate allows a failed packaging job to be retried without rebuilding. The draft job writes the Actions summary.
+The stages are `prepare-metadata → build-release → parallel project tests → package-release → sync-versions → draft-release`. Plugin releases also require full acceptance but skip product-version synchronization. Installer verification and optional plugin packaging share one job. A failed packaging/acceptance job can be retried without rebuilding or rerunning successful project jobs. The draft job writes the Actions summary. Pre-merge may accept an explicit unavailable-desktop skip; Pre-release never accepts a skipped selected test.
 
-The build artifact contains only the main application's Release output, including all plugins, rather than all of `src/`. Packaging downloads it to the same path. The component manifest is generated once and reused for release assets and plugin patches.
+One root-layout build artifact contains application/plugin output, all project tests, and both test hosts. Parallel tests and packaging download that same build; only the application output is packaged. The component manifest is generated once and reused for release assets and plugin patches. Locking, registry-modification UI cases and real idle screen-saver tests remain excluded under the existing test policy.
 
 Component manifests are fetched with `GITHUB_TOKEN` authentication. Network, permission, download, or parsing errors stop the release. A regular release assigns a new build number to every bundled plugin. Plugin releases update only selected plugins and retain other entries from the previous published manifest.
 
@@ -97,7 +99,7 @@ The monthly sequence has two digits and stops at `R99`, avoiding older clients t
 
 Version synchronization preserves business code and documentation added to `dev` during packaging. It does not merge all of `main`, force-reset, or overwrite branches. Concurrent remote updates, unexpected version fields, or insufficient push permissions stop synchronization and draft creation. The `.sln` contains no product version and needs no change. `app_comp_manifest.json` is generated output.
 
-If synchronization succeeds but draft creation fails, use **Re-run failed jobs** on the original run. Restarting the whole workflow is blocked because `main` has advanced, preventing a second increment. Artifacts can overwrite earlier uploads in the same run. Manifests and release packages are retained for 30 days; full build output is retained for one day.
+If synchronization succeeds but draft creation fails, use **Re-run failed jobs** on the original run. Restarting the whole workflow is blocked because `main` has advanced, preventing a second increment. Artifacts can overwrite earlier uploads in the same run. Manifests, release packages and the release test summary are retained for 30 days; build output and raw test reports are retained for seven days.
 
 Existing tags or incompatible releases block progress. An interrupted draft upload may resume only when tag, title, and target commit match. Remote checks and writes are not one atomic transaction; do not manually create the same tag or publish that draft during preparation. There is no automatic forced rollback or separate manual rollback workflow.
 

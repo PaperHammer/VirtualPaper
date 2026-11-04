@@ -256,13 +256,15 @@ UI 关闭超过 10 秒时，会保留可见控件信息和所属窗口截图。�
 
 ## CI 与安装包验收
 
-CI 按 **构建准备 → 安装包验收 → 七个并行常规测试项目 → WinUI 预检与交互测试 → 汇总** 执行。三个测试阶段串行，任一失败都会阻止后续阶段启动。产物完整性检查与常规测试并行，Web 播放器脚本检查随 UI 单元测试任务执行。
+Pre-merge Check 按 **构建一次 → 七个并行常规测试项目 → 编译 ISS → 安装 → 首次启动 → 安装目录 UI 测试 → 卸载 → 汇总** 执行。产物完整性检查与常规测试并行，Web 播放器脚本检查随 UI 单元测试任务执行。前置失败会阻止打包和安装；同一验收任务负责从安装到清理的完整过程，不为 UI 测试重复安装。
 
-Pre-merge Check 使用 `Run-InstallerTests.ps1` 安装真实包，从安装目录启动 Core，由首次运行逻辑打开 UI，检查窗口持续响应三秒，然后关闭 UI，并通过正式 RPC 关闭 Core。强制清理是失败恢复，不算正常关闭。Pre-release 不运行安装包验收。
+Pre-merge Check 基于共用构建编译 `InnoSetup/setup.iss`，将安装包保留为 `test-installer-package`。使用 `Run-InstallerTests.ps1` 安装该包，从安装目录启动 Core，由首次运行逻辑打开 UI，检查窗口持续响应三秒，然后关闭 UI，并通过正式 RPC 关闭 Core。随后预构建 UI 宿主通过 `-CoreExe <安装目录>/VirtualPaper.exe` 运行扩展测试集；应用用例启动的是安装后的 Core、UI 和播放器。宿主保留在安装目录外，不重复构建。强制清理是失败恢复，不算正常关闭。
 
-每次安装测试使用唯一临时安装目录和隔离应用数据。打开失败仍会触发卸载，卸载残留同样会导致失败。报告包含 Install、Open、Uninstall 结果。
+Pre-release 会对设置新版本后生成的构建和实际发布安装包重新验收。复用同一项目测试 action，包含 ML 集成测试和 Web 播放器脚本检查，并运行同一扩展安装目录 UI 测试集。`Summarize-TestResults.ps1 -RequireFullAcceptance` 除了拒绝失败、缺报告，也拒绝项目测试跳过及无桌面导致启动/UI 跳过。完整验收通过后才允许同步版本、创建草稿；插件发布同样需要验收，但跳过产品版本同步。
 
-有交互桌面时，测试操作真实英文安装向导：接受许可、继续、安装和完成。卸载时确认移除、保留用户数据并完成。仅操作安装器及其子进程窗口，未知对话框或超时会失败。无桌面时静默安装、卸载，Open 明确为 `Skipped`。
+每次安装测试使用唯一临时安装目录和隔离应用数据。首次启动失败会跳过 UI 测试。安装、启动或 UI 测试失败仍会触发卸载，卸载残留同样会导致失败。组合报告包含 Install、Open、UIOperation、Uninstall 结果，并保留详细 UI 报告；单独安装验收仍使用三阶段报告。
+
+有交互桌面时，测试操作真实英文安装向导：接受许可、继续、安装和完成。卸载时确认移除、保留用户数据并完成。仅操作安装器及其子进程窗口，未知对话框或超时会失败。无桌面时静默安装、卸载，Open 和 UIOperation 均明确为 `Skipped`，UI 报告保留同一份桌面预检证据。
 
 两种模式都会检查必要的 Core/UI 文件、包与程序版本一致性、开始菜单快捷方式和卸载注册信息。卸载后检查文件、进程、快捷方式和注册残留。保留报告和安装器日志；桌面运行还保留向导轨迹。
 
@@ -271,6 +273,9 @@ Pre-merge Check 使用 `Run-InstallerTests.ps1` 安装真实包，从安装目�
 ```powershell
 # 仅限一次性 Windows 安装测试机器：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
+# 完整验收，使用预构建的 UI 宿主；UI 阶段结束后始终执行卸载：
+./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `
+  -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe
 # 仅做契约检查，不安装、不启动 UI、不写注册表。
 ./test/Test-InstallerTestSupport.ps1
 # 有桌面时，使用不修改系统设置的临时向导测试程序，验证 UIA、子进程交接和超时恢复。
@@ -278,7 +283,7 @@ Pre-merge Check 使用 `Run-InstallerTests.ps1` 安装真实包，从安装目�
 ./.github/scripts/validate-test-workflow.ps1
 ```
 
-WinUI 失败或报告缺失会导致最终 CI 检查失败。只有预检明确报告环境跳过才可继续，最终状态包含 `[SKIPPED]`。WinUI 启动前，还会检查常规 TRX 报告中的未处理异常，防止通过的断言掩盖 testhost 崩溃。
+WinUI 失败或报告缺失会导致最终 CI 检查失败。Pre-merge Check 可接受预检明确报告的环境跳过，最终状态包含 `[SKIPPED]`；Pre-release 会拒绝跳过，必须使用可交互桌面。WinUI 启动前，还会检查常规 TRX 报告中的未处理异常，防止通过的断言掩盖 testhost 崩溃。
 
 ## 添加覆盖
 

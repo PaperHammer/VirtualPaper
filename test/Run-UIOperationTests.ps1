@@ -23,10 +23,7 @@ New-Item -ItemType Directory -Path $artifactPath -Force | Out-Null
 $environment = Get-UIOperationEnvironment
 $environment | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $artifactPath 'environment.json') -Encoding utf8
 if (-not $environment.Available) {
-    [ordered]@{
-        Status = 'Skipped'; Passed = $false; Skipped = $true; SkipReason = $environment.ReasonCode
-        ExpectedCount = 0; Results = @(); Environment = $environment
-    } | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFullPath -Encoding utf8
+    New-UIOperationSkipReport $environment | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFullPath -Encoding utf8
     Write-Warning "WinUI acceptance SKIPPED [$($environment.ReasonCode)]: $($environment.Reason)"
     Write-Output "Report: $reportFullPath"
     Write-Output "Artifacts: $artifactPath"

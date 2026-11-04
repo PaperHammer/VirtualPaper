@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Automation.Provider;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIOperationTest.Infrastructure;
@@ -32,9 +34,38 @@ internal sealed class UiTestContext : IDisposable {
         Check(frame.Navigate(typeof(TPage), payload), "Page navigation failed");
         _page = (TPage)frame.Content;
         _window.Activate();
-        await WaitAsync(() => _page.IsLoaded);
+        nint window = WinRT.Interop.WindowNative.GetWindowHandle(_window);
+        try {
+            await WaitAsync(() => _page.IsLoaded && _page.ActualWidth > 0 && _page.ActualHeight > 0
+                && GetForegroundWindow() == window, "Activate and lay out test window");
+        }
+        catch (TimeoutException) {
+            Evidence["HostWindowState"] = new {
+                Window = window.ToInt64(), Foreground = GetForegroundWindow().ToInt64(),
+                _page.IsLoaded, _page.ActualWidth, _page.ActualHeight
+            };
+            SaveFailureSnapshot("host-activation-timeout");
+            throw;
+        }
+        await WaitForLayoutAsync();
         return (TPage)_page;
     }
+
+    public async Task WaitForLayoutAsync() {
+        bool rendered = false;
+        void OnRendering(object? sender, object args) => rendered = true;
+        CompositionTarget.Rendering += OnRendering;
+        try { await WaitAsync(() => rendered, "Render test window layout"); }
+        finally { CompositionTarget.Rendering -= OnRendering; }
+    }
+
+    public void SaveFailureSnapshot(string name) {
+        string path = Path.Combine(VirtualPaper.Common.Constants.CommonPaths.LogDir, "UIOperation", name + ".png");
+        WindowSnapshot.Save(WinRT.Interop.WindowNative.GetWindowHandle(_window), path);
+        Evidence["HostFailureScreenshot"] = path;
+    }
+
+    [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
 
     public async Task WaitAsync(Func<bool> condition, string operation = "UI operation") {
         var timer = Stopwatch.StartNew();

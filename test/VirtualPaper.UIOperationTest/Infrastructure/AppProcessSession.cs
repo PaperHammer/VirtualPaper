@@ -44,7 +44,10 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
         var settings = new Settings {
             IsFirstRun = false, IsUpdated = false, IsAutoStart = false, IsScreenSaverOn = false,
-            NavigationAnimationsEnabled = true, Language = "en-US"
+            NavigationAnimationsEnabled = true, Language = "en-US",
+            // A host runs several application cases; each Core must get an empty library.
+            WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Guid.NewGuid().ToString("N"),
+                Constants.FolderName.WpStoreFolderName)
         };
         configure?.Invoke(settings);
         UiTestContext.Check(!settings.IsRunningLock, "Desktop locking is excluded from process tests.");

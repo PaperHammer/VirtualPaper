@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Windows.Automation;
 using Google.Protobuf.WellKnownTypes;
@@ -9,6 +10,7 @@ namespace VirtualPaper.UIOperationTest.Infrastructure;
 
 internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBasicData Data) {
     public static async Task<WallpaperFixture> ImportAsync(AppProcessSession session, string source) {
+        byte[] sourceHash = SHA256.HashData(await File.ReadAllBytesAsync(source));
         var ui = await session.OpenUiAsync();
         var root = await Task.Run(() => {
             var window = AutomationElement.FromHandle(ui.MainWindowHandle);
@@ -25,7 +27,8 @@ internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBa
             if (files.Length != 1) return false;
             try {
                 data = JsonSerializer.Deserialize(await AppProcessSession.ReadTextSharedAsync(files[0]), WpBasicDataContext.Default.WpBasicData);
-                return data != null && File.Exists(data.ThumbnailPath);
+                return data != null && File.Exists(data.ThumbnailPath) && File.Exists(data.FilePath)
+                    && sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath)));
             }
             catch (IOException) { return false; }
             catch (JsonException) { return false; }

@@ -368,7 +368,7 @@ jobs:
 
     - name: Run WinUI acceptance
       shell: pwsh
-      run: ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe -ReportPath TestResults/UIOperation/ui-operation-results.json
+      run: ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended -TimeoutSeconds 900 -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe -ReportPath TestResults/UIOperation/ui-operation-results.json
 
     - name: Upload WinUI results
       uses: actions/upload-artifact@v4

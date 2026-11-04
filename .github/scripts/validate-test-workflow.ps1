@@ -44,7 +44,8 @@ $operation = Get-WorkflowJob 'test-winui'
 $build = Get-WorkflowJob 'build-solution'
 $summary = Get-WorkflowJob 'summarize-tests'
 if ($operation -match '(?m)^    if:' -or -not $operation.Contains('Get-ProjectTestReports -Root PrerequisiteTestResults') -or
-    $operation -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b' -or $operation -notmatch '-HostExe\s+test/VirtualPaper.UIOperationTest/bin/') {
+    $operation -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b' -or $operation -notmatch '-HostExe\s+test/VirtualPaper.UIOperationTest/bin/' -or
+    $operation -notmatch '-Suite\s+Extended\b') {
     throw 'WinUI must validate prerequisite reports and execute the prebuilt host without rebuilding.'
 }
 if (-not $build.Contains('test/VirtualPaper.UIOperationTest/bin/x64/Release/') -or

@@ -17,7 +17,8 @@ public partial class App : Application {
     protected override async void OnLaunched(LaunchActivatedEventArgs args) {
         var commandLine = Environment.GetCommandLineArgs();
         if ((commandLine.Length != 3 && commandLine.Length != 5) || commandLine[1] != "--report"
-            || (commandLine.Length == 5 && commandLine[3] != "--module")) {
+            || (commandLine.Length == 5 && commandLine[3] != "--module"
+                && (commandLine[3] != "--suite" || commandLine[4] != "Extended"))) {
             Environment.ExitCode = 2;
             Exit();
             return;
@@ -42,10 +43,13 @@ public partial class App : Application {
             new UiTestCase("Application.ModelInference.SuperResolutionQueueCancelSaveAndImport", ModelInferenceTests.RunAsync, true),
             new UiTestCase("Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen", ScreenSaverLifecycleTests.RunAsync, true),
             new UiTestCase("Application.Rendering.DepthInferenceDrawPauseAndResume", RenderingTests.RunAsync, true),
-            new UiTestCase("Application.ScreenSaverIdle.RealIdleInputWakeAndRepeat", ScreenSaverIdleTests.RunAsync, true)
+            new UiTestCase("Application.ScreenSaverIdle.RealIdleInputWakeAndRepeat", ScreenSaverIdleTests.RunAsync, true,
+                RequiresIdleEnvironment: true)
         };
-        if (commandLine.Length == 5)
+        if (commandLine.Length == 5 && commandLine[3] == "--module")
             cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
+        else if (commandLine.Length == 5)
+            cases = cases.Where(test => !test.RequiresIdleEnvironment).ToArray();
         else
             cases = cases.Where(test => !test.RequiresIntegrationEnvironment).ToArray();
         var results = new List<UiTestResult>();
@@ -90,6 +94,7 @@ public partial class App : Application {
         }
     }
 
-    private sealed record UiTestCase(string Name, Func<UiTestContext, Task> Run, bool RequiresIntegrationEnvironment = false);
+    private sealed record UiTestCase(string Name, Func<UiTestContext, Task> Run,
+        bool RequiresIntegrationEnvironment = false, bool RequiresIdleEnvironment = false);
     private sealed record UiTestResult(string Name, bool Passed, long DurationMilliseconds, string? Error, Dictionary<string, object?> Evidence);
 }

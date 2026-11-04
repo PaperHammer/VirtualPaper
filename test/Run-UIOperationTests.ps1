@@ -5,10 +5,13 @@ param(
     [string]$CoreExe,
     [string]$HostExe,
     [ValidatePattern('^[A-Za-z]+$')][string]$Module,
+    [ValidateSet('Standard', 'Extended')][string]$Suite = 'Standard',
     [ValidateRange(30, 900)][int]$TimeoutSeconds = 180,
     [switch]$NoBuild
 )
 $ErrorActionPreference = 'Stop'
+if ($Module -and $Suite -ne 'Standard') { throw 'Choose either a single module or an extended suite.' }
+if ($Suite -eq 'Extended' -and -not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 900 }
 . (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
 $projectPath = Join-Path $PSScriptRoot 'VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
@@ -70,6 +73,9 @@ $startInfo.ArgumentList.Add($reportFullPath)
 if ($Module) {
     $startInfo.ArgumentList.Add('--module')
     $startInfo.ArgumentList.Add($Module)
+} elseif ($Suite -eq 'Extended') {
+    $startInfo.ArgumentList.Add('--suite')
+    $startInfo.ArgumentList.Add('Extended')
 }
 $sessionId = [guid]::NewGuid().ToString('N')
 $sessionRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
@@ -89,6 +95,13 @@ try {
     }
     if (-not (Test-Path -LiteralPath $reportFullPath)) { throw "Host exited without a report (exit $($process.ExitCode))" }
     $report = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
+    if ($Suite -eq 'Extended') {
+        foreach ($moduleName in @('ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
+            if (@($report.Results | Where-Object { $_.Name -like "Application.$moduleName.*" }).Count -lt 1) {
+                throw "Extended acceptance is missing the $moduleName case."
+            }
+        }
+    }
     $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
     if ($process.ExitCode -ne 0 -or (Get-UIOperationReportOutcome $report) -ne 'Passed') {
         throw "UI operation tests failed: $($report | ConvertTo-Json -Depth 5)"

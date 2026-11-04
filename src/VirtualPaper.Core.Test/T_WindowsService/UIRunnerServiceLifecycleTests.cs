@@ -223,9 +223,53 @@ public class UIRunnerServiceLifecycleTests {
         var jobs = new Mock<IJobService>(MockBehavior.Strict);
         using var service = new UIRunnerService(jobs.Object);
         service.Dispose();
-        service.RestartUI();
+        await service.RestartUIAsync();
         await service.ShowUIAsync();
         Assert.AreEqual(nint.Zero, service.GetUIHwnd());
+        jobs.VerifyNoOtherCalls();
+    }
+
+    [TestMethod]
+    public async Task RestartUi_AllowsClosingNotificationAndWaitsForNormalExit() {
+        using var environment = new WorkflowEnvironment();
+        using var process = StartWaitingProcess();
+        bool previous = App.IsShuttingDown;
+        var jobs = new Mock<IJobService>(MockBehavior.Strict);
+        jobs.Setup(j => j.StopPlugin(process.Id)).Callback(() => App.IsShuttingDown = true);
+        UIRunnerService? service = null;
+        bool notified = false;
+        using var runner = service = new UIRunnerService(jobs.Object, TimeSpan.FromSeconds(5), async () => {
+            // Closing UI must be able to notify Core while restart waits.
+            await Task.Run(() => service!.NotifyUIClosing(process.Id)).WaitAsync(TimeSpan.FromSeconds(2));
+            notified = true;
+            await process.StandardInput.WriteLineAsync("finish");
+            return true;
+        });
+        TrackProcess(runner, process.Id);
+        try {
+            await runner.RestartUIAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.IsTrue(notified);
+            Assert.IsTrue(process.HasExited);
+            Assert.AreEqual(0, process.ExitCode);
+            Assert.IsNull(GetTrackedProcess(runner));
+            jobs.Verify(j => j.StopPlugin(process.Id), Times.Once);
+            jobs.VerifyNoOtherCalls();
+        }
+        finally { App.IsShuttingDown = previous; }
+    }
+
+    [TestMethod]
+    public async Task RestartUi_WhenCloseIsRefusedRetainsCurrentProcessWithoutTimeout() {
+        using var environment = new WorkflowEnvironment();
+        using var process = StartWaitingProcess();
+        var jobs = new Mock<IJobService>(MockBehavior.Strict);
+        using var service = new UIRunnerService(jobs.Object, TimeSpan.FromMilliseconds(100), () => Task.FromResult(false));
+        TrackProcess(service, process.Id);
+        await service.RestartUIAsync();
+        await Task.Delay(200);
+        Assert.IsFalse(process.HasExited);
+        Assert.AreEqual(process.Id, GetTrackedProcess(service)!.Id);
+        Assert.IsNull(GetExitTask(service));
         jobs.VerifyNoOtherCalls();
     }
 
@@ -237,7 +281,7 @@ public class UIRunnerServiceLifecycleTests {
         try {
             App.IsShuttingDown = true;
             await service.ShowUIAsync();
-            service.RestartUI();
+            await service.RestartUIAsync();
             Assert.AreEqual(nint.Zero, service.GetUIHwnd());
             jobs.VerifyNoOtherCalls();
         }

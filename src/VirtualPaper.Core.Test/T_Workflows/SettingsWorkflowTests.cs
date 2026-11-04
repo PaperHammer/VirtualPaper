@@ -41,7 +41,7 @@ public class SettingsWorkflowTests {
         environment.StartSettingsServer(); // Recreate the real service from disk, not a cached Settings object.
         using var restarted = new UserSettingsClient(environment.CreateChannel());
         AssertPreferences(restarted.Settings, animations);
-        environment.UiRunner.Verify(r => r.RestartUI(), Times.Never);
+        environment.UiRunner.Verify(r => r.RestartUIAsync(), Times.Never);
     }
 
     [TestMethod]

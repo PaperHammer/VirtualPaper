@@ -150,7 +150,7 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(resp);
         }
 
-        public override Task<Empty> SetSettings(Grpc_SettingsData request, ServerCallContext context) {
+        public override async Task<Empty> SetSettings(Grpc_SettingsData request, ServerCallContext context) {
             bool restartRequired =
                 request.Language != _userSetting.Settings.Language
                 || (Common.AppSystemBackdrop)request.SystemBackdrop != _userSetting.Settings.SystemBackdrop;
@@ -215,15 +215,13 @@ namespace VirtualPaper.GrpcServers {
             }
 
             try {
-                return Task.FromResult(new Empty());
+                return new Empty();
             }
             finally {
                 lock (settingsWriteLock) {
                     _userSetting.Save<ISettings>();
-                    if (restartRequired) {
-                        _uiRunner.RestartUI();
-                    }
                 }
+                if (restartRequired) await _uiRunner.RestartUIAsync();
             }
         }
 

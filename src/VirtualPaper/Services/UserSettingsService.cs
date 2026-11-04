@@ -5,7 +5,7 @@ using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.DraftPanel;
+using VirtualPaper.Models.EditPanel;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 
@@ -18,7 +18,15 @@ namespace VirtualPaper.Services {
 
         public UserSettingsService(
             IMonitorManager moitorManager,
-            IJsonSaver jsonSaver) {
+            IJsonSaver jsonSaver) : this(moitorManager, jsonSaver,
+                enabled => {
+                    if (!TestProcessEnvironment.IsEnabled) _ = WindowsAutoStart.SetAutoStart(enabled);
+                }) { }
+
+        internal UserSettingsService(
+            IMonitorManager moitorManager,
+            IJsonSaver jsonSaver,
+            Action<bool> configureAutoStart) {
             _jsonSaver = jsonSaver;
 
             Load<ISettings>();
@@ -43,7 +51,7 @@ namespace VirtualPaper.Services {
             }
 
             try {
-                _ = WindowsAutoStart.SetAutoStart(Settings.IsAutoStart);
+                configureAutoStart(Settings.IsAutoStart);
             }
             catch (Exception e) {
                 ArcLog.GetLogger<UserSettingsService>().Error(e);

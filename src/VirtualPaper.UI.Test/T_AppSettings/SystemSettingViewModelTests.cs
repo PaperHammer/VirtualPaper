@@ -36,7 +36,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         public void DebugCommand_WhenExecuted_CallsShowDebugView() {
             _vm.DebugCommand!.Execute(null);
 
-            _commandsClient.Verify(c => c.ShowDebugView(), Times.Once);
+            _commandsClient.Verify(c => c.ShowDebugViewAsync(), Times.Once);
         }
 
         // ── LogCommand ───────────────────────────────────────────────

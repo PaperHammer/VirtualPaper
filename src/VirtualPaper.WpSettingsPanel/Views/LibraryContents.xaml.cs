@@ -1,9 +1,12 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
@@ -36,6 +39,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
             this.DataContext = _viewModel;
             _viewModel.ItemDeleted += ViewModel_ItemDeleted;
+            UpdateWallpaperTileSize();
         }
 
         private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
@@ -58,18 +62,119 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {            
             await _viewModel.InitContentAsync();
-            _viewModel.RefreshWpTitleForeground();
         }
 
         private void Image_ImageFailed(object sender, ExceptionRoutedEventArgs e) {
-            // TODO 兜底图片
-            ArcLog.GetLogger<LibraryContents>().Error($"RImage loading failed: {e.ErrorMessage}");
+            // 图片加载失败（文件缺失/损坏）时隐藏图片，显示原生占位缩略图
+            if (sender is Image image) {
+                image.Visibility = Visibility.Collapsed;
+                if (image.Parent is FrameworkElement parent
+                    && parent.FindName("NoPreviewPlaceholder") is UIElement placeholder) {
+                    placeholder.Visibility = Visibility.Visible;
+                }
+            }
+
+            ArcLog.GetLogger<LibraryContents>().Warn($"Image loading failed: {e.ErrorMessage}");
         }
 
         private async void WallpapersLibView_ItemClick(object sender, ItemClickEventArgs e) {
+            if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
+                return;
+            }
+
             if (e.ClickedItem is IWpBasicData data) {
                 var ctx = ArcPageContextManager.GetContext<WpSettings>();
                 await _viewModel.PreviewAsync(data, ctx);
+            }
+        }
+
+        private void WallpapersLibView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args) {
+            var data = args.InRecycleQueue ? null : args.Item as IWpBasicData;
+            AutomationProperties.SetAutomationId(args.ItemContainer, data == null ? string.Empty : "Library.Item." + data.WallpaperUid);
+            AutomationProperties.SetName(args.ItemContainer, data == null ? string.Empty :
+                string.IsNullOrWhiteSpace(data.Title) ? System.IO.Path.GetFileName(data.FilePath) : data.Title);
+        }
+
+        public void EnterSelectionMode() {
+            // WinUI 的 ItemClick 模式与原生多选互斥；关闭后点击会立即更新 SelectedItems 和选中视觉态。
+            wallpapersLibView.IsItemClickEnabled = false;
+            wallpapersLibView.SelectionMode = ListViewSelectionMode.Multiple;
+            NotifySelectionChanged();
+        }
+
+        public void SelectAllItems() {
+            if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
+                wallpapersLibView.SelectAll();
+            }
+        }
+
+        public void InvertSelection() {
+            if (wallpapersLibView.SelectionMode != ListViewSelectionMode.Multiple) return;
+
+            var selected = wallpapersLibView.SelectedItems.Cast<object>().ToHashSet();
+            var toSelect = wallpapersLibView.Items.Cast<object>()
+                .Where(item => !selected.Contains(item))
+                .ToArray();
+
+            _updatingSelection = true;
+            try {
+                wallpapersLibView.SelectedItems.Clear();
+                foreach (var item in toSelect) {
+                    wallpapersLibView.SelectedItems.Add(item);
+                }
+            }
+            finally {
+                _updatingSelection = false;
+            }
+
+            NotifySelectionChanged();
+        }
+
+        public async Task DeleteSelectedItemsAsync() {
+            var selectedItems = wallpapersLibView.SelectedItems
+                .OfType<IWpBasicData>()
+                .ToList();
+            if (selectedItems.Count == 0) return;
+
+            await _viewModel.DeleteAsync(selectedItems);
+            if (wallpapersLibView.SelectedItems.Count == 0) {
+                ExitSelectionMode();
+            }
+            else {
+                NotifySelectionChanged();
+            }
+        }
+
+        public void ExitSelectionMode() {
+            // SelectionMode=None 时修改 SelectedItems 会触发 WinUI 异常，阻断页面导航。
+            if (wallpapersLibView.SelectionMode != ListViewSelectionMode.None) {
+                wallpapersLibView.SelectedItems.Clear();
+                wallpapersLibView.SelectionMode = ListViewSelectionMode.None;
+            }
+            wallpapersLibView.IsItemClickEnabled = true;
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(false, 0);
+        }
+
+        private void WallpapersLibView_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (!_updatingSelection) NotifySelectionChanged();
+        }
+
+        private void NotifySelectionChanged() {
+            var ctx = ArcPageContextManager.GetContext<WpSettings>();
+            ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(
+                wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple,
+                wallpapersLibView.SelectedItems.Count);
+        }
+
+        private void WallpaperContextFlyout_Opening(object sender, object e) {
+            if (sender is not MenuFlyout flyout) return;
+
+            bool selecting = wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple;
+            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) {
+                item.Visibility = !selecting || (item.Tag as string) == "RemoveFromLib"
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
             }
         }
 
@@ -80,6 +185,18 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
                 var selectedMeun = (MenuFlyoutItem)sender;
                 string? name = selectedMeun.Tag.ToString();
+                if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
+                    if (name == "RemoveFromLib") {
+                        if (wallpapersLibView.SelectedItems.Contains(data)) {
+                            await DeleteSelectedItemsAsync();
+                        }
+                        else {
+                            await _viewModel.DeleteAsync(data);
+                        }
+                    }
+                    return;
+                }
+
                 switch (name) {
                     case "Details":
                         _viewModel.ShowDetail(data);
@@ -126,7 +243,44 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void WallpapersLibView_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
-            e.Handled = true;
+            e.Handled = e.Key is not (Windows.System.VirtualKey.F10 or Windows.System.VirtualKey.Application);
+        }
+
+        private void WallpapersLibView_ContextRequested(UIElement sender, ContextRequestedEventArgs args) {
+            // Mouse requests use the existing tile ContextFlyout. Keyboard
+            // requests originate at the focused container, outside that grid.
+            if (args.TryGetPosition(wallpapersLibView, out _)) return;
+            if (FocusManager.GetFocusedElement(XamlRoot) is not DependencyObject focused) return;
+            while (focused is not GridViewItem && focused != wallpapersLibView) {
+                focused = Microsoft.UI.Xaml.Media.VisualTreeHelper.GetParent(focused);
+                if (focused == null) return;
+            }
+            var container = focused as GridViewItem;
+            if (container?.Content is not IWpBasicData data) return;
+            var flyout = (MenuFlyout)Resources["WallpaperContextFlyout"];
+            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.DataContext = data;
+            void Closed(object? source, object e) {
+                flyout.Closed -= Closed;
+                foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.ClearValue(FrameworkElement.DataContextProperty);
+            }
+            flyout.Closed += Closed;
+            flyout.ShowAt(container);
+            args.Handled = true;
+        }
+
+        private void WallpapersLibView_SizeChanged(object sender, SizeChangedEventArgs e) {
+            UpdateWallpaperTileSize();
+        }
+
+        private void UpdateWallpaperTileSize() {
+            if (wallpapersLibView.ItemsPanelRoot is not ItemsWrapGrid panel || wallpapersLibView.ActualWidth <= 0) return;
+
+            const double gap = 12;
+            // 按约 320px 的卡片宽度选择列数，再平分整行；向下取整避免布局舍入导致换行。
+            int columns = Math.Max(1, (int)Math.Round(wallpapersLibView.ActualWidth / (320 + gap), MidpointRounding.AwayFromZero));
+            double cellWidth = Math.Floor(wallpapersLibView.ActualWidth / columns);
+            panel.ItemWidth = cellWidth;
+            panel.ItemHeight = Math.Round(Math.Max(1, cellWidth - gap) * 5 / 8) + gap;
         }
 
         private void GridViewItem_PointerEntered(object sender, PointerRoutedEventArgs e) {
@@ -179,7 +333,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 anim.InsertKeyFrame(1f, new Vector3(scale, scale, 1f), ease);
                 return anim;
             }
-            var context = new ScaleAnimationContext(visual, CreateScaleAnim(1.0f), CreateScaleAnim(0.9f));
+            var context = new ScaleAnimationContext(visual, CreateScaleAnim(1.0f), CreateScaleAnim(0.98f));
 
             root.Tag = context;
         }
@@ -207,6 +361,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private readonly LibraryContentsViewModel _viewModel;
         private const double _scrollThreshold = 200;
+        private bool _updatingSelection;
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);

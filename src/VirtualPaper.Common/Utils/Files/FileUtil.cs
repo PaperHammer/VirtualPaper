@@ -1,7 +1,10 @@
 using System.Diagnostics;
 using System.Security.Cryptography;
+using System.Text;
+using VirtualPaper.Common.Logging;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
+using Windows.System;
 
 namespace VirtualPaper.Common.Utils.Files {
     public static class FileUtil {
@@ -47,22 +50,55 @@ namespace VirtualPaper.Common.Utils.Files {
         /// </summary>
         /// <param name="path"></param>
         public static void OpenFolderByExplorer(string path) {
+            TryOpenFolderByExplorer(path);
+        }
+
+        private static bool TryOpenFolderByExplorer(string path) {
             try {
                 ProcessStartInfo startInfo = new() {
                     FileName = "explorer.exe"
                 };
                 if (File.Exists(path)) {
-                    startInfo.Arguments = "/select, \"" + path + "\"";
+                    startInfo.ArgumentList.Add("/select,");
+                    startInfo.ArgumentList.Add(path);
                 }
                 else if (Directory.Exists(path)) {
-                    startInfo.Arguments = "\"" + path + "\"";
+                    startInfo.ArgumentList.Add(path);
                 }
                 else {
                     throw new FileNotFoundException();
                 }
                 Process.Start(startInfo);
+                return true;
             }
-            catch { }
+            catch {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 使用系统文件管理器定位文件或打开目录。传入文件时优先通过 explorer.exe
+        /// 选中文件；失败时回退为通过 Windows Launcher 打开文件所在目录。
+        /// </summary>
+        public static async Task OpenFolderAsync(string path) {
+            if (string.IsNullOrWhiteSpace(path)) return;
+
+            bool isFile = File.Exists(path);
+            string fullPath = Path.GetFullPath(path);
+            if (isFile && TryOpenFolderByExplorer(fullPath)) return;
+
+            string folderPath = isFile
+                ? Path.GetDirectoryName(fullPath)!
+                : fullPath;
+            if (!Directory.Exists(folderPath)) return;
+
+            try {
+                StorageFolder folder = await StorageFolder.GetFolderFromPathAsync(folderPath);
+                await Launcher.LaunchFolderAsync(folder);
+            }
+            catch {
+                OpenFolderByExplorer(folderPath);
+            }
         }
 
         /// <summary>
@@ -76,38 +112,41 @@ namespace VirtualPaper.Common.Utils.Files {
 
         //ref: https://stackoverflow.com/questions/1078003/c-how-would-you-make-a-unique-filename-by-adding-a-number
         public static string NextAvailableFilename(string path) {
+            return NextAvailablePath(path);
+        }
+
+        public static string NextAvailablePath(string path) {
             // Short-cut if already Available
-            if (!File.Exists(path))
+            if (!File.Exists(path) && !Directory.Exists(path))
                 return path;
 
             var numberPattern = "({0})";
 
             // If path has extension then insert the number pattern just before the extension and return next filename
             if (Path.HasExtension(path))
-                return GetNextFilename(path.Insert(path.LastIndexOf(Path.GetExtension(path)), numberPattern));
+                return GetNextPath(path.Insert(path.LastIndexOf(Path.GetExtension(path)), numberPattern));
 
             // Otherwise just append the pattern to the path and return next filename
-            return GetNextFilename(path + numberPattern);
+            return GetNextPath(path + numberPattern);
         }
 
-        private static string GetNextFilename(string pattern) {
+        private static string GetNextPath(string pattern) {
             string tmp = string.Format(pattern, 1);
             if (tmp == pattern)
                 throw new ArgumentException("The pattern must include an index place-holder", nameof(pattern));
 
-            if (!File.Exists(tmp))
+            if (!File.Exists(tmp) && !Directory.Exists(tmp))
                 return tmp;
 
             int min = 1, max = 2; // 最小值是包容性的，最大值是排他性/未经测试的
-
-            while (File.Exists(string.Format(pattern, max))) {
+            while (File.Exists(string.Format(pattern, max)) || Directory.Exists(string.Format(pattern, max))) {
                 min = max;
                 max *= 2;
             }
 
             while (max != min + 1) {
                 int pivot = (max + min) / 2;
-                if (File.Exists(string.Format(pattern, pivot)))
+                if (File.Exists(string.Format(pattern, pivot)) || Directory.Exists(string.Format(pattern, pivot)))
                     min = pivot;
                 else
                     max = pivot;
@@ -116,11 +155,43 @@ namespace VirtualPaper.Common.Utils.Files {
             return string.Format(pattern, max);
         }
 
+        public static async Task WriteAllTextAsync(string filePath, string content, Encoding encoding) {
+            var directory = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrEmpty(directory)) {
+                throw new ArgumentException("The file path must have a directory.", nameof(filePath));
+            }
+
+            var tempPath = Path.Combine(directory, $".{Path.GetRandomFileName()}.tmp");
+            try {
+                await File.WriteAllTextAsync(tempPath, content, encoding);
+                File.Move(tempPath, filePath, overwrite: true);
+            }
+            finally {
+                if (File.Exists(tempPath)) {
+                    File.Delete(tempPath);
+                }
+            }
+        }
+
+        public static async Task<T> RetryReadAsync<T>(Func<Task<T>> read) {
+            for (var attempt = 0; ; attempt++) {
+                try {
+                    return await read();
+                }
+                catch (IOException) when (attempt < 3) {
+                    await Task.Delay(50 * (attempt + 1));
+                }
+                catch (UnauthorizedAccessException) when (attempt < 3) {
+                    await Task.Delay(50 * (attempt + 1));
+                }
+            }
+        }
+
         /// <summary>
-        /// 计算文件校验和
+        /// 计算文件 SHA256 校验和
         /// </summary>
-        /// <param name="filePath"></param>
-        /// <returns>SHA256 checksum.</returns>
+        /// <param name="filePath">文件路径</param>
+        /// <returns>SHA256 checksum (小写 hex)</returns>
         public static string GetChecksumSHA256(string filePath) {
             using SHA256 sha256 = SHA256.Create();
             using var stream = File.OpenRead(filePath);
@@ -129,9 +200,115 @@ namespace VirtualPaper.Common.Utils.Files {
             return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
         }
 
-        public static void EmptyDirectory(string directory) {
+        /// <summary>
+        /// 验证文件 SHA256 是否与预期值匹配
+        /// </summary>
+        public static async Task<bool> VerifyFileIntegrityAsync(string filePath, string expectedSha256, CancellationToken token = default) {
+            if (!File.Exists(filePath) || !IsValidSHA256(expectedSha256))
+                return false;
+            var actual = await CalculateFileSHA256Async(filePath, token);
+            return string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static async Task<string> CalculateFileSHA256Async(string filePath, CancellationToken token) {
+            using var sha256 = SHA256.Create();
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, true);
+            var hashBytes = await sha256.ComputeHashAsync(stream, token);
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
+        }
+
+        private static bool IsValidSHA256(string sha256) {
+            if (string.IsNullOrEmpty(sha256) || sha256.Length != 64)
+                return false;
+            return System.Text.RegularExpressions.Regex.IsMatch(sha256, @"^[a-fA-F0-9]{64}$");
+        }
+
+        /// <summary>
+        /// 计算字符串内容的 SHA256 校验和（UTF-8 编码）
+        /// 自动处理 BOM：如果内容以 UTF-8 BOM 开头，会先移除再计算
+        /// </summary>
+        /// <param name="content">字符串内容</param>
+        /// <returns>SHA256 checksum (小写 hex)</returns>
+        public static string GetChecksumSHA256FromContent(string content) {
+            // 移除 UTF-8 BOM（如果存在）
+            if (content.Length > 0 && content[0] == '\uFEFF') {
+                content = content.Substring(1);
+            }
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(content));
+            return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+        }
+
+        public static void RemoveDirectory(string directory) {
+            if (!Directory.Exists(directory)) return;
+
             DirectoryInfo di = new(directory);
             di.Delete(true);
+        }
+
+        /// <summary>
+        /// Determines whether <paramref name="candidatePath"/> is a strict
+        /// descendant of <paramref name="rootDirectory"/> after both paths
+        /// have been normalized. The separator boundary prevents a sibling
+        /// such as "root-backup" from matching "root".
+        /// </summary>
+        public static bool IsPathWithinDirectory(
+            string rootDirectory,
+            string candidatePath) {
+            ArgumentException.ThrowIfNullOrWhiteSpace(rootDirectory);
+            ArgumentException.ThrowIfNullOrWhiteSpace(candidatePath);
+
+            string fullRootWithSeparator = Path.GetFullPath(rootDirectory).TrimEnd(
+                Path.DirectorySeparatorChar,
+                Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            string fullCandidatePath = Path.GetFullPath(candidatePath);
+
+            return fullCandidatePath.StartsWith(
+                fullRootWithSeparator,
+                StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Returns the normalized relative path when <paramref name="path"/>
+        /// is contained by <paramref name="root"/>; otherwise throws.
+        /// </summary>
+        public static string GetContainedRelativePath(string root, string path, string parameterName) {
+            var relative = Path.GetRelativePath(Path.GetFullPath(root), Path.GetFullPath(path));
+            if (relative == ".." ||
+                relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal) ||
+                Path.IsPathRooted(relative)) {
+                throw new ArgumentException("The path must be inside its configured root directory.", parameterName);
+            }
+
+            return relative;
+        }
+
+        /// <summary>
+        /// 清空目录内容（删除所有文件和子目录），但保留目录本身。
+        /// 使用 Enumerate 延迟求值，适合大目录。
+        /// 跳过符号链接和联接点，避免意外删除外部文件。
+        /// </summary>
+        /// <param name="dirPath">要清空的目录路径</param>
+        public static void DeleteDirectoryContents(string dirPath) {
+            if (!Directory.Exists(dirPath)) return;
+
+            var dir = new DirectoryInfo(dirPath);
+            var options = new EnumerationOptions {
+                AttributesToSkip = System.IO.FileAttributes.ReparsePoint  // 跳过 symlink/junction
+            };
+
+            // 先删文件（延迟枚举，不一次性加载全部路径）
+            foreach (var file in dir.EnumerateFiles("*", options)) {
+                // 清除只读属性
+                if (file.Attributes.HasFlag(System.IO.FileAttributes.ReadOnly)) {
+                    file.Attributes &= ~System.IO.FileAttributes.ReadOnly;
+                }
+                file.Delete();
+            }
+
+            // 再删子目录（递归删除，跳过 reparse point）
+            foreach (var subDir in dir.EnumerateDirectories("*", options)) {
+                subDir.Delete(true);
+            }
         }
 
         public static bool IsFileGreaterThanThreshold(string filePath, long bytes) {
@@ -149,7 +326,7 @@ namespace VirtualPaper.Common.Utils.Files {
         public static async Task CopyFileAsync(string src, string dest) {
             if (string.IsNullOrEmpty(src) || string.IsNullOrEmpty(dest) || !File.Exists(src)) return;
             
-            string destDir = Path.GetDirectoryName(dest);
+            string? destDir = Path.GetDirectoryName(dest);
             if (!string.IsNullOrEmpty(destDir)) {
                 Directory.CreateDirectory(destDir);
             }
@@ -173,18 +350,18 @@ namespace VirtualPaper.Common.Utils.Files {
         /// <param name="initialDelay"></param>
         /// <param name="retryDelay"></param>
         /// <returns>True if deletion completed succesfully.</returns>
-        public static async Task<bool> TryDeleteDirectoryAsync(string folderPath, int initialDelay = 1000, int retryDelay = 4000) {
+        public static async Task<bool> TryDeleteDirectoryAsync(string folderPath, int initialDelay = 1000, int retryDelay = 4000, bool isRecursive = true) {
             bool status = true;
             if (Directory.Exists(folderPath)) {
                 await Task.Delay(initialDelay);
                 try {
-                    await Task.Run(() => Directory.Delete(folderPath, true));
+                    await Task.Run(() => Directory.Delete(folderPath, isRecursive));
                 }
                 catch (Exception) {
                     //App.Log.Errors("Folder Delete Failure {0}.\nRetrying..", ex.Message);
                     await Task.Delay(retryDelay);
                     try {
-                        await Task.Run(() => Directory.Delete(folderPath, true));
+                        await Task.Run(() => Directory.Delete(folderPath, isRecursive));
                     }
                     catch (Exception) {
                         //App.Log.Errors("(Retry)Folder Delete Failure: {0}", ie.Message);
@@ -194,7 +371,34 @@ namespace VirtualPaper.Common.Utils.Files {
             }
             return status;
         }
-        
+
+        /// <summary>
+        /// Async folder delete operation after given delay.
+        /// </summary>
+        /// <param name="folderPath"></param>
+        /// <param name="initialDelay"></param>
+        /// <param name="retryDelay"></param>
+        /// <returns>True if deletion completed succesfully.</returns>
+        public static bool TryDeleteDirectory(string folderPath, int retryDelay = 4000, bool isRecursive = true) {
+            bool status = true;
+            if (Directory.Exists(folderPath)) {
+                try {
+                    Directory.Delete(folderPath, isRecursive);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {folderPath}.\nRetrying..", ex);
+                    try {
+                        Directory.Delete(folderPath, isRecursive);
+                    }
+                    catch (Exception ex2) {
+                        ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {folderPath}", ex2);
+                        status = false;
+                    }
+                }
+            }
+            return status;
+        }
+
         /// <summary>
         /// Async folder delete operation after given delay.
         /// </summary>
@@ -209,14 +413,34 @@ namespace VirtualPaper.Common.Utils.Files {
                 try {
                     await Task.Run(() => File.Delete(filePath));
                 }
-                catch (Exception) {
-                    //App.Log.Errors("Folder Delete Failure {0}.\nRetrying..", ex.Message);
+                catch (Exception ex) {
+                    ArcLog.GetLogger(typeof(FileUtil)).Error($"File Delete Failure {filePath}.\nRetrying..", ex);
                     await Task.Delay(retryDelay);
                     try {
                         await Task.Run(() => File.Delete(filePath));
                     }
-                    catch (Exception) {
-                        //App.Log.Errors("(Retry)Folder Delete Failure: {0}", ie.Message);
+                    catch (Exception ex2) {
+                        ArcLog.GetLogger(typeof(FileUtil)).Error($"File Delete Failure {filePath}", ex2);
+                        status = false;
+                    }
+                }
+            }
+            return status;
+        }
+
+        public static bool TryDeletFile(string filePath) {
+            bool status = true;
+            if (File.Exists(filePath)) {
+                try {
+                    File.Delete(filePath);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {filePath}.\nRetrying..", ex);
+                    try {
+                        File.Delete(filePath);
+                    }
+                    catch (Exception ex2) {
+                        ArcLog.GetLogger(typeof(FileUtil)).Error($"Folder Delete Failure {filePath}", ex2);
                         status = false;
                     }
                 }
@@ -304,6 +528,12 @@ namespace VirtualPaper.Common.Utils.Files {
             }
         }
 
+        public static string GetRelativePath(string? basePath, string path) {
+            return string.IsNullOrEmpty(basePath)
+                ? path
+                : Path.GetRelativePath(basePath, path);
+        }
+
         public static string GetFileSize(string filePath) {
             try {
                 FileInfo fi = new(filePath);
@@ -356,7 +586,7 @@ namespace VirtualPaper.Common.Utils.Files {
             ArgumentOutOfRangeException.ThrowIfNegative(decimalPlaces);
             if (value < 0) { return "-" + SizeSuffix(-value, decimalPlaces); }
 
-            string fmt = "0." + new string('#', decimalPlaces);
+            string fmt = "0." + new string('0', decimalPlaces);
 
             if (value == 0) { return string.Format("{0:" + fmt + "} bytes", 0m); }
 

@@ -178,7 +178,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private async void PreviewResult(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
-                GlobalMessageUtil.ShowError(nameof(Constants.I18n.Text_File_Not_Available), isNeedLocalizer: true);
+                GlobalMessageUtil.ShowError(Constants.I18n.Text_File_Not_Available, isNeedLocalizer: true);
                 return;
             }
 
@@ -188,14 +188,14 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 new PreviewFileArgs(taskItem.Data.ResultFilePath, ArcPageContextManager.GetContext<Intelligent>()));
 
             if (!found) {
-                GlobalMessageUtil.ShowError("Panel is not available.", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
             }
         }
 
         private async Task SaveResultAsync(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
-                GlobalMessageUtil.ShowError(nameof(Constants.I18n.Text_File_Not_Available), isNeedLocalizer: true);
+                GlobalMessageUtil.ShowError(Constants.I18n.Text_File_Not_Available, isNeedLocalizer: true);
                 return;
             }
 
@@ -213,7 +213,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             try {
                 await Task.Run(() => File.Copy(taskItem.Data.ResultFilePath, saveFile.Path, overwrite: true));
-                GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(nameof(Constants.I18n.Project_Export_Success))} {saveFile.Path}");
+                GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Success)} {saveFile.Path}");
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
@@ -223,7 +223,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private async void ImportResult(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
-                GlobalMessageUtil.ShowError(nameof(Constants.I18n.Text_File_Not_Available), isNeedLocalizer: true);
+                GlobalMessageUtil.ShowError(Constants.I18n.Text_File_Not_Available, isNeedLocalizer: true);
                 return;
             }
 
@@ -233,13 +233,13 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 taskItem.Data.ResultFilePath);
 
             if (!found) {
-                GlobalMessageUtil.ShowError("Panel is not available.", isNeedLocalizer: false);
+                GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
                 return;
             }
 
             if (success)
-                GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(nameof(Constants.I18n.Add_To_Lib_Success)));
+                GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(Constants.I18n.Add_To_Lib_Success));
             else
                 GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
         }

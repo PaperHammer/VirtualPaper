@@ -12,6 +12,6 @@ namespace VirtualPaper.UIComponent.Others {
             this._viewModel = viewModel;
         }
 
-        private RenameViewModel _viewModel;
+        private readonly RenameViewModel _viewModel;
     }
 }

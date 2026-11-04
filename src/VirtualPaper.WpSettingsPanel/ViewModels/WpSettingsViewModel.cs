@@ -155,7 +155,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 [FileType.FImage],
                 LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_StaticImage)));
             TypeFilters.Add(new WpTypeFilterItem(
-                [FileType.FGif, FileType.FimageAI],
+                [FileType.FGif, FileType.FImageAI],
                 LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_DynamicImage)));
             TypeFilters.Add(new WpTypeFilterItem(
                 [FileType.FVideo],
@@ -233,6 +233,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 new AddToLib(addToLibViewModel),
                 LanguageUtil.GetI18n(Constants.I18n.Text_Confirm));
             if (dialog == null) return;
+            dialog.CloseButtonText = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
 
             addToLibViewModel.OnRequestAddFile += (_, e) => {
                 files = e;
@@ -246,6 +247,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             };
 
             await dialog.ShowAsync();
+            if (files.Count == 0) return;
 
             var libViewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
             await libViewModel.DropFilesAsync(files);
@@ -268,7 +270,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var response = await _wpControlClient.RestartAllWallpapersAsync();
                         if (response.IsFinished != true) {
                             GlobalMessageUtil.ShowError(
-                                message: nameof(Constants.I18n.Dialog_Content_ApplyError),
+                                message: Constants.I18n.Dialog_Content_ApplyError,
                                 isNeedLocalizer: true);
                             // 恢复
                             SelectedWpArrangementsIndex = (int)oldType;
@@ -287,7 +289,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         #region Buttons Command
-        public async void Close() {
+        public async void Close() => await CloseAsync();
+
+        internal async Task CloseAsync() {
             if (Interlocked.Exchange(ref _canClose, 0) != 1) return;
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
@@ -298,28 +302,32 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             (WpCloseCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        public async void Detect() {
+        public async void Detect() => await DetectAsync();
+
+        internal async Task DetectAsync(Task? cooldown = null) {
             if (Interlocked.Exchange(ref _canDetect, 0) != 1) return;
             (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
             InitMonitors();
             GlobalMessageUtil.ShowInfo(
-                message: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
-                key: nameof(Constants.I18n.Dialog_Content_GetMonitorsAsync),
+                message: Constants.I18n.Dialog_Content_GetMonitorsAsync,
+                key: Constants.I18n.Dialog_Content_GetMonitorsAsync,
                 isNeedLocalizer: true,
                 extraMsg: $" {Monitors.Count}");
-            await Task.Delay(3000);
+            await (cooldown ?? Task.Delay(3000));
 
             Interlocked.Exchange(ref _canDetect, 1);
             (WpDetectCommand as RelayCommand)?.RaiseCanExecuteChanged();
         }
 
-        public async void Identify() {
+        public async void Identify() => await IdentifyAsync();
+
+        internal async Task IdentifyAsync(Task? cooldown = null) {
             if (Interlocked.Exchange(ref _canIdentify, 0) != 1) return;
             (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();
 
             await _monitorManagerClient.IdentifyMonitorsAsync();
-            await Task.Delay(3000);
+            await (cooldown ?? Task.Delay(3000));
 
             Interlocked.Exchange(ref _canIdentify, 1);
             (WpIdentifyCommand as RelayCommand)?.RaiseCanExecuteChanged();

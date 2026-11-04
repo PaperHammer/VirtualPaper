@@ -10,7 +10,7 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace Workloads.Creation.StaticImg.Views.Components {
     public sealed partial class LayerItem : UserControl {
-        public string Project_NewName_InvalidTip => LanguageUtil.GetI18n(nameof(Constants.I18n.Project_NewName_InvalidTip));
+        public string Project_NewName_InvalidTip => LanguageUtil.GetI18n(Constants.I18n.Project_NewName_InvalidTip);
 
         public string LayerName {
             get { return (string)GetValue(LayerNameProperty); }

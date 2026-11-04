@@ -45,36 +45,36 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         private void InitEffectGroups() {
             // 调整 (10)
             EffectGrid_Adjust.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "adjust_grayscale",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_GrayScale)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_GrayScale)) },
-                new() { EffectId = "adjust_invert",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Invert)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Invert)) },
-                new() { EffectId = "adjust_exposure",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Exposure)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Exposure)) },
-                new() { EffectId = "adjust_brightness",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Brightness)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Brightness)) },
-                new() { EffectId = "adjust_saturation",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Saturation)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Saturation)) },
-                new() { EffectId = "adjust_hue",         EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Hue)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Hue)) },
-                new() { EffectId = "adjust_contrast",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Contrast)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Contrast)) },
-                new() { EffectId = "adjust_temperature", EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Temperature)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Temperature)) },
-                new() { EffectId = "adjust_highlights",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Highlights)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Highlights)) },
-                new() { EffectId = "color_sepia",        EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Sepia)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Sepia)) },
+                new() { EffectId = "adjust_grayscale",   EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_GrayScale), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_GrayScale) },
+                new() { EffectId = "adjust_invert",      EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Invert), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Invert) },
+                new() { EffectId = "adjust_exposure",    EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Exposure), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Exposure) },
+                new() { EffectId = "adjust_brightness",  EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Brightness), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Brightness) },
+                new() { EffectId = "adjust_saturation",  EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Saturation), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Saturation) },
+                new() { EffectId = "adjust_hue",         EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Hue), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Hue) },
+                new() { EffectId = "adjust_contrast",    EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Contrast), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Contrast) },
+                new() { EffectId = "adjust_temperature", EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Temperature), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Temperature) },
+                new() { EffectId = "adjust_highlights",  EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Highlights), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Highlights) },
+                new() { EffectId = "color_sepia",        EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Sepia), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Sepia) },
             };
 
 
             // 特效 (8)
             EffectGrid_Special.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "fx_blur",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Blur)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Blur)) },
-                new() { EffectId = "fx_sharpen",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Sharpen)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Sharpen)) },
-                new() { EffectId = "fx_noise",     EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Noise)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Noise)) },
-                new() { EffectId = "fx_vignette",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Vignette)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Vignette)) },
-                new() { EffectId = "fx_glow",      EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Glow)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Glow)) },
-                new() { EffectId = "fx_bloom",     EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Bloom)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Bloom)) },
-                new() { EffectId = "fx_distort",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Distort)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Distort)) },
+                new() { EffectId = "fx_blur",      EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Blur), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Blur) },
+                new() { EffectId = "fx_sharpen",   EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Sharpen), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Sharpen) },
+                new() { EffectId = "fx_noise",     EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Noise), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Noise) },
+                new() { EffectId = "fx_vignette",  EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Vignette), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Vignette) },
+                new() { EffectId = "fx_glow",      EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Glow), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Glow) },
+                new() { EffectId = "fx_bloom",     EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Bloom), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Bloom) },
+                new() { EffectId = "fx_distort",   EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Distort), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Distort) },
             };
 
             // 混合 (4)
             EffectGrid_Blend.ItemsSource = new List<CanvasEffectItem> {
-                new() { EffectId = "blend_multiply",  EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Multiply)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Multiply)) },
-                new() { EffectId = "blend_screen",    EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Screen)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Screen)) },
-                new() { EffectId = "blend_overlay",   EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_Overlay)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_Overlay)) },
-                new() { EffectId = "blend_softlight", EffectName = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_Effect_SoftLight)), EffectDescription = LanguageUtil.GetI18n(nameof(Constants.I18n.Project_StaticImg_Text_EffectDesc_SoftLight)) },
+                new() { EffectId = "blend_multiply",  EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Multiply), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Multiply) },
+                new() { EffectId = "blend_screen",    EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Screen), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Screen) },
+                new() { EffectId = "blend_overlay",   EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_Overlay), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_Overlay) },
+                new() { EffectId = "blend_softlight", EffectName = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Effect_SoftLight), EffectDescription = LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_EffectDesc_SoftLight) },
             };
         }
 

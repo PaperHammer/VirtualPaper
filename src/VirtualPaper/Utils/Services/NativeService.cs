@@ -93,7 +93,7 @@ namespace VirtualPaper.Utils.Services {
         /// 刷新桌面（强制重绘 WorkerW 区域）
         /// </summary>
         public void RefreshDesktop() {
-            _ = Native.SystemParametersInfo(Native.SPI_SETDESKWALLPAPER, 0, null, Native.SPIF_UPDATEINIFILE);
+            VirtualPaper.Common.Utils.Shell.DesktopUtil.RefreshDesktop();
         }
 
         /// <summary>

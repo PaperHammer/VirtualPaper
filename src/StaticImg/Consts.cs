@@ -1,21 +1,30 @@
 using System;
 using System.IO;
 using System.Text.Json.Serialization;
-using VirtualPaper.UIComponent;
 using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Utils;
 
 namespace Workloads.Creation.StaticImg {
     class Consts {
-        public static int MAX_CANVAS_SIZE_WITH_DPI => (int)(1.0F * _maxCanvasdge / WindowConsts.ArcWindowInstance.Content.XamlRoot.RasterizationScale * 96);
+        /// <summary>
+        /// Gets the largest Win2D logical canvas edge that can be allocated at the specified DPI.
+        /// CanvasRenderTarget converts its width and height from DIPs to physical pixels, while
+        /// MaximumBitmapSizeInPixels is expressed in physical pixels.
+        /// </summary>
+        public static int GetMaximumCanvasEdge(uint dpi) {
+            if (_maxCanvasEdge <= 0) return 0;
+
+            uint effectiveDpi = dpi == 0 ? 96u : dpi;
+            return Math.Max(1, (int)Math.Floor(_maxCanvasEdge * 96d / effectiveDpi));
+        }
         public static float MinZoomFactor => 0.2f;
         public static float MaxZoomFactor => 8f;
         public static int LayerThumWidth => 60;
         public static int LayerThumHeight => 38;
 
         public static void SetMaxCanvasEdge(int maxCanvasdge) {
-            _maxCanvasdge = maxCanvasdge;
+            _maxCanvasEdge = maxCanvasdge;
         }
 
         public static double DecimalToPercent(double value) {
@@ -83,11 +92,11 @@ namespace Workloads.Creation.StaticImg {
         }
 
         internal static void InitData() {
-            _maxCanvasdge = InkProjectSession.SharedDevice.MaximumBitmapSizeInPixels;
+            _maxCanvasEdge = InkProjectSession.SharedDevice.MaximumBitmapSizeInPixels;
         }
 
         private static readonly float _epsilon = 1e-6f;
-        private static int _maxCanvasdge;
+        private static int _maxCanvasEdge;
     }
 
     static class UintColor {

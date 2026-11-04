@@ -61,6 +61,7 @@ namespace VirtualPaper.UIComponent.Data {
         string NextStepBtnText => string.Empty;
         bool IsNextEnable => false;
         bool BtnVisible => false;
+        bool IsNextStepVisible => true;
         Func<object?, Task>? PreviousStepAction => null;
         Func<object?, Task>? NextStepAction => null;
         Action? CardUIStateChanged { get; set; }

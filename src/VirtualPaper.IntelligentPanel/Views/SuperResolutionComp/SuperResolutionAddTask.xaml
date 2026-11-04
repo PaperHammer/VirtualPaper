@@ -39,7 +39,9 @@
                     StrokeDashArray="4 3"
                     Fill="Transparent"/>
 
-                <Border x:Name="sourceImageBorder"
+                <Button x:Name="sourceImageBorder" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                    AutomationProperties.AutomationId="Intelligent.SuperResolution.Source"
+                    AutomationProperties.Name="{markup:I18n Key=Intelligent_Task_Scr_Img_Import}"
                     Width="400"
                     Height="250"
                     Margin="10"
@@ -49,7 +51,7 @@
                     BorderThickness="1"
                     AllowDrop="True"
                     uicomp_utils:CursorUtil.CursorShape="Hand"
-                    Tapped="SourceImageBorder_Tapped">
+                    Click="SourceImageButton_Click">
                     <Grid>
                         <StackPanel 
                             HorizontalAlignment="Center"
@@ -72,7 +74,7 @@
                             Stretch="UniformToFill"
                             Source="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
                     </Grid>
-                </Border>
+                </Button>
             </Grid>
 
             <StackPanel 
@@ -147,6 +149,7 @@
                 <StackPanel Spacing="16">
 
                     <RadioButton x:Name="qualityRestoreRadio"
+                        AutomationProperties.AutomationId="Intelligent.SuperResolution.Restore"
                         GroupName="EnhanceMode"
                         IsChecked="{x:Bind _viewModel.IsQualityRestoreMode, Mode=TwoWay}"
                         Checked="EnhanceMode_Changed">
@@ -169,6 +172,7 @@
                         HorizontalAlignment="Stretch"/>
 
                     <RadioButton x:Name="superResolutionRadio"
+                        AutomationProperties.AutomationId="Intelligent.SuperResolution.Enhance"
                         GroupName="EnhanceMode"
                         IsChecked="{x:Bind _viewModel.IsSuperResolutionMode, Mode=TwoWay}"
                         Checked="EnhanceMode_Changed">
@@ -197,6 +201,7 @@
 
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <RadioButton x:Name="mag2xRadio"
+                                AutomationProperties.AutomationId="Intelligent.SuperResolution.2x"
                                 GroupName="Magnification"
                                 Content="2×"
                                 MinWidth="60"
@@ -204,6 +209,7 @@
                                 Checked="Magnification_Changed"
                                 Style="{ThemeResource DefaultToggleButtonStyle}"/>
                             <RadioButton x:Name="mag4xRadio"
+                                AutomationProperties.AutomationId="Intelligent.SuperResolution.4x"
                                 GroupName="Magnification"
                                 Content="4×"
                                 MinWidth="60"
@@ -230,6 +236,7 @@
                         FontSize="13"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     <TextBlock 
+                        AutomationProperties.AutomationId="Intelligent.SuperResolution.OutputSize"
                         Text="{x:Bind _viewModel.OutputResolutionText, Mode=OneWay}"
                         FontSize="13"
                         FontWeight="SemiBold"

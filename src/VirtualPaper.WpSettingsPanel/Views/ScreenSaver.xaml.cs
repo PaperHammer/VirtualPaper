@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
@@ -7,6 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models;
 using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -32,10 +34,13 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {
+            _viewModel.ProcsFiltered.CollectionChanged += WhiteList_CollectionChanged;
+            UpdateWhiteListEmptyState();
             _ = _viewModel.ListenForClients();
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _viewModel.ProcsFiltered.CollectionChanged -= WhiteList_CollectionChanged;
             _viewModel.StopListenForClients();
         }
 
@@ -47,6 +52,27 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             _viewModel.RemoveFromWhiteScr(procInfo);
         }
 
+        private void RemoveWhiteListItem_Click(object sender, RoutedEventArgs e) {
+            if (sender is FrameworkElement { DataContext: ProcInfo procInfo }) {
+                _viewModel.RemoveFromWhiteScr(procInfo);
+            }
+        }
+
+        private void WhiteList_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+            UpdateWhiteListEmptyState();
+        }
+
+        private void UpdateWhiteListEmptyState() {
+            bool hasApps = _viewModel.ProcsFiltered.Count > 0;
+            FilteredListView.Visibility = hasApps ? Visibility.Visible : Visibility.Collapsed;
+            WhiteListEmptyState.Visibility = hasApps ? Visibility.Collapsed : Visibility.Visible;
+            bool isSearching = !string.IsNullOrEmpty(TargetProName.Text);
+            EmptyListTitle.Text = LanguageUtil.GetI18n(
+                isSearching ? "ScreenSaver_WhiteListNoResults" : "ScreenSaver_WhiteListEmpty");
+            EmptyListDescription.Text = LanguageUtil.GetI18n(
+                isSearching ? "ScreenSaver_WhiteListNoResultsDescription" : "ScreenSaver_WhiteListEmptyDescription");
+        }
+
         // Whenever text changes in any of the filtering text boxes, the following function is called:
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
             // This is a Linq query that selects only items that return True after being passed through
@@ -54,6 +80,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             var filtered = _viewModel._whiteListScr.Where(Filter);
             Remove_NonMatching(filtered);
             AddBack_Procs(filtered);
+            UpdateWhiteListEmptyState();
         }
 
         /* When the text in any filter is changed, perform a check on each item in the original

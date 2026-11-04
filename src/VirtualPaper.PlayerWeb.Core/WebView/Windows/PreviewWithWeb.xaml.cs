@@ -24,22 +24,24 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         public override ArcWindowHost ContentHost => this.MainHost;
         public override ArcWindowManagerKey Key => _windowKey;
 
-        public PreviewWithWeb(string jsonString) {
+        public PreviewWithWeb(string jsonString, string? previewUrl = null) {
             _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(jsonString);
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCore, _startArgs.FilePath + _startArgs.RuntimeType);
+            _previewUrl = previewUrl;
             this.InitializeComponent();
             InitializeWindow();
 
             AfterFeReady();
         }
 
-        private void NaviContent_Loaded(object sender, RoutedEventArgs e) {
+        private async void NaviContent_Loaded(object sender, RoutedEventArgs e) {
             try {
                 var payload = new FrameworkPayload() {
                     [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
                     [NaviPayloadKey.IWpBasicData.ToString()] = _wpBasicData,
                     [NaviPayloadKey.ArcWindow.ToString()] = this,
                     [NaviPayloadKey.ApplyService.ToString()] = this,
+                    [PageWithPlaying.PreviewUrlPayloadKey] = _previewUrl,
                 };
                 NaviContent.Navigate(typeof(PageWithPlaying), payload);
             }
@@ -61,6 +63,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
 
         private readonly StartArgsWeb? _startArgs;
         private readonly ArcWindowManagerKey _windowKey;
+        private readonly string? _previewUrl;
         private WpBasicData _wpBasicData;
     }
 }

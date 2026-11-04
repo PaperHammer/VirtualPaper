@@ -1,6 +1,7 @@
 using Moq;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.EditPanel.Model;
+using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Test.Utils;
@@ -137,6 +138,18 @@ namespace VirtualPaper.UI.Test.T_Draft {
             Assert.HasCount(1, _vm.RecentUseds);
         }
 
+        [TestMethod]
+        public async Task OnPreviousStepClickedAsync_WorkSpaceMode_ClosesAddProjectFlow() {
+            var tcs = new TaskCompletionSource<PreProjectData[]?>();
+            _vm.IsFromWorkSpaceForAddProj = true;
+            _vm.EditConfigTCS = tcs;
+
+            await _vm.OnPreviousStepClickedAsync();
+
+            Assert.IsTrue(tcs.Task.IsCompleted);
+            Assert.IsNull(await tcs.Task);
+        }
+
         // ── RemoveFromListCommand ─────────────────────────────────────
 
         [TestMethod]
@@ -229,7 +242,7 @@ namespace VirtualPaper.UI.Test.T_Draft {
             string? fileName,
             string filePath) {
             var mock = new Mock<IRecentUsed>();
-            mock.Setup(r => r.FileName).Returns(fileName);
+            mock.Setup(r => r.FileName).Returns(() => fileName!);
             mock.Setup(r => r.FilePath).Returns(filePath);
             return mock.Object;
         }

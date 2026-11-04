@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -28,6 +28,7 @@ using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Core.Utils;
+using Workloads.Creation.StaticImg.Debugging;
 using Workloads.Creation.StaticImg.Events;
 using Workloads.Creation.StaticImg.Extensions;
 using Workloads.Creation.StaticImg.Models;
@@ -43,11 +44,25 @@ using Workloads.Utils.DraftUtils.Models;
 
 namespace Workloads.Creation.StaticImg.Views.Components {
     public sealed partial class InkCanvas : ArcUserControl {
+        private static readonly TimeSpan EffectPreviewThrottleInterval = TimeSpan.FromMilliseconds(100);
         public TaskCompletionSource<bool> IsInited => _isInited;
 
         public InkCanvas() {
             this.InitializeComponent();
             _originalInputCursor = this.ProtectedCursor ?? InputSystemCursor.Create(InputSystemCursorShape.Arrow);
+
+            _effectPreviewTimer = DispatcherQueue.CreateTimer();
+            _effectPreviewTimer.Interval = EffectPreviewThrottleInterval;
+            _effectPreviewTimer.IsRepeating = true;
+            _effectPreviewTimer.Tick += EffectPreviewTimer_Tick;
+            Unloaded += InkCanvas_Unloaded;
+        }
+
+        private void InkCanvas_Unloaded(object sender, RoutedEventArgs e) {
+            CancelPendingEffectPreview();
+            _tool?.CancelPendingOperations();
+            _cropOverlayRenderer?.Dispose();
+            _cropOverlayRenderer = null;
         }
 
         protected override void OnPayloadChanged(FrameworkPayload? newPayload, FrameworkPayload? oldPayload) {
@@ -63,7 +78,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 Payload.TryGet(NaviPayloadKey.ArcPageContext, out context);
                 Consts.InitData();
             }
-            _viewModel = new InkCanvasViewModel(_session, context);
+            _viewModel = new InkCanvasViewModel(_session, context!);
             _tool = new ToolManager(_viewModel);
         }
 
@@ -76,7 +91,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             _tool.RegisterTool(ToolType.Fill, new FillTool(_viewModel.Data));
             _tool.RegisterTool(ToolType.Eraser, new EraserTool(_viewModel.Data));
             _tool.RegisterTool(ToolType.Selection, new SelectionTool(_viewModel.Data));
-            _tool.RegisterTool(ToolType.Crop, new CropTool(_viewModel.Data));
+            var cropTool = new CropTool(_viewModel.Data);
+            cropTool.OnSelectRectChanged += CropTool_OnSelectRectChanged;
+            _tool.RegisterTool(ToolType.Crop, cropTool);
             _tool.RegisterTool(ToolType.CanvasEffect, new EffectTool());
 
             foreach (var tool in _tool.GetAllTools()) {
@@ -84,6 +101,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                     this.ProtectedCursor = e.Cursor ?? _originalInputCursor;
                 };
                 tool.RenderRequest += (s, e) => {
+                    UpdateStrokeCacheDebugPanel(e.StrokeCacheDebugInfo);
                     RenderToCompositeTarget(e.Mode, e.Region);
                 };
                 tool.OnceRenderCompleted += (s, e) => {
@@ -143,9 +161,43 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void HandleCropAspectClicked(double e) {
+            if (_isSynchronizingCropAspectSelection || e <= 0) return;
+
             if (_selectedTool is CropTool ct) {
-                ct.RestoreOriginalContent();
-                ct.ApplyAspectRatio(e);
+                // 切换预设比例时会先清除旧裁剪框，再创建新裁剪框。这只是替换过程，
+                // 不能把中间出现的空矩形误判为“退出裁剪”并清除刚选中的模板。
+                _isReplacingCropAspect = true;
+                try {
+                    ct.RestoreOriginalContent();
+                    ct.ApplyAspectRatio(e);
+                }
+                finally {
+                    _isReplacingCropAspect = false;
+                    if (ct.CurrentState == CanvasAreaSelector.SelectionState.None)
+                        ClearSelectedCropAspect();
+                }
+            }
+        }
+
+        private void CropTool_OnSelectRectChanged(object? sender, Rect selectionRect) {
+            // 裁剪辅助层属于最终显示层，矩形变化只需重绘 CanvasControl，
+            // 无需重新合成任何图层。
+            renderCanvas.Invalidate();
+            if (!selectionRect.IsEmpty || _isReplacingCropAspect) return;
+            ClearSelectedCropAspect();
+        }
+
+        private void ClearSelectedCropAspect() {
+            if (_viewModel.Data.SeletcedAspectItem == null) return;
+
+            // 清空绑定属性会触发 SelectedCropAspectClicked；同步期间忽略该回调，
+            // 避免在裁剪工具 Reset 的调用栈中再次进入状态清理。
+            _isSynchronizingCropAspectSelection = true;
+            try {
+                _viewModel.Data.SeletcedAspectItem = null;
+            }
+            finally {
+                _isSynchronizingCropAspectSelection = false;
             }
         }
 
@@ -160,10 +212,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 if (op) RenderToCompositeTarget(RenderMode.FullRegion);
             }
             else if (_selectedTool is CropTool ct) {
-                var op = ct.RestoreOriginalContent();
-                if (op) RenderToCompositeTarget(RenderMode.FullRegion);
+                ct.RestoreOriginalContent();
+                // 工具或图层切换后裁剪 Overlay 已退出，模板状态也同步清除。
+                ClearSelectedCropAspect();
             }
             else if (_selectedTool is EffectTool et) {
+                CancelPendingEffectPreview();
                 et.Cancel();
                 CanvasEffect.Restore();
                 UnsubscribeCurrentEffectPanel();
@@ -176,13 +230,14 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             float requiredHeight = (float)_viewModel.Data.CanvasSize.Height;
 
             if (_compositeTarget == null ||
-                _compositeTarget.SizeInPixels.Width < requiredWidth ||
-                _compositeTarget.SizeInPixels.Height < requiredHeight) {
+                _compositeTarget.Size.Width < requiredWidth ||
+                _compositeTarget.Size.Height < requiredHeight) {
                 DebugUtil.Output("RebuildComposite triggered: Expanding target");
 
                 // 每次多分配 20% 的空间，避免频繁重建
-                float newWidth = Math.Max(requiredWidth * 1.2f, requiredWidth);
-                float newHeight = Math.Max(requiredHeight * 1.2f, requiredHeight);
+                float maximumEdge = Consts.GetMaximumCanvasEdge(_viewModel.Data.CanvasSize.Dpi);
+                float newWidth = Math.Min(maximumEdge, Math.Max(requiredWidth * 1.2f, requiredWidth));
+                float newHeight = Math.Min(maximumEdge, Math.Max(requiredHeight * 1.2f, requiredHeight));
 
                 _compositeTarget?.Dispose();
                 _compositeTarget = new CanvasRenderTarget(
@@ -222,7 +277,54 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             Rect sourceRect = destRect;
             using (args.DrawingSession) {
                 args.DrawingSession.DrawImage(_compositeTarget, destRect, sourceRect);
+                DrawCropOverlay(args.DrawingSession, destRect);
+                DrawStrokeCacheDebugOverlay(args.DrawingSession);
             }
+        }
+
+        private void DrawCropOverlay(CanvasDrawingSession drawingSession, Rect canvasBounds) {
+            if (_selectedTool is not CropTool {
+                CurrentState: not CanvasAreaSelector.SelectionState.None
+            } cropTool) return;
+
+            (_cropOverlayRenderer ??= new CropOverlayRenderer()).Draw(
+                drawingSession,
+                canvasBounds,
+                cropTool.SelectionRect);
+        }
+
+        private void DrawStrokeCacheDebugOverlay(CanvasDrawingSession ds) {
+            if (!StaticImgDebugSwitches.ShowStrokeCacheOverlay ||
+                _strokeCacheDebugInfo is not { } debugInfo) return;
+
+            if (debugInfo.CacheBounds != Rect.Empty)
+                ds.DrawRectangle(debugInfo.CacheBounds, Color.FromArgb(255, 0, 200, 255), 2f);
+
+            if (debugInfo.UpdatedCacheBounds != Rect.Empty)
+                ds.DrawRectangle(debugInfo.UpdatedCacheBounds, Color.FromArgb(255, 255, 165, 0), 4f);
+
+            ds.DrawRectangle(debugInfo.DirtyBounds, Color.FromArgb(255, 255, 0, 255), 3f);
+            ds.DrawRectangle(debugInfo.ActiveStrokeBounds, Color.FromArgb(255, 80, 255, 80), 3f);
+        }
+
+        private void UpdateStrokeCacheDebugPanel(StrokeCacheDebugInfo? debugInfo) {
+            _strokeCacheDebugInfo = debugInfo;
+            if (!StaticImgDebugSwitches.ShowStrokeCacheOverlay || debugInfo == null) {
+                strokeCacheDebugPanel.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            strokeCacheDebugPanel.Visibility = Visibility.Visible;
+            strokeCacheDebugSummary.Text =
+                $"Cache {(debugInfo.CacheBounds == Rect.Empty ? "none" : "allocated")}  |  " +
+                $"Updated {(debugInfo.UpdatedCacheBounds == Rect.Empty ? "no" : "yes")}  |  " +
+                $"Points {debugInfo.ActivePointCount}";
+            strokeCacheDebugDetails.Text =
+                $"Dirty ({debugInfo.DirtyBounds.X:F0},{debugInfo.DirtyBounds.Y:F0}) " +
+                $"{debugInfo.DirtyBounds.Width:F0}×{debugInfo.DirtyBounds.Height:F0}  |  " +
+                $"Active {debugInfo.ActiveStrokeBounds.Width:F0}×{debugInfo.ActiveStrokeBounds.Height:F0}  |  " +
+                $"Cache {debugInfo.CacheBounds.Width:F0}×{debugInfo.CacheBounds.Height:F0}  |  " +
+                "Block 32  |  Overlap 2";
         }
 
         private void OnOnceRenderCompleted() {
@@ -230,7 +332,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
-            DebugUtil.Output("RenderToCompositeTarget triggered");
             RebuildCompositeIfNeeded();
             if (_compositeTarget == null) return;
 
@@ -331,46 +432,73 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             PerformZoom((float)zoomFactor);
         }
 
-        // todo：按照目标点位缩放；空白区域响应水平滚动
         /// <summary>
         /// 通用缩放方法
         /// </summary>
         /// <param name="targetZoom">目标缩放比例</param>
         /// <param name="contentAnchor">内容坐标系上的锚点（鼠标在 container 上的位置）。如果为 null，则以当前视口中心为基准。</param>
+        /// <param name="viewportAnchor">锚点在 ScrollViewer 视口中的位置；与 contentAnchor 成对传入。</param>
         /// <param name="disableAnimation">是否禁用动画（Slider拖动建议禁用，按钮点击建议启用）</param>
-        private void PerformZoom(float targetZoom, Point? contentAnchor = null, bool disableAnimation = false) {
+        private void PerformZoom(
+            float targetZoom,
+            Point? contentAnchor = null,
+            Point? viewportAnchor = null,
+            bool disableAnimation = false) {
             float currentZoom = scroll.ZoomFactor;
             targetZoom = Math.Clamp(targetZoom, (float)Consts.MinZoomFactor, (float)Consts.MaxZoomFactor);
 
             if (Math.Abs(targetZoom - currentZoom) < 1e-5) return;
 
-            if (contentAnchor.HasValue) {
-                // 先计算原来的锚点在视口中的坐标
-                double oldAnchorViewportX = contentAnchor.Value.X * currentZoom - scroll.HorizontalOffset;
-                double oldAnchorViewportY = contentAnchor.Value.Y * currentZoom - scroll.VerticalOffset;
-
-                // 再在新缩放下，保证锚点还在同一个视口坐标
-                double newOffsetX = contentAnchor.Value.X * targetZoom - oldAnchorViewportX;
-                double newOffsetY = contentAnchor.Value.Y * targetZoom - oldAnchorViewportY;
-
-                scroll.ChangeView(newOffsetX, newOffsetY, targetZoom, disableAnimation);
+            Point effectiveViewportAnchor;
+            Point effectiveContentAnchor;
+            if (contentAnchor.HasValue && viewportAnchor.HasValue) {
+                effectiveContentAnchor = contentAnchor.Value;
+                effectiveViewportAnchor = viewportAnchor.Value;
             }
             else {
-                double viewportCenterX = scroll.ViewportWidth / 2.0;
-                double viewportCenterY = scroll.ViewportHeight / 2.0;
-                var centerPointInScroll = new Point(viewportCenterX, viewportCenterY);
-
-                var transform = scroll.TransformToVisual(container);
-                Point centerPointInCanvas = transform.TransformPoint(centerPointInScroll);
-
-                double oldAnchorViewportX = centerPointInCanvas.X * currentZoom - scroll.HorizontalOffset;
-                double oldAnchorViewportY = centerPointInCanvas.Y * currentZoom - scroll.VerticalOffset;
-
-                double newOffsetX = centerPointInCanvas.X * targetZoom - oldAnchorViewportX;
-                double newOffsetY = centerPointInCanvas.Y * targetZoom - oldAnchorViewportY;
-
-                scroll.ChangeView(newOffsetX, newOffsetY, targetZoom, disableAnimation);
+                effectiveViewportAnchor = new Point(
+                    scroll.ViewportWidth / 2.0,
+                    scroll.ViewportHeight / 2.0);
+                effectiveContentAnchor = new Point(
+                    (scroll.HorizontalOffset + effectiveViewportAnchor.X) / currentZoom - container.Margin.Left,
+                    (scroll.VerticalOffset + effectiveViewportAnchor.Y) / currentZoom - container.Margin.Top);
             }
+
+            Point newOffset = CalculateZoomOffset(
+                targetZoom,
+                effectiveContentAnchor,
+                effectiveViewportAnchor,
+                container.Margin.Left,
+                container.Margin.Top);
+            scroll.ChangeView(newOffset.X, newOffset.Y, targetZoom, disableAnimation);
+        }
+
+        /// <summary>
+        /// 计算保持指定内容点停留在同一视口位置所需的新滚动偏移。
+        /// 屏幕显示位置满足：视口位置 = (画布位置 + 内容外边距) * 缩放比例 - 滚动偏移。
+        /// 已知画布锚点、目标缩放比例和希望保持不变的视口锚点后，变换公式得到：
+        /// 滚动偏移 = (画布位置 + 内容外边距) * 目标缩放比例 - 视口位置。
+        /// 因此缩放后将 ScrollViewer 调整到该偏移，可以让鼠标指向的画布内容仍停留在鼠标下方。
+        /// </summary>
+        internal static Point CalculateZoomOffset(
+            float targetZoom,
+            Point contentAnchor,
+            Point viewportAnchor,
+            double contentMarginLeft,
+            double contentMarginTop) => new(
+                (contentAnchor.X + contentMarginLeft) * targetZoom - viewportAnchor.X,
+                (contentAnchor.Y + contentMarginTop) * targetZoom - viewportAnchor.Y);
+
+        private static float GetWheelZoomTarget(float currentZoom, double wheelDelta) {
+            int detentCount = Math.Max(1, (int)Math.Round(Math.Abs(wheelDelta) / 120d));
+            double targetZoom = currentZoom;
+            for (int i = 0; i < detentCount; i++) {
+                targetZoom += wheelDelta > 0
+                    ? Consts.GetAddStepSize(targetZoom)
+                    : -Consts.GetSubStepSize(targetZoom);
+                targetZoom = Math.Clamp(targetZoom, Consts.MinZoomFactor, Consts.MaxZoomFactor);
+            }
+            return (float)targetZoom;
         }
 
         /// <summary>
@@ -417,7 +545,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
         #region CanvasSet
         private async void CanvasSet_OnValueCommited(object sender, ArcSize e) {
-            await _viewModel.Data.ApplyResizeOrScaleAsync(e);
+            bool isApplied = await _viewModel.Data.ApplyResizeOrScaleAsync(e);
+            if (!isApplied) {
+                CanvasSet.RestoreCurrentSize();
+            }
         }
 
         private async void CanvasOperationBtn_Click(object sender, CanvasOperation e) {
@@ -482,6 +613,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void CanvasEffect_Cancel(object sender, RoutedEventArgs e) {
             if (_selectedTool is not EffectTool et) return;
 
+            CancelPendingEffectPreview();
             et.Cancel();
             UnsubscribeCurrentEffectPanel();
             effectPanelHost.Visibility = Visibility.Collapsed;
@@ -491,7 +623,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void CanvasEffect_Commit(object sender, RoutedEventArgs e) {
             if (_selectedTool is not EffectTool et) return;
 
-            et.Commit();
+            et.Commit(TakePendingEffectParams());
             UnsubscribeCurrentEffectPanel();
             effectPanelHost.Visibility = Visibility.Collapsed;
             CanvasEffect.ClickedEffectId = null;
@@ -507,6 +639,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void OnEffectPreviewRequested(object? sender, string effectId) {
             if (_selectedTool is not EffectTool et) return;
 
+            CancelPendingEffectPreview();
             et.Cancel(); // 先取消之前的预览，避免重复叠加效果
 
             var shaderType = EffectMap.ToShaderType(effectId);
@@ -543,8 +676,39 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void OnEffectPanelParamsChanged(object? sender, EffectParams p) {
-            if (_selectedTool is EffectTool et && et.IsPreviewing)
-                et.UpdateParams(p);
+            if (_selectedTool is not EffectTool { IsPreviewing: true }) return;
+
+            _pendingEffectParams = p;
+            if (_effectPreviewTimer.IsRunning) return;
+
+            ApplyPendingEffectPreview();
+            _effectPreviewTimer.Start();
+        }
+
+        private void EffectPreviewTimer_Tick(DispatcherQueueTimer sender, object args) {
+            if (_pendingEffectParams.HasValue)
+                ApplyPendingEffectPreview();
+            else
+                sender.Stop();
+        }
+
+        private EffectParams? TakePendingEffectParams() {
+            _effectPreviewTimer.Stop();
+            EffectParams? pendingParams = _pendingEffectParams;
+            _pendingEffectParams = null;
+            return pendingParams;
+        }
+
+        private void ApplyPendingEffectPreview() {
+            EffectParams? pendingParams = _pendingEffectParams;
+            _pendingEffectParams = null;
+            if (pendingParams.HasValue && _selectedTool is EffectTool { IsPreviewing: true } et)
+                et.UpdateParams(pendingParams.Value);
+        }
+
+        private void CancelPendingEffectPreview() {
+            _effectPreviewTimer.Stop();
+            _pendingEffectParams = null;
         }
 
         private EffectPanelBase? GetEffectPanel(ShaderType shaderType) => shaderType switch {
@@ -710,39 +874,54 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 _viewModel.Data.SelectedLayer.RenderData == null ||
                 _viewModel.Data.SelectedLayer.RenderData.RenderTarget == null) {
                 GlobalMessageUtil.ShowError(
-                    message: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
-                    key: nameof(Constants.I18n.Draft_SI_LayerNotAvailable),
+                    message: Constants.I18n.Draft_SI_LayerNotAvailable,
+                    key: Constants.I18n.Draft_SI_LayerNotAvailable,
                     isNeedLocalizer: true);
                 return;
             }
 
-            if (!_viewModel.Data.SelectedLayer.IsVisible) {
+            RenderBase? nextTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
+            if (!_viewModel.Data.SelectedLayer.IsVisible && nextTool is not CropTool) {
                 GlobalMessageUtil.ShowWarning(
-                    message: nameof(Constants.I18n.Draft_SI_LayerLocked),
-                    key: nameof(Constants.I18n.Draft_SI_LayerLocked),
+                    message: Constants.I18n.Draft_SI_LayerLocked,
+                    key: Constants.I18n.Draft_SI_LayerLocked,
                     isNeedLocalizer: true);
                 return;
             }
 
-            _selectedTool = _tool.GetTool(_viewModel.Data.SelectedToolItem.Type);
-            if (_selectedTool == null) {
+            _selectedTool = nextTool;
+            if (nextTool == null) {
                 // 还原光标
                 this.ProtectedCursor = _originalInputCursor;
                 return;
             }
 
-            action(_selectedTool);
+            if (_selectedTool is not CanvasPathDrawer)
+                UpdateStrokeCacheDebugPanel(null);
+
+            action(nextTool);
         }
 
         private void Container_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
             var modifiers = e.KeyModifiers;
-            var pointerPoint = e.GetCurrentPoint(container);
-            var properties = pointerPoint.Properties;
-            double delta = properties.MouseWheelDelta;
+            PointerPoint contentPointer = e.GetCurrentPoint(container);
+            double delta = contentPointer.Properties.MouseWheelDelta;
 
             if (delta == 0) return;
 
-            if (modifiers == Windows.System.VirtualKeyModifiers.Shift) {
+            if (modifiers.HasFlag(Windows.System.VirtualKeyModifiers.Control)) {
+                Point viewportAnchor = e.GetCurrentPoint(scroll).Position;
+                float targetZoom = GetWheelZoomTarget(scroll.ZoomFactor, delta);
+                PerformZoom(
+                    targetZoom,
+                    contentPointer.Position,
+                    viewportAnchor,
+                    disableAnimation: true);
+                e.Handled = true;
+                return;
+            }
+
+            if (modifiers.HasFlag(Windows.System.VirtualKeyModifiers.Shift)) {
                 e.Handled = true;
                 PerformScroll(-delta, 0);
                 return;
@@ -760,5 +939,11 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private CanvasImageBrush? _gridBrush;
         private const int _gridSize = 20;
         private InkProjectSession _session = null!;
+        private readonly DispatcherQueueTimer _effectPreviewTimer;
+        private EffectParams? _pendingEffectParams;
+        private StrokeCacheDebugInfo? _strokeCacheDebugInfo;
+        private CropOverlayRenderer? _cropOverlayRenderer;
+        private bool _isReplacingCropAspect;
+        private bool _isSynchronizingCropAspectSelection;
     }
 }

@@ -17,23 +17,32 @@ namespace VirtualPaper.Grpc.Client {
             _uiRecievedCmdTask = Task.Run(() => SubscribeUIRecievedCmdTaskStream(_ctsUIRecievedCmd.Token));
         }
 
-        public async Task ShowUI() {
+        public async Task ShowUIAsync() {
             await _client.ShowUIAsync(new Empty());
         }
 
-        public async Task CloseUI() {
+        public async Task CloseUIAsync() {
             await _client.CloseUIAsync(new Empty());
         }
 
-        public async Task RestartUI() {
+        public async Task NotifyUIClosingAsync() {
+            await _client.NotifyUIClosingAsync(new Grpc_UIClosing { ProcessId = Environment.ProcessId },
+                deadline: DateTime.UtcNow.AddSeconds(2));
+        }
+
+        public async Task RequestInstallAsync() {
+            await _client.RequestInstallAsync(new Empty());
+        }
+
+        public async Task RestartUIAsync() {
             await _client.RestartUIAsync(new Empty());
         }
 
-        public async Task ShowDebugView() {
+        public async Task ShowDebugViewAsync() {
             await _client.ShowDebugViewAsync(new Empty());
         }
 
-        public async Task ShutDown() {
+        public async Task ShutDownAsync() {
             await _client.ShutDownAsync(new Empty());
         }
 

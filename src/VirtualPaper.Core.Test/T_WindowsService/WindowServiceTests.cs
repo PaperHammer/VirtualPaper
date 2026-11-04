@@ -54,7 +54,7 @@ public class WindowServiceConsumerTests {
         // 不抛出异常即通过
         service.Show<FakeWindow>();
 
-        _mockWindowService.Verify(s => s.Show<FakeWindow>(null), Times.Once);
+        _mockWindowService.Verify(s => s.Show<FakeWindow>(null, false), Times.Once);
     }
 
     [TestMethod]
@@ -64,7 +64,7 @@ public class WindowServiceConsumerTests {
 
         service.Show<FakeWindow>(param);
 
-        _mockWindowService.Verify(s => s.Show<FakeWindow>(param), Times.Once);
+        _mockWindowService.Verify(s => s.Show<FakeWindow>(param, false), Times.Once);
     }
 
     #endregion

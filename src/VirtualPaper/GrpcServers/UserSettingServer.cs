@@ -5,7 +5,7 @@ using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
-using VirtualPaper.Models.DraftPanel;
+using VirtualPaper.Models.EditPanel;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils;
 
@@ -114,6 +114,7 @@ namespace VirtualPaper.GrpcServers {
                 AppName = _userSetting.Settings.AppName,
                 AppVersion = _userSetting.Settings.AppVersion,
                 IsFirstRun = _userSetting.Settings.IsFirstRun,
+                NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
                 AppFocusPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFocus,
                 AppFullscreenPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFullscreen,
                 BatteryPause = (Grpc_AppRulesEnum)_userSetting.Settings.BatteryPoweredn,
@@ -140,6 +141,7 @@ namespace VirtualPaper.GrpcServers {
             foreach (var proc in settings.WhiteListScr) {
                 resp.WhiteListScr.Add(new Grpc_ProcInfoData() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });
@@ -156,7 +158,8 @@ namespace VirtualPaper.GrpcServers {
             if (request.IsAutoStart != _userSetting.Settings.IsAutoStart) {
                 _userSetting.Settings.IsAutoStart = request.IsAutoStart;
                 try {
-                    _ = WindowsAutoStart.SetAutoStart(_userSetting.Settings.IsAutoStart);
+                    if (!Common.TestProcessEnvironment.IsEnabled)
+                        _ = WindowsAutoStart.SetAutoStart(_userSetting.Settings.IsAutoStart);
                 }
                 catch (Exception e) {
                     App.Log.Error(e);
@@ -176,6 +179,9 @@ namespace VirtualPaper.GrpcServers {
             _userSetting.Settings.AppName = request.AppName;
             _userSetting.Settings.AppVersion = request.AppVersion;
             _userSetting.Settings.IsFirstRun = request.IsFirstRun;
+            if (request.HasNavigationAnimationsEnabled) {
+                _userSetting.Settings.NavigationAnimationsEnabled = request.NavigationAnimationsEnabled;
+            }
             _userSetting.Settings.AppFocus = (Common.AppWpRunRulesEnum)((int)request.AppFocusPause);
             _userSetting.Settings.AppFullscreen = (Common.AppWpRunRulesEnum)((int)request.AppFullscreenPause);
             _userSetting.Settings.BatteryPoweredn = (Common.AppWpRunRulesEnum)((int)request.BatteryPause);
@@ -202,6 +208,7 @@ namespace VirtualPaper.GrpcServers {
             foreach (var proc in request.WhiteListScr) {
                 _userSetting.Settings.WhiteListScr.Add(new Models.ProcInfo() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });

@@ -3,6 +3,7 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.GammaTransferEffectPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -16,7 +17,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="振幅" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Amplitude}" FontSize="14" VerticalAlignment="Center"/>
             <TextBlock x:Name="AmplitudeValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
@@ -32,7 +33,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="指数" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Exponent}" FontSize="14" VerticalAlignment="Center"/>
             <TextBlock x:Name="ExponentValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
@@ -48,7 +49,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="偏移" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Offset}" FontSize="14" VerticalAlignment="Center"/>
             <TextBlock x:Name="OffsetValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>

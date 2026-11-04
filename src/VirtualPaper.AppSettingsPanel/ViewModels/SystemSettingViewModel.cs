@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using VirtualPaper.Common.Logging;
@@ -33,8 +32,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             });
         }
 
-        private void OpenDebugView() {
-            _commandClient.ShowDebugView();
+        private async void OpenDebugView() {
+            await _commandClient.ShowDebugViewAsync();
         }
 
         public async Task ExportLogsAsync() {

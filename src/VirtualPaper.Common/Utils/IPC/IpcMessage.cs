@@ -1,6 +1,5 @@
 using System.Text.Json.Serialization;
 using VirtualPaper.Common.Events;
-using VirtualPaper.Common.Events.EffectValue.Base;
 
 namespace VirtualPaper.Common.Utils.IPC {
     [JsonSerializable(typeof(IpcMessage))]

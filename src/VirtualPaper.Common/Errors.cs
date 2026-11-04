@@ -116,8 +116,22 @@ namespace VirtualPaper.Common {
             }
 
             private static string GenerateMessage(string filePath, string operation) {
-                return $"对文件 \"{filePath}\" 的 {operation} 操作发生错误，请检查文件完整性或相关权限。";
+                var operationKey = operation.Contains("read", StringComparison.OrdinalIgnoreCase)
+                    || operation.Contains("读取", StringComparison.Ordinal)
+                    ? "Read"
+                    : operation.Contains("write", StringComparison.OrdinalIgnoreCase)
+                        || operation.Contains("写入", StringComparison.Ordinal)
+                        ? "Write"
+                        : "Access";
+                var localizedOperation = FileAccessResources.GetString(operationKey) ?? operation;
+                var message = FileAccessResources.GetString("Message")
+                    ?? "An error occurred while {1} the file \"{0}\".";
+                return string.Format(message, filePath, localizedOperation);
             }
+
+            private static readonly System.Resources.ResourceManager FileAccessResources = new(
+                "VirtualPaper.Common.Resources.FileAccess",
+                typeof(FileAccessException).Assembly);
         }
 
         public class FileCreateException : Exception {

@@ -19,7 +19,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
 
         protected override IUndoableCommand? BuildUndoCommand() {
             lock (_data) {
-                if (SelectionContent == null || BaseContent == null) return null;
+                if (SelectedRegionSnapshot == null || OriginalContentSnapshot == null) return null;
 
                 _originalSelectionRect = _originalSelectionRect.RoundOutwardAsInt();
                 _selectionRect = _selectionRect.RoundOutwardAsInt();
@@ -30,15 +30,15 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 int nx = (int)_selectionRect.X;
                 int ny = (int)_selectionRect.Y;
 
-                byte[] selectionPixels = SelectionContent.GetPixelBytes().CompressPixels();
-                byte[] targetOriginalPixels = BaseContent.GetPixelBytes(nx, ny, w, h).CompressPixels();
+                byte[] selectionPixels = SelectedRegionSnapshot.GetPixelBytes().CompressPixels();
+                byte[] targetOriginalPixels = OriginalContentSnapshot.GetPixelBytes(nx, ny, w, h).CompressPixels();
 
-                using (var ds = BaseContent!.CreateDrawingSession()) {
+                using (var ds = OriginalContentSnapshot.CreateDrawingSession()) {
                     ds.Blend = CanvasBlend.SourceOver;
-                    ds.DrawImage(SelectionContent, (float)_selectionRect.X, (float)_selectionRect.Y);
+                    ds.DrawImage(SelectedRegionSnapshot, (float)_selectionRect.X, (float)_selectionRect.Y);
                 }
 
-                byte[] targetNewPixels = BaseContent.GetPixelBytes(nx, ny, w, h).CompressPixels();
+                byte[] targetNewPixels = OriginalContentSnapshot.GetPixelBytes(nx, ny, w, h).CompressPixels();
 
                 return new LayerSelectionCommand(
                     LayerId,

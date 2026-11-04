@@ -1,0 +1,117 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+		<RootNamespace>Workloads.Creation.WebBackdrop</RootNamespace>
+		<WinUISDKReferences>false</WinUISDKReferences>
+		<UseWinUI>true</UseWinUI>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>WebBackdrop.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+	<ItemGroup>
+		<None Remove="MainPage.xaml" />
+		<None Remove="Views\Components\WebEditor.xaml" />
+		<None Remove="Views\Components\WebQuickOpenControl.xaml" />
+		<None Remove="Views\Components\EditorContent\WebEditorContentView.xaml" />
+		<None Remove="Views\Components\EditorContent\MarkdownEditorView.xaml" />
+		<None Remove="Views\Components\EditorContent\ImagePreviewView.xaml" />
+		<None Remove="Views\Components\EditorContent\FallbackContentView.xaml" />
+		<None Remove="Views\Components\EditorContent\WelcomeContentView.xaml" />
+		<None Remove="Views\Components\BottomPanels\WebProblemsPanelControl.xaml" />
+		<None Remove="Views\Components\MonacoEditor.xaml" />
+		<None Remove="Views\Tools\WebToolListControl.xaml" />
+		<None Remove="Views\Tools\WebFileTreeControl.xaml" />
+		<None Remove="Views\Tools\WebProjectInfoControl.xaml" />
+		<None Remove="Views\Tools\WebPropertyPanelControl.xaml" />
+		<None Remove="Views\Tools\WebStatusBarControl.xaml" />
+		<None Remove="Themes\WebBackdropColors.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
+		<ProjectReference Include="..\VirtualPaper.Models\VirtualPaper.Models.csproj" />
+		<ProjectReference Include="..\VirtualPaper.PlayerWeb.Core\VirtualPaper.PlayerWeb.Core.csproj" />
+		<ProjectReference Include="..\Workloads.Utils\Workloads.Utils.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<Page Update="MainPage.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\WebEditor.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\WebQuickOpenControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\EditorContent\WebEditorContentView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\EditorContent\MarkdownEditorView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\EditorContent\ImagePreviewView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\EditorContent\FallbackContentView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\EditorContent\WelcomeContentView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\BottomPanels\WebProblemsPanelControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Components\MonacoEditor.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebToolListControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebFileTreeControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebProjectInfoControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebPropertyPanelControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Views\Tools\WebStatusBarControl.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Themes\WebBackdropColors.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+	</ItemGroup>
+	<ItemGroup>
+		<Content Remove="Assets\monaco-editor-0.55.1\package\**\*" />
+		<PRIResource Remove="Assets\monaco-editor-0.55.1\package\**\*" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="Assets\monaco.html">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\monaco-fallback.html">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\preview\*.html">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\templates\**\*">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\monaco-editor-*\package\**\*" Exclude="Assets\monaco-editor-*\package\dev\**\*;Assets\monaco-editor-*\package\README.md;Assets\monaco-editor-*\package\CHANGELOG.md">
+			<TargetPath>$([System.Text.RegularExpressions.Regex]::Replace('%(FullPath)', '^.*\\Assets\\monaco-editor-[^\\]+\\package\\', 'Assets\\monaco-editor\\'))</TargetPath>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<ExcludeFromResourceIndex>true</ExcludeFromResourceIndex>
+		</Content>
+	</ItemGroup>
+</Project>

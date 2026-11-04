@@ -1,5 +1,5 @@
 using Moq;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Navigation.TabView.Interfaces;
@@ -15,7 +15,9 @@ namespace VirtualPaper.UI.Test.T_Draft {
         public void Setup() {
             _vm = new WorkSpaceViewModel(
                 Mock.Of<IUserSettingsClient>(),
-                Mock.Of<IGlobalDialogService>());
+                Mock.Of<Workloads.Entry.Interfaces.IRuntimeFactory>(),
+                Mock.Of<VirtualPaper.EditPanel.Services.IWorkspaceSaveCoordinator>(),
+                new Workloads.Entry.FileLoaders.ProjectFileLoaderRegistry([]));
         }
 
         private static IVectorChangedEventArgs MakeArgs(CollectionChange change, uint index) {

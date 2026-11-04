@@ -4,11 +4,14 @@ using NLog;
 using Windows.ApplicationModel.Core;
 
 /*
- * rweb-workload
- * 
+ * 音乐桌面壁纸：先做音乐律动、歌曲信息卡片及播放控制。
+ *   宿主统一采集和分析输出音频，读取支持的系统媒体会话，再分发给各屏壁纸。
+ *   后续评估本地 LRC 歌词；在线歌词、乐评、曲库及自带播放器另行确定范围。
+ *
  * 分组循环播放
  * AI 生成壁纸	接入 Stable Diffusion / ComfyUI，本地生成动态壁纸
- * AI 静态图片动态化
+ * 
+ * diff-update 二期
  */
 
 namespace VirtualPaper.Common.Logging {
@@ -19,11 +22,15 @@ namespace VirtualPaper.Common.Logging {
         /// <summary>
         /// 获取指定类型的日志记录器（自动识别程序集）
         /// </summary>
-        public static ArcLoggerProxy GetLogger<T>() {
-            var type = typeof(T);
-            var loggerName = type.FullName ?? "UnknownTypeFullName";
-            return _cache.GetOrAdd(loggerName, _ =>
-                new ArcLoggerProxy(LogManager.GetLogger(loggerName)));
+        public static ArcLoggerProxy GetLogger<T>() => GetLogger(typeof(T));
+
+        public static ArcLoggerProxy GetLogger(Type type) {
+            ArgumentNullException.ThrowIfNull(type);
+
+            string loggerName = type.FullName ?? "UnknownTypeFullName";
+            return _cache.GetOrAdd(
+                loggerName,
+                _ => new ArcLoggerProxy(LogManager.GetLogger(loggerName)));
         }
 
         private static readonly ConcurrentDictionary<string, ArcLoggerProxy> _cache = new();

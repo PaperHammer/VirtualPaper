@@ -18,7 +18,7 @@ namespace VirtualPaper.Core.Test.T_Common {
             Assert.DoesNotContain(':', result);
         }
 
-        // ── IsValidFileName ───────────────────────────────────────────
+        // ── IsValidPathSegmentName ───────────────────────────────────────────
 
         [TestMethod]
         [DataRow("test.vpd")]
@@ -53,12 +53,12 @@ namespace VirtualPaper.Core.Test.T_Common {
         // ── SizeSuffix ────────────────────────────────────────────────
 
         [TestMethod]
-        [DataRow(0, "0 bytes")]
-        [DataRow(500, "500 bytes")]
-        [DataRow(1024, "1 KB")]
+        [DataRow(0, "0.0 bytes")]
+        [DataRow(500, "500.0 bytes")]
+        [DataRow(1024, "1.0 KB")]
         [DataRow(1536, "1.5 KB")]
-        [DataRow(1048576, "1 MB")]
-        [DataRow(1073741824, "1 GB")]
+        [DataRow(1048576, "1.0 MB")]
+        [DataRow(1073741824, "1.0 GB")]
         public void SizeSuffix_CorrectFormatting(long value, string expected) {
             Assert.AreEqual(expected, FileUtil.SizeSuffix(value));
         }
@@ -73,7 +73,7 @@ namespace VirtualPaper.Core.Test.T_Common {
         public void SizeSuffix_LargeValue_RoundsUp() {
             // 1024 MB → 应显示为 1 GB 而非 1024.0 MB
             var result = FileUtil.SizeSuffix(1024L * 1024 * 1024);
-            Assert.AreEqual("1 GB", result);
+            Assert.AreEqual("1.0 GB", result);
         }
 
         // ── NextAvailableFilename ─────────────────────────────────────
@@ -127,6 +127,78 @@ namespace VirtualPaper.Core.Test.T_Common {
         }
 
         // ── GetChecksumSHA256 ─────────────────────────────────────────
+
+        [TestMethod]
+        public void IsPathWithinDirectory_DirectChild_ReturnsTrue() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+            string child = Path.Combine(root, "session", "payload.undo");
+
+            Assert.IsTrue(FileUtil.IsPathWithinDirectory(root, child));
+        }
+
+        [TestMethod]
+        public void IsPathWithinDirectory_ParentTraversalOutsideRoot_ReturnsFalse() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+            string escaped = Path.Combine(root, "session", "..", "..", "payload.undo");
+
+            Assert.IsFalse(FileUtil.IsPathWithinDirectory(root, escaped));
+        }
+
+        [TestMethod]
+        public void IsPathWithinDirectory_SiblingWithSamePrefix_ReturnsFalse() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+            string sibling = Path.Combine(Path.GetTempPath(), "path-root-backup", "payload.undo");
+
+            Assert.IsFalse(FileUtil.IsPathWithinDirectory(root, sibling));
+        }
+
+        [TestMethod]
+        public void IsPathWithinDirectory_RootItself_ReturnsFalse() {
+            string root = Path.Combine(Path.GetTempPath(), "path-root");
+
+            Assert.IsFalse(FileUtil.IsPathWithinDirectory(root, root));
+        }
+
+        [TestMethod]
+        public void GetContainedRelativePath_NestedPath_ReturnsNormalizedRelativePath() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+            string path = Path.Combine(root, "images", "cover.png");
+
+            string relative = FileUtil.GetContainedRelativePath(root, path, nameof(path));
+
+            Assert.AreEqual(Path.Combine("images", "cover.png"), relative);
+        }
+
+        [TestMethod]
+        public void GetContainedRelativePath_RootItself_ReturnsCurrentDirectory() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+
+            string relative = FileUtil.GetContainedRelativePath(root, root, nameof(root));
+
+            Assert.AreEqual(".", relative);
+        }
+
+        [TestMethod]
+        public void GetContainedRelativePath_SiblingWithSamePrefix_Throws() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+            string sibling = Path.Combine(Path.GetTempPath(), "contained-root-backup", "cover.png");
+
+            var exception = Assert.ThrowsExactly<ArgumentException>(() =>
+                FileUtil.GetContainedRelativePath(root, sibling, nameof(sibling)));
+
+            Assert.AreEqual(nameof(sibling), exception.ParamName);
+        }
+
+        [TestMethod]
+        public void GetContainedRelativePath_ParentTraversalOutsideRoot_Throws() {
+            string root = Path.Combine(Path.GetTempPath(), "contained-root");
+            string escaped = Path.Combine(root, "images", "..", "..", "cover.png");
+
+            var exception = Assert.ThrowsExactly<ArgumentException>(() =>
+                FileUtil.GetContainedRelativePath(root, escaped, nameof(escaped)));
+
+            Assert.AreEqual(nameof(escaped), exception.ParamName);
+        }
 
         [TestMethod]
         public void GetChecksumSHA256_SameContent_SameHash() {

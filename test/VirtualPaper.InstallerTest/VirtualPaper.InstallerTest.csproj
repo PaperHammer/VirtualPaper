@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+    <ProjectReference Include="..\..\src\VirtualPaper.Grpc.Service\VirtualPaper.Grpc.Service.csproj" />
+    <PackageReference Include="GrpcDotNetNamedPipes" Version="3.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
+using VirtualPaper.UIComponent.Dialogs;
 
 namespace VirtualPaper.UIComponent.Utils {
     public static class GlobalDialogUtils {
@@ -10,7 +11,7 @@ namespace VirtualPaper.UIComponent.Utils {
             string message,
             string title,
             string primaryBtnText) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
                 Content = new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap },
                 PrimaryButtonText = primaryBtnText,
@@ -28,7 +29,7 @@ namespace VirtualPaper.UIComponent.Utils {
             string primaryBtnText,
             string secondaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
@@ -48,13 +49,13 @@ namespace VirtualPaper.UIComponent.Utils {
             };
         }
         
-        public static ContentDialog? CreateDialog(
+        public static ArcContentDialog? CreateDialog(
             object content,
             string title,
             string primaryBtnText,
             string secondaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
@@ -72,7 +73,7 @@ namespace VirtualPaper.UIComponent.Utils {
             string title,
             string primaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
@@ -98,7 +99,7 @@ namespace VirtualPaper.UIComponent.Utils {
             string secondaryBtnText,
             string closeBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
@@ -119,12 +120,12 @@ namespace VirtualPaper.UIComponent.Utils {
             };
         }
         
-        public static ContentDialog? CreateDialog(
+        public static ArcContentDialog? CreateDialog(
             object content,
             string title,
             string primaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Title = new TextBlock() { Text = title, TextWrapping = TextWrapping.Wrap },
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
@@ -141,7 +142,7 @@ namespace VirtualPaper.UIComponent.Utils {
             string primaryBtnText,
             string secondaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 SecondaryButtonText = secondaryBtnText,
@@ -160,12 +161,12 @@ namespace VirtualPaper.UIComponent.Utils {
             };
         }
         
-        public static ContentDialog? CreateDialogWithoutTitle(
+        public static ArcContentDialog? CreateDialogWithoutTitle(
             object content,
             string primaryBtnText,
             string secondaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 SecondaryButtonText = secondaryBtnText,                
@@ -181,7 +182,7 @@ namespace VirtualPaper.UIComponent.Utils {
             object content,
             string primaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,
@@ -199,11 +200,11 @@ namespace VirtualPaper.UIComponent.Utils {
             };
         }
 
-        public static ContentDialog? CreateDialogWithoutTitle(
+        public static ArcContentDialog? CreateDialogWithoutTitle(
             object content,
             string primaryBtnText,
             bool isDefaultPrimary = true) {
-            var dialog = new ContentDialog() {
+            var dialog = new ArcContentDialog() {
                 Content = content is string message ? new TextBlock() { Text = message, TextWrapping = TextWrapping.Wrap } : content,
                 PrimaryButtonText = primaryBtnText,
                 DefaultButton = isDefaultPrimary ? ContentDialogButton.Primary : ContentDialogButton.Secondary,

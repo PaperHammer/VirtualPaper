@@ -19,7 +19,7 @@ namespace VirtualPaper.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class lang {
@@ -61,15 +61,6 @@ namespace VirtualPaper.Properties {
         }
         
         /// <summary>
-        ///   查找类似 安装 的本地化字符串。
-        /// </summary>
-        public static string AppUpdater_ActionButtonText_Completed {
-            get {
-                return ResourceManager.GetString("AppUpdater_ActionButtonText_Completed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 暂停 的本地化字符串。
         /// </summary>
         public static string AppUpdater_ActionButtonText_Downloading {
@@ -88,7 +79,7 @@ namespace VirtualPaper.Properties {
         }
         
         /// <summary>
-        ///   查找类似 继续下载 的本地化字符串。
+        ///   查找类似 继续 的本地化字符串。
         /// </summary>
         public static string AppUpdater_ActionButtonText_Paused {
             get {
@@ -283,6 +274,114 @@ namespace VirtualPaper.Properties {
         public static string Find_New_Verison {
             get {
                 return ResourceManager.GetString("Find_New_Verison", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 发现组件更新！ 的本地化字符串。
+        /// </summary>
+        public static string Find_New_Version_Restart {
+            get {
+                return ResourceManager.GetString("Find_New_Version_Restart", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 关闭 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Close {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Close", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 更新完成，UI 即将重启 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Completed {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Completed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 更新失败：{0} 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Failed {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 更新信息无效 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_InvalidInfo {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_InvalidInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 更新已就绪，关闭主窗口以触发更新 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_PostponeTip {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_PostponeTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 正在备份当前组件... 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Stage_BackingUp {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Stage_BackingUp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 已完成 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Stage_Completed {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Stage_Completed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 正在下载组件... 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Stage_Downloading {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Stage_Downloading", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 失败 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Stage_Failed {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Stage_Failed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 正在替换组件文件... 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Stage_Replacing {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Stage_Replacing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 正在开始更新... 的本地化字符串。
+        /// </summary>
+        public static string PluginsUpdate_Starting {
+            get {
+                return ResourceManager.GetString("PluginsUpdate_Starting", resourceCulture);
             }
         }
         

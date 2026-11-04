@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
@@ -12,6 +11,7 @@ using VirtualPaper.Shader;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.PanelBus;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Utils.DraftUtils.Interfaces;
 using Workloads.Utils.DraftUtils.Models;
@@ -27,35 +27,32 @@ namespace Workloads.Creation.StaticImg {
         public event EventHandler<IsSavedChangedEventArgs>? IsSavedChanged;
         public string FileName => Session.DesignFileUtil.FileName;
         public string FileNameWithoutEx => Session.DesignFileUtil.FileNameWithoutEx;
+        public string ProjectFilePath => Session.DesignFileUtil.FilePath;
         public string Id => Session.SessionId;
         public override Type ArcType => typeof(MainPage);
         protected override bool IsMultiInstance => true;
-        public InkProjectSession Session { get; private set; }
-
-        public double FrameTimeMs {
-            get { lock (_frameTimeLock) return _frameTimeMs; }
-            private set { lock (_frameTimeLock) _frameTimeMs = value; }
-        }
+        public InkProjectSession Session { get; private set; } = null!;
 
         public bool IsSavedFromInit => Session.DesignFileUtil.IsSaveFromInit;
 
+        public FileType RuntimeFileType { get; private set; }
+
+        public MainPage() {
+            this.InitializeComponent();
+            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
+        }
+
         /// <summary>
-        /// 打开文件
+        /// 由 RuntimeFactory 在构造后调用，传入文件路径和类型完成初始化
         /// </summary>
         /// <param name="filePath">类型为 vpd 或静态图像的文件路径</param>
-        public MainPage(string filePath, FileType fileType) {
+        public void Initialize(string filePath, FileType fileType) {
+            RuntimeFileType = fileType;
             Session = new InkProjectSession(filePath, fileType);
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.ArcPageContext] = this.ArcContext,
                 [NaviPayloadKey.InkProjectSession] = this.Session
             };
-            this.InitializeComponent();
-            ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
-
-            InitEvents();
-        }
-
-        private void InitEvents() {
             Session.IsSavedChanged += Session_IsSavedChanged;
         }
 
@@ -65,65 +62,28 @@ namespace Workloads.Creation.StaticImg {
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
+            try {
+                // ArcContext belongs to this page instance. Do not resolve it again
+                // from the manager: opened projects share the same page type.
+                var loadingCtx = ArcContext.LoadingContext;
+                if (loadingCtx == null) return;
 
-            var ctx = ArcPageContextManager.GetContext(ContextKey);
-            var loadingCtx = ctx?.LoadingContext;
-            if (loadingCtx == null)
-                return;
-
-            await loadingCtx.RunAsync(
-                operation: async token => {
-                    await Task.WhenAll(
-                        ShaderLoader.LoadAllShadersAsync(),
-                        inkCanvas.IsInited.Task
-                    );
-                });
-
-            StartFrameTimeMonitor();
-
-            this.IsEnabled = true;
+                await loadingCtx.RunAsync(
+                    operation: async token => {
+                        await Task.WhenAll(
+                            ShaderLoader.LoadAllShadersAsync(),
+                            inkCanvas.IsInited.Task
+                        );
+                    });
+            }
+            finally {
+                this.IsEnabled = true;
+            }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
-            StopFrameTimeMonitor();
             Session.Dispose();
             ShaderLoader.ClearCache();
-        }
-
-        private void StartFrameTimeMonitor() {
-            if (_frameTimeRunning) return;
-
-            _frameTimeRunning = true;
-            _frameTimeTask = Task.Run(async () => {
-                while (_frameTimeRunning && !_frameTimeCts.IsCancellationRequested) {
-                    try {
-                        var now = DateTime.Now;
-                        if (_lastFrameTime != default) {
-                            FrameTimeMs = (now - _lastFrameTime).TotalMilliseconds;
-                        }
-                        _lastFrameTime = now;
-
-                        // 动态调整采样频率（帧时间越长，采样间隔越大）
-                        int delayMs = FrameTimeMs < 16.6 ? 1 : (int)Math.Min(FrameTimeMs / 2, 33);
-                        await Task.Delay(delayMs, _frameTimeCts.Token);
-                    }
-                    catch (TaskCanceledException) {
-                    }
-                    catch (Exception ex) {
-                        ArcLog.GetLogger<MainPage>().Error($"FrameTime monitor error: {ex.Message}");
-                    }
-                }
-            }, _frameTimeCts.Token);
-        }
-
-        private void StopFrameTimeMonitor() {
-            _frameTimeRunning = false;
-            _frameTimeCts.Cancel();
-
-            try {
-                _frameTimeTask?.Wait(50); // 等待50ms确保线程退出
-            }
-            catch { /* 忽略线程结束时的异常 */ }
         }
 
         #region workSpace events
@@ -211,13 +171,56 @@ namespace Workloads.Creation.StaticImg {
 
             return await inkCanvas.ExportAsync(exportData);
         }
+
+        /// <summary>
+        /// 一键入库：渲染为临时 PNG → 通知库 Panel（WpSettings）导入 → 清理临时文件。
+        /// 与导出交互一致，由 EditPanel 的“文件 → 入库”菜单触发。
+        /// </summary>
+        public async Task<bool> AddToLibraryAsync() {
+            var tempPngPath = string.Empty;
+            try {
+                tempPngPath = Path.Combine(
+                    Path.GetTempPath(),
+                    $"{Session.DesignFileUtil.FileNameWithoutEx}_{Guid.NewGuid():N}.png");
+                var exportData = new ExportDataStaticImg(
+                    Name: Path.GetFileName(tempPngPath),
+                    Path: tempPngPath,
+                    Format: ExportImageFormat.Png
+                );
+
+                var exported = await inkCanvas.ExportAsync(exportData);
+                if (string.IsNullOrEmpty(exported)) return false;
+
+                var (found, success) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
+                    PanelContracts.WpSettings.Id,
+                    PanelContracts.WpSettings.Action_ImportWallpaper,
+                    exported);
+
+                if (!found) {
+                    GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
+                    return false;
+                }
+
+                if (success) {
+                    GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(Constants.I18n.Add_To_Lib_Success));
+                    return true;
+                }
+
+                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
+                return false;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+                return false;
+            }
+            finally {
+                if (!string.IsNullOrEmpty(tempPngPath)) {
+                    try { if (File.Exists(tempPngPath)) File.Delete(tempPngPath); } catch { /* 忽略清理失败 */ }
+                }
+            }
+        }
         #endregion
 
-        private volatile bool _frameTimeRunning = false;
-        private Task? _frameTimeTask;
-        private readonly object _frameTimeLock = new();
-        private double _frameTimeMs;
-        private DateTime _lastFrameTime;
-        private readonly CancellationTokenSource _frameTimeCts = new();
     }
 }

@@ -12,7 +12,7 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
-    <Expander Style="{StaticResource RightExpanderStyle}">
+    <Expander AutomationProperties.AutomationId="StaticEditor.Canvas" Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
             <TextBlock Text="{markup:I18n Key=SIG_CanvasSet_Header}"/>
         </Expander.Header>
@@ -33,6 +33,7 @@
                             FontSize="12"
                             VerticalAlignment="Center"/>
                         <TextBox x:Name="widthTextBox"
+                            AutomationProperties.AutomationId="StaticEditor.Width"
                             InputScope="Digits"
                             LostFocus="OnSizeBoxLostFocus"
                             KeyDown="OnSizeBoxKeyDown"
@@ -46,6 +47,7 @@
                             FontSize="12"
                             VerticalAlignment="Center"/>
                         <TextBox x:Name="heightTextBox"
+                            AutomationProperties.AutomationId="StaticEditor.Height"
                             InputScope="Digits"
                             LostFocus="OnSizeBoxLostFocus"
                             KeyDown="OnSizeBoxKeyDown"
@@ -73,6 +75,7 @@
 
                     <StackPanel Orientation="Horizontal" Spacing="4">
                         <Button x:Name="rotateLeft"
+                            AutomationProperties.AutomationId="StaticEditor.RotateLeft"
                             Height="45"
                             Width="45"
                             Command="{x:Bind CanvasOperationCommand}"

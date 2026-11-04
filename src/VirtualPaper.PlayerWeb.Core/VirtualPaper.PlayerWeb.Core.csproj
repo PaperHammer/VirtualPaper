@@ -3,7 +3,7 @@
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
 		<RootNamespace>VirtualPaper.PlayerWeb.Core</RootNamespace>
-		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<WinUISDKReferences>false</WinUISDKReferences>
 		<UseWinUI>true</UseWinUI>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<Nullable>enable</Nullable>
@@ -28,6 +28,9 @@
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
 	</ItemGroup>
 	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+	<ItemGroup>
 	  <ProjectReference Include="..\VirtualPaper.Grpc.Client\VirtualPaper.Grpc.Client.csproj" />
 	  <ProjectReference Include="..\VirtualPaper.UIComponent\VirtualPaper.UIComponent.csproj" />
 	</ItemGroup>
@@ -45,6 +48,12 @@
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="PLAYER_Web\js\base.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\js\atmosphere.js">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="PLAYER_Web\js\effects\**\*.js">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="PLAYER_Web\js\default\run.js">

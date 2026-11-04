@@ -17,6 +17,13 @@ namespace VirtualPaper.Utils.Services {
         public void Launch(ProcessStartInfo startInfo) {
             ObjectDisposedException.ThrowIf(_isDisposed, this);
 
+            if (_process != null) {
+                if (!_process.HasExited) throw new InvalidOperationException("A process is already running.");
+                _process.Exited -= OnExited;
+                _process.OutputDataReceived -= OnOutputDataReceived;
+                _process.Dispose();
+            }
+
             _process = new Process {
                 EnableRaisingEvents = true,
                 StartInfo = startInfo,

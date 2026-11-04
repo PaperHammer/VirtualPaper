@@ -23,14 +23,15 @@
                     SelectionChanged="SelectorBar_SelectionChanged"
                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                     HorizontalAlignment="Stretch">
-                    <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem1_StyleTranfer}" Tag="StyleTranferView" IsSelected="True"/>
-                    <SelectorBarItem Text="{markup:I18n Key=Intelligent_SelBarItem2_SuperResolution}" Tag="SuperResolutionView"/>
+                    <SelectorBarItem AutomationProperties.AutomationId="Intelligent.Tab.StyleTransfer" Text="{markup:I18n Key=Intelligent_SelBarItem1_StyleTranfer}" Tag="StyleTranferView" IsSelected="True"/>
+                    <SelectorBarItem AutomationProperties.AutomationId="Intelligent.Tab.SuperResolution" Text="{markup:I18n Key=Intelligent_SelBarItem2_SuperResolution}" Tag="SuperResolutionView"/>
                 </SelectorBar>
 
                 <Frame x:Name="ContentFrame" Grid.Row="1"/>
             </Grid>
 
             <input:ArcButton x:Name="addTaskButton"
+                AutomationProperties.AutomationId="Intelligent.AddTask"
                 Width="56"
                 Height="56"
                 HorizontalAlignment="Right"

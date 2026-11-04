@@ -2,19 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Grpc.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Events;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
@@ -34,8 +37,59 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     ver += "b";
                 else if (Constants.ApplicationType.IsMSIX)
                     ver += $" {LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_MsStore)}";
+
+                var appBuild = LoadAppBuildInfo()?.AppBuildNumber;
+                if (!string.IsNullOrEmpty(appBuild))
+                    ver += $" (Build {appBuild})";
+
                 return ver;
             }
+        }
+
+        public List<string> PluginVersionTexts {
+            get {
+                var plugins = LoadAppBuildInfo()?.Plugins;
+                if (plugins == null) return [];
+                return plugins
+                    .OrderBy(kv => Enum.TryParse<PluginName>(kv.Key, true, out var p) ? (int)p : int.MaxValue)
+                    .Select(kv => $"{kv.Key}: {kv.Value}")
+                    .ToList();
+            }
+        }
+
+        public bool HasPluginVersions => PluginVersionTexts.Count > 0;
+
+        public Microsoft.UI.Xaml.Visibility PluginVersionsVisibility =>
+            HasPluginVersions ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+
+        private AppBuildInfo? LoadAppBuildInfo() {
+            if (_buildInfo != null) return _buildInfo;
+
+            // 从 AppData 目录读取 app_comp_manifest.json
+            var path = Path.Combine(Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
+            if (!File.Exists(path)) {
+                _buildInfo = null;
+                return null;
+            }
+
+            try {
+                var json = File.ReadAllText(path);
+                var manifest = JsonSerializer.Deserialize(json, UpdateManifestContext.Default.AppCompManifest);
+                if (manifest?.Plugins == null) {
+                    _buildInfo = null;
+                    return null;
+                }
+
+                _buildInfo = new AppBuildInfo { AppBuildNumber = manifest.AppBuildNumber };
+                foreach (var (pluginName, buildNumber) in manifest.Plugins) {
+                    _buildInfo.Plugins[pluginName] = buildNumber;
+                }
+            }
+            catch {
+                _buildInfo = null;
+            }
+
+            return _buildInfo;
         }
 
         public List<string> SystemBackdrops { get; set; } = [];
@@ -71,6 +125,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _isUpdateBtnEnable = value; OnPropertyChanged(); }
         }
 
+        private bool _isInstallBtnEnable = true;
+        public bool IsInstallBtnEnable {
+            get => _isInstallBtnEnable;
+            set { _isInstallBtnEnable = value; OnPropertyChanged(); }
+        }
+
         private bool _isUpdateRingActive = false;
         public bool IsUpdateRingActive {
             get => _isUpdateRingActive;
@@ -100,6 +160,20 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 _userSettingsClient.Settings.IsAutoStart = value;
                 UpdateSettingsConfigFile();
                 OnPropertyChanged();
+            }
+        }
+
+        public string NavigationAnimationsStatus => LanguageUtil.GetI18n(
+            NavigationAnimationsEnabled ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
+
+        public bool NavigationAnimationsEnabled {
+            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
+            set {
+                if (_userSettingsClient.Settings.NavigationAnimationsEnabled == value) return;
+                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(NavigationAnimationsStatus));
             }
         }
 
@@ -154,6 +228,13 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             set { _isWallpaperDirectoryChangeEnable = value; OnPropertyChanged(); }
         }
 
+        private string? _text_UpdateReady;
+        public string? Text_UpdateReady {
+            get { return _text_UpdateReady; }
+            set { _text_UpdateReady = value; OnPropertyChanged(); }
+        }
+
+        public ICommand? InstallBtnComand { get; private set; }
         public ICommand? ChangeFileStorageCommand { get; private set; }
         public ICommand? OpenFileStorageCommand { get; private set; }
         public ICommand? CheckUpdateCommand { get; private set; }
@@ -162,10 +243,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public GeneralSettingViewModel(
             IAppUpdaterClient appUpdater,
             IUserSettingsClient userSettingsClient,
-            IWallpaperControlClient wallpaperControlClient) {
+            IWallpaperControlClient wallpaperControlClient,
+            ICommandsClient commandsClient) {
             _appUpdater = appUpdater;
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
+            _commandsClient = commandsClient;
 
             InitText();
             InitCollections();
@@ -186,6 +269,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             StartDownloadComand = new RelayCommand(async () => {
                 await StartDownloadAsync();
             });
+            InstallBtnComand = new RelayCommand(async () => {
+                await RequstInstallAsync();
+            });
         }
 
         private void InitContent() {
@@ -195,6 +281,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
             IsAutoStart = _userSettingsClient.Settings.IsAutoStart;
             WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
+
+            LoadAppBuildInfo();
         }
 
         private void InitText() {
@@ -220,14 +308,15 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private async Task CheckUpdateAsync() {
+            IsInstallBtnEnable = false;
             IsUpdateBtnEnable = false;
             IsUpdateRingActive = true;
             InfoBarVisibilityRestore();
 
             await _appUpdater.CheckUpdateAsync();
 
-            IsUpdateBtnEnable = true;
             IsUpdateRingActive = false;
+            IsUpdateBtnEnable = true;
         }
 
         private void InfoBarVisibilityRestore() {
@@ -236,22 +325,32 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
         private void AppUpdater_UpdateChecked(object? sender, AppUpdaterEventArgs e) {
             CrossThreadInvoker.InvokeOnUIThread(() => {
-                MenuUpdate(e.UpdateStatus, e.UpdateDate, e.UpdateVersion);
+                MenuUpdate(e.UpdateStatus, e.Release);
             });
         }
 
-        private void MenuUpdate(AppUpdateStatus status, DateTime date, Version version) {
-            Version = $"v{version}";
-//#if DEBUG
-//            CurrentVersionState = VersionState.FindNew;
-//#else
+        private void MenuUpdate(AppUpdateStatus status, ReleaseInfo? release) {
+            //CurrentVersionState = VersionState.FindNew;
+
             switch (status) {
                 case AppUpdateStatus.Uptodate:
                     CurrentVersionState = VersionState.UptoNewest;
                     break;
                 case AppUpdateStatus.Available:
-                    Version = $"v{version}";
+                    Version = release?.IsPluginsUpdate == true
+                        ? $"v{release?.Version} Build ({release?.AppBuild})"
+                        : $"v{release?.Version}";
                     CurrentVersionState = VersionState.FindNew;
+                    break;
+                case AppUpdateStatus.InstallerReady:
+                    Text_UpdateReady = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_InstallerReady);
+                    CurrentVersionState = VersionState.InstallReady;
+                    IsInstallBtnEnable = true;
+                    break;
+                case AppUpdateStatus.PluginsReady:
+                    Text_UpdateReady = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_PluginsReady);
+                    CurrentVersionState = VersionState.InstallReady;
+                    IsInstallBtnEnable = true;
                     break;
                 case AppUpdateStatus.Invalid or AppUpdateStatus.Error:
                     CurrentVersionState = VersionState.UpdateErr;
@@ -259,9 +358,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 default:
                     break;
             }
-//#endif
             Version_LastCheckDate = LanguageUtil.GetI18n(Constants.I18n.Settings_General_Version_LastCheckDate);
-            Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $" {date}";
+            Version_LastCheckDate += status == AppUpdateStatus.Notchecked ? "" : $" {release?.CheckedTime}";
         }
 
         private async Task StartDownloadAsync() {
@@ -270,6 +368,10 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             await _appUpdater.StartDownloadAsync();
 
             IsUpdateBtnEnable = true;
+        }
+
+        private async Task RequstInstallAsync() {
+            await _commandsClient.RequestInstallAsync();
         }
 
         private async void WallpaperDirectoryChange() {
@@ -335,7 +437,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<GeneralSettingViewModel>().Error(ex.Message);
                 if (destFolderPath != string.Empty) {
-                    FileUtil.EmptyDirectory(destFolderPath);
+                    FileUtil.RemoveDirectory(destFolderPath);
                 }
             }
             finally {
@@ -376,9 +478,11 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     WpLibData libData = new();
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            libData.BasicData = await JsonSaver.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
+                            var basicData = await JsonSaver.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
+                            if (basicData == null) continue;
 
-                            if (libData.BasicData.IsAvailable()) {
+                            libData.BasicData = basicData;
+                            if (libData.BasicData != null && libData.BasicData.IsAvailable()) {
                                 libData.Idx = idx++;
                                 yield return libData;
                                 break;
@@ -414,6 +518,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private readonly IAppUpdaterClient _appUpdater;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;
+        private readonly ICommandsClient _commandsClient;
+        private AppBuildInfo? _buildInfo;
     }
 
     public enum VersionState {
@@ -424,6 +530,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         DownloadFailed,    // 下载失败
         VerifyFailed,      // 校验失败
         Downloaded,        // 下载完成
-        UpdateErr          // 网络或更新错误
+        UpdateErr,          // 网络或更新错误
+        InstallReady
     }
 }

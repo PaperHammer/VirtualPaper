@@ -2,6 +2,7 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using VirtualPaper.Common;
+using VirtualPaper.lang;
 using Windows.ApplicationModel;
 using MessageBox = System.Windows.MessageBox;
 
@@ -53,9 +54,8 @@ namespace VirtualPaper.Utils {
                 case StartupTaskState.DisabledByUser:
                     // Task is disabled and user must enable it manually.
                     if (setStartup) {
-                        await Task.Run(() => MessageBox.Show("You have disabled this app's ability to run " +
-                            "as soon as you sign in, but if you change your mind, " +
-                            "you can enable this in the GetStart tab in Task Manager.",
+                        await Task.Run(() => MessageBox.Show(
+                            LanguageManager.Instance["Startup_AutoStartDisabledByUser"],
                             "Virtual Paper",
                             MessageBoxButton.OK));
                     }

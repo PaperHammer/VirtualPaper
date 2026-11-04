@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,9 +11,12 @@ using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Common.Utils.Pipe;
+using VirtualPaper.Common.Utils.Pipe.Interfaces;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
-using VirtualPaper.DraftPanel.ViewModels;
+using VirtualPaper.EditPanel.Services;
+using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
@@ -22,6 +26,7 @@ using VirtualPaper.ML.StyleTransfer;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.UIComponent.Converters;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.Adapter;
@@ -31,6 +36,11 @@ using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using Windows.ApplicationModel.Core;
 using WinUIEx;
+using Workloads.Entry;
+using Workloads.Entry.FileLoaders;
+using Workloads.Entry.FileLoaders.Specific;
+using Workloads.Entry.Interfaces;
+using Workloads.Creation.WebBackdrop.ViewModels;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -45,6 +55,7 @@ namespace VirtualPaper.UI {
         /// executed, and as such is the logical equivalent of main() or WinMain().
         /// </summary>
         public App() {
+            TestProcessEnvironment.ConfigureLogging("UI");
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例
@@ -102,14 +113,16 @@ namespace VirtualPaper.UI {
                 .AddSingleton<LibraryContentsViewModel>()
                 .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
-                .AddTransient<DraftPanel.ViewModels.ConfigSpaceViewModel>()
+                .AddTransient<EditPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()
-                .AddTransient<DraftConfigViewModel>()
+                .AddTransient<EditConfigViewModel>()
                 .AddTransient<WorkSpaceViewModel>()
                 .AddTransient<IntelligentViewModel>()
                 .AddTransient<StyleTransferAddTaskViewModel>()
                 .AddTransient<SuperResolutionAddTaskViewModel>()
+                .AddTransient<WebFileTreeViewModel>()
+                .AddTransient<WebPropertyPanelViewModel>()
 
                 .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
@@ -118,15 +131,26 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
                 .AddSingleton<ICommandsClient, CommandsClient>()
                 .AddSingleton<IScrCommandsClient, ScrCommandsClient>()
+                .AddSingleton<ITwoWayClient, TwoWayClient>()
                 .AddSingleton<IGlobalDialogService, GlobalDialogService>()
+                .AddSingleton<IWorkspaceSaveCoordinator, WorkspaceSaveCoordinator>()
+                .AddSingleton<IProjectFileLoader, ImageProjectFileLoader>()
+                .AddSingleton<IProjectFileLoader, DesignProjectFileLoader>()
+                .AddSingleton<IProjectFileLoader, WebProjectFileLoader>()
+                .AddSingleton<ProjectFileLoaderRegistry>()
                 .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
+                .AddSingleton<IPipeServerFactory, NamedPipeServerFactory>()
 
-                .AddSingleton<IDepthEstimate, MiDaS>()
+                .AddTransient<IDepthEstimate, DepthAnythingV2>()
                 .AddSingleton<IStyleTransfer, AdaIn>()
                 .AddSingleton<ISuperResolution, Realesrgan>()
 
-                .BuildServiceProvider();
+                .AddTransient<Workloads.Creation.StaticImg.MainPage>()
+                .AddTransient<Workloads.Creation.WebBackdrop.MainPage>()
+                .AddTransient<IRuntimeFactory, RuntimeFactory>()
+                
+                .BuildServiceProvider();            
 
             return provider;
         }
@@ -160,6 +184,36 @@ namespace VirtualPaper.UI {
 
             var m_window = AppServiceLocator.Services.GetRequiredService<MainWindow>();
             m_window.Show();
+
+            // Check for update failed notice
+            CheckUpdateFailedNotice();
+        }
+
+        private static void CheckUpdateFailedNotice() {
+            try {
+                var noticePath = Constants.CommonPaths.UpdateFailedNoticePath;
+                if (!File.Exists(noticePath)) return;
+
+                var json = File.ReadAllText(noticePath);
+                if (string.IsNullOrWhiteSpace(json)) {
+                    File.Delete(noticePath);
+                    return;
+                }
+
+                var notice = System.Text.Json.JsonSerializer.Deserialize(json, UpdateFailedNoticeContext.Default.UpdateFailedNotice);
+                File.Delete(noticePath);
+
+                if (notice != null && !string.IsNullOrEmpty(notice.MessageKey)) {
+                    VirtualPaper.UIComponent.Utils.GlobalMessageUtil.ShowError(
+                        notice.MessageKey,
+                        isNeedLocalizer: true,
+                        key: "UpdateFailedNotice",
+                        extraMsg: string.IsNullOrEmpty(notice.ExceptionMessage) ? null : notice.ExceptionMessage);
+                }
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<App>().Warn($"Failed to read update failed notice: {ex.Message}");
+            }
         }
 
         private static void LogUnhandledException(Exception exception) => ArcLog.GetLogger<App>().Error(exception);
@@ -187,7 +241,10 @@ namespace VirtualPaper.UI {
         }
 
         public static void ShutDown() {
-            ((ServiceProvider)AppServiceLocator.Services)?.Dispose();
+            // The last window can end the WinUI application lifetime before an
+            // async Closed handler resumes. TwoWayClient's synchronous Dispose
+            // drains its stream without capturing the UI synchronization context.
+            ((ServiceProvider)AppServiceLocator.Services).Dispose();
             ArcLog.GetLogger<App>().Info("UI was closed");
             Application.Current.Exit();
         }

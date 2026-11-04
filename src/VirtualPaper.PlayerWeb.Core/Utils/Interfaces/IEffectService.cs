@@ -1,4 +1,4 @@
-using VirtualPaper.Common.Events.EffectValue.Base;
+using VirtualPaper.Common.Events;
 
 namespace VirtualPaper.PlayerWeb.Core.Utils.Interfaces {
     public interface IEffectService {

@@ -1,5 +1,7 @@
 using Moq;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Pipe.Interfaces;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
@@ -15,6 +17,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         private Mock<IScrCommandsClient> _scrCommandsClient = null!;
         private Mock<ISettings> _settings = null!;
         private ScreenSaverViewModel _vm = null!;
+        private Mock<IPipeServerFactory> _pipeServerFactory = null!;
+        private Mock<IStoragePicker> _storagePicker = null!;
 
         [TestInitialize]
         public void Setup() {
@@ -22,6 +26,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _scrCommandsClient = new Mock<IScrCommandsClient>();
             _settings = new Mock<ISettings>();
+            _pipeServerFactory = new Mock<IPipeServerFactory>();
+            _storagePicker = new Mock<IStoragePicker>();
 
             _settings.SetupProperty(s => s.IsScreenSaverOn, false);
             _settings.SetupProperty(s => s.IsRunningLock, false);
@@ -33,7 +39,9 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
             _vm = new ScreenSaverViewModel(
                 _userSettingsClient.Object,
-                _scrCommandsClient.Object);
+                _scrCommandsClient.Object,
+                _pipeServerFactory.Object,
+                _storagePicker.Object);
         }
 
         [TestCleanup]
@@ -48,6 +56,21 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm.IsScreenSaverOn = true;
 
             _scrCommandsClient.Verify(s => s.Start(), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task IsScreenSaverOn_WaitsForPersistedSettingsBeforeStartingCoreTimer() {
+            var saved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _userSettingsClient.Setup(client => client.SaveAsync<ISettings>()).Returns(saved.Task);
+            _scrCommandsClient.Setup(client => client.Start()).Callback(() => started.TrySetResult());
+
+            _vm.IsScreenSaverOn = true;
+
+            _scrCommandsClient.Verify(client => client.Start(), Times.Never);
+            saved.SetResult();
+            await started.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            _scrCommandsClient.Verify(client => client.Start(), Times.Once);
         }
 
         [TestMethod]
@@ -68,6 +91,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm.IsScreenSaverOn = false; // 与 Settings 相同
 
             _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Never);
+            _scrCommandsClient.Verify(client => client.Start(), Times.Never);
+            _scrCommandsClient.Verify(client => client.Stop(), Times.Never);
         }
 
         [TestMethod]
@@ -182,6 +207,19 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         }
 
         // ── AddToWhiteListScr ─────────────────────────────────────────
+
+        [TestMethod]
+        public void AddToWhiteListCommand_CancelledPickerDoesNotSaveOrAddAnApp() {
+            _storagePicker.Setup(picker => picker.PickFilesAsync(It.IsAny<nint>(), It.IsAny<string[]>(), false))
+                .ReturnsAsync(Array.Empty<Windows.Storage.IStorageItem>());
+
+            _vm.AddToWhiteListCommand!.Execute(null);
+
+            Assert.IsEmpty(_vm.ProcsFiltered);
+            Assert.IsEmpty(_settings.Object.WhiteListScr);
+            _scrCommandsClient.Verify(client => client.AddToWhiteList(It.IsAny<string>()), Times.Never);
+            _userSettingsClient.Verify(client => client.Save<ISettings>(), Times.Never);
+        }
 
         [TestMethod]
         public void AddToWhiteListScr_AddsToProcsFiltered() {
@@ -303,6 +341,40 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         // ── StopListenForClients ──────────────────────────────────────
 
         [TestMethod]
+        public async Task ListenForClients_AfterStop_RecreatesPipeWithoutOverlappingPreviousServer() {
+            int active = 0, maximum = 0, created = 0;
+            var first = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            var second = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _pipeServerFactory.Setup(factory => factory.Create(It.IsAny<string>(), null)).Returns(() => {
+                var server = new Mock<IPipeServer>();
+                server.Setup(pipe => pipe.WaitForConnectionAsync(It.IsAny<CancellationToken>()))
+                    .Returns<CancellationToken>(async token => {
+                        int count = Interlocked.Increment(ref active);
+                        maximum = Math.Max(maximum, count);
+                        if (Interlocked.Increment(ref created) == 1) first.TrySetResult();
+                        else second.TrySetResult();
+                        await Task.Delay(Timeout.Infinite, token);
+                    });
+                server.Setup(pipe => pipe.Dispose()).Callback(() => Interlocked.Decrement(ref active));
+                return server.Object;
+            });
+            Task old = _vm.ListenForClients();
+            await first.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.AreSame(old, _vm.ListenForClients(), "Duplicate load must share the current listener");
+            _vm.StopListenForClients();
+            Task restarted = _vm.ListenForClients();
+            await second.Task.WaitAsync(TimeSpan.FromSeconds(3));
+            _vm.StopListenForClients();
+            await Task.WhenAll(old, restarted).WaitAsync(TimeSpan.FromSeconds(3));
+            Assert.AreEqual(2, created);
+            Assert.AreEqual(1, maximum, "Old pipe must release its name before the next listener starts");
+            Assert.AreEqual(0, active);
+            _vm.Dispose();
+            await _vm.ListenForClients();
+            Assert.AreEqual(2, created, "Disposed view model must not create another pipe");
+        }
+
+        [TestMethod]
         public void StopListenForClients_WhenCalled_DoesNotThrow() {
             // 验证取消操作本身不抛出
             _vm.StopListenForClients();
@@ -330,28 +402,5 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             Assert.HasCount(2, _vm.Effects);
         }
 
-        //// ── 辅助方法 ──────────────────────────────────────────────────
-
-        ///// <summary>通过反射调用 private async void AddToWhiteListScr</summary>
-        //private async Task InvokeAddToWhiteListScrAsync(ProcInfo proc) {
-        //    var method = typeof(ScreenSaverViewModel)
-        //        .GetMethod("AddToWhiteListScr",
-        //            System.Reflection.BindingFlags.NonPublic |
-        //            System.Reflection.BindingFlags.Instance);
-        //    Assert.IsNotNull(method, "AddToWhiteListScr 方法未找到");
-        //    method.Invoke(_vm, new object[] { proc });
-        //    await Task.Delay(50); // async void，等待 Task.Run 完成
-        //}
-
-        ///// <summary>通过反射调用 internal async void RemoveFromWhiteScr</summary>
-        //private async Task InvokeRemoveFromWhiteScrAsync(ProcInfo proc) {
-        //    var method = typeof(ScreenSaverViewModel)
-        //        .GetMethod("RemoveFromWhiteScr",
-        //            System.Reflection.BindingFlags.NonPublic |
-        //            System.Reflection.BindingFlags.Instance);
-        //    Assert.IsNotNull(method, "RemoveFromWhiteScr 方法未找到");
-        //    method.Invoke(_vm, new object[] { proc });
-        //    await Task.Delay(50); // async void，等待 Task.Run 完成
-        //}
     }
 }

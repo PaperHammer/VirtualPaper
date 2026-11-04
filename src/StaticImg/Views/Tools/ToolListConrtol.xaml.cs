@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Automation;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.StaticImg.Models;
 
 
@@ -32,6 +34,17 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
 
         private void ArcListViewToolItem_Loaded(object sender, RoutedEventArgs e) {
             ToolListLoaded?.Invoke(sender, e);
+        }
+
+        private void ToolItem_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args) {
+            if (args.InRecycleQueue) {
+                args.ItemContainer.ClearValue(AutomationProperties.AutomationIdProperty);
+                args.ItemContainer.ClearValue(AutomationProperties.NameProperty);
+            }
+            else if (args.Item is ToolItem tool) {
+                AutomationProperties.SetAutomationId(args.ItemContainer, "StaticEditor.Tool." + tool.TypeString);
+                AutomationProperties.SetName(args.ItemContainer, LanguageUtil.GetI18n(tool.ToolName));
+            }
         }
     }
 }

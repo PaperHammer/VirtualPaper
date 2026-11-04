@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monaco Editor</title>
+    <style>
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; background: #1e1e1e;
+        }
+        #container { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+
+    <script src="monaco-editor/min/vs/loader.js"></script>
+    <script>
+        let editor;
+
+        require.config({
+            paths: { vs: 'monaco-editor/min/vs' }
+        });
+
+        require([
+            'vs/editor/editor.main',
+            'vs/language/html/monaco.contribution',
+            'vs/language/css/monaco.contribution',
+            'vs/language/typescript/monaco.contribution',
+            'vs/language/json/monaco.contribution',
+            'vs/basic-languages/monaco.contribution'
+        ], function () {
+            // Configure TS/JS with full intellisense
+            monaco.languages.typescript.javascriptDefaults.setCompilerOptions({
+                target: monaco.languages.typescript.ScriptTarget.ESNext,
+                allowNonTsExtensions: true,
+                allowJs: true,
+                checkJs: true,
+                lib: ['dom', 'esnext'],
+                moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+                jsx: monaco.languages.typescript.JsxEmit.React
+            });
+            monaco.languages.typescript.javascriptDefaults.setDiagnosticsOptions({
+                noSemanticValidation: false,
+                noSyntaxValidation: false,
+                noSuggestionDiagnostics: false
+            });
+            monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+                target: monaco.languages.typescript.ScriptTarget.ESNext,
+                allowNonTsExtensions: true,
+                allowJs: true,
+                checkJs: true,
+                moduleResolution: monaco.languages.typescript.ModuleResolutionKind.NodeJs,
+                jsx: monaco.languages.typescript.JsxEmit.React,
+                strict: true,
+                strictNullChecks: true
+            });
+
+            // CSS diagnostics
+            monaco.languages.css.cssDefaults.setDiagnosticsOptions({ validate: true });
+            monaco.languages.css.lessDefaults.setDiagnosticsOptions({ validate: true });
+            monaco.languages.css.scssDefaults.setDiagnosticsOptions({ validate: true });
+
+            // JSON diagnostics（.json / .vpw 项目清单）：语法高亮 + 语法检查
+            monaco.languages.json.jsonDefaults.setDiagnosticsOptions({ validate: true });
+
+            editor = monaco.editor.create(document.getElementById('container'), {
+                value: '',
+                language: 'plaintext',
+                theme: window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'vs' : 'vs-dark',
+                automaticLayout: true,
+
+                minimap: { enabled: true, scale: 1, showSlider: 'mouseover' },
+                fontSize: 14,
+                lineNumbers: 'on',
+                scrollBeyondLastLine: false,
+                wordWrap: 'on',
+                tabSize: 2,
+                insertSpaces: true,
+                detectIndentation: true,
+                snippetSuggestions: 'top',
+
+                // IntelliSense
+                quickSuggestions: { other: true, comments: true, strings: true },
+                suggestOnTriggerCharacters: true,
+                acceptSuggestionOnCommitCharacter: true,
+                acceptSuggestionOnEnter: 'on',
+                tabCompletion: 'on',
+                wordBasedSuggestions: 'currentDocument',
+                parameterHints: { enabled: true, cycle: true },
+                hover: { enabled: true, delay: 300 },
+                occurrencesHighlight: 'singleFile',
+
+                // Formatting
+                formatOnPaste: true,
+                formatOnType: true,
+
+                // Brackets
+                matchBrackets: 'always',
+                autoClosingBrackets: 'always',
+                autoClosingQuotes: 'always',
+                autoClosingDelete: 'always',
+                autoSurround: 'languageDefined',
+                bracketPairColorization: { enabled: true },
+                guides: { bracketPairs: true, indentation: true },
+                colorDecorators: true,
+
+                // General
+                autoIndent: 'full',
+                folding: true,
+                foldingHighlight: true,
+                showFoldingControls: 'always',
+                links: true,
+                cursorBlinking: 'smooth',
+                cursorSmoothCaretAnimation: 'on',
+                smoothScrolling: true,
+                stickyScroll: { enabled: true },
+                renderWhitespace: 'selection',
+                semanticHighlighting: { enabled: true },
+                copyWithSyntaxHighlighting: true,
+                multiCursorModifier: 'alt',
+            });
+
+            // Initialize saved version id right after editor creation.
+            // Without this, postEditorState() would report isSaved=false until the
+            // first setValue() call, which can incorrectly mark non-text files
+            // (e.g. the first opened image) as unsaved.
+            var initialModel = editor.getModel();
+            window.savedVersionByUri = new Map();
+            window.encodingByUri = new Map();
+            if (initialModel) {
+                window.savedVersionByUri.set(initialModel.uri.toString(), initialModel.getAlternativeVersionId());
+            }
+
+            function getModelKey(model) {
+                return model && model.uri ? model.uri.toString() : '';
+            }
+
+            function getLineEndingText(model) {
+                return model && model.getEOL && model.getEOL() === '\r\n' ? 'CRLF' : 'LF';
+            }
+
+            function getIndentText(model) {
+                if (!model) return 'Spaces: 2';
+
+                var options = model.getOptions();
+                return options.insertSpaces ? 'Spaces: ' + options.tabSize : 'Tabs: ' + options.tabSize;
+            }
+
+            function postEditorState() {
+                if (!window.chrome || !window.chrome.webview) {
+                    return;
+                }
+
+                var model = editor.getModel();
+                if (!model) {
+                    return;
+                }
+
+                var alternativeVersionId = model.getAlternativeVersionId();
+                var modelKey = getModelKey(model);
+                var savedVersionId = window.savedVersionByUri.get(modelKey);
+                // 尚未通过 setValue/markSaved 初始化 savedAlternativeVersionId 时视为已保存，
+                // 避免把“模型初始状态/上一个文件的状态”误报为当前文件未保存。
+                var isSaved = savedVersionId === undefined || alternativeVersionId === savedVersionId;
+                window.chrome.webview.postMessage(JSON.stringify({
+                    type: 'editorStateChanged',
+                    filePath: getCurrentFilePath(),
+                    isSaved: isSaved,
+                    canUndo: model.canUndo(),
+                    canRedo: model.canRedo(),
+                    lineEnding: getLineEndingText(model),
+                    encoding: window.encodingByUri.get(modelKey) || 'UTF-8',
+                    indent: getIndentText(model)
+                }));
+            }
+
+            var contentChangeTimer = null;
+            editor.onDidChangeModelContent(function () {
+                // 程序化 setValue（打开/切换文件）引起的变更不是用户编辑：跳过状态与变更通知。
+                if (window.isSettingValue) {
+                    return;
+                }
+
+                // 立即上报状态：isSaved 基于版本号对比，undo/redo 也能正确反映保存状态
+                postEditorState();
+
+                if (contentChangeTimer) clearTimeout(contentChangeTimer);
+                contentChangeTimer = setTimeout(function () {
+                    contentChangeTimer = null;
+                    if (window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage(JSON.stringify({ type: 'contentChange' }));
+                    }
+                }, 150);
+            });
+
+            var lastCursorPositionPayload = null;
+            function postCursorPosition(position) {
+                if (!window.chrome || !window.chrome.webview) {
+                    return;
+                }
+
+                var model = editor.getModel();
+                var currentPosition = position || editor.getPosition();
+                if (!model || !currentPosition) {
+                    return;
+                }
+
+                var selection = editor.getSelection();
+                var selectedCharacterCount = selection ? model.getValueInRange(selection).length : 0;
+                var payload = {
+                    type: 'cursorPositionChange',
+                    filePath: getCurrentFilePath(),
+                    lineNumber: currentPosition.lineNumber,
+                    column: currentPosition.column,
+                    selectedCharacterCount: selectedCharacterCount
+                };
+                var serialized = JSON.stringify(payload);
+                if (serialized === lastCursorPositionPayload) return;
+                lastCursorPositionPayload = serialized;
+                window.chrome.webview.postMessage(serialized);
+            }
+
+            editor.onDidChangeCursorPosition(function (e) {
+                postCursorPosition(e.position);
+            });
+
+            editor.onDidChangeCursorSelection(function (e) {
+                postCursorPosition(e.position || editor.getPosition());
+            });
+
+            function getCurrentFilePath() {
+                var model = editor.getModel();
+                if (!model || !model.uri || model.uri.scheme !== 'file') return null;
+                var path = model.uri.fsPath;
+                // Normalize Windows path (remove leading '/')
+                if (path[0] === '/' && path[2] === ':') {
+                    path = path.substring(1);
+                }
+                return path;
+            }
+
+            function postCurrentMarkers() {
+                var model = editor.getModel();
+                if (!model || !window.chrome || !window.chrome.webview) {
+                    return;
+                }
+
+                window.chrome.webview.postMessage(JSON.stringify({
+                    type: 'markersChanged',
+                    filePath: getCurrentFilePath(),
+                    markers: monaco.editor.getModelMarkers({ resource: model.uri }).map(function (marker) {
+                        return {
+                            severity: marker.severity,
+                            message: marker.message,
+                            startLineNumber: marker.startLineNumber,
+                            startColumn: marker.startColumn,
+                            endLineNumber: marker.endLineNumber,
+                            endColumn: marker.endColumn,
+                            source: marker.source || '',
+                            code: marker.code ? String(marker.code.value || marker.code) : ''
+                        };
+                    })
+                }));
+            }
+
+            monaco.editor.onDidChangeMarkers(function (uris) {
+                var model = editor.getModel();
+                if (!model || !uris.some(function (uri) { return uri.toString() === model.uri.toString(); })) {
+                    return;
+                }
+
+                postCurrentMarkers();
+            });
+
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyB, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleLeftSideBar' }));
+                }
+            });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'save' }));
+                }
+            });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyS, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'saveAll' }));
+                }
+            });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyJ, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleBottomPanel' }));
+                }
+            });
+            editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyMod.Alt | monaco.KeyCode.KeyB, function () {
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'toggleRightSideBar' }));
+                }
+            });
+
+            // ---- Block F1-F12 and browser shortcuts ----
+            window.addEventListener('keydown', function (e) {
+                var key = e.keyCode;
+                var ctrl = e.ctrlKey;
+                var shift = e.shiftKey;
+                var alt = e.altKey;
+
+                // F3-F11 (keep F1=Help, F2=Rename)
+                if (key >= 114 && key <= 122) { e.preventDefault(); e.stopPropagation(); return; }
+                // F12: block browser DevTools but let Monaco handle Go to Definition
+                if (key === 123) { e.preventDefault(); return; }
+                // F5 / Ctrl+R (Refresh)
+                if (key === 116 || (ctrl && key === 82)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+Shift+I/J (DevTools)
+                if (ctrl && shift && (key === 73 || key === 74)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+U (View Source)
+                if (ctrl && key === 85) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+N (New Window), Ctrl+T (New Tab), Ctrl+W (Close Tab)
+                if (ctrl && (key === 78 || key === 84 || key === 87)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+Shift+N (Incognito), Ctrl+Shift+T (Reopen Tab)
+                if (ctrl && shift && (key === 78 || key === 84)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+H (History / Replace — let Monaco handle Replace)
+                if (ctrl && !shift && key === 72) { e.preventDefault(); e.stopPropagation(); return; }
+                // Ctrl+G / Ctrl+Shift+G (Find Next/Prev in browser — Monaco has own)
+                if (ctrl && (key === 71)) { e.preventDefault(); e.stopPropagation(); return; }
+                // Navigation history is owned by the host so text and Markdown editors share it.
+                if (alt && !ctrl && !shift && key === 37) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateBack' }));
+                    return;
+                }
+                if (alt && !ctrl && !shift && key === 39) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateForward' }));
+                    return;
+                }
+                // Preserve the existing secondary navigation shortcuts.
+                if (ctrl && alt && !shift && key === 189) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateBack' }));
+                    return;
+                }
+                if (ctrl && !alt && shift && key === 189) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateForward' }));
+                    return;
+                }
+                // Ctrl+D (Bookmark)
+                if (ctrl && key === 68) { e.preventDefault(); e.stopPropagation(); return; }
+            }, true);
+
+            // ---- Mouse side buttons for Go Back / Go Forward ----
+            window.addEventListener('mouseup', function (e) {
+                // XButton1 (browser back)  → Go Back
+                // XButton2 (browser forward) → Go Forward
+                if (e.button === 3) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateBack' }));
+                    return;
+                }
+                if (e.button === 4) {
+                    e.preventDefault(); e.stopPropagation();
+                    window.chrome.webview.postMessage(JSON.stringify({ type: 'shortcut', command: 'navigateForward' }));
+                    return;
+                }
+            }, true);
+
+            // ---- Ctrl+Click file navigation ----
+            // Intercept Ctrl+Click on any word; if it looks like a relative file
+            // path, resolve it against the current model URI and open it via C#.
+            editor.onMouseDown(function (e) {
+                if (!e.event.ctrlKey && !e.event.metaKey) return;
+                if (e.target.type !== monaco.editor.MouseTargetType.CONTENT_TEXT) return;
+                if (!e.target.position) return;
+
+                var model = editor.getModel();
+                if (!model) return;
+                var modelUri = model.uri;
+                if (!modelUri || modelUri.scheme !== 'file') return;
+
+                // Get the word at click position
+                var word = model.getWordAtPosition(e.target.position);
+                if (!word) return;
+                var clickedText = word.word;
+
+                // Always try to find the full quoted path first (e.g. "js/script.js"
+                // vs just "script.js" returned by getWordAtPosition)
+                var lineContent = model.getLineContent(e.target.position.lineNumber);
+                var col = e.target.position.column - 1; // 0-based
+                var quoteMatch = findQuotedPathAt(lineContent, col);
+                if (quoteMatch) {
+                    clickedText = quoteMatch;
+                } else if (!/\.(js|ts|mjs|cjs|css|scss|less|html|htm|json|xml|svg|png|jpg|jpeg|gif|webp|ico|md|txt)$/i.test(clickedText)) {
+                    // Word doesn't have a known extension and not inside a quoted path → ignore
+                    return;
+                }
+
+                // Resolve relative to model URI directory
+                var dir = monaco.Uri.parse(modelUri.toString().replace(/\/[^/]+$/, ''));
+                var resolved = monaco.Uri.joinPath(dir, clickedText);
+                var path = resolved.path;
+
+                // Normalize Windows path (remove leading '/')
+                if (path[0] === '/' && path[2] === ':') {
+                    path = path.substring(1);
+                }
+
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(JSON.stringify({
+                        type: 'openFile',
+                        filePath: path
+                    }));
+                }
+                e.event.preventDefault();
+                e.event.stopPropagation();
+            });
+
+            // Monaco 在 model 切换时会主动取消仍在进行的链接、定义和 hover 计算。
+            // 这是正常控制流，但部分内部 Promise 会以未处理 rejection 的形式写入控制台。
+            window.addEventListener('unhandledrejection', function (event) {
+                var reason = event.reason;
+                if (reason && (reason.name === 'Canceled' || reason.message === 'Canceled')) {
+                    event.preventDefault();
+                }
+            });
+
+            // Find a file path inside quotes at the given column
+            function findQuotedPathAt(line, col) {
+                var matches = line.matchAll(/(['"])((?:(?!\1).)+\.(?:js|ts|mjs|cjs|css|scss|less|html|htm|json|xml|svg|png|jpg|jpeg|gif|webp|ico|md|txt))\1/gi);
+                for (var m of matches) {
+                    var start = m.index + 1; // after opening quote
+                    var end = start + m[2].length;
+                    if (col >= start && col < end) {
+                        return m[2];
+                    }
+                }
+                return null;
+            }
+
+            function updateLargeFileOptions(contentLength) {
+                var isLargeFile = contentLength >= 200000;
+                editor.updateOptions({
+                    minimap: { enabled: !isLargeFile, scale: 1, showSlider: 'mouseover' },
+                    folding: !isLargeFile,
+                    stickyScroll: { enabled: !isLargeFile },
+                    smoothScrolling: !isLargeFile,
+                    cursorSmoothCaretAnimation: isLargeFile ? 'off' : 'on',
+                    semanticHighlighting: { enabled: !isLargeFile },
+                    occurrencesHighlight: isLargeFile ? 'off' : 'singleFile',
+                    colorDecorators: !isLargeFile,
+                    bracketPairColorization: { enabled: !isLargeFile }
+                });
+            }
+
+            window.contentUpdateVersion = 0;
+            window.modelLastUsed = new Map();
+            var maxCachedModelCount = 24;
+            var maxCachedModelCharacters = 16 * 1024 * 1024;
+
+            function trimModelCache(activeModel) {
+                var fileModels = monaco.editor.getModels().filter(function (model) {
+                    return model.uri && model.uri.scheme === 'file';
+                });
+                var totalCharacters = fileModels.reduce(function (total, model) {
+                    return total + model.getValueLength();
+                }, 0);
+                if (fileModels.length <= maxCachedModelCount && totalCharacters <= maxCachedModelCharacters) return;
+
+                fileModels.sort(function (left, right) {
+                    return (window.modelLastUsed.get(getModelKey(left)) || 0)
+                        - (window.modelLastUsed.get(getModelKey(right)) || 0);
+                });
+                for (var i = 0; i < fileModels.length; i++) {
+                    if (fileModels.length <= maxCachedModelCount && totalCharacters <= maxCachedModelCharacters) break;
+                    var candidate = fileModels[i];
+                    if (candidate === activeModel) continue;
+                    var key = getModelKey(candidate);
+                    var savedVersion = window.savedVersionByUri.get(key);
+                    if (savedVersion !== undefined && candidate.getAlternativeVersionId() !== savedVersion) continue;
+                    totalCharacters -= candidate.getValueLength();
+                    candidate.dispose();
+                    window.savedVersionByUri.delete(key);
+                    window.encodingByUri.delete(key);
+                    window.modelLastUsed.delete(key);
+                    fileModels.splice(i--, 1);
+                }
+            }
+
+            window.setValue = function (value, filePath, language, encoding, updateVersion) {
+                if (typeof updateVersion === 'number') {
+                    if (updateVersion < window.contentUpdateVersion) return;
+                    window.contentUpdateVersion = updateVersion;
+                }
+                updateLargeFileOptions(value.length);
+
+                // 以“模型归属（URI）”而不是“文本内容”决定是否切换模型：
+                // 内容相同的两个文件也必须切换到各自的模型，否则切文件后仍显示旧文件。
+                window.isSettingValue = true;
+                try {
+                    if (filePath) {
+                        var normalizedPath = filePath.replace(/\\/g, '/');
+                        var uri = monaco.Uri.parse('file:///' + normalizedPath);
+                        var model = monaco.editor.getModel(uri);
+                        var shouldResetSavedVersion = false;
+                        if (!model) {
+                            model = monaco.editor.createModel(value, undefined, uri);
+                            shouldResetSavedVersion = true;
+                        } else if (model.getValue() !== value) {
+                            model.setValue(value);
+                            shouldResetSavedVersion = true;
+                        }
+
+                        if (editor.getModel() !== model) {
+                            editor.setModel(model);
+                        }
+                        if (language) {
+                            monaco.editor.setModelLanguage(model, language);
+                        }
+                        var modelKey = getModelKey(model);
+                        window.modelLastUsed.set(modelKey, Date.now());
+                        if (encoding) {
+                            window.encodingByUri.set(modelKey, encoding);
+                        }
+                        if (shouldResetSavedVersion || !window.savedVersionByUri.has(modelKey)) {
+                            window.savedVersionByUri.set(modelKey, model.getAlternativeVersionId());
+                        }
+                        trimModelCache(model);
+                    } else {
+                        var model = editor.getModel();
+                        if (!model || model.uri.scheme !== 'inmemory') {
+                            editor.setModel(monaco.editor.createModel('', undefined, monaco.Uri.parse('inmemory://model')));
+                        }
+                        if (editor.getValue() !== value) {
+                            editor.setValue(value);
+                        }
+                    }
+                } finally {
+                    window.isSettingValue = false;
+                }
+
+                postEditorState();
+            };
+
+            window.markSaved = function (alternativeVersionId) {
+                var model = editor.getModel();
+                if (!model) {
+                    return;
+                }
+
+                window.savedVersionByUri.set(getModelKey(model), typeof alternativeVersionId === 'number'
+                    ? alternativeVersionId
+                    : model.getAlternativeVersionId());
+                postEditorState();
+            };
+
+            window.disposeModel = function (filePath) {
+                if (!filePath) {
+                    return;
+                }
+
+                var normalizedPath = filePath.replace(/\\/g, '/');
+                var uri = monaco.Uri.parse('file:///' + normalizedPath);
+                var model = monaco.editor.getModel(uri);
+                if (model) {
+                    if (editor.getModel() === model) {
+                        editor.setModel(null);
+                    }
+                    model.dispose();
+                    window.savedVersionByUri.delete(uri.toString());
+                    window.encodingByUri.delete(uri.toString());
+                    window.modelLastUsed.delete(uri.toString());
+                }
+            };
+
+            window.undo = function () {
+                var model = editor.getModel();
+                if (!model || !model.canUndo()) {
+                    return false;
+                }
+                model.undo();
+                return true;
+            };
+
+            window.redo = function () {
+                var model = editor.getModel();
+                if (!model || !model.canRedo()) {
+                    return false;
+                }
+                model.redo();
+                return true;
+            };
+
+            window.copyLineUp = function () {
+                editor.trigger('host', 'editor.action.copyLinesUpAction', null);
+            };
+
+            window.copyLineDown = function () {
+                editor.trigger('host', 'editor.action.copyLinesDownAction', null);
+            };
+
+            window.moveLineUp = function () {
+                editor.trigger('host', 'editor.action.moveLinesUpAction', null);
+            };
+
+            window.moveLineDown = function () {
+                editor.trigger('host', 'editor.action.moveLinesDownAction', null);
+            };
+
+            window.focusEditor = function () {
+                editor.focus();
+            };
+
+            window.getEditorState = function () {
+                var model = editor.getModel();
+                if (!model) {
+                    return JSON.stringify({
+                        isSaved: true,
+                        lineEnding: 'LF',
+                        encoding: window.editorEncoding || 'UTF-8',
+                        indent: 'Spaces: 2'
+                    });
+                }
+
+                var alternativeVersionId = model.getAlternativeVersionId();
+                var modelKey = getModelKey(model);
+                var savedVersionId = window.savedVersionByUri.get(modelKey);
+                return JSON.stringify({
+                    filePath: getCurrentFilePath(),
+                    isSaved: savedVersionId === undefined || alternativeVersionId === savedVersionId,
+                    canUndo: model.canUndo(),
+                    canRedo: model.canRedo(),
+                    lineEnding: getLineEndingText(model),
+                    encoding: window.encodingByUri.get(modelKey) || 'UTF-8',
+                    indent: getIndentText(model)
+                });
+            };
+
+            window.getValue = function () {
+                return editor.getValue();
+            };
+
+            window.getValueWithVersion = function () {
+                var model = editor.getModel();
+                if (!model) {
+                    return JSON.stringify({ content: '', version: 0 });
+                }
+                return JSON.stringify({
+                    filePath: getCurrentFilePath(),
+                    content: model.getValue(),
+                    version: model.getAlternativeVersionId()
+                });
+            };
+
+            window.revealPosition = function (lineNumber, column) {
+                editor.setPosition({ lineNumber: lineNumber, column: column });
+                editor.revealPositionInCenter({ lineNumber: lineNumber, column: column });
+                editor.focus();
+            };
+
+            window.setEditorTheme = function (theme) {
+                monaco.editor.setTheme(theme);
+                document.documentElement.dataset.theme = theme;
+                document.body.style.background = theme === 'vs' ? '#ffffff' : '#1e1e1e';
+            };
+
+            window.setLanguage = function (language, filePath) {
+                var model = editor.getModel();
+                if (model) {
+                    if (filePath) {
+                        var normalizedPath = filePath.replace(/\\/g, '/');
+                        var requestedUri = monaco.Uri.parse('file:///' + normalizedPath);
+                        if (model.uri.toString() !== requestedUri.toString()) return;
+                    }
+                    monaco.editor.setModelLanguage(model, language);
+                }
+            };
+
+            function createSnippetProvider(snippets) {
+                return {
+                    triggerCharacters: ['!', '.', '#', ':'],
+                    provideCompletionItems: function (model, position) {
+                        var text = model.getValueInRange({
+                            startLineNumber: position.lineNumber,
+                            startColumn: 1,
+                            endLineNumber: position.lineNumber,
+                            endColumn: position.column
+                        });
+                        var match = text.match(/[!a-zA-Z0-9._:-]+$/);
+                        var startColumn = match ? position.column - match[0].length : position.column;
+                        var range = {
+                            startLineNumber: position.lineNumber,
+                            endLineNumber: position.lineNumber,
+                            startColumn: startColumn,
+                            endColumn: position.column
+                        };
+                        return {
+                            suggestions: snippets.map(function (snippet) {
+                                return {
+                                    label: snippet.label,
+                                    kind: monaco.languages.CompletionItemKind.Snippet,
+                                    insertText: snippet.insertText,
+                                    insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                                    detail: snippet.detail,
+                                    range: range
+                                };
+                            })
+                        };
+                    }
+                };
+            }
+
+            monaco.languages.registerCompletionItemProvider('html', createSnippetProvider([
+                { label: '!', detail: 'DOCTYPE declaration', insertText: '<!DOCTYPE html>' },
+                { label: '!!!', detail: 'HTML5 document', insertText: '<!DOCTYPE html>\n<html lang="en">\n<head>\n\t<meta charset="UTF-8">\n\t<meta name="viewport" content="width=device-width, initial-scale=1.0">\n\t<title>${1:Document}</title>\n</head>\n<body>\n\t$0\n</body>\n</html>' },
+                { label: 'meta:vp', detail: 'Viewport meta', insertText: '<meta name="viewport" content="width=device-width, initial-scale=1.0">' },
+                { label: 'link:css', detail: 'Stylesheet link', insertText: '<link rel="stylesheet" href="${1:style.css}">' },
+                { label: 'script:src', detail: 'Script source', insertText: '<script src="${1:script.js}"><\/script>' },
+                { label: 'div', detail: 'Div with class', insertText: '<div class="${1:container}">\n\t$0\n</div>' },
+                { label: 'btn', detail: 'Button', insertText: '<button type="button" class="${1:btn}">$0</button>' },
+                { label: 'input', detail: 'Input', insertText: '<input type="${1:text}" name="${2:name}" placeholder="${3:placeholder}">' },
+                { label: 'img', detail: 'Image', insertText: '<img src="${1:image.png}" alt="${2:description}">' },
+                { label: 'ul', detail: 'List', insertText: '<ul>\n\t<li>${1:item}</li>\n\t<li>${2:item}</li>\n</ul>' }
+            ]));
+
+            monaco.languages.registerCompletionItemProvider('css', createSnippetProvider([
+                { label: 'reset', detail: 'CSS reset', insertText: '* {\n\tbox-sizing: border-box;\n}\n\nhtml, body {\n\tmargin: 0;\n\tpadding: 0;\n\twidth: 100%;\n\theight: 100%;\n}' },
+                { label: 'center', detail: 'Flex center', insertText: 'display: flex;\nalign-items: center;\njustify-content: center;' },
+                { label: 'flex', detail: 'Flex row', insertText: 'display: flex;\ngap: ${1:16px};\nalign-items: center;' },
+                { label: 'grid', detail: 'Responsive grid', insertText: 'display: grid;\ngrid-template-columns: repeat(${1:auto-fit}, minmax(${2:240px}, 1fr));\ngap: ${3:16px};' },
+                { label: 'abs', detail: 'Absolute fill', insertText: 'position: absolute;\ninset: 0;' },
+                { label: 'media', detail: 'Media query', insertText: '@media (max-width: ${1:768px}) {\n\t$0\n}' },
+                { label: 'anim', detail: 'Keyframes animation', insertText: 'animation: ${1:fadeIn} ${2:300ms} ease ${3:both};\n\n@keyframes ${1:fadeIn} {\n\tfrom { opacity: 0; }\n\tto { opacity: 1; }\n}' }
+            ]));
+
+            monaco.languages.registerCompletionItemProvider('javascript', createSnippetProvider([
+                { label: 'fn', detail: 'Function declaration', insertText: 'function ${1:name}(${2:params}) {\n\t$0\n}' },
+                { label: 'afn', detail: 'Arrow function', insertText: 'const ${1:name} = (${2:params}) => {\n\t$0\n};' },
+                { label: 'log', detail: 'Console log', insertText: 'console.log(${1:value});' },
+                { label: 'event', detail: 'Event listener', insertText: '${1:element}.addEventListener(\'${2:click}\', (${3:event}) => {\n\t$0\n});' },
+                { label: 'fetch', detail: 'Fetch async', insertText: 'const response = await fetch(\'${1:url}\');\nconst data = await response.json();\n$0' },
+                { label: 'try', detail: 'Try catch', insertText: 'try {\n\t$0\n} catch (error) {\n\tconsole.error(error);\n}' },
+                { label: 'raf', detail: 'requestAnimationFrame loop', insertText: 'function ${1:tick}(${2:time}) {\n\t$0\n\trequestAnimationFrame(${1:tick});\n}\nrequestAnimationFrame(${1:tick});' }
+            ]));
+
+            monaco.languages.registerCompletionItemProvider('typescript', createSnippetProvider([
+                { label: 'interface', detail: 'Interface', insertText: 'interface ${1:Name} {\n\t${2:property}: ${3:string};\n}' },
+                { label: 'type', detail: 'Type alias', insertText: 'type ${1:Name} = {\n\t${2:property}: ${3:string};\n};' },
+                { label: 'class', detail: 'Class', insertText: 'class ${1:Name} {\n\tconstructor(${2}) {\n\t\t$0\n\t}\n}' },
+                { label: 'async', detail: 'Async function', insertText: 'async function ${1:name}(${2:params}): Promise<${3:void}> {\n\t$0\n}' }
+            ]));
+
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(JSON.stringify({ type: 'ready' }));
+            }
+
+            window.setEncoding = function (encoding, filePath) {
+                var model = editor.getModel();
+                if (!model) return;
+                if (filePath) {
+                    var normalizedPath = filePath.replace(/\\/g, '/');
+                    var requestedUri = monaco.Uri.parse('file:///' + normalizedPath);
+                    if (model.uri.toString() !== requestedUri.toString()) return;
+                }
+                window.encodingByUri.set(getModelKey(model), encoding || 'UTF-8');
+                postEditorState();
+            };
+
+            window.setIndentOptions = function (newTabSize, newInsertSpaces) {
+                editor.updateOptions({
+                    tabSize: newTabSize,
+                    indentSize: newInsertSpaces ? newTabSize : 'tabSize',
+                    insertSpaces: newInsertSpaces,
+                    detectIndentation: false
+                });
+
+                var model = editor.getModel();
+                if (model) {
+                    model.updateOptions({
+                        tabSize: newTabSize,
+                        indentSize: newInsertSpaces ? newTabSize : 'tabSize',
+                        insertSpaces: newInsertSpaces
+                    });
+                }
+                postEditorState();
+            };
+
+            window.replaceLineEndings = function (targetEnding) {
+                var model = editor.getModel();
+                if (!model) return;
+                if (model.getEOL() === targetEnding) return;
+
+                model.pushEOL(targetEnding === '\r\n'
+                    ? monaco.editor.EndOfLineSequence.CRLF
+                    : monaco.editor.EndOfLineSequence.LF);
+            };
+        });
+    </script>
+</body>
+</html>

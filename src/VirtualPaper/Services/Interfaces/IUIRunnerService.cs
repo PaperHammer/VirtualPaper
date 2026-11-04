@@ -9,8 +9,11 @@ namespace VirtualPaper.Services.Interfaces {
 
         bool IsVisibleUI { get; }
         
-        void ShowUI();
+        Task ShowUIAsync();
         void CloseUI();
+        void NotifyUIClosing(int processId);
+        void SendCloseCmd();
+        Task<bool> RequestUICloseAsync();
         void RestartUI();
         nint GetUIHwnd();
     }

@@ -89,15 +89,31 @@ namespace VirtualPaper.Common {
     }
     #endregion
 
-    #region type    
+    #region type
+    [JsonConverter(typeof(FileTypeJsonConverter))]
     public enum FileType {
         FUnknown,
         FImage,
         FGif,
         FVideo,
         FDesign,
-        FimageAI,
+        FWebDesign,
+        FImageAI,
         FWebZip,
+    }
+
+    public sealed class FileTypeJsonConverter : JsonConverter<FileType> {
+        public override FileType Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options) {
+            var str = reader.GetString();
+            if (str != null && Enum.TryParse<FileType>(str, ignoreCase: true, out var result)) {
+                return result;
+            }
+            return FileType.FUnknown;
+        }
+
+        public override void Write(System.Text.Json.Utf8JsonWriter writer, FileType value, System.Text.Json.JsonSerializerOptions options) {
+            writer.WriteStringValue(value.ToString());
+        }
     }
 
     public enum RuntimeType {
@@ -125,6 +141,7 @@ namespace VirtualPaper.Common {
     public enum ProjectType {
         PUnknown,
         P_StaticImage,
+        P_WebBackdrop,
     }
 
     public enum ObjectLifetime {
@@ -141,6 +158,15 @@ namespace VirtualPaper.Common {
 
     public static class FileExtension {
         public const string FE_Design = ".vpd";
+        public const string FE_WebDesign = ".vpw";
+    }
+
+    public enum PluginName {
+        UI,
+        PlayerWeb,
+        ScrSaver,
+        ML,
+        Shaders
     }
     #endregion    
 
@@ -159,6 +185,18 @@ namespace VirtualPaper.Common {
     #endregion
 
     #region costumise
+    // Values are persisted as dropdown indexes and shared with atmosphere.js.
+    public enum AtmosphereEffect {
+        None = 0,
+        Stardust = 1,
+        Snow = 2,
+        Fireflies = 3,
+        Meteor = 4,
+        Rain = 5,
+        Petals = 6,
+        Bokeh = 7,
+    }
+
     public class UniverseCostumise {
         [JsonPropertyOrder(1)]
         public Saturation Saturation { get; }
@@ -175,6 +213,15 @@ namespace VirtualPaper.Common {
         [JsonPropertyOrder(5)]
         public TimePerception TimeAtmoPerception { get; }
 
+        [JsonPropertyOrder(14)]
+        public AtmospherePreset Atmosphere { get; } = new();
+
+        [JsonPropertyOrder(15)]
+        public AtmosphereStyleProperty AtmosphereStyle { get; } = new();
+
+        [JsonPropertyOrder(16)]
+        public AtmosphereIntensity AtmosphereIntensity { get; } = new();
+
         public UniverseCostumise() {
             Saturation = new();
             Hue = new();
@@ -188,6 +235,9 @@ namespace VirtualPaper.Common {
                 { nameof(Brightness), Brightness },
                 { nameof(Contrast), Contrast },
                 { nameof(TimeAtmoPerception), TimeAtmoPerception },
+                { nameof(Atmosphere), Atmosphere },
+                { nameof(AtmosphereStyle), AtmosphereStyle },
+                { nameof(AtmosphereIntensity), AtmosphereIntensity },
             };
         }
 
@@ -266,12 +316,20 @@ namespace VirtualPaper.Common {
         [JsonPropertyOrder(13)]
         public Parallax Parallax { get; }
 
+        [JsonPropertyOrder(17)]
+        public ParallaxStrength ParallaxStrength { get; } = new();
+
+        [JsonPropertyOrder(18)]
+        public ParallaxAutoDrift ParallaxAutoDrift { get; } = new();
+
         public Picture3DCostumize() {
             Scaling = new();
             Parallax = new();
 
             _properties[nameof(Scaling)] = Scaling;
             _properties[nameof(Parallax)] = Parallax;
+            _properties[nameof(ParallaxStrength)] = ParallaxStrength;
+            _properties[nameof(ParallaxAutoDrift)] = ParallaxAutoDrift;
         }
     }
 
@@ -407,11 +465,77 @@ namespace VirtualPaper.Common {
         public string Help { get; init; } = "Effect_Help_Scaling";
     }
 
+    public class AtmospherePreset {
+        public string Type { get; init; } = "Dropdown";
+        public string Text { get; init; } = "Atmosphere";
+        public int Min => (int)AtmosphereEffect.None;
+        public int Max => (int)AtmosphereEffect.Bokeh;
+        private int _value;
+        public int Value {
+            get => _value;
+            set => _value = Enum.IsDefined(typeof(AtmosphereEffect), value) ? value : Min;
+        }
+        public List<string> Items { get; init; } = ["None", "Stardust", "Snow", "Fireflies", "Meteor", "Rain", "Petals", "Bokeh"];
+    }
+
+    public class AtmosphereStyleProperty {
+        public string Type { get; init; } = "Dropdown";
+        public string Text { get; init; } = "AtmosphereStyle";
+        public int Min => 0;
+        public int Max => 1;
+        private int _value;
+        public int Value {
+            get => _value;
+            set => _value = Math.Clamp(value, Min, Max);
+        }
+        public List<string> Items { get; init; } = [];
+
+        // Item indexes remain stable while the labels follow the selected effect.
+        public static string[] GetItems(AtmosphereEffect effect) => effect switch {
+            AtmosphereEffect.Stardust => ["Dust", "Stars"],
+            AtmosphereEffect.Snow => ["SnowDots", "Snowflakes"],
+            AtmosphereEffect.Fireflies => ["WarmFireflies", "BlueFireflies"],
+            AtmosphereEffect.Meteor => ["ShootingStars", "Comets"],
+            AtmosphereEffect.Rain => ["Drizzle", "Downpour"],
+            AtmosphereEffect.Petals => ["CherryBlossoms", "RosePetals"],
+            AtmosphereEffect.Bokeh => ["SoftLights", "Bubbles"],
+            _ => [],
+        };
+    }
+
+    public class AtmosphereIntensity : SliderProperty<int> {
+        public override string Text => "AtmosphereIntensity";
+        public override int Min => 0;
+        public override int Max => 100;
+        public override int DefaultValue => 50;
+        public int Step { get; init; } = 1;
+    }
+
     public class Parallax {
         public string Type { get; init; } = "CheckBox";
         public string Text { get; init; } = "Parallax";
         public bool Value { get; set; } = false;
         public string Help { get; init; } = "Effect_Help_Parallax";
+    }
+
+    public class ParallaxStrength {
+        public string Type { get; init; } = "Dropdown";
+        public string Text { get; init; } = "ParallaxStrength";
+        public int Min => 0;
+        public int Max => 2;
+        private int _value = 1;
+        public int Value {
+            get => _value;
+            set => _value = Math.Clamp(value, Min, Max);
+        }
+        public List<string> Items { get; init; } = ["Gentle", "Standard", "Strong"];
+    }
+
+    public class ParallaxAutoDrift {
+        public string Type { get; init; } = "CheckBox";
+        public string Text { get; init; } = "ParallaxAutoDrift";
+        public bool Value { get; set; } = false;
+        public string Help { get; init; } = "Effect_Help_ParallaxAutoDrift";
     }
 
     //public class Speed {

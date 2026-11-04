@@ -8,7 +8,7 @@ namespace VirtualPaper.UIComponent.ViewModels {
             get { return _newName; }
             set {
                 _newName = value; 
-                IsNameOk = ComplianceUtil.IsValidValueOnlyLength(value);
+                IsNameOk = ComplianceUtil.IsValidPathSegmentName(value, 1, _maxLength, _onlyLength);
                 OnPropertyChanged();
             }
         }
@@ -21,8 +21,13 @@ namespace VirtualPaper.UIComponent.ViewModels {
 
         public string OldName { get; set; } = null!;
 
-        public RenameViewModel(string oldName) {
+        public RenameViewModel(string oldName, int maxLength, bool onlyLength) {
             OldName = oldName;
+            _maxLength = maxLength;
+            _onlyLength = onlyLength;
         }
+
+        private readonly int _maxLength;
+        private readonly bool _onlyLength;
     }
 }

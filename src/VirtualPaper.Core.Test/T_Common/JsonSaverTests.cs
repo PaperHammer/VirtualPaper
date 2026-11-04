@@ -44,6 +44,7 @@ namespace VirtualPaper.Core.Test.T_Common {
             await JsonSaver.SaveAsync(path, original, TestSettingsContext.Default);
             var loaded = await JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default);
 
+            Assert.IsNotNull(loaded);
             Assert.AreEqual(original.Name, loaded.Name);
             Assert.AreEqual(original.Value, loaded.Value);
             CollectionAssert.AreEqual(original.Items, loaded.Items);
@@ -57,6 +58,7 @@ namespace VirtualPaper.Core.Test.T_Common {
             await JsonSaver.SaveAsync(path, original, TestSettingsContext.Default);
             var loaded = await JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default);
 
+            Assert.IsNotNull(loaded);
             Assert.IsEmpty(loaded.Items);
         }
 
@@ -68,6 +70,7 @@ namespace VirtualPaper.Core.Test.T_Common {
             await JsonSaver.SaveAsync(path, original, TestSettingsContext.Default);
             var loaded = await JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default);
 
+            Assert.IsNotNull(loaded);
             Assert.AreEqual("", loaded.Name);
             Assert.AreEqual(0, loaded.Value);
         }
@@ -88,6 +91,7 @@ namespace VirtualPaper.Core.Test.T_Common {
 
             var loaded = await JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default);
 
+            Assert.IsNotNull(loaded);
             Assert.AreEqual("test", loaded.Name);
             Assert.AreEqual(1, loaded.Value);
         }
@@ -107,6 +111,7 @@ namespace VirtualPaper.Core.Test.T_Common {
 
             var loaded = await JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default);
 
+            Assert.IsNotNull(loaded);
             Assert.AreEqual("test", loaded.Name);
             Assert.HasCount(2, loaded.Items);
         }
@@ -126,6 +131,7 @@ namespace VirtualPaper.Core.Test.T_Common {
 
             var loaded = await JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default);
 
+            Assert.IsNotNull(loaded);
             Assert.AreEqual("test", loaded.Name);
             Assert.AreEqual(99, loaded.Value);
         }
@@ -152,6 +158,33 @@ namespace VirtualPaper.Core.Test.T_Common {
 
             await Assert.ThrowsAsync<FileAccessException>(
                 () => JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default));
+        }
+
+        [TestMethod]
+        [DataRow("")]
+        [DataRow("{\"Name\": \"unfinished\"")]
+        [DataRow("not-json")]
+        public async Task Load_CorruptedJson_ThrowsFileAccessException(string content) {
+            var path = Path.Combine(_tempDir, "corrupted.json");
+            await File.WriteAllTextAsync(path, content);
+
+            var exception = await Assert.ThrowsAsync<FileAccessException>(
+                () => JsonSaver.LoadAsync<TestSettings>(path, TestSettingsContext.Default));
+
+            Assert.IsNotNull(exception.InnerException);
+        }
+
+        [TestMethod]
+        public async Task Save_WhenDestinationIsExclusivelyLocked_ThrowsFileAccessException() {
+            var path = Path.Combine(_tempDir, "locked.json");
+            await File.WriteAllTextAsync(path, "{}");
+            await using var lockStream = new FileStream(
+                path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+            var exception = await Assert.ThrowsAsync<FileAccessException>(
+                () => JsonSaver.SaveAsync(path, new TestSettings(), TestSettingsContext.Default));
+
+            Assert.IsInstanceOfType<IOException>(exception.InnerException);
         }
 
         // ── 自动创建目录 ─────────────────────────────────────────────

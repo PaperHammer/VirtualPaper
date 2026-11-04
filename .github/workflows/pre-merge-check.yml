@@ -1,0 +1,456 @@
+name: Pre-merge Check
+run-name: "[Manual] Pre-merge Check | PR #${{ inputs.pr_number }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Open PR number (target: dev or main)'
+        required: true
+        type: number
+      include_ml_integration:
+        description: 'Also run real model inference tests (requires local model files)'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: pre-merge-check-${{ inputs.pr_number }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: pwsh
+
+permissions:
+  contents: read
+
+jobs:
+  validate-pr:
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    name: Validate PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      head_sha: ${{ steps.pr.outputs.head_sha }}
+      test_sha: ${{ steps.pr.outputs.test_sha }}
+      base_sha: ${{ steps.pr.outputs.base_sha }}
+      version_label: ${{ steps.pr.outputs.version_label }}
+    steps:
+    - name: Check PR rules and snapshot
+      id: pr
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const number = Number(context.payload.inputs.pr_number);
+          if (!Number.isSafeInteger(number) || number <= 0) throw new Error('Enter a positive PR number.');
+          const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: number });
+          core.setOutput('head_sha', pr.head.sha);
+          const status = state => github.rest.repos.createCommitStatus({
+            ...context.repo, sha: pr.head.sha, context: 'pre-merge-check', state,
+            description: state === 'pending' ? 'Manual pre-merge checks are running' : 'PR policy validation failed',
+            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`
+          });
+          // Do not write statuses for a fork. Same-repository PRs are the supported release path.
+          if (pr.head.repo?.full_name !== context.payload.repository.full_name) throw new Error('Only same-repository PRs are supported.');
+          if (pr.state !== 'open') throw new Error('Pre-merge Check requires an open PR.');
+          await status('pending');
+          try {
+            const base = pr.base.ref, head = pr.head.ref;
+            if (!(base === 'main' && head === 'dev') && !(base === 'dev' && !['main', 'dev'].includes(head))) {
+              throw new Error('Allowed paths: feature/fix branches -> dev; dev -> main.');
+            }
+            const allowed = ['version:major', 'version:minor', 'version:build', 'version:revision'];
+            const selected = pr.labels.map(label => label.name).filter(name => allowed.includes(name));
+            if (base === 'main' && selected.length !== 1) throw new Error(`Select exactly one version label: ${allowed.join(', ')}.`);
+            if (pr.mergeable === false || !pr.merge_commit_sha) throw new Error('PR cannot be merged yet. Resolve conflicts or retry once GitHub has calculated the merge.');
+            const { data: merge } = await github.rest.git.getCommit({ ...context.repo, commit_sha: pr.merge_commit_sha });
+            if (!merge.parents.some(p => p.sha === pr.head.sha) || !merge.parents.some(p => p.sha === pr.base.sha)) {
+              throw new Error('The PR merge snapshot is stale. Retry after GitHub refreshes it.');
+            }
+            core.setOutput('test_sha', pr.merge_commit_sha);
+            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('version_label', base === 'main' ? selected[0] : '');
+            core.info(`Testing PR #${number}: ${head} -> ${base} at ${pr.merge_commit_sha}`);
+          } catch (error) {
+            await status('failure');
+            throw error;
+          }
+
+  build-solution:
+    name: Build Solution
+    runs-on: windows-latest
+    needs: validate-pr
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+
+    - name: Check workflow contracts
+      shell: pwsh
+      run: ./.github/scripts/validate-test-workflow.ps1
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props') }}
+        restore-keys: nuget-${{ runner.os }}-
+
+    - name: Build solution
+      # 使用 msbuild 而非 dotnet build，确保 .sln 的 Platform Mapping 生效：
+      # VirtualPaper.UI（WinAppSDK）在 .sln 中映射为 Release|x64，
+      # dotnet build 不读取此映射，msbuild 才能正确路由到 x64 构建。
+      # 与 pre-release.yml 保持工具链一致。
+      run: msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /restore /m
+
+    - name: Check test hosts
+      run: |
+        $hostRoot = 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0'
+        foreach ($file in @('VirtualPaper.UIOperationTest.exe', 'VirtualPaper.Common.dll')) {
+          if (-not (Test-Path -LiteralPath (Join-Path $hostRoot $file))) { throw "WinUI host output missing: $file" }
+        }
+        if (-not (Test-Path -LiteralPath 'test/VirtualPaper.InstallerTest/bin/Release/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll')) {
+          throw 'Installer test host output missing.'
+        }
+
+    - name: Upload build output
+      uses: actions/upload-artifact@v4
+      with:
+        overwrite: true
+        name: build-output
+        if-no-files-found: error
+        retention-days: 7
+        path: |
+          src/
+          test/actions/run-project/action.yml
+          test/Run-ProjectTests.ps1
+          test/TestReportSupport.ps1
+          test/VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj
+          test/VirtualPaper.UIOperationTest/bin/x64/Release/
+          test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj
+          test/VirtualPaper.InstallerTest/bin/Release/
+
+  # Test phases are sequential: installer lifecycle -> parallel regular tests -> real UI.
+  test-installer:
+    name: Installer Acceptance
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution]
+    timeout-minutes: 20
+
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Install Inno Setup 6.7.1
+      shell: pwsh
+      run: choco install innosetup --version=6.7.1 --no-progress -y
+
+    - name: Compile installer
+      shell: pwsh
+      run: |
+        & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" InnoSetup/setup.iss
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Verify installer lifecycle
+      shell: pwsh
+      run: |
+        $installers = @(Get-ChildItem -LiteralPath InnoSetup/Output -Filter '*.exe' -File)
+        if ($installers.Count -ne 1) { throw 'Expected exactly one installer.' }
+        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -ReportPath TestResults/Installer/installer-results.json
+
+    - name: Upload installer results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        overwrite: true
+        name: test-results-installer
+        path: TestResults/Installer/
+        if-no-files-found: warn
+        retention-days: 7
+
+  test-artifacts:
+    name: Artifact Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-artifacts
+
+  test-core:
+    name: Core Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-core
+
+  test-ui-logic:
+    name: UI Logic Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - name: Test web players
+      run: |
+        node .github/scripts/test-atmosphere.cjs
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        node .github/scripts/test-depth-player.cjs
+        exit $LASTEXITCODE
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-ui-logic
+
+  test-images:
+    name: Static Image Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-images
+
+  test-web-backdrop:
+    name: Web Backdrop Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-web-backdrop
+
+  test-ui-components:
+    name: UI Component Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-ui-components
+
+  test-ml:
+    name: ML Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-ml
+        include-ml-integration: ${{ inputs.include_ml_integration }}
+
+  test-shader:
+    name: Shader Tests
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer]
+    steps:
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+    - name: Run project tests
+      uses: ./test/actions/run-project
+      with:
+        job-id: test-shader
+
+  test-winui:
+    name: WinUI Acceptance
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-installer, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+
+    - name: Download prerequisite reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        path: PrerequisiteTestResults/
+
+    - name: Validate prerequisite reports
+      run: |
+        . ./test/TestReportSupport.ps1
+        Get-ProjectTestReports -Root PrerequisiteTestResults | Format-Table Total, Executed, Passed
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run WinUI acceptance
+      shell: pwsh
+      run: ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe -ReportPath TestResults/UIOperation/ui-operation-results.json
+
+    - name: Upload WinUI results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        overwrite: true
+        name: test-results-ui-operation
+        path: TestResults/UIOperation/
+        if-no-files-found: error
+        retention-days: 7
+
+  summarize-tests:
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [validate-pr, build-solution, test-installer, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-winui]
+    if: always() && needs.validate-pr.result == 'success'
+
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+
+    - name: Download test reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        path: TestResults/
+
+    - name: Summarize test reports
+      id: reports
+      run: ./test/Summarize-TestResults.ps1 -Root TestResults
+
+    - name: Upload report bundle
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        overwrite: true
+        name: test-summary-${{ needs.validate-pr.outputs.head_sha }}
+        path: TestResults/
+        retention-days: 30
+
+    - name: Update PR status
+      if: always()
+      uses: actions/github-script@v7
+      env:
+        REPORT_JOB_STATUS: ${{ job.status }}
+        PREREQUISITE_RESULTS: ${{ join(needs.*.result, ' ') }}
+        UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}
+        INSTALLER_OUTCOME: ${{ steps.reports.outputs.installer_outcome }}
+      with:
+        script: |
+          const { data: pr } = await github.rest.pulls.get({
+            ...context.repo, pull_number: Number(context.payload.inputs.pr_number)
+          });
+          const passed = process.env.REPORT_JOB_STATUS === 'success' &&
+            process.env.PREREQUISITE_RESULTS.split(' ').every(result => result === 'success') &&
+            ['Passed', 'Skipped'].includes(process.env.UI_OUTCOME);
+          let state = passed ? 'success' : 'failure';
+          let description = !passed ? 'Some tests failed or results missing [FAILED]' :
+            process.env.UI_OUTCOME === 'Skipped' || process.env.INSTALLER_OUTCOME === 'OpenSkipped' ?
+              'Regular tests passed; UI acceptance skipped [SKIPPED]' : 'All tests passed [OK]';
+          const head = '${{ needs.validate-pr.outputs.head_sha }}';
+          const selected = pr.labels.map(label => label.name).filter(name =>
+            ['version:major', 'version:minor', 'version:build', 'version:revision'].includes(name));
+          if (pr.state !== 'open' || pr.head.sha !== head ||
+              pr.base.sha !== '${{ needs.validate-pr.outputs.base_sha }}' ||
+              (pr.base.ref === 'main' && (pr.head.ref !== 'dev' || selected.length !== 1 || selected[0] !== '${{ needs.validate-pr.outputs.version_label }}')) ||
+              !((pr.base.ref === 'main' && pr.head.ref === 'dev') || (pr.base.ref === 'dev' && !['main', 'dev'].includes(pr.head.ref)))) {
+            state = 'failure';
+            description = 'PR changed during this run; manually rerun Pre-merge Check';
+          }
+          const marker = pr.base.ref === 'main' ? `PR #${context.payload.inputs.pr_number} | ${{ needs.validate-pr.outputs.version_label }}` : `PR #${context.payload.inputs.pr_number}`;
+          description = `[${marker}] ${description}`;
+          await github.rest.repos.createCommitStatus({
+            ...context.repo, sha: head, state, description,
+            target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
+            context: 'pre-merge-check'
+          });
+          if (state !== 'success') core.setFailed(description);

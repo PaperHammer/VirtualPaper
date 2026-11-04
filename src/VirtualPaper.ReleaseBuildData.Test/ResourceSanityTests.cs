@@ -47,10 +47,10 @@ namespace VirtualPaper.ReleaseBuildData.Test {
 
         [TestMethod]
         [TestCategory("ReleaseBuild")]
-        public void Plugin_UI_DraftPanelConfigs_Exists() {
+        public void Plugin_UI_EditPanelConfigs_Exists() {
             ReleaseBuildSanityTests.AssertDirExists(
-                Path.Combine(PluginsDir, "UI", "DraftPanelConfigs"),
-                "DraftPanelConfigs directory");
+                Path.Combine(PluginsDir, "UI", "EditPanelConfigs"),
+                "EditPanelConfigs directory");
         }
 
         // ── PlayerWeb 内嵌 Web 资源 ───────────────────────────────────────────

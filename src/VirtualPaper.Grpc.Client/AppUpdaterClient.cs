@@ -2,21 +2,24 @@ using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Update;
+using VirtualPaper.Models.AppUpdate;
+using VirtualPaper.Models.Events;
 
 namespace VirtualPaper.Grpc.Client {
     public partial class AppUpdaterClient : IAppUpdaterClient {
         public event EventHandler<AppUpdaterEventArgs>? UpdateChecked;
 
         public AppUpdateStatus Status { get; private set; } = AppUpdateStatus.Notchecked;
-        public DateTime LastCheckTime { get; private set; } = DateTime.MinValue;
-        public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
-        public string LastCheckChangelog { get; private set; } = string.Empty;
-        public Uri LastCheckUri { get; private set; }
-        public Uri LastCheckShaUri { get; private set; }
+        //public DateTime LastCheckTime { get; private set; } = DateTime.MinValue;
+        //public Version LastCheckVersion { get; private set; } = new Version(0, 0, 0, 0);
+        //public string LastCheckChangelog { get; private set; } = string.Empty;
+        //public Uri LastCheckUri { get; private set; }
+        //public Uri LastCheckShaUri { get; private set; }
+        public ReleaseInfo Release { get; private set; } = new ReleaseInfo();
 
         public AppUpdaterClient() {
             _client = new Grpc_UpdateService.Grpc_UpdateServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
@@ -40,12 +43,18 @@ namespace VirtualPaper.Grpc.Client {
         private async Task UpdateStatusRefresh() {
             var resp = await _client.GetUpdateStatusAsync(new Empty());
             Status = (AppUpdateStatus)((int)resp.Status);
-            LastCheckTime = resp.Time.ToDateTime().ToLocalTime();
-            LastCheckChangelog = resp.Changelog;
+            Release.CheckedTime = resp.CheckedTime.ToDateTime().ToLocalTime();
+            Release.Changelog = resp.Changelog;
+            Release.AppBuild = resp.AppBuild;
             try {
-                LastCheckVersion = string.IsNullOrEmpty(resp.Version) ? null : new Version(resp.Version);
-                LastCheckUri = string.IsNullOrEmpty(resp.Uri) ? null : new Uri(resp.Uri);
-                LastCheckShaUri = string.IsNullOrEmpty(resp.ShaUri) ? null : new Uri(resp.ShaUri);
+                Release.Version = string.IsNullOrEmpty(resp.Version) ? null : new Version(resp.Version);
+                Release.InstallerUri = string.IsNullOrEmpty(resp.InstallerUri) ? null : new Uri(resp.InstallerUri);
+                Release.InstallerShaUri = string.IsNullOrEmpty(resp.InstallerShaUri) ? null : new Uri(resp.InstallerShaUri);
+                Release.PluginPatchUri = string.IsNullOrEmpty(resp.PluginPatchUri) ? null : new Uri(resp.PluginPatchUri);
+                Release.PluginPatchSha256Uri = string.IsNullOrEmpty(resp.PluginPatchSha256Uri) ? null : new Uri(resp.PluginPatchSha256Uri);
+                if (!string.IsNullOrEmpty(resp.AppCompManifest)) {
+                    Release.AppCompManifest = System.Text.Json.JsonSerializer.Deserialize(resp.AppCompManifest, UpdateManifestContext.Default.AppCompManifest);
+                }
             }
             catch { /* TODO */ }
         }
@@ -58,7 +67,7 @@ namespace VirtualPaper.Grpc.Client {
                     try {
                         var resp = call.ResponseStream.Current;
                         await UpdateStatusRefresh();
-                        UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, LastCheckVersion, LastCheckTime, LastCheckUri, LastCheckShaUri, LastCheckChangelog));
+                        UpdateChecked?.Invoke(this, new AppUpdaterEventArgs(Status, Release));
                     }
                     finally {
                         _updateCheckedLock.Release();

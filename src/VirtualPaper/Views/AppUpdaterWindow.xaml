@@ -8,6 +8,7 @@
         xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
         xmlns:lang="clr-namespace:VirtualPaper.lang"
         xmlns:mdxam="clr-namespace:MdXaml;assembly=MdXaml"
+        xmlns:converters="clr-namespace:VirtualPaper.Converters"
         mc:Ignorable="d"
         WindowStartupLocation="CenterScreen"
         WindowBackdropType="Mica"
@@ -17,11 +18,15 @@
         Height="600" Width="800"
         ResizeMode="CanMinimize"
         Title="Virtual Paper Updater"
-        Icon="pack://application:,,,/Resources/appicon_download.png"
+        Icon="pack://application:,,,/VirtualPaper;component/Resources/appicon_download.ico"
         ExtendsContentIntoTitleBar="True"
         Closing="FluentWindow_Closing"
         Closed="FluentWindow_Closed"
         PreviewKeyDown="FluentWindow_PreviewKeyDown">
+
+    <ui:FluentWindow.Resources>
+        <converters:BoolToErrorBrushConverter x:Key="BoolToErrorBrushConverter"/>
+    </ui:FluentWindow.Resources>
 
     <Grid x:Name="MainGrid">
         <Grid.RowDefinitions>
@@ -39,7 +44,7 @@
             ShowMaximize="False"
             Height="48">
             <ui:TitleBar.Icon>
-                <ui:ImageIcon Source="pack://application:,,,/Resources/appicon_download.png" />
+                <ui:ImageIcon Source="pack://application:,,,/VirtualPaper;component/Resources/appicon_download.ico" />
             </ui:TitleBar.Icon>
         </ui:TitleBar>
 
@@ -102,28 +107,36 @@
                                FontSize="13"/>
 
                     <ProgressBar Height="8"
-                                 Margin="0,8,0,0"                                 
+                                 Margin="0,8,0,0"                                            
                                  IsIndeterminate="{Binding IsIndeterminate}"
-                                 Foreground="{DynamicResource AccentFillColorDefaultBrush}"
+                                 Foreground="{Binding IsError, Converter={StaticResource BoolToErrorBrushConverter}}"
                                  Background="{DynamicResource ControlStrokeColorSecondaryBrush}"
                                  Value="{Binding Progress}"
                                  Minimum="0" Maximum="100"/>
 
-                    <TextBlock Text="{Binding SpeedText}"
-                               FontSize="12"
-                               Margin="0,6,0,0"/>
+                    <Grid Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="90"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding SpeedValue}" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="{Binding SizeText}" FontSize="12"/>
+                        <TextBlock Grid.Column="2" Text="{Binding RemainingText}" FontSize="12"/>
+                    </Grid>
                 </StackPanel>
 
                 <!-- 右侧：操作按钮 -->
-                <ui:Button Grid.Column="1"
-                           Content="{Binding ActionButtonText}"
-                           Command="{Binding ActionCommand}"
-                           IsEnabled="{Binding ActionButtonEnable}"
-                           Appearance="Primary"
-                           Width="100"
-                           Height="36"
-                           Margin="8,0"
-                           HorizontalAlignment="Right"/>
+                <ui:Button x:Name="actionBtn"
+                    Grid.Column="1"
+                    Content="{Binding ActionButtonText}"
+                    Click="ActionBtn_Click"
+                    IsEnabled="{Binding ActionButtonEnable}"
+                    Appearance="Primary"
+                    Width="100"
+                    Height="36"
+                    Margin="8,0"
+                    HorizontalAlignment="Right"/>
             </Grid>
         </Border>
 

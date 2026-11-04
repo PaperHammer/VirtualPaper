@@ -47,7 +47,7 @@ namespace VirtualPaper.IntelligentPanel.Views.SuperResolutionComp {
             }
         }
 
-        private async void SourceImageBorder_Tapped(object sender, TappedRoutedEventArgs e) {
+        private async void SourceImageButton_Click(object sender, RoutedEventArgs e) {
             await _viewModel.SelectSourceImageAsync();
         }
 

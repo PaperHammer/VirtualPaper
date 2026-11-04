@@ -25,8 +25,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
 
         public int Magnification => Data.Magnification;
         public string ModeText => Data.Mode switch {
-            EnhanceMode.QualityRestore => LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Enhance_QualityRestore)),
-            EnhanceMode.SuperResolution => $"{LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Enhance_SuperResolution))} x{Magnification}",
+            EnhanceMode.QualityRestore => LanguageUtil.GetI18n(Constants.I18n.Intelligent_Enhance_QualityRestore),
+            EnhanceMode.SuperResolution => $"{LanguageUtil.GetI18n(Constants.I18n.Intelligent_Enhance_SuperResolution)} x{Magnification}",
             _ => string.Empty
         };
         #endregion
@@ -51,12 +51,12 @@ namespace VirtualPaper.IntelligentPanel.Models {
         }
 
         public string StatusText => Status switch {
-            TaskStatus.Created => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Completed)),
-            TaskStatus.WaitingToRun => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Queue)),
-            TaskStatus.Running => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Processing)),
-            TaskStatus.RanToCompletion => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Completed)),
-            TaskStatus.Faulted => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Failed)),
-            _ => LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Task_Status_Unknown))
+            TaskStatus.Created => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
+            TaskStatus.WaitingToRun => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Queue),
+            TaskStatus.Running => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Processing),
+            TaskStatus.RanToCompletion => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
+            TaskStatus.Faulted => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Failed),
+            _ => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Unknown)
         };
 
         public bool IsPending => Status is TaskStatus.Created or TaskStatus.WaitingToRun;

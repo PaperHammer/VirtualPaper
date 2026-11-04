@@ -1,0 +1,46 @@
+{
+    "version": 1,
+    "name": "template",
+    "files": [
+        {
+            "path": "index.html",
+            "type": "html",
+            "role": "entry"
+        },
+        {
+            "path": "css",
+            "type": "folder",
+            "role": "style"
+        },
+        {
+            "path": "css/style.css",
+            "type": "css",
+            "role": "style"
+        },
+        {
+            "path": "js",
+            "type": "folder",
+            "role": "script"
+        },
+        {
+            "path": "js/script.js",
+            "type": "javascript",
+            "role": "script"
+        },
+        {
+            "path": "images",
+            "type": "folder",
+            "role": "asset"
+        },
+        {
+            "path": "images/sample-image.png",
+            "type": "file",
+            "role": "asset"
+        },
+        {
+            "path": "project.json",
+            "type": "json",
+            "role": "metadata"
+        }
+    ]
+}

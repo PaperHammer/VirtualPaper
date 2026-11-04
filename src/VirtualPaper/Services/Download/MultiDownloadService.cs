@@ -3,12 +3,17 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using Downloader;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Services.Interfaces;
 using IDownloadService = VirtualPaper.Services.Interfaces.IDownloadService;
 
 namespace VirtualPaper.Services.Download {
     public partial class MultiDownloadService : IDownloadService {
         public MultiDownloadService() {
+            _parallelDownloaders = new List<DownloadService>();
+        }
+
+        private static DownloadService CreateDownloader() {
             //CPU can get toasty.. should rate limit to 100MB/s ?
             var downloadOpt = new DownloadConfiguration() {
                 BufferBlockSize = 8000, // usually, hosts support max to 8000 bytes, default values is 8000
@@ -23,9 +28,8 @@ namespace VirtualPaper.Services.Download {
                 ReserveStorageSpaceBeforeStartingDownload = false,
             };
 
-            _downloader = new DownloadService(downloadOpt);
+            return new DownloadService(downloadOpt);
         }
-
 
         /// <summary>
         /// 异步下载文件并逐步返回下载进度。
@@ -34,8 +38,6 @@ namespace VirtualPaper.Services.Download {
             Uri uri,
             string saveFilePath,
             [EnumeratorCancellation] CancellationToken token) {
-            await _downloader.Clear();
-
             var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             var channel = Channel.CreateUnbounded<DownloadProgress>(
                 new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
@@ -52,7 +54,7 @@ namespace VirtualPaper.Services.Download {
                         : 0);
 
                 // 尝试异步写入通道
-                channel.Writer.TryWrite(new DownloadProgress(percent, speed, remaining));
+                channel.Writer.TryWrite(new DownloadProgress(percent, speed, remaining, e.ReceivedBytesSize, e.TotalBytesToReceive));
             }
 
             void OnCompleted(object? sender, AsyncCompletedEventArgs e) {
@@ -66,11 +68,19 @@ namespace VirtualPaper.Services.Download {
                 channel.Writer.TryComplete();
             }
 
-            _downloader.DownloadProgressChanged += OnProgressChanged;
-            _downloader.DownloadFileCompleted += OnCompleted;
+            var downloader = _downloader ?? CreateDownloader();
+            _downloader = downloader;
+
+            downloader.DownloadProgressChanged += OnProgressChanged;
+            downloader.DownloadFileCompleted += OnCompleted;
+
+            var ctr = token.Register(() => {
+                var captured = downloader;
+                _ = Task.Run(() => { try { captured.Dispose(); } catch { } });
+            });
 
             try {
-                var downloadTask = _downloader.DownloadFileTaskAsync(uri.AbsoluteUri, saveFilePath, token)
+                var downloadTask = downloader.DownloadFileTaskAsync(uri.AbsoluteUri, saveFilePath, token)
                     .ContinueWith(t => {
                         // 捕获潜在未观察异常
                         if (t.IsFaulted)
@@ -84,9 +94,119 @@ namespace VirtualPaper.Services.Download {
                 await Task.WhenAll(downloadTask, tcs.Task);
             }
             finally {
-                _downloader.DownloadProgressChanged -= OnProgressChanged;
-                _downloader.DownloadFileCompleted -= OnCompleted;
+                ctr.Dispose();
+                downloader.DownloadProgressChanged -= OnProgressChanged;
+                downloader.DownloadFileCompleted -= OnCompleted;
+
+                if (token.IsCancellationRequested) {
+                    _downloader = null;
+                }
             }
+        }
+
+        /// <summary>
+        /// 并行下载多个文件，返回聚合后的总进度
+        /// </summary>
+        public async IAsyncEnumerable<DownloadProgress> DownloadMultipleAsync(
+            IEnumerable<(Uri uri, string saveFilePath)> downloads,
+            [EnumeratorCancellation] CancellationToken token) {
+
+            var downloadList = downloads.ToList();
+            if (downloadList.Count == 0) yield break;
+
+            if (downloadList.Count == 1) {
+                await foreach (var p in DownloadAsync(downloadList[0].uri, downloadList[0].saveFilePath, token))
+                    yield return p;
+                yield break;
+            }
+
+            var channel = Channel.CreateUnbounded<DownloadProgress>(
+                new UnboundedChannelOptions { SingleReader = true });
+
+            var perPlugin = new (long received, long total, float speed)[downloadList.Count];
+            var lockObj = new object();
+
+            void ReportAggregate() {
+                long totalReceived = 0, totalAll = 0;
+                float totalSpeed = 0;
+                lock (lockObj) {
+                    for (int i = 0; i < perPlugin.Length; i++) {
+                        totalReceived += perPlugin[i].received;
+                        totalAll += perPlugin[i].total;
+                        totalSpeed += perPlugin[i].speed;
+                    }
+                }
+                float percent = totalAll > 0 ? (float)totalReceived / totalAll * 100 : 0;
+                TimeSpan remaining = totalSpeed > 0
+                    ? TimeSpan.FromSeconds((totalAll - totalReceived) / (totalSpeed * 1024.0 * 1024.0))
+                    : TimeSpan.Zero;
+                channel.Writer.TryWrite(new DownloadProgress(percent, totalSpeed, remaining, totalReceived, totalAll));
+            }
+
+            var tasks = downloadList.Select((item, index) => Task.Run(async () => {
+                var downloadOpt = new DownloadConfiguration() {
+                    BufferBlockSize = 8000,
+                    ChunkCount = 4,
+                    MaxTryAgainOnFailover = 5,
+                    Timeout = 10000,
+                    ClearPackageOnCompletionWithFailure = false,
+                    ReserveStorageSpaceBeforeStartingDownload = false,
+                };
+                var downloader = new DownloadService(downloadOpt);
+                
+                lock (_parallelDownloaders) {
+                    _parallelDownloaders.Add(downloader);
+                }
+                
+                CancellationTokenRegistration itemCtr = default;
+                try {
+                    var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                    downloader.DownloadProgressChanged += (s, e) => {
+                        if (token.IsCancellationRequested) return;
+                        lock (lockObj) {
+                            perPlugin[index] = (e.ReceivedBytesSize, e.TotalBytesToReceive, (float)(e.BytesPerSecondSpeed / 1024.0 / 1024.0));
+                        }
+                        ReportAggregate();
+                    };
+                    downloader.DownloadFileCompleted += (s, e) => {
+                        if (e.Error != null) tcs.TrySetException(e.Error);
+                        else if (e.Cancelled) tcs.TrySetCanceled(token);
+                        else tcs.TrySetResult();
+                    };
+
+                    itemCtr = token.Register(() => {
+                        var captured = downloader;
+                        _ = Task.Run(() => { try { captured.Dispose(); } catch { } });
+                    });
+
+                    var downloadTask = downloader.DownloadFileTaskAsync(item.uri.AbsoluteUri, item.saveFilePath, token)
+                        .ContinueWith(t => { if (t.IsFaulted) _ = t.Exception; }, TaskContinuationOptions.ExecuteSynchronously);
+
+                    await Task.WhenAll(downloadTask, tcs.Task);
+                }
+                finally {
+                    itemCtr.Dispose();
+                    lock (_parallelDownloaders) {
+                        _parallelDownloaders.Remove(downloader);
+                    }
+                }
+            }, token)).ToArray();
+
+            // 在后台等待所有下载完成，然后关闭 channel
+            _ = Task.Run(async () => {
+                try {
+                    await Task.WhenAll(tasks);
+                }
+                catch { }
+                channel.Writer.TryComplete();
+            });
+
+            await foreach (var p in channel.Reader.ReadAllAsync(token))
+                yield return p;
+
+            // 等待所有下载任务完成（传播异常）
+            await Task.WhenAll(tasks);
         }
 
         /// <summary>
@@ -97,13 +217,16 @@ namespace VirtualPaper.Services.Download {
 
             string tempFilePath = Path.Combine(Path.GetTempPath(), $"virtualpaper_sha256_{Guid.NewGuid():N}.txt");
 
+            var downloader = _downloader ?? CreateDownloader();
+            _downloader = downloader;
+
             try {
-                await _downloader.DownloadFileTaskAsync(shaUri.AbsoluteUri, tempFilePath, token);
+                await downloader.DownloadFileTaskAsync(shaUri.AbsoluteUri, tempFilePath, token);
 
                 string sha256Content = await File.ReadAllTextAsync(tempFilePath, token);
                 sha256Content = sha256Content.Trim();
 
-                if (!IsValidSHA256(sha256Content))
+                if (sha256Content.Length != 64 || !System.Text.RegularExpressions.Regex.IsMatch(sha256Content, @"^[a-fA-F0-9]{64}$"))
                     throw new InvalidDataException("The downloaded SHA256 file format is invalid");
 
                 return sha256Content;
@@ -127,81 +250,67 @@ namespace VirtualPaper.Services.Download {
         /// <param name="token">取消令牌</param>
         /// <returns>校验结果</returns>
         public async Task<bool> VerifyFileIntegrityAsync(string filePath, string expectedSha256, CancellationToken token = default) {
-            if (!File.Exists(filePath) || !IsValidSHA256(expectedSha256))
-                return false;
-
-            string actualSha256 = await CalculateFileSHA256Async(filePath, token);
-
-            return string.Equals(actualSha256, expectedSha256, StringComparison.OrdinalIgnoreCase);
+            return await FileUtil.VerifyFileIntegrityAsync(filePath, expectedSha256, token);
         }
 
 
         public void Pause() {
-            if (_downloader.Status == DownloadStatus.Running)
+            if (_downloader?.Status == DownloadStatus.Running)
                 _downloader.Pause();
+            
+            List<DownloadService> snapshot;
+            lock (_parallelDownloaders) {
+                snapshot = _parallelDownloaders.ToList();
+            }
+            
+            Parallel.ForEach(snapshot, downloader => {
+                if (downloader.Status == DownloadStatus.Running)
+                    downloader.Pause();
+            });
         }
 
         public void Resume() {
-            if (_downloader.Status == DownloadStatus.Paused)
+            if (_downloader?.Status == DownloadStatus.Paused)
                 _downloader.Resume();
+            
+            List<DownloadService> snapshot;
+            lock (_parallelDownloaders) {
+                snapshot = _parallelDownloaders.ToList();
+            }
+            
+            Parallel.ForEach(snapshot, downloader => {
+                if (downloader.Status == DownloadStatus.Paused)
+                    downloader.Resume();
+            });
+        }
+
+        public Task CancelAsync() {
+            _downloader?.Dispose();
+            _downloader = null;
+
+            List<DownloadService> snapshot;
+            lock (_parallelDownloaders) {
+                snapshot = _parallelDownloaders.ToList();
+                _parallelDownloaders.Clear();
+            }
+            foreach (var downloader in snapshot) {
+                downloader.Dispose();
+            }
+
+            return Task.CompletedTask;
         }
 
         public void Dispose() {
             _downloader?.Dispose();
+            lock (_parallelDownloaders) {
+                foreach (var downloader in _parallelDownloaders) {
+                    downloader.Dispose();
+                }
+                _parallelDownloaders.Clear();
+            }
         }
 
-        #region Private Methods
-        /// <summary>
-        /// 计算文件的SHA256哈希值
-        /// </summary>
-        private static async Task<string> CalculateFileSHA256Async(string filePath, CancellationToken token) {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 8192, true);
-
-            var hashBytes = await sha256.ComputeHashAsync(fileStream, token);
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-        }
-
-        /// <summary>
-        /// 验证SHA256字符串格式
-        /// </summary>
-        private static bool IsValidSHA256(string sha256) {
-            if (string.IsNullOrEmpty(sha256) || sha256.Length != 64)
-                return false;
-            return SHA256Regex().IsMatch(sha256);
-        }
-        #endregion
-
-        ///// <summary>
-        ///// 内部轻量级异步通道（单消费者）
-        ///// </summary>
-        //private sealed class Channel<T> {
-        //    private readonly Queue<T> _queue = new();
-        //    private readonly SemaphoreSlim _signal = new(0);
-
-        //    public void TryWrite(T value) {
-        //        lock (_queue) {
-        //            _queue.Enqueue(value);
-        //        }
-        //        _signal.Release();
-        //    }
-
-        //    public async IAsyncEnumerable<T> ReadAllAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token) {
-        //        while (!token.IsCancellationRequested) {
-        //            await _signal.WaitAsync(token);
-        //            T item;
-        //            lock (_queue) {
-        //                if (_queue.Count == 0) continue;
-        //                item = _queue.Dequeue();
-        //            }
-        //            yield return item;
-        //        }
-        //    }
-        //}
-
-        private readonly DownloadService _downloader;
-
-        [System.Text.RegularExpressions.GeneratedRegex(@"^[a-fA-F0-9]{64}$")]
-        private static partial System.Text.RegularExpressions.Regex SHA256Regex();
+        private DownloadService? _downloader;
+        private readonly List<DownloadService> _parallelDownloaders;
     }
 }

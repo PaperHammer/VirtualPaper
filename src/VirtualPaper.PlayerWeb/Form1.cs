@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events.EffectValue.Base;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils;
@@ -165,20 +165,33 @@ namespace VirtualPaper.PlayerWeb {
             _webView2.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
             _webView2.CoreWebView2.NewWindowRequested += CoreWebView2_NewWindowRequested;
 
+            #region devtools protocol
+            var exceptions = _webView2.CoreWebView2.GetDevToolsProtocolEventReceiver("Runtime.exceptionThrown");
+            exceptions.DevToolsProtocolEventReceived += (_, args) => Program.WriteToParent(new VirtualPaperMessageConsole {
+                MsgType = ConsoleMessageType.Error, Message = "Browser script exception: " + args.ParameterObjectAsJson
+            });
+            await _webView2.CoreWebView2.CallDevToolsProtocolMethodAsync("Runtime.enable", "{}");
+            var browserLog = _webView2.CoreWebView2.GetDevToolsProtocolEventReceiver("Log.entryAdded");
+            browserLog.DevToolsProtocolEventReceived += (_, args) => {
+                using var entry = JsonDocument.Parse(args.ParameterObjectAsJson);
+                if (entry.RootElement.GetProperty("entry").GetProperty("level").GetString() == "error")
+                    Program.WriteToParent(new VirtualPaperMessageConsole {
+                        MsgType = ConsoleMessageType.Error, Message = "Browser resource error: " + args.ParameterObjectAsJson
+                    });
+            };
+            await _webView2.CoreWebView2.CallDevToolsProtocolMethodAsync("Log.enable", "{}");
+            #endregion
+
             string playingFile = GetPlayingFile();
             string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile);
-            _webView2.NavigateToLocalPath(new Uri(fullPath).LocalPath);
+            _webView2.NavigateToLocalPath(new Uri(fullPath).LocalPath,
+                _startArgs.RuntimeType == "RImage3D" ? Path.GetDirectoryName(_startArgs.FilePath!) : null);
 
             this.Controls.Add(_webView2);
             _webView2.Dock = DockStyle.Fill;
         }
 
         private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
-            // Expected behavior: DebugActiveProcess(CEF_D3DRenderingSubProcess)
-            // Ref: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2processfailedkind
-            if (e.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
-                return;
-
             Program.WriteToParent(new VirtualPaperMessageConsole() {
                 MsgType = ConsoleMessageType.Error,
                 Message = $"CoreWebView2 process failed: {e.Reason}"
@@ -205,13 +218,6 @@ namespace VirtualPaper.PlayerWeb {
                     Message = $"WebView navigation failed: {e.WebErrorStatus}"
                 });
                 return;
-            }
-
-            if (!_webView2.TryGetCefD3DRenderingSubProcessId(out cefD3DRenderingSubProcessId)) {
-                Program.WriteToParent(new VirtualPaperMessageConsole() {
-                    MsgType = ConsoleMessageType.Error,
-                    Message = $"Failed to retrieve GetCefD3DRenderingSubProcessId"
-                });
             }
 
             Run();
@@ -243,11 +249,12 @@ namespace VirtualPaper.PlayerWeb {
             return $"https://{CoreWebView2Extensions.WallpaperHost}/{wpFolder}/{htmlFile}";
         }
 
-        string GetWallpaperRootVirtualPath(string? fileName, string? filePath) {
-            if (string.IsNullOrEmpty(fileName) || string.IsNullOrEmpty(filePath))
-                throw new ArgumentNullException(nameof(filePath));
-
-            return $"https://{CoreWebView2Extensions.WallpaperHost}/{fileName}/{Path.GetFileName(filePath)}";
+        string GetTextureVirtualPath(string? filePath) {
+            if (string.IsNullOrEmpty(filePath)) throw new ArgumentNullException(nameof(filePath));
+            if (!string.Equals(Path.GetDirectoryName(Path.GetFullPath(filePath)),
+                Path.GetDirectoryName(Path.GetFullPath(_startArgs.FilePath!)), StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("3D textures must belong to the current wallpaper directory.");
+            return $"https://texture.wallpaper.localhost/{Uri.EscapeDataString(Path.GetFileName(filePath))}";
         }
         #endregion
 
@@ -305,6 +312,9 @@ namespace VirtualPaper.PlayerWeb {
                         break;
                     case MessageType.cmd_resume:
                         HandlePlaybackCommand(false);
+                        break;
+                    case MessageType.cmd_screenshot:
+                        CrossThreadInvoker.InvokeOnUIThread(() => _ = CaptureAsync((VirtualPaperScreenshotCmd)obj));
                         break;
                     case MessageType.cmd_muted:
                         HandleMuteCommand((VirtualPaperMutedCmd)obj);
@@ -373,16 +383,49 @@ namespace VirtualPaper.PlayerWeb {
         }
 
         private void HandlePlaybackCommand(bool pause) {
-            if (_isPaused == pause) return;
+            CrossThreadInvoker.InvokeOnUIThread(() => _playbackTask = ChangePlaybackAsync(_playbackTask, pause));
+        }
 
-            if (pause) {
-                SuspendRenderingSubProcess();
+        private async Task ChangePlaybackAsync(Task previous, bool pause) {
+            await previous;
+            if (_isPaused == pause) return;
+            try {
+                // The bundled runtime stops video, WebGL RAF and atmosphere through this hook.
+                // Never attach a debugger to Chromium's rendering process to pause playback.
+                await _webView2.ExecuteScriptAsync($"{Fields.PlaybackChanged}({(pause ? "true" : "false")});");
+                _isPaused = pause;
             }
-            else {
-                ResumeRenderingSubProcess();
+            catch (Exception ex) {
+                Program.WriteToParent(new VirtualPaperMessageConsole {
+                    MsgType = ConsoleMessageType.Error, Message = $"Playback state change failed: {ex.Message}"
+                });
             }
-            _scriptExecutor?.EnqueueEvent(Fields.PlaybackChanged, pause);
-            _isPaused = pause;
+        }
+
+        private async Task CaptureAsync(VirtualPaperScreenshotCmd command) {
+            bool success = false;
+            try {
+                await _playbackTask;
+                if (command.Delay > 0) await Task.Delay(checked((int)command.Delay));
+                var format = command.Format switch {
+                    ScreenshotFormat.png => CoreWebView2CapturePreviewImageFormat.Png,
+                    ScreenshotFormat.jpeg => CoreWebView2CapturePreviewImageFormat.Jpeg,
+                    _ => throw new NotSupportedException($"Screenshot format: {command.Format}")
+                };
+                string path = Path.GetFullPath(command.FilePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                using var stream = File.Create(path);
+                await _webView2.CoreWebView2.CapturePreviewAsync(format, stream);
+                success = true;
+            }
+            catch (Exception ex) {
+                Program.WriteToParent(new VirtualPaperMessageConsole {
+                    MsgType = ConsoleMessageType.Error, Message = $"Screenshot failed: {ex.Message}"
+                });
+            }
+            finally {
+                Program.WriteToParent(new VirtualPaperMessageScreenshot { FileName = command.FilePath, Success = success });
+            }
         }
 
         private void HandleMuteCommand(VirtualPaperMutedCmd muted) {
@@ -394,7 +437,11 @@ namespace VirtualPaper.PlayerWeb {
                 var args = JsonSerializer.Deserialize<StartArgsWeb>(update.Args);
                 if (args != null && _startArgs.FilePath != args.FilePath) {
                     _startArgs = args;
-                    Run();
+                    if (_startArgs.RuntimeType == "RImage3D") {
+                        _webView2.NavigateToLocalPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, GetPlayingFile()),
+                            Path.GetDirectoryName(_startArgs.FilePath!));
+                    }
+                    else Run();
                 }
             }            
         }
@@ -410,7 +457,9 @@ namespace VirtualPaper.PlayerWeb {
                     break;
                 case "RImage3D":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, GetWallpaperVirtualPath(_startArgs.FilePath), GetWallpaperRootVirtualPath(Path.GetFileNameWithoutExtension(_startArgs.FilePath), _startArgs.DepthFilePath));
+                    // Three.js requests CORS-enabled textures; expose only this wallpaper's folder.
+                    // RWeb continues using the separate DenyCors wallpaper mapping.
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, GetTextureVirtualPath(_startArgs.FilePath), GetTextureVirtualPath(_startArgs.DepthFilePath));
                     break;
                 case "RWeb":
                     UpdateRectToWebview();
@@ -421,31 +470,6 @@ namespace VirtualPaper.PlayerWeb {
             }
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
             _scriptExecutor?.EnqueueEvent(Fields.Play);
-        }
-
-        /// <summary>
-        /// Resumes the suspended CEF Direct3D rendering subprocess by detaching the debugger.
-        /// Must be called on the same thread that previously attached, since debugger state is thread-specific.
-        /// </summary>
-        private void ResumeRenderingSubProcess() {
-            if (cefD3DRenderingSubProcessId == 0)
-                return;
-
-            _ = Native.DebugActiveProcessStop((uint)cefD3DRenderingSubProcessId);
-        }
-
-        /// <summary>
-        /// Suspends the CEF Direct3D rendering subprocess by attaching a debugger.
-        /// Must be called on the same thread to ensure proper detachment later.
-        /// </summary>
-        private void SuspendRenderingSubProcess() {
-            // The "System Idle Process" is given process ID 0, Kernel is 1.
-            if (cefD3DRenderingSubProcessId == 0)
-                return;
-
-            // DebugSetProcessKillOnExit by default is TRUE.
-            // Ref: https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-debugsetprocesskillonexit
-            _ = Native.DebugActiveProcess((uint)cefD3DRenderingSubProcessId);
         }
 
         private string GetPlayingFile() {
@@ -487,12 +511,15 @@ namespace VirtualPaper.PlayerWeb {
 
         private void ExecuteCheckBoxSet(string propertyName, bool val) {
             switch (propertyName) {
-                case "Parallax":
+                case nameof(Picture3DCostumize.Parallax):
                     Interlocked.Exchange(ref _isParallaxOnFromUser, val ? 1 : 0);
                     RunParallax();
                     break;
-                case "TimeAtmoPerception":
+                case nameof(Picture3DCostumize.TimeAtmoPerception):
                     RunTimePerception(val);
+                    break;
+                case nameof(Picture3DCostumize.ParallaxAutoDrift):
+                    _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, propertyName, val);
                     break;
                 default:
                     break;
@@ -601,13 +628,13 @@ namespace VirtualPaper.PlayerWeb {
         private WebViewScriptExecutor? _scriptExecutor;
         private bool _isPaused = false;
         private Native.RECT _windowRc;
-        private int cefD3DRenderingSubProcessId;
+        private Task _playbackTask = Task.CompletedTask;
         private int _isParallaxOnFromUser;      // 0=关闭, 1=开启（用户效果设置）
         private int _isParallaxOnFromMouse;     // 0=鼠标不在本壁纸上, 1=在（MouseEnter/Leave）
         private int _isParallaxOnFromIpc = 1;   // 0=IPC 挂起（全屏/焦点应用遮盖）, 1=IPC 允许（默认允许）
         private readonly CancellationTokenSource _ctsConsoleIn = new();
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1 --autoplay-policy=no-user-gesture-required "
-        }; // workaround: avoid cache
+            AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
+        };
     }
 }

@@ -34,7 +34,7 @@
                 <Grid>
                     <Image 
                         Stretch="UniformToFill"
-                        Source="{StaticResource DraftPanel_Create_StaticImge_LayerThu}"/>
+                        Source="{StaticResource EditPanel_Create_StaticImge_LayerThu}"/>
 
                     <Image  
                         Stretch="UniformToFill"

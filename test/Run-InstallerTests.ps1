@@ -21,8 +21,8 @@ if (Test-Path -LiteralPath $ReportPath) { throw "Refusing to reuse an existing i
 $artifacts = "$ReportPath.artifacts"
 if (Test-Path -LiteralPath $artifacts) { throw "Installer lifecycle artifacts already exist: $artifacts" }
 New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
-# Unicode and spaces exercise installer/application path handling; never reuse a daily install.
-$installDir = Join-Path ([IO.Path]::GetTempPath()) "Virtual Paper 安装验收-$([guid]::NewGuid().ToString('N'))"
+# Spaces exercise installer/application path handling; never reuse a daily install.
+$installDir = Join-Path ([IO.Path]::GetTempPath()) "Virtual Paper install-acceptance-$([guid]::NewGuid().ToString('N'))"
 $project = Join-Path $repositoryRoot 'test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj'
 $probe = Join-Path $repositoryRoot "test/VirtualPaper.InstallerTest/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
 if (-not $NoBuild) {

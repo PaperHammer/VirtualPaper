@@ -475,7 +475,7 @@ jobs:
         retention-days: 7
 
     - name: Upload WinUI results
-      if: always()
+      if: always() && hashFiles('TestResults/test-results-ui-operation/**') != ''
       uses: actions/upload-artifact@v4
       with:
         overwrite: true

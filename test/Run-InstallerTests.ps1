@@ -142,13 +142,27 @@ $report = Invoke-InstallerLifecycle -Install {
         [version]$_.Version -ne [version]$packageVersion
     }).Count) { throw 'The installed application registration does not match this installation.' }
     $shortcuts = @($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ })
-    if ($shortcuts.Count -eq 0) { throw 'The Start menu shortcut was not installed.' }
+    if ($shortcuts.Count -eq 0) { throw "The Start menu shortcut was not installed. Checked: $($shortcutPaths -join '; ')" }
+    $expectedTarget = Join-Path $installDir 'VirtualPaper.exe'
     $shell = New-Object -ComObject WScript.Shell
     try {
         foreach ($path in $shortcuts) {
             $shortcut = $shell.CreateShortcut($path) # Read-only: never Save().
             try {
-                if ($shortcut.TargetPath -ine (Join-Path $installDir 'VirtualPaper.exe')) { throw "Start menu shortcut points to the wrong application: $path" }
+                $actualTarget = $shortcut.TargetPath
+                $targetExists = -not [string]::IsNullOrWhiteSpace($actualTarget) -and
+                    (Test-Path -LiteralPath $actualTarget -PathType Leaf)
+                Write-Host ('Start menu shortcut: ' + ([ordered]@{
+                    ShortcutPath = $path; ActualTarget = $actualTarget
+                    ExpectedTarget = $expectedTarget; TargetExists = $targetExists
+                } | ConvertTo-Json -Compress))
+                if ([string]::IsNullOrWhiteSpace($actualTarget)) {
+                    throw "Start menu shortcut has an empty target: $path. Expected: $expectedTarget"
+                }
+                if ($actualTarget -ine $expectedTarget) {
+                    throw "Start menu shortcut points to the wrong application: $path. Actual: $actualTarget; expected: $expectedTarget; target exists: $targetExists"
+                }
+                if (-not $targetExists) { throw "Start menu shortcut target does not exist: $actualTarget (shortcut: $path)" }
             } finally { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut) | Out-Null }
         }
     } finally { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) | Out-Null }

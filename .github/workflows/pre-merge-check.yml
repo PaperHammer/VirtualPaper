@@ -354,7 +354,7 @@ jobs:
 
     - name: Upload WinUI results
       uses: actions/upload-artifact@v4
-      if: always()
+      if: always() && hashFiles('TestResults/UIOperation/**') != ''
       with:
         overwrite: true
         name: test-results-ui-operation

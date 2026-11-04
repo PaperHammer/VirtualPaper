@@ -89,7 +89,13 @@ try {
     $history.Previous.assets = @()
     Assert-Equal (Get-ReleaseBaseline fixture/repo $history $script:downloadPath -WarningAction SilentlyContinue) $null 'Legacy manifest absence is explicit'
     $history.Previous.name = 'Legacy release with unknown build'
-    Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } 'neither a component manifest nor a recorded build'
+    $legacyBaseline = Get-ReleaseBaseline fixture/repo $history $script:downloadPath -WarningAction SilentlyContinue
+    Assert-Equal $legacyBaseline $null 'Missing legacy build number does not block a full release'
+    $bootstrap = New-ComponentManifest '2611R04' -Previous $legacyBaseline
+    foreach ($value in $bootstrap.plugins.Values) { Assert-Equal $value '2611R04' 'Bootstrap assigns new builds, without guessing old plugin versions' }
+    Assert-Throws { New-ComponentManifest '2611R04' -PluginUpdate -UpdatePlugins UI -Previous $legacyBaseline } 'requires the previous published'
+    $history.Previous.assets = @(@{ name = 'app_comp_manifest.json' }, @{ name = 'app_comp_manifest.json' })
+    Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } 'duplicate component manifests'
 
     # Empty release pages are the only first-release case; transport/auth errors must fail closed.
     $script:releasePages = @(@())
@@ -125,17 +131,53 @@ try {
         if (-not $match.Success) { throw "Missing release step: $Name" }
         return [regex]::Replace($match.Groups['body'].Value, '(?m)^        ', '')
     }
+    $baselineStep = [scriptblock]::Create((Get-StepBody 'Read release baseline'))
     $versionStep = [scriptblock]::Create((Get-StepBody 'Calculate version and build'))
     $manifestStep = [scriptblock]::Create((Get-StepBody 'Build component manifest'))
     New-Item -ItemType Directory -Path (Join-Path $fixture '.github/scripts'), (Join-Path $fixture 'src/VirtualPaper') -Force | Out-Null
     Copy-Item (Join-Path $PSScriptRoot '../.github/scripts/ReleaseMetadata.ps1'), (Join-Path $PSScriptRoot '../.github/scripts/ReleaseVersion.ps1') -Destination (Join-Path $fixture '.github/scripts')
-    $variables = @('GITHUB_OUTPUT', 'PR_LABELS', 'INCREMENT', 'BUILD_NUMBER', 'HAS_PLUGIN_UPDATE', 'UPDATE_PLUGINS', 'RELEASE_BIN_DIR', 'APP_COMP_MANIFEST')
+    $variables = @('GITHUB_OUTPUT', 'GITHUB_REPOSITORY', 'RUNNER_TEMP', 'PR_LABELS', 'INCREMENT', 'BUILD_NUMBER', 'HAS_PLUGIN_UPDATE', 'UPDATE_PLUGINS', 'RELEASE_BIN_DIR', 'APP_COMP_MANIFEST')
     $saved = @{}
     foreach ($name in $variables) { $saved[$name] = [Environment]::GetEnvironmentVariable($name) }
     Push-Location -LiteralPath $fixture
     try {
         $month = (Get-Date).ToString('yyMM', [Globalization.CultureInfo]::InvariantCulture)
         $env:INCREMENT = 'build'
+        # Real v0.5.2.0 metadata: no component manifest and no build recorded in its title/tag.
+        $script:releasePages = @(@(@{
+            tag_name = 'v0.5.2.0'; name = 'v0.5.2.0'; draft = $false; prerelease = $false
+            published_at = '2026-06-23T05:16:04Z'
+            assets = @(@{ name = 'SHA256.txt' }, @{ name = 'virtualpaper_setup_x64_full_v0_5_2_0.exe' })
+        }))
+        $env:GITHUB_REPOSITORY = 'fixture/repo'
+        $env:RUNNER_TEMP = $fixture
+        & $baselineStep -WarningAction SilentlyContinue | Out-Null
+        $legacy = Get-Content release-baseline.json -Raw | ConvertFrom-Json -AsHashtable
+        Assert-Equal $legacy.manifest $null 'Workflow permits missing legacy component manifest'
+        Assert-Equal @($legacy.builds).Count 0 'Workflow does not invent legacy build numbers'
+        foreach ($mode in @('full', 'plugin')) {
+            [IO.File]::WriteAllText((Join-Path $fixture 'src/VirtualPaper/VirtualPaper.csproj'), '<Project><AssemblyVersion>0.5.2.0</AssemblyVersion></Project>')
+            $env:GITHUB_OUTPUT = Join-Path $fixture "bootstrap-$mode-output.txt"
+            $env:PR_LABELS = if ($mode -eq 'plugin') { 'version:build,update-plugin-ui' } else { 'version:build' }
+            & $versionStep | Out-Null
+            $outputs = @{}
+            foreach ($line in Get-Content $env:GITHUB_OUTPUT) { $key, $value = $line -split '=', 2; $outputs[$key] = $value }
+            Assert-Equal $outputs.build_number "${month}R01" "Bootstrap $mode build number"
+            $env:BUILD_NUMBER = $outputs.build_number
+            $env:HAS_PLUGIN_UPDATE = $outputs.has_plugin_update
+            $env:UPDATE_PLUGINS = $outputs.update_plugins
+            if ($mode -eq 'plugin') {
+                Assert-Throws { & $manifestStep } 'requires the previous published'
+            } else {
+                Assert-Equal $outputs.new_version '0.5.3.0' 'Bootstrap full release increments product version'
+                & $manifestStep | Out-Null
+                $json = (Get-Content $env:GITHUB_OUTPUT | Where-Object { $_.StartsWith('app_comp_manifest=') }).Substring('app_comp_manifest='.Length)
+                $result = $json | ConvertFrom-Json -AsHashtable
+                Assert-ComponentManifest $result
+                foreach ($value in $result.plugins.Values) { Assert-Equal $value "${month}R01" 'Bootstrap full release establishes every plugin build' }
+            }
+        }
+
         $previous = New-ComponentManifest "${month}R07"
         $sourceVersion = '0.5.2.0'
         foreach ($mode in @('full', 'plugin')) {

@@ -44,10 +44,8 @@ function Get-ReleaseBaseline {
     if (-not $previous) { return $null }
     $assets = @($previous.assets | Where-Object name -CEQ 'app_comp_manifest.json')
     if ($assets.Count -eq 0) {
-        # Old full releases did not attach this asset. Only a new full release can establish a baseline.
-        if ($previous.name -notmatch '\(Build (\d{4}R\d{2,})\)$' -and $previous.tag_name -cnotmatch 'plugin[A-Z]+$') {
-            throw "Release '$($previous.tag_name)' has neither a component manifest nor a recorded build number. Attach its original app_comp_manifest.json before preparing another release."
-        }
+        # A full release assigns fresh builds to all shipped plugins; no old plugin state is needed.
+        # Get-ReleaseHistory still reserves any recorded builds. New-ComponentManifest rejects plugin-only releases without a baseline.
         Write-Warning "Release '$($previous.tag_name)' has no component manifest; plugin-only releases require a full release first."
         return $null
     }

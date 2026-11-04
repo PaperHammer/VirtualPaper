@@ -1,28 +1,28 @@
-# StaticImg 本地调试开关
+# StaticImg local debugging switches
 
-调试开关集中定义在 `StaticImgDebugSwitches.cs`，仅在 Debug 构建中生效，
-Release 构建会强制关闭。
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-## 稳定笔画动态缓存覆盖层
+Debugging switches are defined in `StaticImgDebugSwitches.cs`. They are available in Debug builds and forced off in Release builds.
 
-临时开启且不修改源码时：
+## Stroke cache overlay
 
-1. 启动调试并等待 StaticImg 界面加载。
-2. 使用“调试 → 全部中断”，让进程进入中断模式。
-3. 在 Visual Studio 即时窗口执行：
+The overlay shows the stable stroke cache, current commit bounds, active stroke bounds, and dirty canvas regions. To enable it temporarily without editing source:
+
+1. Start debugging and wait for the StaticImg UI to load.
+2. Select **Debug > Break All** in Visual Studio.
+3. Run this in the Immediate Window:
 
 ```csharp
 Workloads.Creation.StaticImg.Debugging.StaticImgDebugSwitches.ShowStrokeCacheOverlay = true
 ```
 
-4. 按 F5 继续运行，并重新开始或移动一次笔画以刷新覆盖层。
+4. Press F5 to resume, then start or move a stroke to refresh the overlay.
 
-即时窗口在进程仍处于运行模式时可能提示“无法计算表达式”，这是调试器限制。
+The Immediate Window may report that it cannot evaluate the expression while the process is running. Pause execution first.
 
-最稳定的配置方式是将 `ShowStrokeCacheOverlay` 的属性初始值改为 `true`，让它在
-每次 Debug 启动后默认开启。性能测试和提交代码前建议恢复为 `false`。
+For a persistent local setting, change the `ShowStrokeCacheOverlay` property initializer to `true`. This enables the overlay at each Debug startup. Restore it to `false` before performance measurements or committing changes.
 
-关闭时执行：
+To disable it in the debugger:
 
 ```csharp
 Workloads.Creation.StaticImg.Debugging.StaticImgDebugSwitches.ShowStrokeCacheOverlay = false

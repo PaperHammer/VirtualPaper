@@ -1,5 +1,7 @@
 # Business workflow tests
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 Run with:
 
 ```powershell

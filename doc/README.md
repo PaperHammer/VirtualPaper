@@ -1,27 +1,31 @@
-# VirtualPaper 开发文档
+# VirtualPaper developer documentation
 
-本目录面向准备阅读、调试和维护 VirtualPaper 的开发者。内容依据当前仓库源码与 CI 配置整理；面向用户的功能介绍仍以根目录 [`README.md`](../README.md) 为准。
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-## 文档索引
+These guides are for contributors who want to read, debug, or maintain VirtualPaper. They describe the current source code and CI configuration. For user-facing features, see the root [README](../README.md).
 
-- [项目总览](project-overview.md)：产品边界、技术栈、主要进程与源码模块。
-- [架构说明](architecture.md)：核心进程、依赖方向、壁纸运行时和数据流。
-- [开发与构建](development-guide.md)：环境要求、构建、测试以及推荐阅读顺序。
-- [WebBackdrop 模块](webbackdrop.md)：Web 壁纸工程格式、编辑器、文件树、预览与保存机制。
+## Guides
 
-## 快速定位
+The detailed guides linked below are currently in Chinese.
 
-| 想了解的内容 | 建议入口 |
+- [Project overview](project-overview.md): product scope, technology stack, main processes, and source modules.
+- [Architecture](architecture.md): Core, dependency direction, wallpaper runtimes, and data flows.
+- [Development and builds](development-guide.md): prerequisites, builds, tests, and a suggested reading order.
+- [WebBackdrop](webbackdrop.md): Web wallpaper project formats, the editor, file tree, preview, and saving.
+
+## Source entry points
+
+| Topic | Start here |
 | --- | --- |
-| 主程序如何启动和注册服务 | `src/VirtualPaper/App.xaml.cs` |
-| WinUI 管理界面如何启动 | `src/VirtualPaper.UI/App.xaml.cs` |
-| 壁纸运行时如何选择 | `src/Workloads.Entry/RuntimeFactory.cs` |
-| Web 项目编辑器 | `src/WebBackdrop/Views/Components/WebEditor.xaml.cs` |
-| Web 项目文件树 | `src/WebBackdrop/Views/Tools/WebFileTreeControl.xaml.cs` |
-| Web 项目清单 | `src/WebBackdrop/Models/SerializableData/WebDesignFileUtil.cs` |
-| 公共项目系统与文件监听 | `src/VirtualPaper.Common/Utils/ProjectSystem/` |
-| CI、版本与发布流程 | `.github/workflows/README.md` |
+| Core startup and service registration | [VirtualPaper/App.xaml.cs](../src/VirtualPaper/App.xaml.cs) |
+| WinUI startup | [VirtualPaper.UI/App.xaml.cs](../src/VirtualPaper.UI/App.xaml.cs) |
+| Wallpaper runtime selection | [RuntimeFactory.cs](../src/Workloads.Entry/RuntimeFactory.cs) |
+| Web project editor | [WebEditor.xaml.cs](../src/WebBackdrop/Views/Components/WebEditor.xaml.cs) |
+| Web project file tree | [WebFileTreeControl.xaml.cs](../src/WebBackdrop/Views/Tools/WebFileTreeControl.xaml.cs) |
+| Web project manifest | [WebDesignFileUtil.cs](../src/WebBackdrop/Models/SerializableData/WebDesignFileUtil.cs) |
+| Shared project system and file watching | [ProjectSystem](../src/VirtualPaper.Common/Utils/ProjectSystem/) |
+| CI, versioning, and releases | [Workflow guide](../.github/workflows/README.md) |
 
-## 文档维护约定
+## Keeping these guides up to date
 
-新增或重构模块时，请同步更新模块职责、依赖方向和关键入口。文档只描述源码中可以确认的行为；部署环境、外部服务或尚未落地的设计应明确标注为假设或规划。
+When adding or restructuring a module, update its responsibilities, dependencies, and key entry points. Describe behavior that can be confirmed in the source. Label assumptions about deployment environments, external services, and planned designs explicitly.

@@ -18,7 +18,8 @@ namespace VirtualPaper.PlayerWeb.Extensions {
             );
         }
 
-        public static void NavigateToLocalPath(this WebView webView, string filePath, string? textureFolder = null) {
+        public static void NavigateToLocalPath(this WebView webView, string filePath, string? textureFolder = null,
+            string? wallpaperFolder = null) {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentNullException(nameof(filePath));
 
@@ -34,7 +35,7 @@ namespace VirtualPaper.PlayerWeb.Extensions {
                 CoreWebView2HostResourceAccessKind.DenyCors);
             webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
                 WallpaperHost,
-                Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName),
+                wallpaperFolder ?? Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName),
                 CoreWebView2HostResourceAccessKind.DenyCors);
 
             // Mapping changes take effect on the next navigation, before any texture requests.

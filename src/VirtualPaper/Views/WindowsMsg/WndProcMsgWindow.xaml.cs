@@ -79,7 +79,7 @@ namespace VirtualPaper.Views.WindowsMsg {
             }
             else if (msg == (uint)Native.WM.ENDSESSION) {
                 //Gracefully close app.
-                App.ShutDown();
+                _ = App.ShutDownAsync();
             }
 
             //Monitor message processing...

@@ -1,9 +1,13 @@
-using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System;
+using System.Linq;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
@@ -36,18 +40,21 @@ namespace VirtualPaper.WpSettingsPanel {
         #region nav
         private void NvLocal_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args) {
             try {
+                if (ContentFrame.Content is LibraryContents currentLibrary) {
+                    currentLibrary.ExitSelectionMode();
+                }
+
                 Type pageType = args.SelectedItemContainer.Name switch {
                     "Nav_LibraryContents" => typeof(LibraryContents),
                     "Nav_ScreenSaver" => typeof(ScreenSaver),
                     _ => throw new NotImplementedException(),
                 };
 
-                // 过滤栏仅在"库内容"标签下展示
-                FilterBar.Visibility = args.SelectedItemContainer.Name == "Nav_LibraryContents"
+                LibraryToolbar.Visibility = args.SelectedItemContainer.Name == "Nav_LibraryContents"
                     ? Visibility.Visible
                     : Visibility.Collapsed;
 
-                ContentFrame.Navigate(pageType, this);
+                ContentFrame.Navigate(pageType, this, NavigationAnimation.CreateTransition(AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>().Settings));
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WpSettings>().Error(ex);
@@ -60,10 +67,84 @@ namespace VirtualPaper.WpSettingsPanel {
             _viewModel.InitFlyoutData();
         }
 
-        private void OnFilterChanged(object sender, TextChangedEventArgs e) {
-            if (sender is TextBox tb && tb.Tag is FilterKey fk) {
-                _viewModel.OnFilterChanged(fk, tb.Text);
+        private async void ScreenFit_Click(object sender, RoutedEventArgs e) {
+            if (sender is not Button button || !button.IsEnabled) return;
+            button.IsEnabled = false;
+            try {
+                var viewModel = ActivatorUtilities.CreateInstance<ScreenFitViewModel>(AppServiceLocator.Services);
+                if (_viewModel.SelectedMonitorIndex >= 0 && _viewModel.SelectedMonitorIndex < _viewModel.Monitors.Count) {
+                    string deviceId = _viewModel.Monitors[_viewModel.SelectedMonitorIndex].DeviceId;
+                    viewModel.SelectedMonitor = viewModel.Monitors.FirstOrDefault(m => m.DeviceId == deviceId) ?? viewModel.SelectedMonitor;
+                }
+                viewModel.Imported += data => AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>().UpdateLib(data);
+                var dialog = new ScreenFitDialog(viewModel) { XamlRoot = XamlRoot, RequestedTheme = ActualTheme };
+                await dialog.ShowAsync();
+                if (dialog.Applied) {
+                    int index = _viewModel.Monitors.ToList().FindIndex(m => m.DeviceId == viewModel.SelectedMonitor?.DeviceId);
+                    if (index >= 0) _viewModel.SelectedMonitorIndex = index;
+                    _viewModel.UpdateAdjustWindowCache();
+                }
             }
+            catch (Exception ex) { ArcLog.GetLogger<WpSettings>().Error(ex); GlobalMessageUtil.ShowException(ex); }
+            finally { button.IsEnabled = true; }
+        }
+
+        private void OnFilterChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {
+            if (sender.Tag is FilterKey fk) {
+                _viewModel.OnFilterChanged(fk, sender.Text);
+            }
+        }
+
+        private void FilterBar_SizeChanged(object sender, SizeChangedEventArgs e) {
+            tbSearchName.Width = Math.Clamp(
+                e.NewSize.Width - LibraryTypeFilter.ActualWidth - LibraryBrowseTools.Spacing, 120, 260);
+        }
+
+        private void SelectLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                if (SelectLibraryItems.IsChecked == true) {
+                    library.EnterSelectionMode();
+                }
+                else {
+                    library.ExitSelectionMode();
+                }
+            }
+        }
+
+        private void SelectAllLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                library.SelectAllItems();
+            }
+        }
+
+        private void InvertLibrarySelection_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                library.InvertSelection();
+            }
+        }
+
+        private async void DeleteSelectedLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                await library.DeleteSelectedItemsAsync();
+            }
+        }
+
+        private void CancelLibrarySelection_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library) {
+                library.ExitSelectionMode();
+            }
+        }
+
+        internal void UpdateLibrarySelectionState(bool isSelecting, int selectedCount) {
+            SelectLibraryItems.IsChecked = isSelecting;
+            AddToLib.IsEnabled = !isSelecting;
+            ScreenFitButton.IsEnabled = !isSelecting;
+            LibraryBrowseTools.Visibility = isSelecting ? Visibility.Collapsed : Visibility.Visible;
+            LibrarySelectionTools.Visibility = isSelecting ? Visibility.Visible : Visibility.Collapsed;
+            LibrarySelectionCount.Text = string.Format(
+                LanguageUtil.GetI18n(Constants.I18n.WpLib_SelectedCount),
+                selectedCount);
+            DeleteSelectedLibraryItems.IsEnabled = selectedCount > 0;
         }
 
         private readonly WpSettingsViewModel _viewModel;

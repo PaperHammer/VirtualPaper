@@ -7,6 +7,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Services.Interfaces;
 using VirtualPaper.Utils.Interfcaes;
@@ -44,12 +45,16 @@ namespace VirtualPaper.Cores.ScreenSaver {
             }
         }
 
-        public void Start() {
+        public async Task StartAsync() {
+            // Wait for any pending plugin update to complete
+            await UpdateLock.WaitAllAsync();
+
             if (!_userSettings.Settings.IsScreenSaverOn || _isTiming || IsRunning) return;
 
             try {
                 _isRunningLock = _userSettings.Settings.IsRunningLock;
                 StartTimerTask();
+                ArcLog.GetLogger<ScrControl>().Info("ScreenSaver idle timer enabled.");
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<ScrControl>().Error("ScreenSaver started Error: " + ex.Message);
@@ -58,6 +63,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         public void Stop() {
             StopTimerTask();
+            ArcLog.GetLogger<ScrControl>().Info("ScreenSaver idle timer disabled.");
         }
 
         public void ChangeLockStatu(bool isLock) {
@@ -115,7 +121,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
         }
 
         // -------------------------------------------------------------------------
-        // Process: Start
+        // Process: StartAsync
         // -------------------------------------------------------------------------
 
         private void DispatcherTimer_Tick(object? sender, EventArgs e) {
@@ -126,7 +132,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 // 检查壁纸
                 var (filePath, runtimeType) = _wpControl.GetPrimaryWpFilePathRType();
                 if (filePath == null) {
-                    ArcLog.GetLogger<ScrControl>().Info("Primary wallpaper was none, reset timer.");
                     RestartTimer();
                     return;
                 }
@@ -138,7 +143,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_BUSY:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_RUNNING_D3D_FULL_SCREEN:
                         case Native.QUERY_USER_NOTIFICATION_STATE.QUNS_PRESENTATION_MODE:
-                            ArcLog.GetLogger<ScrControl>().Info($"System notification state [{state}], reset timer.");
                             RestartTimer();
                             return;
                     }
@@ -149,7 +153,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
                 _nativeService.GetWindowThreadProcessId(hwnd, out int processId);
                 string procName = _nativeService.GetProcessNameById(processId);
                 if (_scrWhiteListProcState.ContainsKey(procName)) {
-                    ArcLog.GetLogger<ScrControl>().Info($"Whitelisted process [{procName}] is active, reset timer.");
                     RestartTimer();
                     return;
                 }
@@ -176,7 +179,7 @@ namespace VirtualPaper.Cores.ScreenSaver {
             _processLauncher.Exited += Proc_Exited;
             _processLauncher.OutputDataReceived += Proc_OutputDataReceived;
             _processLauncher.Launch(startInfo);
-            _jobService.AddProcess(_processLauncher.ProcessId);
+            _jobService.AddProcess(_processLauncher.ProcessId, PluginName.ScrSaver);
             _processLauncher.BeginOutputReadLine();
 
             ArcLog.GetLogger<ScrControl>().Info("ScreenSaver launched.");
@@ -208,11 +211,15 @@ namespace VirtualPaper.Cores.ScreenSaver {
         /// 无论是主动 Stop 还是意外退出，都走这里。
         /// </summary>
         private void Proc_Exited(object? sender, EventArgs e) {
+            var pid = _processLauncher.ProcessId;
             _processLauncher.OutputDataReceived -= Proc_OutputDataReceived;
             _processLauncher.Exited -= Proc_Exited;
 
             CleanupProc();
-            RestartTimerAfterExit();
+            if (!App.IsShuttingDown) {
+                _jobService.StopPlugin(pid);
+                RestartTimerAfterExit();
+            }
         }
 
         /// <summary>
@@ -221,7 +228,6 @@ namespace VirtualPaper.Cores.ScreenSaver {
         private void CleanupProc() {
             try {
                 _processLauncher.Kill();
-                _processLauncher.Dispose();
                 ArcLog.GetLogger<ScrControl>().Info("ScreenSaver process cleaned up.");
             }
             catch (Exception ex) {
@@ -340,13 +346,18 @@ namespace VirtualPaper.Cores.ScreenSaver {
 
         protected virtual void Dispose(bool disposing) {
             if (_isDisposed) return;
+            _isDisposed = true;
+
+            StopTimerTask();
+            _processLauncher.OutputDataReceived -= Proc_OutputDataReceived;
+            _processLauncher.Exited -= Proc_Exited;
+            _processLauncher.Kill();
+            _processLauncher.Dispose();
 
             _msgWindow.MouseMoveRaw -= MsgWindow_MouseMoveRaw;
             _msgWindow.MouseDownRaw -= MsgWindow_MouseDownRaw;
             _msgWindow.MouseUpRaw -= MsgWindow_MouseUpRaw;
             _msgWindow.KeyboardClickRaw -= MsgWindow_KeyboardClickRaw;
-
-            _isDisposed = true;
         }
 
         public void Dispose() {

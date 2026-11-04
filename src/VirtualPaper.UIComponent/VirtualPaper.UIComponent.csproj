@@ -2,19 +2,31 @@
 	<PropertyGroup>
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<RootNamespace>VirtualPaper.UIComponent</RootNamespace>
-		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+		<WinUISDKReferences>false</WinUISDKReferences>
 		<UseWinUI>true</UseWinUI>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>VirtualPaper.UIComponent.Test</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
 
 	<!--避免打包时生成额外的语言包文件夹-->
 	<PropertyGroup>
 		<SupportedCultures>zh-CN;en-US</SupportedCultures>
 		<GenerateSatelliteAssemblies>false</GenerateSatelliteAssemblies>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="Themes\**" />
+	  <Content Remove="Themes\**" />
+	  <EmbeddedResource Remove="Themes\**" />
+	  <None Remove="Themes\**" />
+	  <Page Remove="Themes\**" />
+	  <PRIResource Remove="Themes\**" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<PRIResource Remove="Strings\en-US\Resources.resw" />
@@ -33,6 +45,7 @@
 		<PackageReference Include="H.Hooks" Version="1.6.0" />
 		<PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
 		<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
 		<PackageReference Include="WinUI3Localizer" Version="2.2.0" />
 		<PackageReference Include="WinUIEx" Version="2.4.2" />
 	</ItemGroup>
@@ -44,9 +57,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Collection\ArcTreeView.xaml" />
+		<None Remove="Collection\ArcTreeViewItem.xaml" />
 		<None Remove="Host\ArcWindowContent.xaml" />
 		<None Remove="Input\Button\ArcButton.xaml" />
 		<None Remove="Input\Slider\ArcSlider.xaml" />
+		<None Remove="Input\TextBox\ArcTextBox.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationContentView.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationView.xaml" />
 		<None Remove="Navigation\RootView\ArcNavigationviewStyle.xaml" />
@@ -85,6 +101,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Page Update="Collection\ArcTreeView.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Collection\ArcTreeViewItem.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
 	  <Page Update="Input\Slider\ArcSlider.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
@@ -98,6 +126,12 @@
 
 	<ItemGroup>
 	  <Page Update="Input\Button\ArcButton.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Page Update="Input\TextBox\ArcTextBox.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </Page>
 	</ItemGroup>
@@ -170,6 +204,9 @@
 
 	<ItemGroup>
 		<Page Update="Others\RenameView.xaml">
+			<Generator>MSBuild:Compile</Generator>
+		</Page>
+		<Page Update="Others\AddFileItemView.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</Page>
 	</ItemGroup>

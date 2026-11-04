@@ -36,10 +36,12 @@ namespace VirtualPaper.UIComponent.Context {
             EnterLoading(showProgress, cts);
 
             IDisposable blockingHandle = _arcPageContext.KeepAliveBlocking.Block();
-
-            await operation(token);
-
-            LeaveLoading(blockingHandle);
+            try {
+                await operation(token);
+            }
+            finally {
+                LeaveLoading(blockingHandle);
+            }
         }
 
         public async Task RunWithProgressAsync(

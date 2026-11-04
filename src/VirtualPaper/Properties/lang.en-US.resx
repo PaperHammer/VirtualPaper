@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AppUpdater_ActionButtonText_Completed" xml:space="preserve">
-    <value>Install</value>
-  </data>
   <data name="AppUpdater_ActionButtonText_Downloading" xml:space="preserve">
     <value>Pause</value>
   </data>
@@ -127,7 +124,7 @@
     <value>Installing...</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Paused" xml:space="preserve">
-    <value>Resume downloading</value>
+    <value>Resume</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Ready" xml:space="preserve">
     <value>Download</value>
@@ -139,7 +136,7 @@
     <value>Download complete!</value>
   </data>
   <data name="AppUpdater_StatusText_DownloadFailed" xml:space="preserve">
-    <value>Unable to access the resource, please check your network and try again.</value>
+    <value>Unable to access, please check network or try again.</value>
   </data>
   <data name="AppUpdater_StatusText_Downloading" xml:space="preserve">
     <value>Downloading...</value>
@@ -192,6 +189,9 @@ https://github.com/PaperHammer/VirtualPaper/releases</value>
   </data>
   <data name="Find_New_Verison" xml:space="preserve">
     <value>Find a newer version!</value>
+  </data>
+  <data name="Find_New_Version_Restart" xml:space="preserve">
+    <value>Component update available!</value>
   </data>
   <data name="Systray_TextCloseAllWallpapers" xml:space="preserve">
     <value>Close all wallpapers</value>
@@ -252,5 +252,116 @@ Windows Explorer restarted twice in the last 30 seconds!This could be a conflict
 3. Enable/check "Animation controls and elements within the window" (uncheck if already checked) and apply.
 4. Close the window by clicking Apply and then OK.
 If it still doesn't work, shut down and restart or reboot the system.(Doesn't work in some Windows 10 preview versions)</value>
+  </data>
+  <data name="PluginsUpdate_InvalidInfo" xml:space="preserve">
+    <value>Invalid update info</value>
+  </data>
+  <data name="PluginsUpdate_Starting" xml:space="preserve">
+    <value>Starting update...</value>
+  </data>
+  <data name="PluginsUpdate_Completed" xml:space="preserve">
+    <value>Update completed. UI will restart.</value>
+  </data>
+  <data name="PluginsUpdate_Failed" xml:space="preserve">
+    <value>Update failed: {0}</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Downloading" xml:space="preserve">
+    <value>Downloading plugins...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>Backing up current plugins...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Replacing" xml:space="preserve">
+    <value>Replacing plugin files...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Completed" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Failed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="PluginsUpdate_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="PluginsUpdate_PostponeTip" xml:space="preserve">
+    <value>Update ready. Close the main window to apply.</value>
+  </data>
+  <data name="InstallerUpdate_PostponeTip" xml:space="preserve">
+    <value>Installer ready. Installation will start after fully exiting the application.</value>
+  </data>
+  <data name="PluginUpdate_Title_Updating" xml:space="preserve">
+    <value>Updating components...</value>
+  </data>
+  <data name="PluginUpdate_Title_Completed" xml:space="preserve">
+    <value>Update completed</value>
+  </data>
+  <data name="PluginUpdate_Title_Failed" xml:space="preserve">
+    <value>Update failed</value>
+  </data>
+  <data name="PluginUpdate_Preparing" xml:space="preserve">
+    <value>Preparing...</value>
+  </data>
+  <data name="PluginUpdate_ReplacedPlugin" xml:space="preserve">
+    <value>Replaced {0}</value>
+  </data>
+  <data name="Startup_AutoStartDisabledByUser" xml:space="preserve">
+    <value>You have disabled Virtual Paper from running when you sign in. To enable it again, open Startup apps in Task Manager.</value>
+  </data>
+  <data name="Startup_AppDataCreateFailedTitle" xml:space="preserve">
+    <value>Unable to create the app data directory. Virtual Paper will exit.</value>
+  </data>
+  <data name="Startup_CoreRuntimeFailed" xml:space="preserve">
+    <value>Core runtime initialization failed. Please restart or reinstall Virtual Paper.&#x0A;{0}</value>
+  </data>
+  <data name="AppUpdater_Close_Downloading_Title" xml:space="preserve">
+    <value>Stop downloading the update?</value>
+  </data>
+  <data name="AppUpdater_Close_Downloading_Content" xml:space="preserve">
+    <value>The update is downloading. Stop the download and close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_StopDownload" xml:space="preserve">
+    <value>Stop download and close</value>
+  </data>
+  <data name="AppUpdater_Close_Paused_Title" xml:space="preserve">
+    <value>Discard this download?</value>
+  </data>
+  <data name="AppUpdater_Close_Paused_Content" xml:space="preserve">
+    <value>The update download is paused. Discard this download and close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_DiscardDownload" xml:space="preserve">
+    <value>Discard download and close</value>
+  </data>
+  <data name="AppUpdater_Close_Verifying_Title" xml:space="preserve">
+    <value>Stop verifying the update?</value>
+  </data>
+  <data name="AppUpdater_Close_Verifying_Content" xml:space="preserve">
+    <value>The update files are being verified. Stop verification and close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_StopVerification" xml:space="preserve">
+    <value>Stop verification and close</value>
+  </data>
+  <data name="AppUpdater_Close_Title" xml:space="preserve">
+    <value>Close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_Content" xml:space="preserve">
+    <value>Close the update window?</value>
+  </data>
+  <data name="AppUpdater_Close_Window" xml:space="preserve">
+    <value>Close window</value>
+  </data>
+  <data name="AppUpdater_Close_DownloadFailed_Content" xml:space="preserve">
+    <value>The update download failed. You can close this window and try updating again later.</value>
+  </data>
+  <data name="AppUpdater_Close_VerifyFailed_Content" xml:space="preserve">
+    <value>Update file verification failed. You can close this window and download the update again later.</value>
+  </data>
+  <data name="AppUpdater_Close_BackToUpdate" xml:space="preserve">
+    <value>Back to update</value>
+  </data>
+  <data name="AppUpdater_UpdateReady_Title" xml:space="preserve">
+    <value>Update ready</value>
+  </data>
+  <data name="Common_TextGotIt" xml:space="preserve">
+    <value>Got it</value>
   </data>
 </root>

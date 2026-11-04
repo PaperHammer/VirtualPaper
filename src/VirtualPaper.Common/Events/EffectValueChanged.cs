@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace VirtualPaper.Common.Events.EffectValue.Base {
+namespace VirtualPaper.Common.Events {
     [JsonSerializable(typeof(EffectValueChangedBase))]
     public partial class EffectValueChangedBaseContext : JsonSerializerContext { }
 

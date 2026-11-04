@@ -33,5 +33,6 @@
     <Protobuf Include="Protos\commands.proto" />
     <Protobuf Include="Protos\screen_commands.proto" />
     <Protobuf Include="Protos\common_models.proto" />
+    <Protobuf Include="Protos\twoway_stream.proto" />
   </ItemGroup>
 </Project>

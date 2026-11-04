@@ -44,7 +44,12 @@ namespace VirtualPaper.GrpcServers {
 
         public override async Task<Grpc_GetPlayerStartArgsResponse> GetPlayerStartArgs(Grpc_GetPlayerStartArgsRequest request, ServerCallContext context) {
             var playingData = DataAssist.GrpcToPlayerData(request.WpPlayerData);
-            var data = _wpControl.GetPlayerStartArgs(playingData, context.CancellationToken);
+            var data = _wpControl.GetPlayerStartArgs(
+                playingData,
+                string.IsNullOrWhiteSpace(request.WpBasicDataFilePath)
+                    ? null
+                    : request.WpBasicDataFilePath,
+                context.CancellationToken);
             Grpc_GetPlayerStartArgsResponse response = new() {
                 Data = data,
             };
@@ -62,9 +67,9 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task<Grpc_RestartWallpaperResponse> RestartAllWallpapers(Empty request, ServerCallContext context) {
-            Grpc_RestartWallpaperResponse response = _wpControl.RestoreWallpaper();
+            Grpc_RestartWallpaperResponse response = await _wpControl.RestoreWallpaperAsync();
 
-            return await Task.FromResult(response);
+            return response;
         }
 
         public override async Task<Grpc_SetWallpaperResponse> SetWallpaper(Grpc_SetWallpaperRequest request, ServerCallContext context) {

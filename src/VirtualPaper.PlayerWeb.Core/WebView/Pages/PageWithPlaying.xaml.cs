@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events.EffectValue.Base;
+using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils;
@@ -15,6 +16,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.PlayerWeb.Core.Utils;
 using VirtualPaper.PlayerWeb.Core.Utils.Interfaces;
+using VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
@@ -30,6 +32,18 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         public override Type ArcType => typeof(PageWithPlaying);
         protected override bool IsMultiInstance => true;
 
+        /// <summary>
+        /// Payload key for an external development-server URL such as Vite.
+        /// This extends the existing preview shell without changing its
+        /// rendering or WebView initialization logic.
+        /// </summary>
+        public const string PreviewUrlPayloadKey = "PreviewUrl";
+
+        /// <summary>
+        /// Development-server URL used by editor preview when available.
+        /// </summary>
+        internal string? PreviewUrl { get; set; }
+
         public PageWithPlaying() {
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
@@ -40,8 +54,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             Payload = payload;
             if (payload != null) {
                 payload.TryGet(NaviPayloadKey.StartArgs.ToString(), out _startArgs);
+                payload.TryGet(PreviewUrlPayloadKey, out string? previewUrl);
+                PreviewUrl = previewUrl;
                 // 预览窗口使用
-                payload.TryGet(NaviPayloadKey.ArcWindow.ToString(), out _arcWindow);
+                //payload.TryGet(NaviPayloadKey.ArcWindow.ToString(), out _arcWindow);
                 payload.Set(NaviPayloadKey.IEffectService.ToString(), this);
                 payload.Set(NaviPayloadKey.AvailableConfigTab.ToString(), DataConfigTab.GeneralEffect | DataConfigTab.GeneralInfo);
             }
@@ -74,20 +90,39 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             UpdateRectToWebview();
         }
 
-        private void InputLayer_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            _isPointerInsidePage = true;
+        /// <summary>
+        /// Starts a PreviewServer for the file's directory and returns an
+        /// http://127.0.0.1:{port}/{filename} URL.  The server is tracked
+        /// for cleanup in <see cref="OnUnloaded"/>.
+        /// </summary>
+        private async Task<string> ServeFileAsync(string? filePath) {
+            if (string.IsNullOrEmpty(filePath)) return string.Empty;
+            var dir = Path.GetDirectoryName(filePath)!;
+            var entry = Path.GetFileName(filePath);
+            var server = new PreviewServer();
+            await server.StartAsync(dir, new PreviewServerOptions {
+                AllowedOrigin = _shellServer is null
+                    ? null
+                    : $"http://127.0.0.1:{_shellServer.Port}"
+            });
+            _resourceServers.Add(server);
+            return server.GetUrl(entry);
         }
 
-        private void InputLayer_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            if (_isParallaxRunning != 1) return;
+        //private void InputLayer_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        //    _isPointerInsidePage = true;
+        //}
 
-            var point = e.GetCurrentPoint(this);
-            _mousePos = point.Position;
-        }
+        //private void InputLayer_PointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        //    //if (_isParallaxRunning != 1) return;
 
-        private void InputLayer_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
-            _isPointerInsidePage = false;
-        }
+        //    var point = e.GetCurrentPoint(this);
+        //    _mousePos = point.Position;
+        //}
+
+        //private void InputLayer_PointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
+        //    _isPointerInsidePage = false;
+        //}
 
         #region effect change from ui
         public void UpdateEffectValue<T>(EffectValueChanged<T> e) {
@@ -247,8 +282,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             Webview2.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
 
             string playingFile = GetPlayingFile();
-            string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile).Replace("\\", "/");
-            Webview2.CoreWebView2.Navigate(new Uri(fullPath).AbsoluteUri);
+            var shellDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PLAYER_Web");
+            var entry = Path.GetFileName(playingFile); // default.html or 3d_depth_map.html
+
+            _shellServer = new PreviewServer();
+            await _shellServer.StartAsync(shellDir);
+            var shellUrl = _shellServer.GetUrl(entry);
+            Webview2.CoreWebView2.Navigate(shellUrl);
         }
 
         private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
@@ -265,7 +305,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             e.Cancel = true;
         }
 
-        private void Webview2_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args) {
+        private async void Webview2_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args) {
             if (!args.IsSuccess) {
                 ArcLog.GetLogger<PageWithPlaying>().Error($"WebView navigation failed: {args.WebErrorStatus}");
                 return;
@@ -273,19 +313,37 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
             switch (_startArgs.RuntimeType) {
                 case "RImage":
-                case "RWeb":
                     Webview2.IsHitTestVisible = true;
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType,
+                        await ServeFileAsync(_startArgs.FilePath));
+                    break;
+                case "RWeb":
+                    Webview2.IsHitTestVisible = true;
+                    UpdateRectToWebview(); {
+                        string url;
+                        if (!string.IsNullOrEmpty(PreviewUrl)) {
+                            url = PreviewUrl;
+                        }
+                        else {
+                            url = Webview2.CoreWebView2.GetVirtualHostUrl(_startArgs.FilePath);
+                        }
+                        if (!string.IsNullOrEmpty(url))
+                            url += $"?_t={DateTime.Now.Ticks}";
+                        _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, url);
+                    }
                     break;
                 case "RVideo":
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType, _startArgs.FilePath);
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.RuntimeType,
+                        await ServeFileAsync(_startArgs.FilePath));
                     break;
                 case "RImage3D":
                     Webview2.IsHitTestVisible = true;
                     UpdateRectToWebview();
-                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad, _startArgs.FilePath, _startArgs.DepthFilePath);
+                    _scriptExecutor?.EnqueueEvent(Fields.ResourceLoad,
+                        await ServeFileAsync(_startArgs.FilePath),
+                        await ServeFileAsync(_startArgs.DepthFilePath));
                     break;
                 default:
                     break;
@@ -293,15 +351,24 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
             _scriptExecutor?.EnqueueEvent(Fields.Play);
 
+            if (!_devToolsOpened) {
+                _devToolsOpened = true;
 #if DEBUG
-            Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
-            Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
-            Webview2.CoreWebView2.OpenDevToolsWindow();
+                Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
+                Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+                Webview2.CoreWebView2.OpenDevToolsWindow();
 #else
-            // Don't allow contextmenu and devtools.
-            Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
-            Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
+                // Don't allow contextmenu and devtools.
+                Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
+                Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 #endif
+                // Runtime debug mode: open DevTools even in Release builds (for editor Debug button)
+                if (_startArgs.IsDebug) {
+                    Webview2.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
+                    Webview2.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+                    Webview2.CoreWebView2.OpenDevToolsWindow();
+                }
+            }
 
             _loadedTcs.TrySetResult();
         }
@@ -354,11 +421,14 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         private void ExecuteCheckBoxSet(string propertyName, bool val) {
             switch (propertyName) {
-                case "Parallax":
+                case nameof(Picture3DCostumize.Parallax):
                     RunParallax(val);
                     break;
-                case "TimeAtmoPerception":
+                case nameof(Picture3DCostumize.TimeAtmoPerception):
                     RunTimePerception(val);
+                    break;
+                case nameof(Picture3DCostumize.ParallaxAutoDrift):
+                    _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, propertyName, val);
                     break;
                 default:
                     break;
@@ -367,6 +437,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         private void OnUnloaded() {
             Payload = null;
+            _ = _shellServer?.StopAsync();
+            foreach (var s in _resourceServers) _ = s.StopAsync();
+            _resourceServers.Clear();
             CrossThreadInvoker.InvokeOnUIThread(() => {
                 Webview2?.Close();
             });
@@ -375,14 +448,17 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         private WebViewScriptExecutor? _scriptExecutor;
         private StartArgsWeb _startArgs = null!;
-        private ArcWindow? _arcWindow;
-        private Point _mousePos;
+        //private ArcWindow? _arcWindow;
+        //private Point _mousePos;
         private Rect _pageRegion;
-        private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
-        private bool _isPointerInsidePage;
+        //private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
+        //private bool _isPointerInsidePage;
+        private bool _devToolsOpened;
         private readonly TaskCompletionSource _loadedTcs = new();
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disable-web-security --allow-file-access --allow-file-access-from-files --disk-cache-size=1 --autoplay-policy=no-user-gesture-required "
-        }; // workaround: avoid cache
+            AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
+        };
+        private PreviewServer? _shellServer;
+        private readonly List<PreviewServer> _resourceServers = [];
     }
 }

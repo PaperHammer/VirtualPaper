@@ -13,8 +13,8 @@ using Workloads.Creation.StaticImg.Core.Utils;
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     // IO part of StaticImgDesignFileUtil
     partial class StaticImgDesignFileUtil {
-        // 定义缓冲区大小：1MB
-        private const int COPY_BUFFER_SIZE = 1024 * 1024;
+        // 定义缓冲区大小：2MB
+        private const int COPY_BUFFER_SIZE = 2 * 1024 * 1024;
 
         /// <summary>
         /// 仅异步获取文件头信息
@@ -32,11 +32,12 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 byte[] headerBytes = new byte[headerSize];
 
                 using var fs = CreateFileStream(filePath, FileMode.Open, autoCheckHeaderOnOpenMode: true);
-                int bytesRead = await fs.ReadAsync(headerBytes.AsMemory(0, headerSize));
-
-                if (bytesRead < headerSize) {
+                try {
+                    await fs.ReadExactlyAsync(headerBytes.AsMemory(0, headerSize));
+                }
+                catch (EndOfStreamException) {
                     GlobalMessageUtil.ShowWarning(
-                        message: nameof(Constants.I18n.Project_FileLoad_FileCorrupted),
+                        message: Constants.I18n.Project_FileLoad_FileCorrupted,
                         isNeedLocalizer: true,
                         extraMsg: filePath);
                     return null;
@@ -73,25 +74,32 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
                 // Read and validate header
                 var headerBytes = new byte[Marshal.SizeOf<FileHeader>()];
-                await fs.ReadAsync(headerBytes);
+                await fs.ReadExactlyAsync(headerBytes);
                 var header = BytesToStructure<FileHeader>(headerBytes);
 
                 // Read business data
                 fs.Position = header.BusinessDataOffset;
                 var businessDataBytes = new byte[header.BusinessDataLength];
-                await fs.ReadAsync(businessDataBytes);
+                await fs.ReadExactlyAsync(businessDataBytes);
                 var businessData = BusinessData.Deserialize(businessDataBytes);
 
                 // Read layers
                 fs.Position = header.LayersOffset;
                 var canvasSize = new ArcSize(header.CanvasWidth, header.CanvasHeight, header.Dpi, RebuildMode.None);
-                var layers = await Layer.DeserializeAsync(session, fs, header.LayerCount, canvasSize);
+                var layers = await Layer.DeserializeAsync(
+                    session,
+                    fs,
+                    header.LayerCount,
+                    canvasSize,
+                    header.Version);
 
                 UpdateCache(header, businessData, layers);
+                _loadFailed = false;
                 return (header, businessData, layers);
 
             }
             catch (Exception ex) {
+                _loadFailed = true;
                 ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return (null, null, null);
             }
@@ -104,28 +112,34 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             ArcSize arcSize,
             BusinessData business,
             List<Layer> layers) {
+            if (_loadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please use Save As to create a new file.",
+                    key: "VpdLoadFailed");
+                return (false, null);
+            }
+
             await _ioLock.WaitAsync();
             string tempPath = FileUtil.GetTempFile(Constants.CommonPaths.TempDir);
 
             try {
                 var businessDataBytes = BusinessData.Serialize(business);
-                var layersBytes = await Layer.SerializeAsync(layers);
-                var header = FileHeader.Create(
-                    arcSize,
-                    layers.Count,
-                    (uint)businessDataBytes.Length,
-                    (uint)layersBytes.Length);
-
-                byte[] buffer = StructureToBytes(header);
-                // 计算并回填CRC（跳过最后4字节的CRC字段）
-                header.CRC32 = CrcUtils.ComputeCrc32(buffer.AsSpan(0, buffer.Length - 4));
-                buffer = StructureToBytes(header); // 更新包含 CRC 的 Buffer
+                FileHeader header;
 
                 {
                     using var fs = CreateFileStream(tempPath, FileMode.Create);
-                    await fs.WriteAsync(buffer);
+                    int headerSize = Marshal.SizeOf<FileHeader>();
+                    await fs.WriteAsync(new byte[headerSize]);
                     await fs.WriteAsync(businessDataBytes);
-                    await fs.WriteAsync(layersBytes);
+
+                    long layersLength = await Layer.SerializeToStreamAsync(layers, fs);
+                    header = FileHeader.Create(
+                        arcSize,
+                        layers.Count,
+                        checked((uint)businessDataBytes.Length),
+                        checked((uint)layersLength));
+                    header = await WriteFinalHeaderAsync(fs, header);
                 }
 
                 UpdateFile(tempPath);
@@ -150,6 +164,14 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         // 单独保存 BusinessData
         public async Task<bool> SaveBusinessDataAsync(BusinessData business) {
             if (!IsValidVpdFile) {
+                return false;
+            }
+
+            if (_loadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please use Save As to create a new file.",
+                    key: "VpdLoadFailed");
                 return false;
             }
 
@@ -203,25 +225,30 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                 return false;
             }
 
+            if (_loadFailed) {
+                GlobalMessageUtil.ShowError(
+                    $"Cannot save file: {FilePath}\n" +
+                    "The file failed to load and may be corrupted. Please use Save As to create a new file.",
+                    key: "VpdLoadFailed");
+                return false;
+            }
+
             await _ioLock.WaitAsync();
             string tempPath = FileUtil.GetTempFile(Constants.CommonPaths.TempDir);
 
             try {
-                var layersBytes = await Layer.SerializeAsync(layers);
-
                 // Update header
                 var header = _headerCache;
+                // 图层会被完整重写，因此可以安全升级为当前格式。
+                // 仅保存 BusinessData 时则必须保留旧版本，因为图层字节会原样复制。
+                header.Version = FileHeader.CurrentVersion;
                 header.LayerCount = layers.Count;
-                header.LayersLength = (uint)layersBytes.Length;
+                header.BusinessDataOffset = (uint)Marshal.SizeOf<FileHeader>();
                 header.LayersOffset = (uint)Marshal.SizeOf<FileHeader>() + header.BusinessDataLength;
-
-                byte[] headerBuffer = StructureToBytes(header);
-                header.CRC32 = CrcUtils.ComputeCrc32(headerBuffer.AsSpan(0, headerBuffer.Length - 4));
-                headerBuffer = StructureToBytes(header);
 
                 {
                     using var fsTemp = CreateFileStream(tempPath, FileMode.Create);
-                    await fsTemp.WriteAsync(StructureToBytes(header));
+                    await fsTemp.WriteAsync(new byte[Marshal.SizeOf<FileHeader>()]);
 
                     if (header.BusinessDataLength > 0) {
                         using var fsSource = CreateFileStream(FilePath, FileMode.Open);
@@ -231,7 +258,9 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                         await CopyStreamRangeAsync(fsSource, fsTemp, _headerCache.BusinessDataLength);
                     }
 
-                    await fsTemp.WriteAsync(layersBytes);
+                    long layersLength = await Layer.SerializeToStreamAsync(layers, fsTemp);
+                    header.LayersLength = checked((uint)layersLength);
+                    header = await WriteFinalHeaderAsync(fsTemp, header);
                 }
 
                 UpdateFile(tempPath);
@@ -251,6 +280,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
 
         internal void SetFilePath(string selectedPath) {
             FilePath = selectedPath;
+            _loadFailed = false;
         }
 
         /// <summary>
@@ -263,11 +293,29 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             while (remaining > 0) {
                 int count = (int)Math.Min(buffer.Length, remaining);
                 int read = await input.ReadAsync(buffer.AsMemory(0, count));
-                if (read == 0) break; // End of stream unexpected
+                if (read == 0)
+                    throw new EndOfStreamException(
+                        $"Expected {bytesToCopy} bytes, but the source stream ended with {remaining} bytes remaining.");
 
                 await output.WriteAsync(buffer.AsMemory(0, read));
                 remaining -= read;
             }
+        }
+
+        /// <summary>
+        /// 计算文件头校验和并回写到文件开头，同时保留调用方的当前流位置。
+        /// </summary>
+        private static async Task<FileHeader> WriteFinalHeaderAsync(Stream output, FileHeader header) {
+            long returnPosition = output.Position;
+            byte[] headerBuffer = StructureToBytes(header);
+            header.CRC32 = CrcUtils.ComputeCrc32(
+                headerBuffer.AsSpan(0, headerBuffer.Length - sizeof(uint)));
+            headerBuffer = StructureToBytes(header);
+
+            output.Position = 0;
+            await output.WriteAsync(headerBuffer);
+            output.Position = returnPosition;
+            return header;
         }
 
         private static void SafeDeleteTempFile(string? path) {

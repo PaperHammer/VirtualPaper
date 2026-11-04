@@ -29,6 +29,7 @@
             Orientation="Horizontal"
             Padding="0 0 16 0">
             <Button x:Name="btnRestore"
+                AutomationProperties.AutomationId="GeneralEffect.Restore"
                 HorizontalAlignment="Right"
                 Height="33"
                 Margin="10 0 0 0"
@@ -36,6 +37,7 @@
                 Content="{markup:I18n Key=Text_Restore}"/>
 
             <Button x:Name="btnSaveAndApply"
+                AutomationProperties.AutomationId="GeneralEffect.Apply"
                 Height="33"
                 Margin="10 0 0 0"
                 Click="SaveAndApplyBtn_Click"

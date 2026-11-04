@@ -11,6 +11,7 @@ using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Shell;
 using VirtualPaper.Common.Utils.Storage;
+using VirtualPaper.Cores.AppUpdate;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Factories.Interfaces;
@@ -51,6 +52,10 @@ namespace VirtualPaper.Cores.WpControl {
 
             this._monitorManager.MonitorUpdated += MonitorSettingsChanged_Hwnd;
             this.WallpaperChanged += SetupDesktop_WallpaperChanged;
+
+            _jobService.PluginsUpdateFinishedEvent += (s, e) => {
+                _ = RestoreWallpaperAsync();
+            };
 
             SystemEvents.SessionSwitch += (s, e) => {
                 if (e.Reason == SessionSwitchReason.SessionUnlock) {
@@ -149,11 +154,14 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public string? GetPlayerStartArgs(IWpPlayerData data, CancellationToken token = default) {
+        public string? GetPlayerStartArgs(
+            IWpPlayerData data,
+            string? wpBasicDataFilePath = null,
+            CancellationToken token = default) {
             var wpRuntimeData = CreateRuntimeData(data.FilePath, data.FolderPath, data.RType, data.DepthFilePath, true, _userSettings.Settings.SelectedMonitor.Content);
             DataAssist.FromRuntimeDataGetPlayerData(data, wpRuntimeData);
 
-            var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true);
+            var startArgs = _wallpaperFactory.CreatePlayerStartArgs(data, true, wpBasicDataFilePath);
 
             return startArgs;
         }
@@ -193,8 +201,11 @@ namespace VirtualPaper.Cores.WpControl {
             }
         }
 
-        public Grpc_RestartWallpaperResponse RestoreWallpaper() {
+        public async Task<Grpc_RestartWallpaperResponse> RestoreWallpaperAsync() {
             Grpc_RestartWallpaperResponse response = new();
+
+            // Wait for any pending plugin update to complete
+            await UpdateLock.WaitAllAsync();
 
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info("Restore wallpapers...");
@@ -204,7 +215,7 @@ namespace VirtualPaper.Cores.WpControl {
                     if (wallpaperLayouts.Count > 0) {
                         var layout = wallpaperLayouts.FirstOrDefault(x => x.MonitorDeviceId == _monitorManager.PrimaryMonitor.DeviceId);
                         var data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, _monitorManager.PrimaryMonitor.Content, layout.RType);
-                        SetWallpaperAsync(data.GetPlayerData(), _monitorManager.PrimaryMonitor);
+                        _ = SetWallpaperAsync(data.GetPlayerData(), _monitorManager.PrimaryMonitor);
                     }
                 }
                 else {
@@ -275,7 +286,11 @@ namespace VirtualPaper.Cores.WpControl {
 
                 bool isStarted = false;
                 if (isFromPreview) {
-                    _ = await GetAndSaveTempRuntimeDataAsync(data, monitor.Content);
+                    if (!File.Exists(data.WpEffectFilePathUsing)) {
+                        throw new FileNotFoundException("Preview effect configuration is missing.", data.WpEffectFilePathUsing);
+                    }
+                    var runtimeData = await GetAndSaveTempRuntimeDataAsync(data, monitor.Content);
+                    DataAssist.FromRuntimeDataGetPlayerData(data, runtimeData);
                 }
                 // restore 时避免覆盖已有的自定义配置
                 else if (data.WpEffectFilePathUsing == string.Empty) {
@@ -300,7 +315,7 @@ namespace VirtualPaper.Cores.WpControl {
                             CloseWallpaper(instance.Monitor);
                             isStarted = await instance.ShowAsync(token);
 
-                            if (isStarted && !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
+                            if (!isStarted || !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
                                 isStarted = false;
                                 instance.Close();
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
@@ -310,7 +325,7 @@ namespace VirtualPaper.Cores.WpControl {
                             }
                             else {
                                 instance.Closing += ClosingEvent;
-                                _jobService.AddProcess(instance.Proc.Id);
+                                _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
                             }
@@ -330,8 +345,9 @@ namespace VirtualPaper.Cores.WpControl {
                             CloseAllWallpapers();
                             isStarted = await instance.ShowAsync(token);
 
-                            if (isStarted && !TrySetWallpaperSpanMonitor(instance.ProcWindowHandle)) {
+                            if (!isStarted || !TrySetWallpaperSpanMonitor(instance.ProcWindowHandle)) {
                                 isStarted = false;
+                                instance.Close();
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
                                 ArcLog.GetLogger<WallpaperControl>().Error("Failed to set wallpaper as child of WorkerW");
 
@@ -339,7 +355,7 @@ namespace VirtualPaper.Cores.WpControl {
                             }
                             else {
                                 instance.Closing += ClosingEvent;
-                                _jobService.AddProcess(instance.Proc.Id);
+                                _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 _wallpapers.Add(instance);
                             }
@@ -360,8 +376,9 @@ namespace VirtualPaper.Cores.WpControl {
                                 IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item);
                                 isStarted = await instance.ShowAsync(token);
 
-                                if (isStarted && !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
+                                if (!isStarted || !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
                                     isStarted = false;
+                                    instance.Close();
                                     _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
                                     ArcLog.GetLogger<WallpaperControl>().Error("Failed to set wallpaper as child of WorkerW");
 
@@ -369,7 +386,7 @@ namespace VirtualPaper.Cores.WpControl {
                                 }
                                 else {
                                     instance.Closing += ClosingEvent;
-                                    _jobService.AddProcess(instance.Proc.Id);
+                                    _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
                                     _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                     _wallpapers.Add(instance);
                                 }
@@ -382,6 +399,7 @@ namespace VirtualPaper.Cores.WpControl {
                 }
             }
             catch (Win32Exception ex) {
+                response.IsFinished = false;
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
                 if (ex.NativeErrorCode == 2) //ERROR_FILE_NOT_FOUND
                     WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex.Message));
@@ -389,6 +407,7 @@ namespace VirtualPaper.Cores.WpControl {
                     WallpaperError?.Invoke(this, ex);
             }
             catch (Exception ex) {
+                response.IsFinished = false;
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
                 WallpaperError?.Invoke(this, ex);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
@@ -855,9 +874,11 @@ namespace VirtualPaper.Cores.WpControl {
         private void ClosingEvent(object? s, EventArgs e) {
             if (s is not IWpPlayer instance) return;
 
+            var pid = instance.Proc.Id;
             instance.Closing -= ClosingEvent;
             instance.Closing = null;
             _wallpapers.RemoveAll(x => x.Monitor!.DeviceId == instance.Monitor!.DeviceId);
+            _jobService.StopPlugin(pid);
         }
 
         private void SetupDesktop_WallpaperChanged(object? sender, EventArgs e) {

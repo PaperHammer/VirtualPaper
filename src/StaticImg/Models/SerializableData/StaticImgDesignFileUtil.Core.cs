@@ -25,6 +25,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         public List<Layer> LayesCache => _layersCache;
         public bool IsSaveFromInit { get; internal set; } // 标记当撤销栈为空时，是否已经被保存（.vpd 为 true， 其余为 false）。在保存一次后，永久为 true
 
+        /// <summary>
+        /// 文件加载失败时置为 true，阻止保存以避免覆盖可能可恢复的原始数据
+        /// </summary>
+        public bool IsLoadFailed => _loadFailed;
+
         private StaticImgDesignFileUtil(string path, FileType fileType) {
             FilePath = Path.GetFullPath(path);
             IsSaveFromInit = IsValidVpdFile;
@@ -43,23 +48,27 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             return format;
         }
 
-        public async Task InitCacheAsync(
+        public Task InitCacheAsync(
             ArcSize arcSize,
             BusinessData business,
             List<Layer> layers) {
             var businessDataBytes = BusinessData.Serialize(business);
-            var layersBytes = await Layer.SerializeAsync(layers);
+            // 非 VPD 项目初始化时尚未需要持久化图层。真正保存时会逐层
+            // 序列化并回填准确长度，这里不再为计算缓存头而生成全部图层字节。
             var header = FileHeader.Create(
                 arcSize,
                 layers.Count,
                 (uint)businessDataBytes.Length,
-                (uint)layersBytes.Length);
+                layersLength: 0);
 
             UpdateCache(header, business, layers);
+            return Task.CompletedTask;
         }
 
         /// <summary>
-        /// 创建ProjectFile 自动区分路径和文件名
+        /// 创建 ProjectFile，自动区分文件路径和文件名。
+        /// 文件路径：直接打开指定文件（通常是 .vpd 或图片文件）。
+        /// 文件名：放到默认文档目录下创建/打开。
         /// </summary>
         public static StaticImgDesignFileUtil Create(string idnetify, FileType fileType) {
             if (string.IsNullOrWhiteSpace(idnetify)) throw new ArgumentException("Input cannot be empty");
@@ -206,5 +215,6 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         private BusinessData _businessDataCache = null!;
         private List<Layer> _layersCache = null!;
         private readonly SemaphoreSlim _ioLock = new(1, 1);
+        private bool _loadFailed;
     }
 }

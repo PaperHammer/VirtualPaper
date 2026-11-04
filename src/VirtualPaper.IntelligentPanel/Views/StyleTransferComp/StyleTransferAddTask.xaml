@@ -39,7 +39,10 @@
                     StrokeDashArray="4 3"
                     Fill="Transparent"/>
 
-                <Border x:Name="sourceImageBorder"
+                <Button x:Name="sourceImageBorder" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                    AutomationProperties.AutomationId="Intelligent.StyleTransfer.Source"
+                    AutomationProperties.Name="{markup:I18n Key=Intelligent_Task_Scr_Img_Import}"
+                    AutomationProperties.HelpText="{x:Bind _viewModel.SourceFilePath, Mode=OneWay}"
                     Width="400"
                     Height="250"
                     Margin="10"
@@ -49,7 +52,7 @@
                     BorderThickness="1"
                     AllowDrop="True"
                     uicomp_utils:CursorUtil.CursorShape="Hand"
-                    Tapped="SourceImageBorder_Tapped">
+                    Click="SourceImageButton_Click">
                     <Grid>
                         <StackPanel 
                             HorizontalAlignment="Center"
@@ -72,7 +75,7 @@
                             Stretch="UniformToFill"
                             Source="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
                     </Grid>
-                </Border>
+                </Button>
             </Grid>
 
             <StackPanel 
@@ -254,7 +257,10 @@
                     StrokeDashArray="4 3"
                     Fill="Transparent"/>
 
-                <Border x:Name="styleImageBorder"
+                <Button x:Name="styleImageBorder" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+                    AutomationProperties.AutomationId="Intelligent.StyleTransfer.Style"
+                    AutomationProperties.Name="{markup:I18n Key=Intelligent_Task_Style_Img_Import}"
+                    AutomationProperties.HelpText="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay}"
                     Width="300"
                     Height="250"
                     Margin="10"
@@ -264,7 +270,7 @@
                     BorderThickness="1"
                     AllowDrop="True"
                     uicomp_utils:CursorUtil.CursorShape="Hand"
-                    Tapped="StyleImageBorder_Tapped">
+                    Click="StyleImageButton_Click">
                     <Grid>
                         <StackPanel 
                             HorizontalAlignment="Center"
@@ -287,7 +293,7 @@
                             Stretch="UniformToFill"
                             Source="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource StringToImageSourceConverter}}" />
                     </Grid>
-                </Border>
+                </Button>
             </Grid>
 
             <StackPanel HorizontalAlignment="Center">

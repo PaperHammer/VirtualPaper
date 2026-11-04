@@ -55,6 +55,8 @@ namespace VirtualPaper.Common.Utils.Shell {
         /// 强制重绘桌面 - 清除壁纸，即使在关闭后仍保留在屏幕上。
         /// </summary>
         public static void RefreshDesktop() {
+            // Process tests must not persist changes to the user's system wallpaper/registry.
+            if (TestProcessEnvironment.IsEnabled) return;
             //todo: Find a better way to do this?
             _ = Native.SystemParametersInfo(Native.SPI_SETDESKWALLPAPER, 0, null, Native.SPIF_UPDATEINIFILE);
         }

@@ -1,12 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<Platforms>x86;x64;ARM64</Platforms>
-		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+		<Platforms>x64</Platforms>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 		<UseWinUI>true</UseWinUI>
 		<EnableMsixTooling>true</EnableMsixTooling>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -19,6 +19,13 @@
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
 		<DefaultLanguage>zh-CN</DefaultLanguage>
 	</PropertyGroup>
+
+	<!-- 排除 ONNX Runtime 重复的原生 DLL（在 MSIX payload 重复检测之前从 PackagingOutputs 移除 NuGet 缓存副本） -->
+	<Target Name="RemoveDuplicateOnnxRuntimeDlls" BeforeTargets="_ComputeAppxPackagePayload" AfterTargets="GetPackagingOutputs">
+		<ItemGroup>
+			<PackagingOutputs Remove="@(PackagingOutputs)" Condition="('%(Filename)%(Extension)' == 'onnxruntime.dll' or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll') and $([System.String]::new('%(FullPath)').Contains('.nuget'))" />
+		</ItemGroup>
+	</Target>
 
 	<PropertyGroup Condition="'$(IsMsixRelease)' != 'true'">
 		<!--<WindowsPackageType>None</WindowsPackageType>-->
@@ -123,6 +130,10 @@
 		<Content Update="Assets\icon-vp-512.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\splashCol_1400x1400_with_round40.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
 		<Content Update="Assets\intelligent\demo\style_transfer\origin.jpg">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -170,6 +181,21 @@
 		<Content Update="Assets\staticImg\layer_thu_grid.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_border_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_color_fill_24_regular.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_cursor_24_regular.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_resize_small_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\staticImg\Dark\ic_fluent_select_object_24_filled.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\staticImg\Light\ic_fluent_border_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -185,6 +211,12 @@
 		<Content Update="Assets\staticImg\Light\ic_fluent_select_object_24_filled.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\ui_components\Dark\project_create_staticimg_dark.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\Dark\project_create_webbackdrop_dark.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\ui_components\Dark\theme_dark.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
@@ -198,6 +230,9 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\ui_components\Light\intelligent_light.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="Assets\ui_components\Light\project_create_webbackdrop_light.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<Content Update="Assets\ui_components\Light\theme_auto.png">
@@ -217,6 +252,9 @@
 		<Content Update="Assets\ui_components\Light\project_create_staticimg_light.png">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Update="Assets\ui_components\project-create-webbackdrop-desc.png">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Update="Assets\virtualpaper.ico">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  </Content>
@@ -232,13 +270,13 @@
 	</PropertyGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.AppSettingsPanel\VirtualPaper.AppSettingsPanel.csproj" />
-		<ProjectReference Include="..\VirtualPaper.DraftPanel\VirtualPaper.DraftPanel.csproj" />
+		<ProjectReference Include="..\VirtualPaper.EditPanel\VirtualPaper.EditPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.IntelligentPanel\VirtualPaper.IntelligentPanel.csproj" />
 		<ProjectReference Include="..\VirtualPaper.WpSettingsPanel\VirtualPaper.WpSettingsPanel.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Content Update="Assets\ui_components\Dark\intelligent_dark.png">
 	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	  </Content>	  
+	  </Content>
 	</ItemGroup>
 </Project>

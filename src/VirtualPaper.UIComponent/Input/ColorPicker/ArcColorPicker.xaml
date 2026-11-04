@@ -4,6 +4,7 @@
     xmlns:controls="using:Microsoft.UI.Xaml.Controls" 
     xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives" 
     xmlns:input="using:VirtualPaper.UIComponent.Input"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
     <Style TargetType="input:ArcColorPicker" BasedOn="{StaticResource DefaultColorPickerStyle}" />
     <Style x:Key="DefaultColorPickerStyle" TargetType="input:ArcColorPicker">
@@ -526,7 +527,7 @@
 
                                         <TextBlock
                                             x:Name="AlphaLabel"
-                                            Text="Opacity"
+                                            Text="{markup:I18n Key=StaticImg_EffectParam_Opacity}"
                                             Padding="0 5 0 0"
                                             Margin="0 0 10 0"
                                             VerticalAlignment="Center"

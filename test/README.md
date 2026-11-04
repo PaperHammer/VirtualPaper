@@ -1,0 +1,267 @@
+# WinUI 操作测试
+
+`VirtualPaper.UIOperationTest` 是独立的未打包 WinUI 可执行测试项目，本身承担宿主职责。
+组件用例通过项目引用加载生产页面；应用用例启动隔离的真实 Core，并由 Core 拉起真实 UI。
+两类用例都不依赖 Sandbox，也不连接用户日常运行的 VirtualPaper 实例。
+
+```text
+test/
+  Run-UIOperationTests.ps1
+  VirtualPaper.UIOperationTest/
+    App.xaml / App.xaml.cs         UI 线程、用例执行和 JSON 结果
+    Cases/                        按生产模块组织真实 UI 交互用例
+      Components/GeneralEffectTests.cs
+      Application/NavigationSettingsTests.cs  真实 Core + UI 的设置保存与重开验证
+      Application/PerformanceSettingsTests.cs 性能设置的保存与重开验证
+      Application/WallpaperLibraryTests.cs    真实壁纸库、桌面播放器及删除验证
+      Application/ScreenSaverTests.cs         屏保设置与白名单保存重开验证
+      Application/ScreenFitTests.cs           高清适屏选图预览、取消及实际应用验证
+      Application/WallpaperEffectsTests.cs    已应用壁纸的正式调整窗口保存重开验证
+      Application/GeneralSettingsTests.cs     主题、材质、语言与设置子页保存重开验证
+      Application/SystemSettingsTests.cs      系统页取消保存、日志 ZIP 导出及内容验证
+      Application/StaticEditorTests.cs        静态编辑器旋转、取消、VPD 保存重开及导出验证
+    Infrastructure/
+      UiTestContext.cs            页面生命周期、等待、UI Automation 操作和临时目录
+      AppProcessSession.cs        真实进程、RPC 就绪、UI 重启及退出
+      ApplicationUi.cs            跨进程控件定位、滚动和选择
+```
+
+## 运行
+
+在具有图形会话的 Windows 桌面中使用 PowerShell 7.2 或更高版本：
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release
+# 单独验证一个应用模块；CI 默认执行全部用例。
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module WallpaperLibrary
+# 显式集成测试：需要安装目录中已有 Real-ESRGAN 模型，不自动下载。
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
+```
+
+默认使用 Visual Studio MSBuild 构建完整解决方案，再启动测试；已构建时可以加 `-NoBuild`。
+默认从 `src/VirtualPaper/bin/<Configuration>/net8.0-windows10.0.19041.0` 启动 Core，
+也可用 `-CoreExe` 指定另一个完整构建中的 Core（同目录必须有生产 UI 插件）。通过 `-ReportPath` 指定新的 JSON
+结果路径，默认写入系统临时目录。脚本检查进程退出码、计划用例数及结果完整性；失败时抛出错误，
+超时会终止本次启动的宿主及其子进程。不要用 `dotnet test` 运行这个 WinUI 可执行项目。
+默认总超时 180 秒，可用 `-TimeoutSeconds` 调整。
+报告旁的 `.artifacts` 目录保留隔离配置和前后台日志，临时运行目录会清理。
+
+启动前只读检查 Windows 交互会话、可访问的当前输入桌面、物理或虚拟显示区域，以及壁纸验收需要的 Explorer 桌面。
+不满足时，在构建和启动任何测试进程之前退出，生成 `Status: Skipped`、`Passed: false`、`ExpectedCount: 0` 的报告及原因，退出码为 0。
+原因包括 `WindowsRequired`、`NoInteractiveDesktop`、`NoDisplay`、`NoDesktopShell`；详细预检保存在 `.artifacts/environment.json`。
+这只跳过真实 UI 验收，常规测试照常执行。CI 汇总明确显示 UI 跳过，不宣称全部验收通过。
+环境检查自身出错、报告缺失，以及启动后的测试失败或超时仍然判失败，不会转为环境跳过。
+检测不会锁屏、解锁、切换输入桌面、修改注册表或创建虚拟显示器。
+
+## 当前覆盖
+
+组件交互：普通图片和深度图片分别执行以下链路：
+
+1. 在真实 WinUI 窗口中导航到生产 `GeneralEffect` 页面，检查对应的特效分组。
+2. 通过 UI Automation 的 ExpandCollapse 打开选项，RangeValue 修改已加载滑块，检查事件到达。
+3. 通过按钮 Invoke 恢复默认，重复五轮，检查值恢复、控件不累计或脱离页面。
+4. 保存修改，检查真实 JSON 落盘及应用回调；重建页面并展开选项，确认控件回显已保存值。
+
+应用交互：`Application.NavigationSettings.SaveAndReopen` 执行以下链路：
+
+1. 启动真实 `VirtualPaper.exe`，以带超时的设置 RPC 等待后台就绪。
+2. 通过生产 ShowUI RPC 拉起真实 `VirtualPaper.UI.exe`，仅识别该 Core 的直接子进程。
+3. 通过跨进程 UI Automation 进入设置并关闭导航动画，不直接调用 ViewModel 或 SetSettings。
+4. 独立读取后台 RPC 和真实 JSON，确认修改已保存。
+5. 正常关闭 UI，再由 Core 拉起新的 UI 进程，验证开关回显为关闭。
+6. 正常关闭 UI 和 Core，检查退出码。JSON 记录 Core/UI PID、保存值及正常退出结果。
+
+重开时等待真实窗口就绪；OS 进程退出早于 Core 退出回调清理时，会在超时内有限重试幂等显示命令。
+报告记录 `ShowUiRequests`，不把一次 RPC 返回当成窗口已经可用。
+
+`Application.PerformanceSettings.SaveAndReopen` 验证性能页的 7 项设置：全屏、焦点、电池、
+省电、远程桌面的播放策略，多屏判断策略，以及仅桌面播放声音开关。
+逐项操作真实下拉框或开关，等待后台 RPC 确认，检查 JSON 落盘，再重开 UI 核对 7 个控件的回显。
+这覆盖设置保存链路；没有模拟电池/远程桌面状态，也未验收壁纸实际暂停或静音行为。
+
+`Application.WallpaperLibrary.ImportApplyCloseDelete` 验证壁纸库最小闭环：
+
+1. 创建独立 PNG，经实际添加按钮、系统文件选择器导入，检查元数据、缩略图和源文件哈希。
+2. 操作搜索框，验证无匹配时隐藏、清空后恢复。普通图片初始标题允许为空，本用例不代表非空标题匹配验收。
+3. 聚焦真实卡片，经 Shift+F10 打开正式菜单，验证取消删除保留文件，再确认普通图片应用。
+4. 检查真实布局 JSON、Core 直接创建的 PlayerWeb PID，以及播放器窗口的实际 WorkerW 父窗口。
+5. 重开真实 UI，确认条目仍存在；经显示控制关闭壁纸，核对布局清空和该播放器进程退出。
+6. 确认删除，检查目录和列表移除；再次重开 UI 检查空列表，输入 PNG 保持不变。
+
+卡片容器按壁纸 UID 提供 AutomationId；键盘菜单与鼠标菜单共用生产处理逻辑。
+原生键盘输入只用于所属测试窗口，必要时临时置顶并恢复；不会关闭桌面上的其他应用。
+系统选图必须实际提交成功，不替换存储选择器。菜单定位失败时保存所属窗口截图到报告 artifacts。
+WebView2 退出后可能延后释放缓存，脚本等待释放再清理测试目录。
+
+当前播放器有时记录 `Failed to retrieve GetCefD3DRenderingSubProcessId`，报告保留该 ERROR。
+普通图片窗口挂载与关闭断言通过不代表 D3D 子进程识别、3D 暂停或画质验收通过。
+
+`Application.ScreenSaver.SettingsAndWhitelist` 验证屏保设置与白名单：
+
+1. 经实际屏保页启用开关，修改等待时间和效果，独立读取后台 RPC 和 JSON。
+2. 经正式异步 `IStoragePicker` 选择系统 notepad.exe，只登记白名单，不启动程序。
+3. 核对程序名、完整路径与图标保存；搜索无匹配和有匹配状态，再重开 UI 核对回显。
+4. 经实际移除按钮删除白名单与图标，关闭屏保，再次重开核对关闭和空列表。
+
+启用屏保必须等待设置保存完成后再发送启动 RPC，避免后台仍读取旧的关闭值。
+白名单程序路径通过 gRPC 的新增字段往返；屏保通知管道也带测试会话后缀。
+选择器经明确的原生按钮提交；仅对所属选择器内、类名和原生 ID 已核对的 Button
+投递异步点击，不发送全局回车。这样也避免另存为校验期间 UIA 同步调用导致的 COM 错误。
+本用例使用较长等待时间且保持锁屏选项关闭，不验证真实空闲触发、屏保进程启动或系统锁屏。
+
+`Application.ScreenFit.PreviewCancelApplyAndReopen` 验证高清适屏的基础交互：
+
+1. 经正式系统选择器选择竖图，等待示例预览消失，切换包含／覆盖，检查可视区域提示变化。
+2. 取消后确认没有导入、布局或播放器；重开对话框必须重新选图才能应用。
+3. 保持超分关闭，以包含方式实际应用，核对原图哈希、目标屏幕及三份效果 JSON 的 Scaling。
+4. 验证 PlayerWeb 窗口挂载到 WorkerW；重开 UI，检查壁纸条目、当前壁纸预览及设置持久化。
+5. 经正式 UI 关闭播放器、删除测试壁纸，确认源文件保持不变并正常退出前后台。
+
+本用例不运行超分模型，不代表推理、预览像素画质、多屏切换或覆盖方式实际渲染验收。
+
+`Application.WallpaperEffects.EditRestoreSaveAndReopen` 使用真实 Core、UI、桌面播放器与效果服务：
+
+1. 实际导入并应用普通图片，从显示控制打开该壁纸的正式调整窗口。
+2. 修改氛围效果和强度，经恢复按钮回到保存值，再选择雪花样式和强度 71。
+3. 保存前检查应用配置不变，保存后核对效果、样式与强度落盘，默认模板保持不变。
+4. 关闭并重开 UI，重新打开调整窗口核对三个控件，最后关闭播放器并删除测试条目。
+
+修改使用正式 RPC／IPC 路径，播放器保持运行；本用例不读取渲染端状态或比对渲染像素。
+它不代替粒子画质、3D 深度模型、鼠标视差及暂停／恢复的验证。
+
+`Application.GeneralSettings.SaveLanguageThemeAndReopen` 验证通用设置：
+
+1. 通过主题按钮切换浅色到深色，修改界面材质、开机启动偏好和语言，逐项核对 Core RPC 与 JSON。
+2. 在通用／系统／其他子页间导航，返回后设置保持一致，About 图片保留可访问名称。
+3. 材质与语言修改后，观察 Core 自动拉起新的 UI 进程，逐代核对旧进程退出码；不代发显示命令。
+4. 再手动关闭并重开 UI，核对中文通用标签、中文材质选项、语言和开机启动开关；最后恢复英语和关闭开机启动偏好。
+
+显式测试会话不注册系统开机启动。本用例不验证实际系统注册、材质像素、About 图片解码或更新下载。
+
+`Application.SystemSettings.ExportLogsAndCancel` 验证系统页日志导出：
+
+1. 经正式保存选择器取消导出，然后再次导出 ZIP 到本用例临时目录。
+2. 等待 ZIP 完整可读，核对设置内容与当前会话 JSON 一致、布局存在、Core／UI 日志非空。
+3. 检查压缩包条目路径安全，重开 UI 确认系统页仍可使用，前后台正常退出。
+
+本用例只导出隔离会话的诊断数据，不包含用户生产日志，不打开后台调试窗口。
+
+`Application.StaticEditor.RotateCancelSaveReopenAndExport` 验证静态图片编辑器：
+
+1. 经正式打开入口和系统选择器载入独立 PNG，选择画布工具，将当前默认 1920×1080 画布旋转为 1080×1920。
+2. 取消未保存关闭提示，确认 UI 保留；取消一次设计保存后，再实际保存 `.vpd`。
+3. 经生产文件头读取逻辑核对尺寸和图层数，重开 UI、重新载入 `.vpd`，核对画布回显。
+4. 经正式导出菜单保存 PNG，检查尺寸、非空图像内容及源图哈希，正常退出前后台。
+
+本用例使用真实 Win2D 与着色器资源，不覆盖画笔、图层重命名、跨 DPI 或逐像素视觉一致性。
+
+`Application.WebEditor.CreateFilesSaveReopenAndExport` 验证 Web 编辑器：
+
+1. 从正式模板新建独立 Web 项目，创建文件夹，取消一次文件创建，再创建并删除文件。
+2. 点击文件树打开入口文件，等待 Monaco 上报当前文件状态；确认所属浏览器获得原生焦点后，发送真实键盘输入。
+3. 通过正式保存菜单保存，独立读取磁盘文件确认编辑标记，不以未保存指示消失替代内容检查。
+4. 关闭并重开 UI，经系统选择器载入 `.vpw`，核对目录与入口文件；通过完整导出菜单保存 ZIP，确认编辑内容、项目清单和删除结果。
+
+文件树右键和代码输入只作用于所属窗口，检查遮挡与前台焦点，不注入 DOM、调用测试保存接口或替换真实服务。
+本用例不覆盖 Web 壁纸预览画质、另存为、全部编辑命令、OCR 或逐像素渲染验收。
+
+`Application.Intelligent.ConfigureCancelAndReopen` 验证智能任务配置：
+
+1. 通过正式选图按钮打开系统选择器，取消选图时保持禁止提交。
+2. 选择 256×144 图片，切换 2×、4× 与画质修复，核对 512×288、1024×576 和原尺寸提示。
+3. 取消后重开，确认原图与倍率重置；风格迁移先只选风格图，等待回填后确认仍不可提交，再补选原图。
+4. 多次取消和重开 UI，确认配置可继续使用、原始文件哈希不变，前后台正常退出。
+
+这条用例不提交推理任务、不下载模型；报告明确记录 `ModelInferenceAndQueueTested=false`。
+队列、运行中取消、模型推理与结果导入／导出需要另外验证，不能由配置用例代替。
+
+`Application.ModelInference.SuperResolutionQueueCancelSaveAndImport` 是显式运行的模型集成用例：
+
+1. 使用安装目录中的真实 Real-ESRGAN ONNX 模型，经正式 UI 连续提交三项任务。
+2. 确认第三项排队、第二项运行，然后分别取消，保留第一项完成真实推理。
+3. 经系统保存选择器导出 PNG，检查 2× 输出尺寸；经正式入库按钮导入，核对导出与入库图片哈希。
+4. 删除完成任务、重开 UI，确认入库条目仍在，源图不变，前后台正常退出且没有 ERROR。
+
+该用例不进入默认 CI 集合；只有显式指定模块才执行，缺少模型会失败，不会静默跳过。
+它验证实际 CPU ONNX 推理与队列基础链路，不代表画质评分、全部模型或长期压力测试。
+
+`Passed` 表示本用例的交互与保存断言通过，不能代替整套应用健康检查；环境跳过不计为通过。
+`Evidence.RuntimeErrors` 单独保留运行中出现的 ERROR 日志；脚本会提示，不能因退出码为 0 就忽略。
+失败用例在结束后快照当时的 Core／UI 日志和配置到 artifacts，避免后续进程轮转日志后丢失诊断信息。
+
+脚本通过仅对子进程生效的环境变量传递测试会话 GUID 和数据根目录。
+Common 在进程初始化时读取它们，隔离配置、日志、Core/UI 单例、管道及共享文件锁。
+进程测试不启用 `Constants.IsTestMode`；着色器资源路径、消息显示、桌面挂载检查沿用生产行为。
+旧的 `IsTestMode` 仍供常规单元测试设置，数据根目录隔离独立于该开关。
+显式测试会话中跳过开机自启注册、启动通知及待安装插件更新；设置保存仍使用真实生产代码。
+按用户约束，真实锁屏及注册表修改标为 **跳过**，不注册对应测试项，也不申请锁屏权限。
+进程用例始终关闭屏保锁定，跳过带 `SPIF_UPDATEINIFILE` 的系统壁纸刷新；该调用会写入系统配置，不能借桌面重绘间接执行。
+报告的 `SkippedSystemOperations` 记录这些边界，不能将跳过项计为通过。
+未设置环境变量时保持正常运行方式。测试不读写用户壁纸库或生产配置。
+
+组件用例在 UI 线程串行运行；跨进程 UI Automation 在单独 MTA 线程执行，参见
+[Microsoft UI Automation 线程说明](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-threading)。
+新增模块时在 `Cases` 中实现用例，并在 `App.xaml.cs` 注册；脚本及 CI 不需要维护用例名称或数量。
+组件用例的效果服务和应用回调使用记录实现；应用设置用例不替代前后台服务。
+壁纸库、高清适屏和壁纸效果用例启动真实播放器并验证桌面挂载；各用例按上述边界执行。
+默认集合不覆盖 WebView 渲染画质、多屏布局、视频播放策略或 AI 推理；实际推理需运行上述 ModelInference 模块。
+
+`Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen` 是显式压力回归：
+同一真实后台下启动、正常关闭 12 代 UI，每代进入屏保页两次，并经真实命名管道发送设置通知，要求 UI 日志确认接收。
+用于验证页面退出后监听可恢复及关闭生命周期，不模拟真实空闲或锁屏。
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module ScreenSaverLifecycle -TimeoutSeconds 300
+```
+
+应用关闭超过 10 秒时，保留所属窗口的可见控件及截图；仍判失败，不延长超时来掩盖问题。
+
+`Application.Rendering.DepthInferenceDrawPauseAndResume` 使用真实选图／3D 类型选择和已安装的 Depth Anything V2：
+核对深度缓存，启用自动镜头，通过正式截图 RPC 捕获 WebView 渲染内容，检查测试景物颜色、运动帧差、暂停静止和恢复运动。
+截图取自测试所属播放器，不截取用户其他窗口；保留在报告旁的 `logs/UIOperation/rendering`。
+缺少深度模型会失败；不会自动下载。该用例验证基本渲染正确性，不代替主观画质评分、多显卡／多屏或第三方 Web 壁纸暂停验收。
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module Rendering -TimeoutSeconds 300
+```
+
+`Application.ScreenSaverIdle.RealIdleInputWakeAndRepeat` 真实等待一分钟空闲，验证屏保加载、鼠标唤醒、正常退出，再重复第二轮。
+输入转发的“始终移动”关闭，屏保仍应接收活动通知；使用自身屏保窗口的可见 HWND，兼容 WPF 隐藏 owner。
+每轮最多等待两分钟，真实键鼠活动会重置计时，报告保留观察到的 OS 空闲秒数用于识别环境干扰。
+本用例只运行非锁屏屏保；锁屏、开机自启注册和持久化系统设置写入均跳过。
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -Module ScreenSaverIdle -TimeoutSeconds 300
+```
+
+现有七个常规测试项目保持原目录；`Core.Test/T_Workflows` 继续负责文件、服务和 gRPC
+业务集成测试，不作为真实 UI 交互用例迁入本项目。
+
+CI 顺序为：构建准备 → **安装生命周期验收** → **七项常规测试并行** → **WinUI 环境预检／操作测试** → 汇总。
+三个测试阶段串行：任一阶段失败，后续阶段不运行。产物完整性测试与七项常规测试并行，Web 播放器脚本检查随 UI 单元测试执行。
+Pre-merge Check 使用 `Run-InstallerTests.ps1`，从安装目录启动主程序，由首次运行逻辑自行打开 UI；验证窗口持续响应三秒，再通过窗口关闭和正式退出 RPC 正常结束前后台。强制清理仅用于失败恢复，不能算验收通过。Pre-release 不执行安装生命周期验收。
+安装验收使用唯一临时安装目录和隔离应用数据；启动失败仍尝试卸载，卸载残留也判失败，报告包含 Install／Open／Uninstall 三项。
+有交互桌面时，测试操作真实英文安装向导：接受许可、下一步、安装、完成；卸载时确认移除、保留用户数据并确认完成。仅操作当前安装程序及其子进程的窗口，未知弹窗或超时判失败。没有交互桌面时使用静默安装和卸载，Open 明确记为 Skipped；不会把未打开的 UI 记为通过。
+安装后检查 Core／UI 必要文件、包与程序版本一致、开始菜单快捷方式及卸载注册信息；卸载后检查文件、进程、快捷方式和注册信息残留。两种模式均保留三阶段报告和安装日志；有桌面时另有向导操作记录。
+安装包测试会进行实际系统安装／卸载，应在可丢弃的 Windows CI 机器上运行；发现同 AppId 的已有安装或开始菜单快捷方式会拒绝执行。本机仍遵守不执行注册表修改测试的约束。
+
+```powershell
+# 在可丢弃的 Windows 安装验收机器上执行：
+./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
+# 以下只验证阶段顺序、失败阻断和报告契约，不安装、不启动 UI、不写注册表：
+./test/Test-InstallerTestSupport.ps1
+# 有桌面时，用不修改系统的临时向导验证 UIA 操作、子进程接管和超时恢复：
+./test/Test-InstallerWizard.ps1
+./.github/scripts/validate-test-workflow.ps1
+```
+
+WinUI 失败或结果缺失不能让最终 CI 检查通过；只有预检明确记录的环境跳过允许继续，并在最终状态注明 `[SKIPPED]`。
+进入 WinUI 阶段前还会检查常规 TRX 的未处理异常，防止“断言全通过、testhost 仍崩溃”的假绿。
+
+## 分批推进
+
+- 公共测试基础设施和最小真实链路单独提交。
+- 后续每批只推进一个模块，必要的共用辅助方法随该模块提交。
+- 完成真实交互、后台保存、重开回显和进程清理验证后，提交该模块，再开始下一个。
+- 报告中注明未覆盖的运行行为和已知异常；修复跨模块问题时另立提交。
+- 测试报告、运行日志和无关本地改动不纳入功能提交。

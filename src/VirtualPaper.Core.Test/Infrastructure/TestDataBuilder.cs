@@ -44,9 +44,12 @@ namespace VirtualPaper.Core.Test.Infrastructure {
             RuntimeType rtype = RuntimeType.RImage,
             string wpId = "wp_preview_001") {
             var mock = CreateValidPlayerData(tempFilesToCleanup, rtype, wpId);
-            var effectUsing    = CreateTempFile(tempFilesToCleanup);
-            var effectTemplate = CreateTempFile(tempFilesToCleanup);
-            var effectTemp     = CreateTempFile(tempFilesToCleanup);
+            string previewFolder = Path.Combine(Constants.CommonPaths.TempDir, wpId);
+            Directory.CreateDirectory(previewFolder);
+            mock.Setup(d => d.FolderPath).Returns(previewFolder);
+            var effectUsing    = CreateTempFile(tempFilesToCleanup, previewFolder);
+            var effectTemplate = CreateTempFile(tempFilesToCleanup, previewFolder);
+            var effectTemp     = CreateTempFile(tempFilesToCleanup, previewFolder);
             mock.Setup(d => d.WpEffectFilePathUsing).Returns(effectUsing);
             mock.Setup(d => d.WpEffectFilePathTemplate).Returns(effectTemplate);
             mock.Setup(d => d.WpEffectFilePathTemporary).Returns(effectTemp);
@@ -89,8 +92,8 @@ namespace VirtualPaper.Core.Test.Infrastructure {
             tempFilesToCleanup.Clear();
         }
 
-        private static string CreateTempFile(List<string> tempFilesToCleanup) {
-            var path = Path.GetTempFileName();
+        private static string CreateTempFile(List<string> tempFilesToCleanup, string? folder = null) {
+            var path = folder == null ? Path.GetTempFileName() : Path.Combine(folder, Path.GetRandomFileName());
             File.WriteAllBytes(path, new byte[100]); // 确保 File.Exists 为 true
             tempFilesToCleanup.Add(path);
             return path;

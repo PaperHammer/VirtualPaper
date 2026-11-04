@@ -8,13 +8,13 @@ using Windows.ApplicationModel.DataTransfer;
 
 namespace VirtualPaper.UIComponent.Collection {
     public partial class ArcListView : ListView {
-        public event EventHandler<ItemMoveEventArgs> ItemMoved;
+        public event EventHandler<ItemMoveEventArgs>? ItemMoved;
 
         ~ArcListView() {
             UnregisterPropertyChangedCallback(ItemsSourceProperty, _itemsSourceChangedToken);
         }
 
-        // Listview 在取消选择项时，会优先将 Selecteditem(Twoway) 设置为 null，再触发控件内事件 SelectionChanged，最后出发外部绑定的 SelectionChanged 事件。
+        // Listview 在取消选择项时，会优先将 Selecteditem(Twoway) 设置为 null，再触发控件内事件 SelectionChanged，最后触发外部绑定的 SelectionChanged 事件。
         public bool CancelSelectionEnable {
             get { return (bool)GetValue(CancelSelectionEnableProperty); }
             set { SetValue(CancelSelectionEnableProperty, value); }
@@ -93,7 +93,7 @@ namespace VirtualPaper.UIComponent.Collection {
             _isProgrammaticClear = false;
         }
 
-        private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) {
+        private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
             switch (e.Action) {
                 case NotifyCollectionChangedAction.Add:
                     TrySelectNewestItem(e);
@@ -166,7 +166,7 @@ namespace VirtualPaper.UIComponent.Collection {
         /// <summary>
         /// 用于还原选择项，防止空选择
         /// </summary>
-        private object _lastSelectedItem;
+        private object? _lastSelectedItem;
         private bool _isDragging;
         private bool _isProgrammaticClear;
         private int _oldIndex;

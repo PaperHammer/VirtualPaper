@@ -1,4 +1,4 @@
-﻿namespace VirtualPaper.Common.Events {
+namespace VirtualPaper.Common.Events {
     public class HardwareUsageEventArgs : EventArgs {
         /// <summary>
         /// Primary cpu name.

@@ -11,12 +11,13 @@
     xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
-    NavigationCacheMode="Enabled"
-    x:Name="rootPage">
+    NavigationCacheMode="Enabled">
 
     <arc:ArcPage.Resources>
         <Style x:Key="LibGridViewItemStyle" TargetType="GridViewItem">
-            <Setter Property="Margin" Value="5 5 5 10"/>
+            <Setter Property="Margin" Value="0 0 12 12"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="GridViewItem">
@@ -27,14 +28,61 @@
                             PointerExited="GridViewItem_PointerExited"
                             PointerCanceled="GridViewItem_PointerCanceled">
 
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver"/>
+                                    <VisualState x:Name="Pressed"/>
+                                    <VisualState x:Name="Selected">
+                                        <VisualState.Setters>
+                                            <Setter Target="SelectionOverlay.Opacity" Value="1"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="PointerOverSelected">
+                                        <VisualState.Setters>
+                                            <Setter Target="SelectionOverlay.Opacity" Value="1"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="PressedSelected">
+                                        <VisualState.Setters>
+                                            <Setter Target="SelectionOverlay.Opacity" Value="1"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+
                             <ContentPresenter x:Name="contentPresenter"
                                 RenderTransformOrigin="0.5 0.5"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
                                 Content="{TemplateBinding Content}"
                                 ContentTemplate="{TemplateBinding ContentTemplate}">
                                 <ContentPresenter.RenderTransform>
                                     <CompositeTransform x:Name="ContentPresenterTransform" ScaleX="1" ScaleY="1"/>
                                 </ContentPresenter.RenderTransform>
                             </ContentPresenter>
+
+                            <Border x:Name="SelectionOverlay"
+                                Opacity="0"
+                                IsHitTestVisible="False"
+                                BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                                BorderThickness="3"
+                                CornerRadius="8">
+                                <Border
+                                    Width="26"
+                                    Height="26"
+                                    Margin="8"
+                                    Padding="5"
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    CornerRadius="13">
+                                    <FontIcon
+                                        Glyph="&#xE73E;"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"/>
+                                </Border>
+                            </Border>
                         </Grid>
                     </ControlTemplate>
                 </Setter.Value>
@@ -43,27 +91,52 @@
 
         <DataTemplate x:Key="WallpaperItemTemplate" x:DataType="models:IWpBasicData">
             <Grid
-                Width="320"
-                Height="200"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
                 CornerRadius="8"
                 ContextFlyout="{StaticResource WallpaperContextFlyout}">
 
+                <!-- 原生占位缩略图：无 preview（ThumbnailPath 为空）或图片加载失败时显示 -->
+                <Grid x:Name="NoPreviewPlaceholder"
+                    Visibility="{x:Bind ThumbnailPath, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}"
+                    Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="6"
+                        Opacity="0.65">
+                        <FontIcon Glyph="&#xEB9F;" FontSize="36"/>
+                        <TextBlock
+                            Text="{markup:I18n Key=Text_NoPreview}"
+                            FontSize="12"
+                            TextAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
                 <Image 
-                    Source="{x:Bind ThumbnailPath}"
+                    Source="{x:Bind ThumbnailPath, Converter={StaticResource StringToImageSourceConverter}}"
                     Stretch="UniformToFill"
                     ImageFailed="Image_ImageFailed"/>
 
                 <Border 
                     VerticalAlignment="Bottom"
-                    Padding="6"
-                    Height="48"
-                    Background="{ThemeResource SystemControlBackgroundBaseMediumLowBrush}">
+                    Padding="10 18 10 10"
+                    Height="72">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="Transparent" Offset="0"/>
+                            <GradientStop Color="#D9000000" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
                     <TextBlock
                         Text="{x:Bind Title, Mode=OneWay}"
                         MaxLines="2"
                         FontSize="16"
-                        Foreground="{Binding DataContext.WpTitleForeground, ElementName=rootPage, Converter={StaticResource ByteArrayToBrushConverter}}"
-                        TextTrimming="CharacterEllipsis"/>
+                        LineHeight="20"
+                        VerticalAlignment="Bottom"
+                        Foreground="White"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}"/>
                 </Border>
             </Grid>
         </DataTemplate>
@@ -72,10 +145,12 @@
             <ItemsWrapGrid x:Name="InternalItemsWrapGrid"
                 Orientation="Horizontal" 
                 VerticalAlignment="Top"
-                HorizontalAlignment="Center"/>
+                HorizontalAlignment="Left"/>
         </ItemsPanelTemplate>
 
-        <MenuFlyout x:Key="WallpaperContextFlyout" ShowMode="Transient">
+        <MenuFlyout x:Key="WallpaperContextFlyout"
+            ShowMode="Transient"
+            Opening="WallpaperContextFlyout_Opening">
             <MenuFlyoutItem
                 Tag="Details"
                 Text="{markup:I18n Key=Text_Details}"
@@ -110,6 +185,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem 
                 Tag="Apply" 
+                AutomationProperties.AutomationId="Library.Item.Apply"
                 Text="{markup:I18n Key=Text_Apply}"
                 Click="ContextMenu_Click" >
                 <MenuFlyoutItem.Icon>
@@ -134,6 +210,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="RemoveFromLib"
+                AutomationProperties.AutomationId="Library.Item.Delete"
                 Text="{markup:I18n Key=Text_RemoveFromLib}"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
@@ -144,13 +221,18 @@
     </arc:ArcPage.Resources>
 
     <ScrollView x:Name="wallpaperLibScrollViewer"
-         Padding="0 0 16 0" Margin="0 0 0 20"
+         HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Hidden"
+         Padding="12 0 12 0" Margin="0 0 0 20"
          ViewChanged="WallpaperLibScrollViewer_ViewChanged">
         <StackPanel
             Orientation="Vertical"
             Spacing="8">
             <GridView x:Name="wallpapersLibView"
-                Margin="5 0 5 10"
+                AutomationProperties.AutomationId="Library.Items"
+                ContainerContentChanging="WallpapersLibView_ContainerContentChanging"
+                ContextRequested="WallpapersLibView_ContextRequested"
+                Margin="0 0 -12 0"
+                SizeChanged="WallpapersLibView_SizeChanged"
                 DataContext="{x:Bind _viewModel}"
                 ItemsSource="{x:Bind _viewModel.LibraryWallpapers}"
                 Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
@@ -161,6 +243,8 @@
                 VerticalContentAlignment="Stretch"
                 ItemClick="WallpapersLibView_ItemClick"
                 IsItemClickEnabled="True"
+                SelectionMode="None"
+                SelectionChanged="WallpapersLibView_SelectionChanged"
                 ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
                 ItemTemplate="{StaticResource WallpaperItemTemplate}"
                 ItemsPanel="{StaticResource WallpaperItemsPanel}"

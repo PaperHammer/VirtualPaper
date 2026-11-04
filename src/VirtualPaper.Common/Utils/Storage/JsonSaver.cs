@@ -11,14 +11,32 @@ namespace VirtualPaper.Common.Utils.Storage {
         }
 
         public static T Load<T>(string filePath, JsonSerializerContext context) {
-            return LoadAsync<T>(filePath, context).Result;
+            try {
+                JsonSerializerOptions combinedLoadOptions = new(_optionsLoad) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                using FileStream stream = File.OpenRead(filePath);
+                return JsonSerializer.Deserialize<T>(stream, combinedLoadOptions)!;
+            }
+            catch (Exception ex) {
+                throw new FileAccessException(filePath, "read json", ex);
+            }
         }
 
         public static void Save<T>(string filePath, T data, JsonSerializerContext context) {
-            SaveAsync(filePath, data, context).Wait();
+            try {
+                string? directoryPath = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(directoryPath)) {
+                    Directory.CreateDirectory(directoryPath);
+                }
+                JsonSerializerOptions combinedStoreOptions = new(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                using FileStream stream = File.Create(filePath);
+                JsonSerializer.Serialize(stream, data, combinedStoreOptions);
+            }
+            catch (Exception ex) {
+                throw new FileAccessException(filePath, "write json", ex);
+            }
         }
 
-        public static async Task<T> LoadAsync<T>(string filePath, JsonSerializerContext context, params JsonConverter[]? converters) {
+        public static async Task<T?> LoadAsync<T>(string filePath, JsonSerializerContext context, params JsonConverter[]? converters) {
             try {
                 JsonSerializerOptions combinedLoadOptions = new(_optionsLoad) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
 

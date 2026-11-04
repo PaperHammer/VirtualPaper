@@ -30,7 +30,8 @@
 
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="lcl_models:SuperResolutionTaskItem">
-                    <Grid>
+                    <Grid AutomationProperties.AutomationId="Intelligent.SuperResolution.Task"
+                        AutomationProperties.Name="{x:Bind SourceFilePath}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
@@ -93,6 +94,7 @@
                                             Spacing="2">
                                             <StackPanel Spacing="2" Orientation="Horizontal">
                                                 <TextBlock
+                                                    AutomationProperties.AutomationId="Intelligent.Task.Status"
                                                     Text="{x:Bind StatusText, Mode=OneWay}"
                                                     FontSize="14"
                                                     FontWeight="SemiBold"
@@ -112,19 +114,20 @@
                                                 </StackPanel>
                                             </input:ArcButton>
 
-                                            <input:ArcButton Command="{x:Bind ImportCommand}">
+                                            <input:ArcButton AutomationProperties.AutomationId="Intelligent.Task.Import" Command="{x:Bind ImportCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <TextBlock Text="{markup:I18n Key=Text_ImportLib}" FontSize="14"/>
                                                 </StackPanel>
                                             </input:ArcButton>
 
-                                            <input:ArcButton Command="{x:Bind SaveCommand}">
+                                            <input:ArcButton AutomationProperties.AutomationId="Intelligent.Task.Save" Command="{x:Bind SaveCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                                     <TextBlock Text="{markup:I18n Key=Text_Save}" FontSize="14"/>
                                                 </StackPanel>
                                             </input:ArcButton>
 
                                             <input:ArcButton
+                                                AutomationProperties.AutomationId="Intelligent.Task.Remove"
                                                 Command="{x:Bind RemoveCommand}"
                                                 BorderBrush="#FFE0B0B0"
                                                 Background="#20FF4D6A"

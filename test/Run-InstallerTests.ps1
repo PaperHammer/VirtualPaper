@@ -1,0 +1,175 @@
+#Requires -Version 7.2
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)][string] $InstallerPath,
+    [string] $ReportPath = 'TestResults/Installer/installer-results.json',
+    [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
+    [ValidateRange(10, 600)][int] $TimeoutSeconds = 120,
+    [switch] $NoBuild
+)
+$ErrorActionPreference = 'Stop'
+. "$PSScriptRoot/InstallerTestSupport.ps1"
+if (-not $IsWindows) { throw 'Installer lifecycle tests require Windows.' }
+$repositoryRoot = Split-Path -Parent $PSScriptRoot
+$InstallerPath = (Resolve-Path -LiteralPath $InstallerPath).Path
+$ReportPath = [IO.Path]::GetFullPath($ReportPath)
+if (Test-Path -LiteralPath $ReportPath) { throw "Refusing to reuse an existing installer lifecycle report: $ReportPath" }
+$artifacts = "$ReportPath.artifacts"
+if (Test-Path -LiteralPath $artifacts) { throw "Installer lifecycle artifacts already exist: $artifacts" }
+New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
+# Unicode and spaces exercise installer/application path handling; never reuse a daily install.
+$installDir = Join-Path ([IO.Path]::GetTempPath()) "Virtual Paper 安装验收-$([guid]::NewGuid().ToString('N'))"
+$project = Join-Path $repositoryRoot 'test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj'
+$probe = Join-Path $repositoryRoot "test/VirtualPaper.InstallerTest/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
+if (-not $NoBuild) {
+    dotnet build $project -c $Configuration
+    if ($LASTEXITCODE -ne 0) { throw 'Installer lifecycle probe build failed; installation was not attempted.' }
+}
+if (-not (Test-Path -LiteralPath $probe)) { throw "Installer lifecycle probe not found: $probe" }
+
+# The production AppId is shared with a user's existing installation. Read all registry
+# views before installing, so this acceptance run cannot overwrite a daily installation.
+$setupScript = Get-Content -LiteralPath (Join-Path $repositoryRoot 'InnoSetup/setup.iss') -Raw
+$appId = [regex]::Match($setupScript, '(?m)^#define AppId "\{\{([0-9A-Fa-f-]+)\}"').Groups[1].Value
+if (-not $appId) { throw 'Cannot determine the production installer AppId.' }
+function Get-InstallRegistrations {
+    $keyPath = "Software\Microsoft\Windows\CurrentVersion\Uninstall\{$appId}_is1"
+    foreach ($hive in @([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryHive]::CurrentUser)) {
+        foreach ($view in @([Microsoft.Win32.RegistryView]::Registry64, [Microsoft.Win32.RegistryView]::Registry32)) {
+            $root = [Microsoft.Win32.RegistryKey]::OpenBaseKey($hive, $view)
+            try {
+                $key = $root.OpenSubKey($keyPath)
+                if ($null -ne $key) {
+                    try { [pscustomobject]@{ Location = $key.GetValue('InstallLocation'); Version = $key.GetValue('DisplayVersion') } }
+                    finally { $key.Dispose() }
+                }
+            } finally { $root.Dispose() }
+        }
+    }
+}
+if (@(Get-InstallRegistrations).Count) { throw 'An existing Virtual Paper installation was found. Use a disposable Windows test machine.' }
+$shortcutPaths = @([Environment]::GetFolderPath('CommonPrograms'), [Environment]::GetFolderPath('Programs')) |
+    ForEach-Object { Join-Path $_ 'Virtual Paper.lnk' } | Sort-Object -Unique
+if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) {
+    throw 'An existing Virtual Paper Start menu shortcut was found. Use a disposable Windows test machine.'
+}
+$packageVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($InstallerPath).FileVersion
+$installedVersion = $null
+$environment = Get-UIOperationEnvironment
+$mode = if ($environment.Available) { 'InteractiveWizard' } else { 'Silent' }
+Write-Host "Installer acceptance mode: $mode"
+
+function Invoke-BoundedProcess([string] $Executable, [string] $Arguments) {
+    $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -WindowStyle Hidden -PassThru
+    try {
+        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+            $process.Kill($true)
+            $process.WaitForExit(10000) | Out-Null
+            throw "Process timed out: $Executable"
+        }
+        if ($process.ExitCode -ne 0) { throw "Process exited with $($process.ExitCode): $Executable" }
+    } finally { $process.Dispose() }
+}
+
+function Get-InstallerTestProcesses {
+    $prefix = [IO.Path]::GetFullPath($installDir).TrimEnd('\') + '\'
+    foreach ($process in Get-Process -Name 'VirtualPaper*' -ErrorAction SilentlyContinue) {
+        try {
+            $path = $process.Path
+            if ($path -and $path.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) { $process }
+        } catch [System.ComponentModel.Win32Exception] { }
+    }
+}
+
+function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall) {
+    $action = if ($Uninstall) { '--wizard-uninstall' } else { '--wizard-install' }
+    $stage = if ($Uninstall) { 'uninstall' } else { 'install' }
+    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" $action `"$Executable`" --install-dir `"$installDir`" --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 10)) --results-file `"$artifacts/$stage-wizard.json`""
+}
+
+$report = Invoke-InstallerLifecycle -Install {
+    if ($environment.Available) { Invoke-InstallerWizard $InstallerPath }
+    else { Invoke-BoundedProcess $InstallerPath "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/install.log`"" }
+    foreach ($file in @('VirtualPaper.exe', 'VirtualPaper.dll', 'VirtualPaper.runtimeconfig.json', 'VirtualPaper.deps.json',
+        'VirtualPaper.Common.dll', 'Plugins/UI/VirtualPaper.UI.exe', 'Plugins/UI/VirtualPaper.UI.dll',
+        'Plugins/UI/VirtualPaper.UI.runtimeconfig.json', 'Plugins/UI/VirtualPaper.UI.deps.json')) {
+        $path = Join-Path $installDir $file
+        if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or (Get-Item -LiteralPath $path).Length -eq 0) {
+            throw "Installed file is missing or empty: $file"
+        }
+    }
+    $script:installedVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $installDir 'VirtualPaper.exe')).FileVersion
+    if ([version]$installedVersion -ne [version]$packageVersion) { throw "Installed version $installedVersion does not match package $packageVersion." }
+    $registrations = @(Get-InstallRegistrations)
+    if ($registrations.Count -eq 0 -or @($registrations | Where-Object {
+        -not $_.Location -or [IO.Path]::GetFullPath($_.Location).TrimEnd('\') -ine $installDir.TrimEnd('\') -or
+        [version]$_.Version -ne [version]$packageVersion
+    }).Count) { throw 'The installed application registration does not match this installation.' }
+    $shortcuts = @($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ })
+    if ($shortcuts.Count -eq 0) { throw 'The Start menu shortcut was not installed.' }
+    $shell = New-Object -ComObject WScript.Shell
+    try {
+        foreach ($path in $shortcuts) {
+            $shortcut = $shell.CreateShortcut($path) # Read-only: never Save().
+            try {
+                if ($shortcut.TargetPath -ine (Join-Path $installDir 'VirtualPaper.exe')) { throw "Start menu shortcut points to the wrong application: $path" }
+            } finally { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut) | Out-Null }
+        }
+    } finally { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) | Out-Null }
+} -Open {
+    $openReport = Join-Path $artifacts 'application-results.json'
+    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" --install-dir `"$installDir`" --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 40)) --results-file `"$openReport`""
+    $application = Get-Content -LiteralPath $openReport -Raw | ConvertFrom-Json
+    if ($application.Passed -cne $true -or $application.OpenedNormally -cne $true -or
+        $application.ExitedNormally -cne $true -or $application.ForcedCleanup -cne $false -or
+        $application.CoreProcessId -lt 1 -or $application.UiProcessId -lt 1 -or $application.Error) {
+        throw 'Installed application did not open and exit normally.'
+    }
+} -Uninstall {
+    $cleanupErrors = [Collections.Generic.List[string]]::new()
+    foreach ($process in @(Get-InstallerTestProcesses)) {
+        try {
+            if (-not $process.HasExited) {
+                $cleanupErrors.Add("Application process $($process.Id) required forced recovery; normal exit was not accepted.")
+                $process.Kill($true)
+                if (-not $process.WaitForExit(10000)) { throw "Process did not stop: $($process.Id)" }
+            }
+        } catch { $cleanupErrors.Add($_.Exception.Message) }
+        finally { $process.Dispose() }
+    }
+    # Always try the actual uninstaller after recovery, including when terminating a process failed.
+    if (Test-Path -LiteralPath $installDir) {
+        $uninstallers = @(Get-ChildItem -LiteralPath $installDir -Filter 'unins*.exe' -File)
+        if ($uninstallers.Count -ne 1) { throw "Expected one uninstaller, found $($uninstallers.Count)." }
+        if ($environment.Available) { Invoke-InstallerWizard $uninstallers[0].FullName -Uninstall }
+        else { Invoke-BoundedProcess $uninstallers[0].FullName "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG=`"$artifacts/uninstall.log`"" }
+        # Inno's temporary uninstaller helper may finish deleting files just after the parent exits.
+        $cleanup = [Diagnostics.Stopwatch]::StartNew()
+        do {
+            $files = if (Test-Path -LiteralPath $installDir) {
+                @(Get-ChildItem -LiteralPath $installDir -Recurse -File -Force)
+            } else { @() }
+            $files = @($files)
+            if ($files.Count -eq 0) { break }
+            Start-Sleep -Milliseconds 200
+        } while ($cleanup.Elapsed.TotalSeconds -lt 10)
+        if ($files.Count -gt 0) { throw "Files remain after uninstall: $($files.FullName -join '; ')" }
+    }
+    if (@(Get-InstallerTestProcesses).Count -ne 0) { $cleanupErrors.Add('Application processes remain after uninstall.') }
+    if (@(Get-InstallRegistrations).Count) { $cleanupErrors.Add('Application uninstall registration remains after uninstall.') }
+    if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) { $cleanupErrors.Add('Start menu shortcut remains after uninstall.') }
+    if ($cleanupErrors.Count) { throw ($cleanupErrors -join [Environment]::NewLine) }
+} -Environment $environment
+$report | Add-Member NoteProperty InstallDir $installDir
+$report | Add-Member NoteProperty Mode $mode
+$report | Add-Member NoteProperty PackageVersion $packageVersion
+$report | Add-Member NoteProperty InstalledVersion $installedVersion
+$report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8
+if ($env:GITHUB_STEP_SUMMARY) {
+    "### Installer lifecycle: install → open → uninstall`n`n| Stage | Result | Duration |`n| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
+    foreach ($check in $report.Checks) {
+        "| $($check.Name) | $($check.Status) | $($check.DurationMilliseconds) ms |" >> $env:GITHUB_STEP_SUMMARY
+    }
+}
+Assert-InstallerReportPassed $report
+Write-Host "[OK] Installer acceptance: $(Get-InstallerReportOutcome $report). Report: $ReportPath"

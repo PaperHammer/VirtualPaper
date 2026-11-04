@@ -40,12 +40,14 @@
                     Orientation="Horizontal"
                     Spacing="6">
                     <input:ArcButton
+                        AutomationProperties.AutomationId="Intelligent.Task.Cancel"
                         Content="{x:Bind _viewModel.PreviousStepBtnText, Mode=OneWay}"
                         Command="{x:Bind _viewModel.PreviousStepCommand}"
                         Width="100"
                         FontSize="12"/>
 
                     <input:ArcButton
+                        AutomationProperties.AutomationId="Intelligent.Task.Confirm"
                         Content="{x:Bind _viewModel.NextStepBtnText, Mode=OneWay}"
                         IsEnabled="{x:Bind _viewModel.IsNextEnable, Mode=OneWay}"
                         Width="100"

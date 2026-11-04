@@ -3,6 +3,7 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.Effects.DisplacementLiquefactionEffectPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools.Effects"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,7 +13,7 @@
     <StackPanel Spacing="8">
         <!-- 模式 -->
         <ComboBox x:Name="ModeCombo"
-            Header="模式"
+            Header="{markup:I18n Key=StaticImg_EffectParam_Mode}"
             SelectedIndex="1"
             SelectionChanged="ModeCombo_SelectionChanged">
             <x:String>重置</x:String>
@@ -29,7 +30,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="半径" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Radius}" FontSize="14" VerticalAlignment="Center"/>
             <TextBlock x:Name="RadiusValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
@@ -45,7 +46,7 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="压力" FontSize="14" VerticalAlignment="Center"/>
+            <TextBlock Text="{markup:I18n Key=StaticImg_EffectParam_Pressure}" FontSize="14" VerticalAlignment="Center"/>
             <TextBlock x:Name="PressureValueText" Grid.Column="1" FontSize="13" VerticalAlignment="Center"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>

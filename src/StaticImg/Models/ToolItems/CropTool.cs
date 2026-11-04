@@ -1,16 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.Geometry;
-using Microsoft.UI;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.UIComponent.Utils;
 using Windows.Foundation;
-using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
@@ -28,15 +23,17 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             _data.SelectionRect = e;
         }
 
+        // 裁剪预览由 InkCanvas 的独立 Overlay 绘制，不修改任何图层像素，
+        // 因此无需为交互过程保留完整尺寸的图层快照。
+        protected override bool RequiresOriginalContentSnapshot => false;
+
         // 裁剪工具在框选过程中不截取像素，直到 Commit 再处理
-        protected override void CaptureSelectionContent() {
+        protected override void CaptureSelectedRegionSnapshot() {
         }
 
         public override LayerRebuildCommand? CommitSelection() {
-            if (_currentState != SelectionState.Selected || BaseContent == null)
-                return null;
+            if (_currentState != SelectionState.Selected) return null;
 
-            LayerId = _data.SelectedLayer.Tag;
             var command = BuildUndoCommand();
             if (command != null) {
                 Reset();
@@ -63,18 +60,21 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             var rawPixelDataList = new List<(Guid Tag, byte[] OldPixels, byte[] NewPixels)>();
 
             lock (_data) {
-                if (BaseContent == null) return null;
-
                 originalSize = _data.CanvasSize;
-                Rect cropRect = _selectionRect.RoundOutwardAsInt().IntersectRect(BaseContent.Bounds);
+                Rect canvasBounds = new(0, 0, originalSize.Width, originalSize.Height);
+                Rect cropRect = _selectionRect.RoundOutwardAsInt().IntersectRect(canvasBounds);
 
                 if (cropRect.Width <= 0 || cropRect.Height <= 0) return null;
-                newSize = new ArcSize((float)cropRect.Width, (float)cropRect.Height, (uint)BaseContent.Dpi, RebuildMode.None);
+                newSize = new ArcSize(
+                    (float)cropRect.Width,
+                    (float)cropRect.Height,
+                    originalSize.Dpi,
+                    RebuildMode.None);
 
                 foreach (var layer in ViewModel.Data.Layers) {
                     if (layer.RenderData?.RenderTarget == null) continue;
 
-                    var baseRender = layer.Tag == LayerId ? BaseContent : layer.RenderData.RenderTarget;
+                    CanvasRenderTarget baseRender = layer.RenderData.RenderTarget;
                     byte[] oldPixels = baseRender.GetPixelBytes();
                     byte[] newPixels = baseRender.GetPixelBytes(
                         (int)cropRect.X,
@@ -116,112 +116,51 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             );
         }
 
-        protected override void RenderToTarget() {
-            if (RenderTarget == null) return;
-
-            try {
-                using (var ds = RenderTarget.CreateDrawingSession()) {
-                    ds.Clear(Colors.Transparent);
-
-                    // 只绘制基础内容
-                    if (BaseContent != null) {
-                        ds.DrawImage(BaseContent);
-                    }
-
-                    // 区分 selectiontool，croptool 仅在 commit 时更新选区
-
-                    if (_currentState != SelectionState.None) {
-                        // 绘制半透明遮罩（选区外区域变暗）
-                        using (var overlayBrush = new CanvasSolidColorBrush(RenderTarget, Color.FromArgb(180, 0, 0, 0))) {
-                            var outer = CanvasGeometry.CreateRectangle(ds, new Rect(0, 0, RenderTarget.Size.Width, RenderTarget.Size.Height));
-                            var inner = CanvasGeometry.CreateRectangle(ds, _selectionRect);
-                            ds.FillGeometry(outer.CombineWith(inner, Matrix3x2.Identity, CanvasGeometryCombine.Exclude), overlayBrush);
-                        }
-
-                        // 绘制选择框辅助线
-                        using (var borderBrush = new CanvasSolidColorBrush(RenderTarget, _selectionBorderColor)) {
-                            ds.DrawRectangle(_selectionRect, borderBrush, _selectionBorderWidth, _selectionStrokeStyle);
-                        }
-                    }
-                }
-
-                HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-            }
-            catch (Exception ex) when (IsDeviceLost(ex)) {
-                HandleDeviceLost();
-            }
+        // 选区矩形变化时 InkCanvas 会单独刷新 Overlay；裁剪预览不再写入图层 RenderTarget。
+        protected override void RenderToTarget(CanvasRenderTarget? target = null) {
         }
 
         public void ApplyAspectRatio(double ratio) {
-            if (!IsCanvasReady) return;
-
-            SaveBaseContent();
-            using (var ds = RenderTarget.CreateDrawingSession()) {
-                ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(BaseContent);
-            }
-
-            _ratioController.ApplyRatio(ratio);
+            if (ratio <= 0 || _data.CanvasSize.Width <= 0 || _data.CanvasSize.Height <= 0) return;
+            _ratioController.ApplyRatio(ratio, _data.CanvasSize.ToSize());
         }
 
         public override bool RestoreOriginalContent() {
-            if (SelectionRect.IsEmpty || BaseContent == null || RenderTarget == null) return false;
-
-            using (var ds = RenderTarget.CreateDrawingSession()) {
-                ds.Blend = CanvasBlend.Copy;
-                ds.DrawImage(BaseContent);
-            }
-            Reset();
-            HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
-
-            return true;
+            bool hadSelection = _currentState != SelectionState.None || !_selectionRect.IsEmpty;
+            if (hadSelection) Reset();
+            return hadSelection;
         }
 
         private readonly AspectRatioController _ratioController;
         private readonly InkCanvasData _data;
 
         private class AspectRatioController(CropTool cropTool) {
-            public void ApplyRatio(double ratio) {
-                if (cropTool.RenderTarget == null || ratio <= 0) return;
-                _currentRatio = ratio;
-                CreateCenteredCrop();
-                cropTool.RenderToTarget();
-            }
-
-            private void CreateCenteredCrop() {
-                var size = CalculateInitialSize();
-                var canvas = cropTool.RenderTarget!.Size;
-                cropTool._selectionRect = new Rect(
-                    (canvas.Width - size.Width) / 2,
-                    (canvas.Height - size.Height) / 2,
-                    size.Width,
-                    size.Height);
+            public void ApplyRatio(double ratio, Size canvas) {
+                if (ratio <= 0) return;
+                cropTool._selectionRect = CalculateAspectRatioRect(canvas, ratio);
                 cropTool.UpdateSelectionRect(cropTool._selectionRect);
                 cropTool._currentState = SelectionState.Selected;
             }
+        }
 
-            private Size CalculateInitialSize() {
-                const double maxScale = 0.8;
-                var canvas = cropTool.RenderTarget!.Size;
+        internal static Rect CalculateAspectRatioRect(Size canvas, double ratio) {
+            const double maxScale = 0.8;
 
-                // 自由比例模式（使用图片中的默认值）
-                if (_currentRatio == 0)
-                    return new Size(canvas.Width * maxScale, canvas.Height * maxScale);
-
-                // 预设比例模式
-                double ratio = _currentRatio;
+            Size size;
+            if (ratio == 0) {
+                size = new Size(canvas.Width * maxScale, canvas.Height * maxScale);
+            }
+            else {
                 double maxW = canvas.Width * maxScale;
                 double maxH = canvas.Height * maxScale;
 
-                // 高度优先
                 Size optionA = new(maxH * ratio, maxH);
                 bool isOptionAValid = optionA.Width <= maxW;
 
-                // 宽度优先
                 Size optionB = new(maxW, maxW / ratio);
                 bool isOptionBValid = optionB.Height <= maxH;
 
-                return (isOptionAValid, isOptionBValid) switch {
+                size = (isOptionAValid, isOptionBValid) switch {
                     (true, true) => ArcSize.Area(optionA) > ArcSize.Area(optionB) ? optionA : optionB, // 两者有效选面积大的
                     (true, false) => optionA, // 只有A有效
                     (false, true) => optionB, // 只有B有效
@@ -229,13 +168,16 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 };
             }
 
-            private static Size GetFallbackSize(double ratio, double maxW, double maxH) {
-                // 比例缩放
-                double scale = Math.Min(maxW / ratio, maxH) / maxH;
-                return new Size(maxH * ratio * scale, maxH * scale);
-            }
+            return new Rect(
+                (canvas.Width - size.Width) / 2,
+                (canvas.Height - size.Height) / 2,
+                size.Width,
+                size.Height);
+        }
 
-            private double _currentRatio;
+        private static Size GetFallbackSize(double ratio, double maxW, double maxH) {
+            double scale = Math.Min(maxW / ratio, maxH) / maxH;
+            return new Size(maxH * ratio * scale, maxH * scale);
         }
     }
 }

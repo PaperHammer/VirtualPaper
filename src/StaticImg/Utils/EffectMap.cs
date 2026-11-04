@@ -1,4 +1,5 @@
 using VirtualPaper.Shader;
+using VirtualPaper.UIComponent.Utils;
 
 namespace Workloads.Creation.StaticImg.Utils {
     public static class EffectMap {
@@ -55,82 +56,82 @@ namespace Workloads.Creation.StaticImg.Utils {
 
             // 单滑块 (Value)
             ShaderType.Exposure
-                => new EffectSliderConfig { Min = -200, Max = 200, Default = 0, Label = "曝光" },
+                => new EffectSliderConfig { Min = -200, Max = 200, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Exposure") },
             ShaderType.Brightness
-                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = "亮度" },
+                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Brightness") },
             ShaderType.Saturation
-                => new EffectSliderConfig { Min = 0, Max = 200, Default = 100, Label = "饱和度" },
+                => new EffectSliderConfig { Min = 0, Max = 200, Default = 100, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Saturation") },
             ShaderType.Contrast
-                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = "对比度" },
+                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Contrast") },
             ShaderType.Vignette
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "暗角" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Vignette") },
             ShaderType.GaussianBlur
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "模糊" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Blur") },
             ShaderType.Sharpen
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "锐化" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Sharpen") },
 
             // 双滑块 (Value + Value2)
             ShaderType.HueRotation
-                => new EffectSliderConfig { Min = -180, Max = 180, Default = 0, Label = "色相",
-                    Min2 = 0, Max2 = 100, Default2 = 100, Label2 = "强度" },
+                => new EffectSliderConfig { Min = -180, Max = 180, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Hue"),
+                    Min2 = 0, Max2 = 100, Default2 = 100, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity") },
             ShaderType.TemperatureAndTint
-                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = "色温",
-                    Min2 = -100, Max2 = 100, Default2 = 0, Label2 = "色调" },
+                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Temperature"),
+                    Min2 = -100, Max2 = 100, Default2 = 0, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Tint") },
             ShaderType.Emboss
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "强度",
-                    Min2 = 0, Max2 = 360, Default2 = 45, Label2 = "角度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity"),
+                    Min2 = 0, Max2 = 360, Default2 = 45, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Angle") },
             ShaderType.DirectionalBlur
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "模糊",
-                    Min2 = 0, Max2 = 360, Default2 = 0, Label2 = "角度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Blur"),
+                    Min2 = 0, Max2 = 360, Default2 = 0, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Angle") },
             ShaderType.EdgeDetection
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度",
-                    Min2 = 0, Max2 = 100, Default2 = 0, Label2 = "模糊" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity"),
+                    Min2 = 0, Max2 = 100, Default2 = 0, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Blur") },
             ShaderType.Morphology
-                => new EffectSliderConfig { Min = 1, Max = 20, Default = 3, Label = "宽度",
-                    Min2 = 1, Max2 = 20, Default2 = 3, Label2 = "高度" },
+                => new EffectSliderConfig { Min = 1, Max = 20, Default = 3, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Width"),
+                    Min2 = 1, Max2 = 20, Default2 = 3, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Height") },
             ShaderType.Posterize
-                => new EffectSliderConfig { Min = 2, Max = 256, Default = 4, Label = "色阶",
-                    Min2 = 2, Max2 = 256, Default2 = 4, Label2 = "色阶G" },
+                => new EffectSliderConfig { Min = 2, Max = 256, Default = 4, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Levels"),
+                    Min2 = 2, Max2 = 256, Default2 = 4, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_LevelsGreen") },
             ShaderType.Shadow
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 10, Label = "模糊",
-                    Min2 = -200, Max2 = 200, Default2 = 5, Label2 = "偏移X" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 10, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Blur"),
+                    Min2 = -200, Max2 = 200, Default2 = 5, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_OffsetX") },
             ShaderType.Straighten
-                => new EffectSliderConfig { Min = -45, Max = 45, Default = 0, Label = "角度" },
+                => new EffectSliderConfig { Min = -45, Max = 45, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Angle") },
             ShaderType.GammaTransfer
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 100, Label = "振幅",
-                    Min2 = 1, Max2 = 500, Default2 = 100, Label2 = "指数" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 100, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Amplitude"),
+                    Min2 = 1, Max2 = 500, Default2 = 100, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Exponent") },
             ShaderType.HighlightsAndShadows
-                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = "阴影",
-                    Min2 = -100, Max2 = 100, Default2 = 0, Label2 = "高光" },
+                => new EffectSliderConfig { Min = -100, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Shadows"),
+                    Min2 = -100, Max2 = 100, Default2 = 0, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Highlights") },
 
             // 自定义着色器
             ShaderType.ThresholdEffect
-                => new EffectSliderConfig { Min = 0, Max = 300, Default = 150, Label = "阈值" },
+                => new EffectSliderConfig { Min = 0, Max = 300, Default = 150, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Threshold") },
             ShaderType.RippleEffect
-                => new EffectSliderConfig { Min = 0, Max = 200, Default = 140, Label = "频率",
-                    Min2 = -200, Max2 = 200, Default2 = 0, Label2 = "相位" },
+                => new EffectSliderConfig { Min = 0, Max = 200, Default = 140, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Frequency"),
+                    Min2 = -200, Max2 = 200, Default2 = 0, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Phase") },
             ShaderType.DisplacementLiquefactionEffect
-                => new EffectSliderConfig { Min = 1, Max = 100, Default = 20, Label = "半径",
-                    Min2 = 1, Max2 = 100, Default2 = 50, Label2 = "压力" },
+                => new EffectSliderConfig { Min = 1, Max = 100, Default = 20, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Radius"),
+                    Min2 = 1, Max2 = 100, Default2 = 50, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Pressure") },
 
             // 新增效果
             ShaderType.HSB
-                => new EffectSliderConfig { Min = 0, Max = 360, Default = 0, Label = "色相",
-                    Min2 = 0, Max2 = 400, Default2 = 100, Label2 = "饱和度" },
+                => new EffectSliderConfig { Min = 0, Max = 360, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Hue"),
+                    Min2 = 0, Max2 = 400, Default2 = 100, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Saturation") },
             ShaderType.Fog
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "浓度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Density") },
             ShaderType.Glass
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity") },
             ShaderType.ChromaKey
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "容差" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Tolerance") },
             ShaderType.Noise
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 30, Label = "强度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 30, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity") },
             ShaderType.Bloom
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity") },
             ShaderType.BlendMultiply or ShaderType.BlendScreen or ShaderType.BlendOverlay or ShaderType.BlendSoftLight
-                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = "强度" },
+                => new EffectSliderConfig { Min = 0, Max = 100, Default = 0, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity") },
 
-            _ => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = "强度" },
+            _ => new EffectSliderConfig { Min = 0, Max = 100, Default = 50, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Intensity") },
         };
     }
 

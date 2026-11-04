@@ -1,24 +1,25 @@
 using System.Windows.Threading;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Cores.AppUpdate.Models;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Grpc.Service.Update;
+using VirtualPaper.Models.Events;
 
 namespace VirtualPaper.GrpcServers {
     public class AppUpdateServer(
         IAppUpdaterService updater) : Grpc_UpdateService.Grpc_UpdateServiceBase {
         public override async Task<Empty> CheckUpdate(Empty _, ServerCallContext context) {
-            await _updater.CheckUpdate(0);
+            await _updater.CheckUpdateAsync(0);
 
             return await Task.FromResult(new Empty());
         }
 
         public override Task<Empty> StartDownload(Empty _, ServerCallContext context) {
-            if (true || _updater.Status == AppUpdateStatus.Available) {
+            if (_updater.Status == AppUpdateStatus.Available) {
                 System.Windows.Application.Current.Dispatcher.BeginInvoke(DispatcherPriority.Normal, new ThreadStart(delegate {
-                    App.AppUpdateDialog(new AppUpdaterEventArgs(_updater.Status, _updater.LastCheckVersion, _updater.LastCheckTime, _updater.LastCheckUri, _updater.LastCheckShaUri, _updater.LastCheckChangelog));
+                    App.AppUpdateDialog(new AppUpdaterEventArgs(_updater.Status, _updater.LastReleaseInfo));
                 }));
             }
 
@@ -26,13 +27,20 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override Task<Grpc_UpdateResponse> GetUpdateStatus(Empty _, ServerCallContext context) {
+            var release = _updater.LastReleaseInfo;
             return Task.FromResult(new Grpc_UpdateResponse() {
                 Status = (Grpc_UpdateStatus)((int)_updater.Status),
-                Changelog = _updater.LastCheckChangelog ?? string.Empty,
-                Uri = _updater.LastCheckUri?.OriginalString ?? string.Empty,
-                ShaUri = _updater.LastCheckShaUri?.OriginalString ?? string.Empty,
-                Version = _updater.LastCheckVersion.ToString() ?? string.Empty,
-                Time = Timestamp.FromDateTime(_updater.LastCheckTime.ToUniversalTime()),
+                Changelog = release?.Changelog ?? string.Empty,
+                InstallerUri = release?.InstallerUri?.OriginalString ?? string.Empty,
+                InstallerShaUri = release?.InstallerShaUri?.OriginalString ?? string.Empty,
+                Version = release?.Version?.ToString() ?? string.Empty,
+                AppBuild = release?.AppBuild ?? string.Empty,
+                CheckedTime = Timestamp.FromDateTime(release?.CheckedTime.ToUniversalTime() ?? DateTime.UtcNow),
+                PluginPatchUri = release?.PluginPatchUri?.OriginalString ?? string.Empty,
+                PluginPatchSha256Uri = release?.PluginPatchSha256Uri?.OriginalString ?? string.Empty,
+                AppCompManifest = release?.AppCompManifest != null
+                    ? System.Text.Json.JsonSerializer.Serialize(release.AppCompManifest, UpdateManifestContext.Default.AppCompManifest)
+                    : string.Empty,
             });
         }
 

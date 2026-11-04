@@ -27,8 +27,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         public void UpdateCardComponentUI() {
-            PreviousStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Cancel));
-            NextStepBtnText = LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Confirm));
+            PreviousStepBtnText = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
+            NextStepBtnText = LanguageUtil.GetI18n(Constants.I18n.Text_Confirm);
 
             BtnVisible = true;
             CardUIStateChanged?.Invoke();
@@ -90,77 +90,77 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         private void InitCollectoins() {
             StyleOptions = [
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_Anime)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Anime),
                     ThumbnailResourceKey = "PresetStyles_Anime",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/anime.jpg",
                     FileSize = "751 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_Cartoon)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Cartoon),
                     ThumbnailResourceKey = "PresetStyles_Cartoon",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/cartoon.jpg",
                     FileSize = "557 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_Gongbi)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Gongbi),
                     ThumbnailResourceKey = "PresetStyles_Gongbi",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/gongbi.jpg",
                     FileSize = "671 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_Pencil)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Pencil),
                     ThumbnailResourceKey = "PresetStyles_Pencil",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/pencil.jpg",
                     FileSize = "931 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_Watercolor)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Watercolor),
                     ThumbnailResourceKey = "PresetStyles_Watercolor",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/watercolor.jpg",
                     FileSize = "888 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_InkWash)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_InkWash),
                     ThumbnailResourceKey = "PresetStyles_InkWash",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/ink_wash.jpg",
                     FileSize = "602 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_OilPainting)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_OilPainting),
                     ThumbnailResourceKey = "PresetStyles_OilPainting",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/oil_painting.jpg",
                     FileSize = "853 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_ColoredPencil)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_ColoredPencil),
                     ThumbnailResourceKey = "PresetStyles_ColoredPencil",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/colored_pencil.jpg",
                     FileSize = "999 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_OutlineDrawing)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_OutlineDrawing),
                     ThumbnailResourceKey = "PresetStyles_OutlineDrawing",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/outline_drawing.jpg",
                     FileSize = "952 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_Ukiyoe)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Ukiyoe),
                     ThumbnailResourceKey = "PresetStyles_Ukiyoe",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/ukiyo-e.jpg",
                     FileSize = "955 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(nameof(Constants.I18n.Intelligent_Style_Type_Custom)),
+                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Custom),
                     IsCustom = true,
                 },
             ];
@@ -171,26 +171,26 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         internal async Task SelectStyleImageAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FimageAI]]);
+                [.. FileFilter.FileTypeToExtension[FileType.FImageAI]]);
             if (storage == null || storage.Length < 1) return;
 
             string filePath = storage[0].Path;
             StyleOptions[^1].ImagePath = filePath;
             StyleOptions[^1].FileSize = FileUtil.GetFileSize(filePath);
             StyleOptions[^1].FileExt = Path.GetExtension(filePath)?.ToLower();
-            IsNextEnable = SelectedStyle != null && SelectedStyle.ImagePath != null;
+            IsNextEnable = !string.IsNullOrEmpty(SourceFilePath) && !string.IsNullOrEmpty(SelectedStyle?.ImagePath);
         }
 
         internal async Task SelectSourceImageAsync() {
             var storage = await WindowsStoragePickers.PickFilesAsync(
                 WindowConsts.WindowHandle,
-                [.. FileFilter.FileTypeToExtension[FileType.FimageAI]]);
+                [.. FileFilter.FileTypeToExtension[FileType.FImageAI]]);
             if (storage == null || storage.Length < 1) return;
 
             string filePath = storage[0].Path;
 
-            if (FileFilter.GetFileTypeFroImageAI(filePath) != FileType.FimageAI) {
-                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(nameof(Constants.I18n.Text_Error_InvalidFile)));
+            if (FileFilter.GetFileTypeFroImageAI(filePath) != FileType.FImageAI) {
+                GlobalMessageUtil.ShowError(LanguageUtil.GetI18n(Constants.I18n.Text_Error_InvalidFile));
                 return;
             }
 

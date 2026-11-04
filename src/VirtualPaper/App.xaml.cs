@@ -8,30 +8,33 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
+using Octokit.Internal;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
+using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.AppUpdate;
+using VirtualPaper.Cores.AppUpdate.Specific;
 using VirtualPaper.Cores.Monitor;
+using VirtualPaper.Cores.PipeControl;
 using VirtualPaper.Cores.PlaybackControl;
 using VirtualPaper.Cores.ScreenSaver;
-using VirtualPaper.Cores.TrayControl;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.MonitorManager;
 using VirtualPaper.Grpc.Service.ScrCommands;
+using VirtualPaper.Grpc.Service.TwoWay;
 using VirtualPaper.Grpc.Service.Update;
 using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.GrpcServers;
 using VirtualPaper.lang;
-using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Events;
 using VirtualPaper.Services;
 using VirtualPaper.Services.Download;
 using VirtualPaper.Services.Interfaces;
@@ -63,12 +66,17 @@ namespace VirtualPaper {
         }
 
         public App() {
+            TestProcessEnvironment.ConfigureLogging("Core");
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例
                 if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
-                    MessageBox.Show("已存在正在运行的程序，请检查托盘或任务管理器\nThere are already running programs, check the tray or Task Manager", "Virtual Paper", MessageBoxButton.OK, MessageBoxImage.Information);
-                    ShutDown();
+                    MessageBox.Show(
+                        LanguageManager.Instance["Virtual_Paper_isRunning"],
+                        "Virtual Paper",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    _ = ShutDownAsync();
                     return;
                 }
             }
@@ -81,12 +89,13 @@ namespace VirtualPaper {
             #endregion
 
             SetupUnhandledExceptionLogging(); // 初始化异常处理机制
-            Log.Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
+            ArcLog.GetLogger<App>().Info(LogUtil.GetHardwareInfo()); // 记录硬件信息
 
             #region 必要路径处理
             try {
                 // 清空缓存
-                FileUtil.EmptyDirectory(Constants.CommonPaths.TempDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.TempDir);
+                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
             }
             catch { }
 
@@ -101,8 +110,13 @@ namespace VirtualPaper {
                 //Directory.CreateDirectory(Path.Combine(Constants.CommonPaths.TempDir, Constants.FolderName.WpStoreFolderName));
             }
             catch (Exception ex) {
-                MessageBox.Show(ex.Message, "AppData directory creation failed, exiting..", MessageBoxButton.OK, MessageBoxImage.Error);
-                ShutDown();
+                ArcLog.GetLogger<App>().Error("Failed to create AppData directory.", ex);
+                MessageBox.Show(
+                    ex.Message,
+                    LanguageManager.Instance["Startup_AppDataCreateFailedTitle"],
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                _ = ShutDownAsync();
                 return;
             }
             #endregion
@@ -120,8 +134,9 @@ namespace VirtualPaper {
 
             #region 用户配置
             SplashWindow? spl = null;
-            if (UserSettings.Settings.IsUpdated || UserSettings.Settings.IsFirstRun) {
-                spl = UserSettings.Settings.IsFirstRun ? new SplashWindow(0, 500) : null;
+            bool isFirstRun = UserSettings.Settings.IsFirstRun;
+            if (UserSettings.Settings.IsUpdated || isFirstRun) {
+                spl = isFirstRun ? new SplashWindow(0, 500) : null;
                 spl?.Show();
                 UserSettings.Settings.IsFirstRun = false;
                 UserSettings.Save<ISettings>();
@@ -132,8 +147,12 @@ namespace VirtualPaper {
                 UserSettings.Settings.WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Constants.FolderName.WpStoreFolderName);
                 Directory.CreateDirectory(UserSettings.Settings.WallpaperDir);
             }
-            // 初始化语言包
+            // 初始化语言包（需在插件更新前，确保更新进度窗口文字有 i18n）
             ChangeLanguage(UserSettings.Settings.Language);
+
+            // 检查是否有未完成的插件更新（异步，不阻塞 UI 线程）
+            if (!TestProcessEnvironment.IsEnabled)
+                _ = ((IPluginsUpdateServiceInit)Services.GetRequiredService<IPluginsUpdateService>()).InitAsync();
 
             UserSettings.Save<ISettings>();
             #endregion
@@ -151,8 +170,10 @@ namespace VirtualPaper {
                 InitMemorySharedContext();
             }
             catch (Exception ex) {
-                Log.Error(ex);
-                MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
+                ArcLog.GetLogger<App>().Error(ex);
+                MessageBox.Show(string.Format(
+                    LanguageManager.Instance["Startup_CoreRuntimeFailed"],
+                    ex.Message));
                 return;
             }
             #endregion
@@ -162,22 +183,24 @@ namespace VirtualPaper {
 
                 //restore wallpaper(s) from previous run.
                 var wpControl = Services.GetRequiredService<IWallpaperControl>();
-                wpControl.RestoreWallpaper();
+                _ = wpControl.RestoreWallpaperAsync();
 
                 // 启动屏保服务（需要在"还原壁纸"后进行）
                 bool isScrOn = UserSettings.Settings.IsScreenSaverOn;
                 if (isScrOn) {
-                    Services.GetRequiredService<IScrControl>().Start();
+                    _ = Services.GetRequiredService<IScrControl>().StartAsync();
                 }
 
                 //first run Setup-Wizard show..
-                if (UserSettings.Settings.IsFirstRun) {
-                    Services.GetRequiredService<IUIRunnerService>().ShowUI();
+                if (isFirstRun) {
+                    _ = Services.GetRequiredService<IUIRunnerService>().ShowUIAsync();
                 }
             }
             catch (Exception ex) {
-                Log.Error(ex);
-                MessageBox.Show("Core runtime Error, please restart or reinstall.\n" + ex.Message);
+                ArcLog.GetLogger<App>().Error(ex);
+                MessageBox.Show(string.Format(
+                    LanguageManager.Instance["Startup_CoreRuntimeFailed"],
+                    ex.Message));
                 return;
             }
 
@@ -199,7 +222,8 @@ namespace VirtualPaper {
             this.SessionEnding += (s, e) => {
                 if (e.ReasonSessionEnding == ReasonSessionEnding.Shutdown || e.ReasonSessionEnding == ReasonSessionEnding.Logoff) {
                     e.Cancel = true;
-                    ShutDown();
+                    ArcLog.GetLogger<App>().Error($"SessionEnding: {e.ReasonSessionEnding}");
+                    _ = ShutDownAsync();
                 }
             };
             #endregion
@@ -229,6 +253,9 @@ namespace VirtualPaper {
                 .AddSingleton<IUIRunnerService, UIRunnerService>()
                 .AddSingleton<IUserSettingsService, UserSettingsService>()
                 .AddSingleton<IAppUpdaterService, GithubUpdaterService>()
+                .AddSingleton<IPluginsUpdateService, PluginsUpdateService>()
+                .AddSingleton<IInstallerUpdateService, InstallerUpdateService>()
+                .AddSingleton<IAppBuildService, AppBuildService>()
                 .AddSingleton<IDownloadService, MultiDownloadService>()
                 .AddSingleton<IWindowService, WindowService>()
                 .AddSingleton<INativeService, NativeService>()
@@ -246,12 +273,14 @@ namespace VirtualPaper {
                 .AddSingleton<AppUpdateServer>()
                 .AddSingleton<CommandsServer>()
                 .AddSingleton<ScrCommandsServer>()
+                .AddSingleton<TwoWayServer>()
 
                 .AddSingleton<WndProcMsgWindow>()
                 .AddSingleton<MainWindow>()
                 .AddTransient<DebugLog>()
                 .AddTransient<AppUpdaterWindow>()
                 .AddTransient<AppUpdaterWindowViewModel>()
+                .AddTransient<PluginUpdateWindow>()
 
                 .AddTransient<TrayCommand>()
 
@@ -269,13 +298,14 @@ namespace VirtualPaper {
             Grpc_UpdateService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<AppUpdateServer>());
             Grpc_CommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<CommandsServer>());
             Grpc_ScrCommandsService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<ScrCommandsServer>());
+            Grpc_TwoWayService.BindService(server.ServiceBinder, _serviceProvider.GetRequiredService<TwoWayServer>());
             server.Start();
 
             return server;
         }
 
         private static void LogUnhandledException(Exception exception, string source)
-            => Log.Error(exception, source);
+            => ArcLog.GetLogger<App>().Error(source, exception);
 
         private void SetupUnhandledExceptionLogging() {
             // 当.NET应用程序域中的任何线程抛出了未捕获的异常时，会触发此事件。
@@ -303,9 +333,9 @@ namespace VirtualPaper {
                 });
             }
             catch (Exception e) {
-                Log.Error(e);
+                ArcLog.GetLogger<App>().Error(e);
             }
-            Log.Info($"Theme changed: {theme}");
+            ArcLog.GetLogger<App>().Info($"Theme changed: {theme}");
         }
 
         public static void ChangeLanguage(string lang) {
@@ -319,8 +349,9 @@ namespace VirtualPaper {
         public static void AppUpdateDialog(AppUpdaterEventArgs e) {
             _updateNotify = false;
             var windowService = Services.GetRequiredService<IWindowService>();
-            var info = new AppUpdateInfo(e.UpdateUri, e.UpdateSHAUri, e.UpdateVersion.ToString(), e.ChangeLog);
-            windowService.Show<AppUpdaterWindow>(info);
+
+            // Both installer-style and restart-style updates use AppUpdaterWindow
+            windowService.Show<AppUpdaterWindow>(e.Release, bringToFront: true);
         }
 
         private static int _updateNotifyAmt = 1;
@@ -331,8 +362,15 @@ namespace VirtualPaper {
                     if (_updateNotifyAmt > 0) {
                         _updateNotifyAmt--;
                         _updateNotify = true;
+
+                        var updater = Services.GetRequiredService<IAppUpdaterService>();
+                        var isRestart = updater.LastReleaseInfo?.IsPluginsUpdate == true;
+                        var toastKey = isRestart
+                            ? Constants.I18n.Find_New_Version_Restart
+                            : Constants.I18n.Settings_General_Version_FindNew;
+
                         new ToastContentBuilder()
-                            .AddText(LanguageManager.Instance["Find_New_Verison"])
+                            .AddText(LanguageManager.Instance[toastKey])
                             .Show();
                     }
 
@@ -341,11 +379,37 @@ namespace VirtualPaper {
                         AppUpdateDialog(e);
                     }
                 }
-                Log.Info($"AppUpdate status: {e.UpdateStatus}");
+                ArcLog.GetLogger<App>().Info($"AppUpdate status: {e.UpdateStatus}");
             }));
         }
 
-        public static void ShutDown() {
+        private static async Task TryInstallerUpdateAsync() {
+            // Execute pending installer update before cleanup
+            var installerFlagPath = Constants.CommonPaths.InstallerUpdateFlagPath;
+            if (File.Exists(installerFlagPath)) {
+                try {
+                    var installerService = Services.GetRequiredService<IInstallerUpdateService>();
+                    await installerService.ExecuteAsync();
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<App>().Error($"Failed to execute installer: {ex.Message}");
+                }
+            }
+        }
+
+        public static volatile bool IsShuttingDown;
+        public static async Task ShutDownAsync(bool isForce = false) {
+            if (!isForce) {
+                var uiRunner = Services.GetRequiredService<IUIRunnerService>();
+                var canClose = await uiRunner.RequestUICloseAsync();
+                if (!canClose) {
+                    return; // UI 拒绝关闭，终止 shutdown
+                }
+            }
+
+            await TryInstallerUpdateAsync();
+
+            IsShuttingDown = true;
             try {
                 _ctsPlayback.Cancel();
                 Jobs?.Close();
@@ -353,7 +417,7 @@ namespace VirtualPaper {
                 ((ServiceProvider)Services)?.Dispose();
                 ((App)Current)._grpcServer?.Kill();
                 ((App)Current)._grpcServer?.Dispose();
-                ToastNotificationManagerCompat.Uninstall();
+                if (!TestProcessEnvironment.IsEnabled) ToastNotificationManagerCompat.Uninstall();
 
                 if (UserSettings.Settings.IsUpdated) {
                     UserSettings.Settings.IsUpdated = false;
@@ -365,9 +429,9 @@ namespace VirtualPaper {
             Application.Current.Dispatcher.Invoke(Application.Current.Shutdown);
         }
 
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceProvider _serviceProvider = null!;
         private readonly Mutex _mutex = new(false, Constants.CoreField.UniqueAppUid);
-        private readonly NamedPipeServer _grpcServer;
+        private readonly NamedPipeServer _grpcServer = null!;
         private static readonly CancellationTokenSource _ctsPlayback = new();
         private static readonly Logger _log = LogManager.GetCurrentClassLogger();
     }

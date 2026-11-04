@@ -5,10 +5,14 @@ using VirtualPaper.Common;
 namespace Workloads.Creation.StaticImg.Models.SerializableData {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct FileHeader {
+        public const ushort Version1 = 1;
+        public const ushort Version2 = 2;
+        public const ushort CurrentVersion = Version2;
+
         // 基础标识区 (6字节)
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 4)]
         public byte[] Magic; // "_VPD"标识
-        public ushort Version; // 当前版本：1
+        public ushort Version; // 文件格式版本
        
         // 画布参数区 (16字节)
         public ProjectType ProjType; // 项目类型
@@ -35,7 +39,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         public static FileHeader Create(ArcSize arcSize, int layerCount, uint contentLength, uint layersLength) {
             var header = new FileHeader {
                 Magic = Encoding.ASCII.GetBytes("_VPD"),
-                Version = 1,
+                Version = CurrentVersion,
                 ProjType = ProjectType.P_StaticImage,
                 CanvasWidth = arcSize.Width,
                 CanvasHeight = arcSize.Height,
@@ -56,15 +60,18 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
         /// 验证文件头有效性
         /// </summary>
         public readonly bool IsValid() {
-            return Encoding.ASCII.GetString(Magic) == "_VPD" &&
-                Version is 1 &&
-                CanvasWidth > 0 &&
-                CanvasHeight > 0 &&
+            ulong businessDataEnd = (ulong)BusinessDataOffset + BusinessDataLength;
+
+            return Magic is { Length: 4 } &&
+                Encoding.ASCII.GetString(Magic) == "_VPD" &&
+                Version is Version1 or Version2 &&
+                float.IsFinite(CanvasWidth) && CanvasWidth > 0 &&
+                float.IsFinite(CanvasHeight) && CanvasHeight > 0 &&
                 Dpi >= 72 &&
                 Dpi <= 1200 &&
                 LayerCount > 0 &&
                 BusinessDataOffset >= Marshal.SizeOf<FileHeader>() &&
-                LayersOffset >= BusinessDataOffset + BusinessDataLength;
+                LayersOffset >= businessDataEnd;
         }
 
         /// <summary>

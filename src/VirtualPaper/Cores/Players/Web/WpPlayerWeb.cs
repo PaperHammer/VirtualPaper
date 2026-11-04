@@ -88,7 +88,22 @@ namespace VirtualPaper.Cores.Players.Web {
             }
         }
 
-        public Task ScreenCapture(string filePath) { return Task.FromResult(string.Empty); }
+        public async Task ScreenCapture(string filePath) {
+            await _captureGate.WaitAsync();
+            try {
+                if (IsExited || !IsLoaded) throw new InvalidOperationException("Wallpaper player is not loaded.");
+                _capturePath = Path.GetFullPath(filePath);
+                var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                _captureCompletion = completion;
+                SendMessage(new VirtualPaperScreenshotCmd { FilePath = _capturePath, Format = ScreenshotFormat.png });
+                if (!await completion.Task.WaitAsync(TimeSpan.FromSeconds(10)))
+                    throw new IOException("Wallpaper player could not capture the rendered frame.");
+            }
+            finally {
+                _captureCompletion = null;
+                _captureGate.Release();
+            }
+        }
 
         public void SetMute(bool mute) {
             if (Data.RType == RuntimeType.RVideo)
@@ -107,7 +122,7 @@ namespace VirtualPaper.Cores.Players.Web {
                 Proc.Exited += Proc_Exited;
                 Proc.OutputDataReceived += Proc_OutputDataReceived;
                 Proc.Start();
-                App.Jobs.AddProcess(Proc.Id);
+                App.Jobs.AddProcess(Proc.Id, PluginName.PlayerWeb);
                 Proc.BeginOutputReadLine();
 
                 StartArgs = new PlayerWebSrartArgs(Data, IsPreview).ToJson();
@@ -227,6 +242,10 @@ namespace VirtualPaper.Cores.Players.Web {
                 if (obj is VirtualPaperMessageConsole mc) {
                     DebugUtil.Output(mc.Message);
                 }
+                if (obj is VirtualPaperMessageScreenshot screenshot &&
+                    string.Equals(screenshot.FileName, _capturePath, StringComparison.OrdinalIgnoreCase)) {
+                    _captureCompletion?.TrySetResult(screenshot.Success);
+                }
             }
             else {
                 _tcsProcessWait.TrySetResult(new ArgumentException(e.Data));
@@ -234,10 +253,15 @@ namespace VirtualPaper.Cores.Players.Web {
         }
 
         private void Proc_Exited(object? sender, EventArgs e) {
+            _captureCompletion?.TrySetException(new IOException("Wallpaper player exited during capture."));
+            var pid = Proc.Id;
             _tcsProcessWait.TrySetResult(null);
             Proc.OutputDataReceived -= Proc_OutputDataReceived;
             Terminate();
             IsExited = true;
+            if (!App.IsShuttingDown) {
+                App.Jobs.StopPlugin(pid);
+            }
         }
 
         public bool Equals(IWpPlayer? other) {
@@ -274,5 +298,8 @@ namespace VirtualPaper.Cores.Players.Web {
         private readonly int _uniqueId;
         private bool _isInitialized;
         private int _parallaxState = 0; // 0: 运行中, 1: 已暂停
+        private readonly SemaphoreSlim _captureGate = new(1, 1);
+        private volatile TaskCompletionSource<bool>? _captureCompletion;
+        private string? _capturePath;
     }
 }

@@ -6,7 +6,8 @@ namespace VirtualPaper.Common.Utils.Storage {
         private static readonly string SharedFilePath =
             Path.Combine(Constants.CommonPaths.LocalApplicationData, Constants.CoreField.AppName, "shared_data.json");
 
-        private const string MutexName = "Global\\VirtualPaper_FileShared";
+        private static string MutexName => "Global\\VirtualPaper_FileShared" +
+            (TestProcessEnvironment.IsEnabled ? "_" + TestProcessEnvironment.SessionId : string.Empty);
 
         public static void Write(SharedContext context) {
             using var mutex = new Mutex(false, MutexName);

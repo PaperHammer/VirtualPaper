@@ -22,11 +22,7 @@
                 VerticalAlignment="Stretch"
                 NavigationCompleted="Webview2_NavigationCompleted"/>
 
-            <Grid x:Name="InputLayer"
-                IsHitTestVisible="True"
-                PointerEntered="InputLayer_PointerEntered"
-                PointerMoved="InputLayer_PointerMoved"
-                PointerExited="InputLayer_PointerExited">
+            <Grid x:Name="InputLayer" IsHitTestVisible="True">
                 <comp:SlidingSidePanel x:Name="SidePanel">
                     <comp:SlidingSidePanel.PanelContent>
                         <comp:DataConfig Payload="{x:Bind Payload}"/>

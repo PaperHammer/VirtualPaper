@@ -273,6 +273,9 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
         [TestMethod]
         [Description("SetWallpaperAsync with isFromPreview=true should succeed (runtime data loaded from temp path)")]
         public async Task SetWallpaperAsync_IsFromPreview_True_ShouldSucceed() {
+            using var environment = new WorkflowEnvironment();
+            Mock.Get(_settings.Object.Settings).SetupGet(s => s.WallpaperDir)
+                .Returns(Path.Combine(environment.Root, "library"));
             // Arrange
             var monitor = _monitorMgr.Object.PrimaryMonitor;
             // Build data with all effect paths pre-populated so isFromPreview branch can proceed

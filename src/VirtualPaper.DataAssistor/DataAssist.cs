@@ -206,6 +206,7 @@ namespace VirtualPaper.DataAssistor {
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
+                NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
 
                 WallpaperDir = settings.WallpaperDir,
 
@@ -249,6 +250,7 @@ namespace VirtualPaper.DataAssistor {
             foreach (var proc in settings.WhiteListScr) {
                 data.WhiteListScr.Add(new Grpc_ProcInfoData() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });
@@ -272,6 +274,7 @@ namespace VirtualPaper.DataAssistor {
                 IsUpdated = settings.IsUpdated,
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
+                NavigationAnimationsEnabled = !settings.HasNavigationAnimationsEnabled || settings.NavigationAnimationsEnabled,
 
                 WallpaperDir = settings.WallpaperDir,
 
@@ -316,6 +319,7 @@ namespace VirtualPaper.DataAssistor {
             foreach (var proc in settings.WhiteListScr) {
                 data.WhiteListScr.Add(new ProcInfo() {
                     ProcName = proc.ProcName,
+                    ProcPath = proc.ProcPath,
                     IconPath = proc.IconPath,
                     IsRunning = proc.IsRunning,
                 });

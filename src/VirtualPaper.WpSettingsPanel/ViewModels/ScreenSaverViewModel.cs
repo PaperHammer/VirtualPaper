@@ -2,19 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.Pipe.Interfaces;
+using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
+using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
@@ -31,11 +32,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             set {
                 _isScreenSaverOn = value;
                 OnPropertyChanged();
-                ChangeScreenSaverStatu(value);
-                if (_userSettingsClient.Settings.IsScreenSaverOn == value) return;
+                ScreenSaverStatu = LanguageUtil.GetI18n(value ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
+                if (_userSettingsClient.Settings.IsScreenSaverOn == value) {
+                    return;
+                }
 
                 _userSettingsClient.Settings.IsScreenSaverOn = value;
-                UpdateSettingsConfigFile();
+                SaveAndChangeScreenSaverAsync(value);
             }
         }
 
@@ -85,10 +88,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         public ScreenSaverViewModel(
             IUserSettingsClient userSettingsClient,
-            IScrCommandsClient scrCommandsClient) {
+            IScrCommandsClient scrCommandsClient,
+            IPipeServerFactory pipeServerFactory,
+            IStoragePicker storagePicker) {
             _userSettingsClient = userSettingsClient;
             _scrCommandsClient = scrCommandsClient;
-            _ctsListen = new();
+            _pipeServerFactory = pipeServerFactory;
+            _storagePicker = storagePicker;
 
             InitText();
             InitCollections();
@@ -97,8 +103,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void InitCommand() {
-            AddToWhiteListCommand = new RelayCommand<ProcInfo>(procInfo => {
-                PreAddToWhiteList();
+            AddToWhiteListCommand = new RelayCommand(async () => {
+                await PreAddToWhiteListAsync();
             });
         }
 
@@ -120,34 +126,54 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             ProcsFiltered = [.. _userSettingsClient.Settings.WhiteListScr];
         }
 
-        internal async Task ListenForClients() {
+        internal Task ListenForClients() {
+            lock (_listenLock) {
+                if (_isDisposed) return Task.CompletedTask;
+                if (_ctsListen is { IsCancellationRequested: false }) return _listenTask;
+                var previous = _listenTask;
+                var source = new CancellationTokenSource();
+                _ctsListen = source;
+                return _listenTask = ListenForClientsAsync(previous, source);
+            }
+        }
+
+        private async Task ListenForClientsAsync(Task previous, CancellationTokenSource source) {
+            // A re-entered page must wait for the old pipe to release its name.
+            await previous.ConfigureAwait(false);
+            CancellationToken token = source.Token;
             ArcLog.GetLogger<ScreenSaverViewModel>().Info("[PipeServer] Pipe Server is running...");
 
             try {
                 await Task.Run(async () => {
-                    while (!_ctsListen.IsCancellationRequested) {
-                        using var server = new NamedPipeServerStream("TRAY_CMD", PipeDirection.InOut, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous);
-                        await server.WaitForConnectionAsync(_ctsListen.Token);
-                        using var reader = new StreamReader(server);
-                        string? cmd = await reader.ReadLineAsync(_ctsListen.Token);
+                    while (!token.IsCancellationRequested) {
+                        using var server = _pipeServerFactory.Create(Constants.PipeControlField.TrayCmdPipeName);
+                        await server.WaitForConnectionAsync(token);
+                        using var reader = new StreamReader(server.GetStream());
+                        string? cmd = await reader.ReadLineAsync(token);
                         ArcLog.GetLogger<ScreenSaverViewModel>().Info($"[PipeServer] Received command: {cmd}");
 
-                        if (cmd == "UPDATE_SCRSETTINGS") {
+                        if (cmd == Constants.PipeControlField.CmdUpdateScrSettings) {
                             await UpdateScrSettginsAsync();
                         }
                     }
                 });
             }
-            catch (OperationCanceledException) when (_ctsListen.IsCancellationRequested) {
+            catch (OperationCanceledException) when (token.IsCancellationRequested) {
                 ArcLog.GetLogger<ScreenSaverViewModel>().Warn("[PipeServer] Listening was canceled.");
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<ScreenSaverViewModel>().Error($"[PipeServer] An Error occurred while waiting for or processing client connections: ${ex.Message}");
             }
+            finally {
+                lock (_listenLock) {
+                    if (ReferenceEquals(_ctsListen, source)) _ctsListen = null;
+                    source.Dispose();
+                }
+            }
         }
 
         public void StopListenForClients() {
-            _ctsListen?.Cancel();
+            lock (_listenLock) _ctsListen?.Cancel();
         }
 
         private void ChangeScreenSaverStatu(bool isScreenSaverOn) {
@@ -161,6 +187,19 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
+        private async void SaveAndChangeScreenSaverAsync(bool enabled) {
+            try {
+                // Core's StartAsync checks its saved IsScreenSaverOn value.
+                // Starting before the settings RPC completes can silently do nothing.
+                await _userSettingsClient.SaveAsync<ISettings>();
+                if (enabled == _isScreenSaverOn) ChangeScreenSaverStatu(enabled);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<ScreenSaverViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+        }
+
         private void ChangeLockStatu(bool isLock) {
             _scrCommandsClient.ChangeLockStatu(isLock);
         }
@@ -170,32 +209,25 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public async Task UpdateScrSettginsAsync() {
-            try {
-                _isLoading = true;
-                await _userSettingsClient.LoadAsync<ISettings>();
-                CrossThreadInvoker.InvokeOnUIThread(() => {
-                    IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
-                    IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
-                    SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
-                });
-            }
-            finally {
-                _isLoading = false;
-            }
+            await _userSettingsClient.LoadAsync<ISettings>();
+            CrossThreadInvoker.InvokeOnUIThread(() => {
+                IsScreenSaverOn = _userSettingsClient.Settings.IsScreenSaverOn;
+                IsRunningLock = _userSettingsClient.Settings.IsRunningLock;
+                SeletedEffectIndx = (int)_userSettingsClient.Settings.ScreenSaverEffect;
+            });
         }
 
-        private void PreAddToWhiteList() {
+        private async Task PreAddToWhiteListAsync() {
             try {
-                OpenFileDialog openFileDialog = new() {
-                    Filter = "Executable Files (*.exe)|*.exe"
-                };
-                bool? result = openFileDialog.ShowDialog();
+                var files = await _storagePicker.PickFilesAsync(WindowConsts.WindowHandle, [".exe"], false);
 
-                if (result == true) {
-                    string procPath = openFileDialog.FileName;
+                if (files is { Length: > 0 }) {
+                    string procPath = files[0].Path;
                     string procName = Path.GetFileNameWithoutExtension(procPath);
 
-                    using System.Drawing.Image img = Win32Util.GetIconByFileName("FILE", procPath).ToBitmap();
+                    using var icon = Win32Util.GetIconByFileName("FILE", procPath)
+                        ?? (System.Drawing.Icon)System.Drawing.SystemIcons.Application.Clone();
+                    using System.Drawing.Image img = icon.ToBitmap();
                     string iconPath = Path.Combine(Constants.CommonPaths.ExeIconDir, procName) + ".png";
                     img.Save(iconPath);
 
@@ -230,11 +262,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         #region Dispose
         private bool _isDisposed;
         protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
+            lock (_listenLock) {
+                if (_isDisposed) return;
+                _isDisposed = true;
                 if (disposing) {
                     _ctsListen?.Cancel();
                 }
-                _isDisposed = true;
             }
         }
 
@@ -244,12 +277,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
         #endregion
 
-        private readonly CancellationTokenSource _ctsListen;
+        private readonly object _listenLock = new();
+        private CancellationTokenSource? _ctsListen;
+        private Task _listenTask = Task.CompletedTask;
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IScrCommandsClient _scrCommandsClient;
+        private readonly IPipeServerFactory _pipeServerFactory;
+        private readonly IStoragePicker _storagePicker;
         private string _effectNone = string.Empty;
         private string _effectBubble = string.Empty;
         public List<ProcInfo> _whiteListScr = [];
-        private bool _isLoading = false;
     }
 }

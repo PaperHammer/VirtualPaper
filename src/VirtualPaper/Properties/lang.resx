@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AppUpdater_ActionButtonText_Completed" xml:space="preserve">
-    <value>安装</value>
-  </data>
   <data name="AppUpdater_ActionButtonText_Downloading" xml:space="preserve">
     <value>暂停</value>
   </data>
@@ -127,7 +124,7 @@
     <value>安装中...</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Paused" xml:space="preserve">
-    <value>继续下载</value>
+    <value>继续</value>
   </data>
   <data name="AppUpdater_ActionButtonText_Ready" xml:space="preserve">
     <value>下载</value>
@@ -193,6 +190,9 @@ https://github.com/PaperHammer/VirtualPaper/releases</value>
   <data name="Find_New_Verison" xml:space="preserve">
     <value>发现新版本！</value>
   </data>
+  <data name="Find_New_Version_Restart" xml:space="preserve">
+    <value>发现组件更新！</value>
+  </data>
   <data name="Systray_TextCloseAllWallpapers" xml:space="preserve">
     <value>关闭所有壁纸</value>
   </data>
@@ -252,5 +252,116 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
 3. 启用/勾选 "窗口内的动画控件和元素"（如果已经勾选，则取消勾选）并应用。
 4. 点击 "应用"，然后按 "确定"，关闭该窗口。
 如果还是不行，关闭并重新启动或重启系统。(在某些 Windows 10 预览版本中不工作)</value>
+  </data>
+  <data name="PluginsUpdate_InvalidInfo" xml:space="preserve">
+    <value>更新信息无效</value>
+  </data>
+  <data name="PluginsUpdate_Starting" xml:space="preserve">
+    <value>正在开始更新...</value>
+  </data>
+  <data name="PluginsUpdate_Completed" xml:space="preserve">
+    <value>更新完成，UI 即将重启</value>
+  </data>
+  <data name="PluginsUpdate_Failed" xml:space="preserve">
+    <value>更新失败：{0}</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Downloading" xml:space="preserve">
+    <value>正在下载组件...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>正在备份当前组件...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Replacing" xml:space="preserve">
+    <value>正在替换组件文件...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Completed" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Failed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="PluginsUpdate_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="PluginsUpdate_PostponeTip" xml:space="preserve">
+    <value>更新已就绪，关闭主窗口以触发更新</value>
+  </data>
+  <data name="InstallerUpdate_PostponeTip" xml:space="preserve">
+    <value>安装包已就绪，完全退出应用后触发安装</value>
+  </data>
+  <data name="PluginUpdate_Title_Updating" xml:space="preserve">
+    <value>正在更新组件...</value>
+  </data>
+  <data name="PluginUpdate_Title_Completed" xml:space="preserve">
+    <value>更新完成</value>
+  </data>
+  <data name="PluginUpdate_Title_Failed" xml:space="preserve">
+    <value>更新失败</value>
+  </data>
+  <data name="PluginUpdate_Preparing" xml:space="preserve">
+    <value>准备中...</value>
+  </data>
+  <data name="PluginUpdate_ReplacedPlugin" xml:space="preserve">
+    <value>已替换 {0}</value>
+  </data>
+  <data name="Startup_AutoStartDisabledByUser" xml:space="preserve">
+    <value>你已禁止 Virtual Paper 在登录时自动运行。如需重新启用，请前往任务管理器的“启动应用”页面。</value>
+  </data>
+  <data name="Startup_AppDataCreateFailedTitle" xml:space="preserve">
+    <value>无法创建应用数据目录，Virtual Paper 即将退出</value>
+  </data>
+  <data name="Startup_CoreRuntimeFailed" xml:space="preserve">
+    <value>核心运行时初始化失败，请重启或重新安装 Virtual Paper。&#x0A;{0}</value>
+  </data>
+  <data name="AppUpdater_Close_Downloading_Title" xml:space="preserve">
+    <value>停止更新下载？</value>
+  </data>
+  <data name="AppUpdater_Close_Downloading_Content" xml:space="preserve">
+    <value>更新正在下载中。是否停止下载并关闭更新窗口？</value>
+  </data>
+  <data name="AppUpdater_Close_StopDownload" xml:space="preserve">
+    <value>停止下载并关闭</value>
+  </data>
+  <data name="AppUpdater_Close_Paused_Title" xml:space="preserve">
+    <value>放弃本次下载？</value>
+  </data>
+  <data name="AppUpdater_Close_Paused_Content" xml:space="preserve">
+    <value>更新下载已暂停。是否放弃本次下载并关闭更新窗口？</value>
+  </data>
+  <data name="AppUpdater_Close_DiscardDownload" xml:space="preserve">
+    <value>放弃下载并关闭</value>
+  </data>
+  <data name="AppUpdater_Close_Verifying_Title" xml:space="preserve">
+    <value>停止更新校验？</value>
+  </data>
+  <data name="AppUpdater_Close_Verifying_Content" xml:space="preserve">
+    <value>正在校验更新文件。是否停止校验并关闭更新窗口？</value>
+  </data>
+  <data name="AppUpdater_Close_StopVerification" xml:space="preserve">
+    <value>停止校验并关闭</value>
+  </data>
+  <data name="AppUpdater_Close_Title" xml:space="preserve">
+    <value>关闭更新窗口？</value>
+  </data>
+  <data name="AppUpdater_Close_Content" xml:space="preserve">
+    <value>是否关闭更新窗口？</value>
+  </data>
+  <data name="AppUpdater_Close_Window" xml:space="preserve">
+    <value>关闭窗口</value>
+  </data>
+  <data name="AppUpdater_Close_DownloadFailed_Content" xml:space="preserve">
+    <value>更新下载失败。关闭窗口后，可以稍后重新尝试更新。</value>
+  </data>
+  <data name="AppUpdater_Close_VerifyFailed_Content" xml:space="preserve">
+    <value>更新文件校验失败。关闭窗口后，可以稍后重新下载更新。</value>
+  </data>
+  <data name="AppUpdater_Close_BackToUpdate" xml:space="preserve">
+    <value>返回更新</value>
+  </data>
+  <data name="AppUpdater_UpdateReady_Title" xml:space="preserve">
+    <value>更新已准备就绪</value>
+  </data>
+  <data name="Common_TextGotIt" xml:space="preserve">
+    <value>知道了</value>
   </data>
 </root>

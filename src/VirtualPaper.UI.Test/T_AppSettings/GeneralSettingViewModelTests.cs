@@ -2,14 +2,15 @@ using Grpc.Core;
 using Moq;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.Common;
-using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Utils.Localization;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
+using VirtualPaper.Models.AppUpdate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Events;
 using VirtualPaper.UI.Test.Utils;
 
 namespace VirtualPaper.UI.Test.T_AppSettings {
@@ -19,6 +20,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         private Mock<IUserSettingsClient> _userSettingsClient = null!;
         private Mock<IWallpaperControlClient> _wpControlClient = null!;
         private Mock<ISettings> _settings = null!;
+        private Mock<ICommandsClient> _commandsClient = null!;
         private GeneralSettingViewModel _vm = null!;
 
         [TestInitialize]
@@ -29,9 +31,11 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _userSettingsClient = new Mock<IUserSettingsClient>();
             _wpControlClient = new Mock<IWallpaperControlClient>();
             _settings = new Mock<ISettings>();
+            _commandsClient = new Mock<ICommandsClient>();
 
             _settings.SetupProperty(s => s.IsAutoStart, false);
             _settings.SetupProperty(s => s.SystemBackdrop, AppSystemBackdrop.Default);
+            _settings.SetupProperty(s => s.NavigationAnimationsEnabled, true);
             _settings.SetupProperty(s => s.Language, "en-US");
             _settings.SetupProperty(s => s.WallpaperDir, @"C:\Wallpapers");
 
@@ -43,7 +47,8 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _vm = new GeneralSettingViewModel(
                 _appUpdater.Object,
                 _userSettingsClient.Object,
-                _wpControlClient.Object);
+                _wpControlClient.Object,
+                _commandsClient.Object);
         }
 
         [TestCleanup]
@@ -55,14 +60,16 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
         [TestMethod]
         public void MenuUpdate_WhenUptodate_SetsUptoNewest() {
+            var releaseInfo = new ReleaseInfo {
+                Version = new Version(1, 0),
+                CheckedTime = DateTime.Now,
+                InstallerUri = new Uri("https://example.com/update"),
+                InstallerShaUri = new Uri("https://example.com/update.sha"),
+            };
             _appUpdater.Raise(a => a.UpdateChecked += null,
                 new AppUpdaterEventArgs(
                     AppUpdateStatus.Uptodate,
-                    new Version(1, 0),
-                    DateTime.Now,
-                    new Uri("https://example.com/update"),
-                    new Uri("https://example.com/update.sha"),
-                    string.Empty));
+                    releaseInfo));
 
             Assert.AreEqual(VersionState.UptoNewest, _vm.CurrentVersionState);
         }
@@ -70,14 +77,17 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         [TestMethod]
         public void MenuUpdate_WhenAvailable_SetsVersionAndFindNew() {
             var version = new Version(2, 0);
+            var releaseInfo = new ReleaseInfo {
+                Version = version,
+                CheckedTime = DateTime.Now,
+                InstallerUri = new Uri("https://example.com/update"),
+                InstallerShaUri = new Uri("https://example.com/update.sha"),
+            };
             _appUpdater.Raise(a => a.UpdateChecked += null,
                 new AppUpdaterEventArgs(
                     AppUpdateStatus.Available,
-                    version,
-                    DateTime.Now,
-                    new Uri("https://example.com/update"),
-                    new Uri("https://example.com/update.sha"),
-                    string.Empty));
+                    releaseInfo));
+
 
             Assert.AreEqual(VersionState.FindNew, _vm.CurrentVersionState);
             Assert.AreEqual("v2.0", _vm.Version);
@@ -87,14 +97,16 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         [DataRow(AppUpdateStatus.Invalid)]
         [DataRow(AppUpdateStatus.Error)]
         public void MenuUpdate_WhenInvalidOrError_SetsUpdateErr(AppUpdateStatus status) {
+            var releaseInfo = new ReleaseInfo {
+                Version = new Version(1, 0),
+                CheckedTime = DateTime.Now,
+                InstallerUri = new Uri("https://example.com/update"),
+                InstallerShaUri = new Uri("https://example.com/update.sha"),
+            };
             _appUpdater.Raise(a => a.UpdateChecked += null,
                 new AppUpdaterEventArgs(
                     status,
-                    new Version(1, 0),
-                    DateTime.Now,
-                    new Uri("https://example.com/update"),
-                    new Uri("https://example.com/update.sha"),
-                    string.Empty));
+                    releaseInfo));
 
             Assert.AreEqual(VersionState.UpdateErr, _vm.CurrentVersionState);
         }
@@ -114,6 +126,22 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _settings.Object.IsAutoStart = false;
             _vm.IsAutoStart = true;
 
+            _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
+        }
+
+        [TestMethod]
+        public void NavigationAnimations_WhenChanged_SavesAndNotifiesOnlyOnce() {
+            int notifications = 0;
+            _vm.PropertyChanged += (_, args) => {
+                if (args.PropertyName == nameof(_vm.NavigationAnimationsEnabled)) notifications++;
+            };
+
+            Assert.IsTrue(_vm.NavigationAnimationsEnabled);
+            _vm.NavigationAnimationsEnabled = false;
+            _vm.NavigationAnimationsEnabled = false;
+
+            Assert.IsFalse(_settings.Object.NavigationAnimationsEnabled);
+            Assert.AreEqual(1, notifications);
             _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
         }
 

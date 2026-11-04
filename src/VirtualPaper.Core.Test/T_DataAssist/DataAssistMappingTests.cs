@@ -274,6 +274,31 @@ public class DataAssistMappingTests {
     }
 
     [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public void NavigationAnimations_SurvivesJsonAndGrpcRoundtrip(bool enabled) {
+        var settings = MakeSettings();
+        settings.NavigationAnimationsEnabled = enabled;
+        var json = System.Text.Json.JsonSerializer.Serialize(settings, SettingsContext.Default.Settings);
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(json, SettingsContext.Default.Settings)!;
+        var grpc = DataAssist.SettingsToGrpc(loaded);
+        var restored = DataAssist.GrpcToSettings(grpc);
+
+        Assert.IsTrue(grpc.HasNavigationAnimationsEnabled);
+        Assert.AreEqual(enabled, restored.NavigationAnimationsEnabled);
+    }
+
+    [TestMethod]
+    public void NavigationAnimations_OlderConfigurationAndGrpc_DefaultToEnabled() {
+        var settings = System.Text.Json.JsonSerializer.Deserialize("{}", SettingsContext.Default.Settings)!;
+        var grpc = DataAssist.SettingsToGrpc(MakeSettings());
+        grpc.ClearNavigationAnimationsEnabled();
+
+        Assert.IsTrue(settings.NavigationAnimationsEnabled);
+        Assert.IsTrue(DataAssist.GrpcToSettings(grpc).NavigationAnimationsEnabled);
+    }
+
+    [TestMethod]
     public void Settings_Roundtrip_PreservesEnumFields() {
         var src = MakeSettings();
 
@@ -325,7 +350,7 @@ public class DataAssistMappingTests {
     public void Settings_Roundtrip_PreservesWhiteListScr() {
         var src = MakeSettings();
         src.WhiteListScr = [
-            new ProcInfo { ProcName = "chrome.exe",  IconPath = @"C:\icon.ico", IsRunning = true  },
+            new ProcInfo { ProcName = "chrome.exe", ProcPath = @"C:\apps\chrome.exe", IconPath = @"C:\icon.ico", IsRunning = true  },
             new ProcInfo { ProcName = "notepad.exe", IconPath = string.Empty,   IsRunning = false },
         ];
 
@@ -334,6 +359,8 @@ public class DataAssistMappingTests {
 
         Assert.HasCount(2, restored.WhiteListScr);
         Assert.AreEqual("chrome.exe", restored.WhiteListScr[0].ProcName);
+        Assert.AreEqual(@"C:\apps\chrome.exe", grpc.WhiteListScr[0].ProcPath);
+        Assert.AreEqual(@"C:\apps\chrome.exe", restored.WhiteListScr[0].ProcPath);
         Assert.AreEqual(@"C:\icon.ico", restored.WhiteListScr[0].IconPath);
         Assert.IsTrue(restored.WhiteListScr[0].IsRunning);
         Assert.AreEqual("notepad.exe", restored.WhiteListScr[1].ProcName);

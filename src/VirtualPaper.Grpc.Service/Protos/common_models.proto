@@ -4,6 +4,7 @@ import "google/protobuf/timestamp.proto";
 
 message Grpc_GetPlayerStartArgsRequest {
 	Grpc_WpPlayerData wp_player_data = 1;
+	string wp_basic_data_file_path = 2;
 }
 
 message Grpc_GetPlayerStartArgsResponse {
@@ -75,15 +76,20 @@ message Grpc_ProcInfoData {
     string proc_name = 1;
     string icon_path = 2;
     bool is_running = 3;
+    string proc_path = 4;
 }
 
 message Grpc_UpdateResponse {
 	Grpc_UpdateStatus status = 1;
 	string version = 2;
-	string uri = 3;
-	string sha_uri = 4;
+	string installer_uri = 3;
+	string installer_sha_uri = 4;
 	string changelog = 5;
-	google.protobuf.Timestamp time = 6;
+	string app_build = 6;
+	google.protobuf.Timestamp checked_time = 7;
+	string plugin_patch_uri = 8;
+	string plugin_patch_sha256_uri = 9;
+	string app_comp_manifest = 10;
 }
 
 message Grpc_WallpaperLayoutsSettings {
@@ -135,6 +141,7 @@ message Grpc_SettingsData {
     int32 waiting_time = 28;
     Grpc_ScrEffectEnum screen_saver_effect = 29;
     repeated Grpc_ProcInfoData white_list_scr = 30; 
+    optional bool navigation_animations_enabled = 31;
 }
 
 message Grpc_AppRulesSettings {

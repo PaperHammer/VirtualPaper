@@ -41,9 +41,12 @@ namespace VirtualPaper.Cores.WpControl {
         IWpMetadata GetWallpaperByFolderPath(string folderPath, string monitorContent, string rtype);
         IWpBasicData GetWpBasicDataByForlderPath(string folderPath);
         string GetPlayerStartArgsInRunning(string monitorId);
-        string? GetPlayerStartArgs(IWpPlayerData wpPlayingData, CancellationToken toke = default);
+        string? GetPlayerStartArgs(
+            IWpPlayerData wpPlayingData,
+            string? wpBasicDataFilePath = null,
+            CancellationToken token = default);
         Task ResetWallpaperAsync();
-        Grpc_RestartWallpaperResponse RestoreWallpaper();
+        Task<Grpc_RestartWallpaperResponse> RestoreWallpaperAsync();
         Task<Grpc_SetWallpaperResponse> SetWallpaperAsync(IWpPlayerData data, IMonitor monitor, bool isFromPreview = false, CancellationToken token = default);
         void SeekWallpaper(IWpPlayerData data, float seek, PlaybackPosType type);
         void SeekWallpaper(IMonitor monitor, float seek, PlaybackPosType type);

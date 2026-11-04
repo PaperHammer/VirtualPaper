@@ -1,6 +1,7 @@
 using System.IO;
 using SharpCompress.Archives;
 using SharpCompress.Common;
+using SharpCompress.Readers;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores;
 
@@ -13,7 +14,7 @@ namespace VirtualPaper.Utils.BasicDataBuilders {
         public void Build(string srcPath, string folderPath, string folderName, WpBasicData data, CancellationToken token) {
             // 解压压缩包（zip/rar/7z 统一走 SharpCompress）
             using (var stream = File.OpenRead(srcPath))
-            using (var archive = ArchiveFactory.Open(stream)) {
+            using (var archive = ArchiveFactory.OpenArchive(stream, new ReaderOptions())) {
                 foreach (var entry in archive.Entries.Where(e => !e.IsDirectory)) {
                     token.ThrowIfCancellationRequested();
                     entry.WriteToDirectory(folderPath, new ExtractionOptions {

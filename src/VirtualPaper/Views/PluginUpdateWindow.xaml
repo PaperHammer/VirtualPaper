@@ -1,0 +1,157 @@
+<Window x:Class="VirtualPaper.Views.PluginUpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lang="clr-namespace:VirtualPaper.lang"
+        Title="PluginUpdateWindow"
+        Icon="pack://application:,,,/VirtualPaper;component/Resources/appicon_download.ico"
+        Width="620"
+        Height="300"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="NoResize"
+        ShowInTaskbar="True"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        mc:Ignorable="d">
+
+    <Grid>
+        <!-- Background image (same splash style) -->
+        <Border CornerRadius="10">
+            <Border.Background>
+                <ImageBrush ImageSource="pack://application:,,,/VirtualPaper;component/Resources/splash.png" Stretch="Fill" />
+            </Border.Background>
+        </Border>
+
+        <!-- Semi-transparent overlay for readability -->
+        <Border CornerRadius="10" Background="#33000000" />
+
+        <!-- Window buttons (top-right) -->
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,12,0">
+            <!-- Minimize button -->
+            <Button x:Name="MinimizeButton"
+                    Width="32" Height="32"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="White"
+                    FontSize="16"
+                    Content="&#xE949;"
+                    FontFamily="Segoe MDL2 Assets"
+                    Click="MinimizeButton_Click"
+                    Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
+                                        <TextBlock Text="{TemplateBinding Content}"
+                                                   FontFamily="{TemplateBinding FontFamily}"
+                                                   FontSize="{TemplateBinding FontSize}"
+                                                   Foreground="{TemplateBinding Foreground}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#33FFFFFF" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <!-- Close button (disabled during installation) -->
+            <Button x:Name="CloseButton"
+                    Width="32" Height="32"
+                    Background="Transparent"
+                    BorderBrush="Transparent"
+                    Foreground="White"
+                    FontSize="16"
+                    Content="&#xE8BB;"
+                    FontFamily="Segoe MDL2 Assets"
+                    Click="CloseButton_Click"
+                    IsEnabled="False"
+                    Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="Button">
+                                    <Border x:Name="Bd" Background="Transparent" CornerRadius="4">
+                                        <TextBlock Text="{TemplateBinding Content}"
+                                                   FontFamily="{TemplateBinding FontFamily}"
+                                                   FontSize="{TemplateBinding FontSize}"
+                                                   Foreground="{TemplateBinding Foreground}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#44FF0000" />
+                                        </Trigger>
+                                        <Trigger Property="IsEnabled" Value="False">
+                                            <Setter Property="Foreground" Value="#66FFFFFF" />
+                                            <Setter Property="Cursor" Value="Arrow" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
+
+        <!-- Content (moved to top area) -->
+        <StackPanel Margin="40,50,40,0" VerticalAlignment="Top" HorizontalAlignment="Center">
+            <!-- Title with pill background -->
+            <Border Background="#44000000" CornerRadius="16" Padding="18,8,18,8" HorizontalAlignment="Center">
+                <TextBlock x:Name="TitleText"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="White"
+                           HorizontalAlignment="Center"
+                           Text="{Binding [PluginUpdate_Title_Updating], Source={x:Static lang:LanguageManager.Instance}}" />
+            </Border>
+        </StackPanel>
+
+        <!-- Bottom area: status + progress bar -->
+        <StackPanel Margin="25,0,25,25" VerticalAlignment="Bottom">
+            <!-- Status description above progress bar -->
+            <TextBlock x:Name="StatusText"
+                       FontSize="14"
+                       Foreground="#CCFFFFFF"
+                       HorizontalAlignment="Left"
+                       Margin="0,0,0,8"
+                       Text="{Binding [PluginUpdate_Preparing], Source={x:Static lang:LanguageManager.Instance}}"
+                       TextTrimming="CharacterEllipsis" />
+
+            <!-- Progress bar (faster animation via SpeedRatio) -->
+            <ProgressBar x:Name="UpdateProgressBar"
+                         Height="6"
+                         IsIndeterminate="True"
+                         Background="Transparent"
+                         BorderBrush="Transparent"
+                         Foreground="#c9b3fa">
+                <ProgressBar.Resources>
+                    <Style TargetType="ProgressBar">
+                        <Style.Triggers>
+                            <Trigger Property="IsIndeterminate" Value="True">
+                                <Trigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard SpeedRatio="4" />
+                                    </BeginStoryboard>
+                                </Trigger.EnterActions>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ProgressBar.Resources>
+            </ProgressBar>
+        </StackPanel>
+    </Grid>
+</Window>

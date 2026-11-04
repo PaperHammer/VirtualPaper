@@ -41,6 +41,7 @@
         x:Name="arcListView"
         Width="40"
         Loaded="ArcListViewToolItem_Loaded"
+        ContainerContentChanging="ToolItem_ContainerContentChanging"
         CancelSelectionEnable="False"
         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
         ScrollViewer.VerticalScrollBarVisibility="Hidden"

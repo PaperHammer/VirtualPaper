@@ -4,6 +4,7 @@
     xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives" 
     xmlns:controls="using:Microsoft.UI.Xaml.Controls" 
     xmlns:local="using:VirtualPaper.UIComponent.Navigation"
+    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
     <Style TargetType="local:ArcNavigationView">
         <Setter Property="PaneToggleButtonStyle" Value="{StaticResource PaneToggleButtonStyle}" />
@@ -243,7 +244,7 @@
                                             </controls:ItemsRepeater>
                                         </ScrollViewer>
                                     </controls:ItemsRepeaterScrollHost>
-                                    <Button x:Name="TopNavOverflowButton" Grid.Column="4" Content="More" Margin="{ThemeResource TopNavigationViewOverflowButtonMargin}" Style="{StaticResource NavigationViewOverflowButtonStyleWhenPaneOnTop}" Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.OverflowButtonVisibility}">
+                                    <Button x:Name="TopNavOverflowButton" Grid.Column="4" Content="{markup:I18n Key=Text_More}" Margin="{ThemeResource TopNavigationViewOverflowButtonMargin}" Style="{StaticResource NavigationViewOverflowButtonStyleWhenPaneOnTop}" Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=TemplateSettings.OverflowButtonVisibility}">
                                         <Button.Flyout>
                                             <Flyout Placement="BottomEdgeAlignedRight" ElementSoundMode="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ElementSoundMode}">
                                                 <Flyout.FlyoutPresenterStyle>

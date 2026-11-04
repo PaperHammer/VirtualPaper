@@ -20,10 +20,14 @@
             SelectionChanged="SelectorBar_SelectionChanged"
             Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
             HorizontalAlignment="Stretch">
-            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem1_General}" Tag="GeneralView" IsSelected="True"/>
-            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem2_Performance}" Tag="PerformanceView"/>
-            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem3_System}" Tag="SystemView"/>
-            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem4_Others}" Tag="OthersView"/>
+            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem1_General}" Tag="GeneralView" IsSelected="True"
+                AutomationProperties.AutomationId="Settings.Tab.General"/>
+            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem2_Performance}" Tag="PerformanceView"
+                AutomationProperties.AutomationId="Settings.Tab.Performance"/>
+            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem3_System}" Tag="SystemView"
+                AutomationProperties.AutomationId="Settings.Tab.System"/>
+            <SelectorBarItem Text="{markup:I18n Key=AppSettings_SelBarItem4_Others}" Tag="OthersView"
+                AutomationProperties.AutomationId="Settings.Tab.Others"/>
         </SelectorBar>
 
         <Frame x:Name="ContentFrame" Grid.Row="1"/>

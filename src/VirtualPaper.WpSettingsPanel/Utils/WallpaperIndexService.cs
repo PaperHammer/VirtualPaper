@@ -13,6 +13,9 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
 
         public async void Initialize(IEnumerable<string> wallpaperInstallDir) {
             await _index.RebuildIndexAsync(wallpaperInstallDir);
+            lock (_lock) {
+                RebuildUidIndexMapUnsafe();
+            }
             Initialized.TrySetResult(true);
         }
 

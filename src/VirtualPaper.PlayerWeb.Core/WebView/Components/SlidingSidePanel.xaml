@@ -10,10 +10,31 @@
     Loaded="SlidingSidePanel_Loaded"
     SizeChanged="SlidingSidePanel_SizeChanged">
 
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="PreviewPanelBackgroundBrush" Color="#DCFAFAFA" />
+                    <SolidColorBrush x:Key="PreviewPanelHandleBackgroundBrush" Color="#EAF3F3F3" />
+                    <SolidColorBrush x:Key="PreviewPanelBorderBrush" Color="#33000000" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Default">
+                    <SolidColorBrush x:Key="PreviewPanelBackgroundBrush" Color="#DC202020" />
+                    <SolidColorBrush x:Key="PreviewPanelHandleBackgroundBrush" Color="#EA2A2A2A" />
+                    <SolidColorBrush x:Key="PreviewPanelBorderBrush" Color="#4DFFFFFF" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <SolidColorBrush x:Key="PreviewPanelBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="PreviewPanelHandleBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}" />
+                    <SolidColorBrush x:Key="PreviewPanelBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid x:Name="RootGrid" 
         VerticalAlignment="Top" 
-        HorizontalAlignment="Right"
-        Opacity="0.95">
+        HorizontalAlignment="Right">
         <Grid.RenderTransform>
             <TranslateTransform x:Name="TranslateXY" />
         </Grid.RenderTransform>
@@ -22,8 +43,11 @@
             <Border x:Name="HandleArea"
                 Width="30"
                 Height="100"
-                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                Background="{ThemeResource PreviewPanelHandleBackgroundBrush}"
+                BorderBrush="{ThemeResource PreviewPanelBorderBrush}"
+                BorderThickness="1,1,0,1"
                 CornerRadius="8 0 0 8"
+                Margin="0,0,-1,0"
                 VerticalAlignment="Center"
                 PointerPressed="Handle_PointerPressed"
                 PointerReleased="Handle_PointerReleased"
@@ -38,7 +62,9 @@
             <Border x:Name="ContentArea"
                 Width="340"
                 Height="520"
-                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                Background="{ThemeResource PreviewPanelBackgroundBrush}"
+                BorderBrush="{ThemeResource PreviewPanelBorderBrush}"
+                BorderThickness="1,1,0,1"
                 CornerRadius="12,0,0,12">
                 <ContentPresenter x:Name="PART_ContentPresenter"/>
             </Border>

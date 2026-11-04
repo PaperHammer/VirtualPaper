@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -18,6 +19,7 @@ using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
+using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -26,6 +28,8 @@ using VirtualPaper.UIComponent.Context;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
+using VirtualPaper.UIComponent.Utils.Adapter;
+using VirtualPaper.UIComponent.Utils.Adapter.Interfaces;
 using VirtualPaper.UIComponent.Utils.PanelBus.WpSettingsArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using VirtualPaper.WpSettingsPanel.Utils;
@@ -38,12 +42,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
     public partial class LibraryContentsViewModel : ObservableObject, IFilterable {
         public ObservableCollection<IWpBasicData> LibraryWallpapers { get; private set; } = null!;
 
-        private byte[] _wpTitleForeground = [255, 255, 255, 255];
-        public byte[] WpTitleForeground {
-            get => _wpTitleForeground;
-            set { _wpTitleForeground = value; OnPropertyChanged(); }
-        }
-
         private LoadingStatus _libLoadingStatus;
         public LoadingStatus LibLoadingStatus {
             get { return _libLoadingStatus; }
@@ -54,13 +52,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
             WpSettingsViewModel wpSettingsViewModel,
-            IWallpaperIndexService wallpaperIndexService) {
+            IWallpaperIndexService wallpaperIndexService,
+            IGlobalDialogService? dialogService = null) {
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
             _wpSettingsViewModel = wpSettingsViewModel;
             _wallpaperIndexService = wallpaperIndexService;
+            _dialogService = dialogService ?? new GlobalDialogService();
 
-            InitEvent();
             InitColletions();
             InitOthers();
         }
@@ -69,18 +68,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             _wallpaperIndexService.Initialize(_wallpaperInstallFolders);
             _wpSettingsViewModel.RegisterLibraryContents(this);
             RegisterPanelActions();
-        }
-
-        private void InitEvent() {
-            ArcThemeUtil.AppThemeChanged += (s, e) => {
-                RefreshWpTitleForeground();
-            };
-        }
-
-        internal void RefreshWpTitleForeground() {
-            WpTitleForeground = ArcThemeUtil.GetFormatMainWindowTheme() == AppTheme.Light
-                ? [255, 255, 255, 255]   // White: A=255, R=255, G=255, B=255
-                : [255, 0, 0, 0];        // Black: A=255, R=0, G=0, B=0
         }
 
         private void InitColletions() {
@@ -227,17 +214,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var rtype = await GetWallpaperRTypeByFTypeAsync(data.FType);
                         if (rtype == RuntimeType.RUnknown) return;
 
-                        string? depthFilePath = null;
-                        if (rtype == RuntimeType.RImage3D) {
-                            depthFilePath = SetDepthPath(data);
-                        }
-
                         if (_previews.TryGetValue((data.WallpaperUid, rtype), out var preview)) {
                             preview.Activate();
                             return;
                         }
 
+                        string? depthFilePath = rtype == RuntimeType.RImage3D
+                            ? await SetDepthPathAsync(data, token) : null;
+                        token.ThrowIfCancellationRequested();
                         var jsonString = await _wpControlClient.GetPlayerStartArgsAsync(data, rtype, depthFilePath, token);
+                        token.ThrowIfCancellationRequested();
+                        // Another request may have opened this preview while inference was running.
+                        if (_previews.TryGetValue((data.WallpaperUid, rtype), out preview)) {
+                            preview.Activate();
+                            return;
+                        }
+
                         var previewWindow = rtype switch {
                             RuntimeType.RImage or RuntimeType.RImage3D or RuntimeType.RVideo or RuntimeType.RWeb => new PreviewWithWeb(jsonString),
                             _ or RuntimeType.RUnknown => throw new NotImplementedException(),
@@ -296,7 +288,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
                         string? depthFilePath = null;
                         if (rtype == RuntimeType.RImage3D) {
-                            depthFilePath = SetDepthPath(data);
+                            depthFilePath = await SetDepthPathAsync(data, token);
                         }
                         
                         Grpc_SetWallpaperResponse response = await _wpControlClient.SetWallpaperAsync(
@@ -326,14 +318,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }, cts: ctsApply);
         }
 
-        private string? SetDepthPath(IWpBasicData data) {
-            var midas = AppServiceLocator.Services.GetRequiredService<IDepthEstimate>();
-            midas.LoadModel();
-            var output = midas.Run(data.FilePath);
-            string depthFilePath = midas.SaveDepthMap(output, data.FolderPath);
-            midas.Dispose();
-            return depthFilePath;
-        }
+        private static Task<string> SetDepthPathAsync(IWpBasicData data, CancellationToken token) =>
+            DepthMapCache.GetOrCreateAsync(data.FilePath, data.FolderPath,
+                () => AppServiceLocator.Services.GetRequiredService<IDepthEstimate>(), token);
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
@@ -365,23 +352,54 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task DeleteAsync(IWpBasicData data) {
+            await DeleteAsync(new[] { data });
+        }
+
+        internal async Task DeleteAsync(IReadOnlyCollection<IWpBasicData> items) {
             try {
-                var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
-                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
-                    , LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt)
-                    , LanguageUtil.GetI18n(Constants.I18n.Text_Confirm)
-                    , LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
+                var uniqueItems = items
+                    .GroupBy(item => item.WallpaperUid)
+                    .Select(group => group.First())
+                    .ToList();
+                if (uniqueItems.Count == 0) return;
+
+                string title = uniqueItems.Count == 1
+                    ? LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_LibraryDelete)
+                    : string.Format(
+                        LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_LibraryDeleteMany),
+                        uniqueItems.Count);
+                string message = uniqueItems.Count == 1
+                    ? LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDelete)
+                    : LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_LibraryDeleteMany);
+                var dialogRes = await _dialogService.ShowDialogAsync(
+                    message,
+                    title,
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Delete),
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes != DialogResult.Primary) return;
 
-                bool isUsing = await IsFileInUseAsync(data);
-                if (isUsing) {
+                await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
+                var activeFolders = _userSettingsClient.WallpaperLayouts
+                    .Select(layout => layout.FolderPath)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var deletable = uniqueItems
+                    .Where(item => !activeFolders.Contains(item.FolderPath))
+                    .ToList();
+                if (deletable.Count == 0) {
                     GlobalMessageUtil.ShowInfo(Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                     return;
                 }
 
-                HandleDelete(data);
-                if (Directory.Exists(data.FolderPath)) {
-                    Directory.Delete(data.FolderPath, true);
+                HandleDelete(deletable);
+                foreach (string folderPath in deletable
+                    .Select(item => item.FolderPath)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)) {
+                    if (Directory.Exists(folderPath)) {
+                        Directory.Delete(folderPath, true);
+                    }
+                }
+                if (deletable.Count != uniqueItems.Count) {
+                    GlobalMessageUtil.ShowInfo(Constants.I18n.Text_FileUsing, isNeedLocalizer: true);
                 }
             }
             catch (Exception ex) {
@@ -391,10 +409,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public void HandleDelete(IWpBasicData data) {
-            LibraryWallpapers.Remove(data);
-            _libraryWallpapers.Remove(data);
-            _wallpaperIndexService.Remove(data);
-            ItemDeleted?.Invoke(this, EventArgs.Empty);
+            HandleDelete(new[] { data });
+        }
+
+        public void HandleDelete(IEnumerable<IWpBasicData> items) {
+            bool handledAny = false;
+            foreach (var data in items
+                .GroupBy(item => item.WallpaperUid)
+                .Select(group => group.First())) {
+                LibraryWallpapers.Remove(data);
+                _libraryWallpapers.Remove(data);
+                _wallpaperIndexService.Remove(data);
+                handledAny = true;
+            }
+            if (handledAny) {
+                ItemDeleted?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         /// <summary>删除条目后触发，通知 View 层检查是否需要补充加载更多数据</summary>
@@ -506,12 +536,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 case FileType.FImage:
                 case FileType.FGif:
                     var wpCreateDialogViewModel = new WallpaperCreateViewModel();
-                    var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
+                    var dialog = GlobalDialogUtils.CreateDialog(
                         new WallpaperCreateView(wpCreateDialogViewModel),
                         LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_CreateType),
                         LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
-                        LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
-                    if (dialogRes != DialogResult.Primary) return RuntimeType.RUnknown;
+                        LanguageUtil.GetI18n(Constants.I18n.Text_Cancel))!;
+                    dialog.DialogWidth = 480;
+                    dialog.DialogMaxWidth = 480;
+                    var dialogRes = await dialog.ShowAsync();
+                    if (dialogRes != ContentDialogResult.Primary) return RuntimeType.RUnknown;
 
                     return wpCreateDialogViewModel.SelectedItem.CreateType switch {
                         WallpaperCreateType.Img => RuntimeType.RImage,
@@ -531,8 +564,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             if (data.AppInfo.FileVersion != _userSettingsClient.Settings.FileVersion) {
                 var dialogRes = await GlobalDialogUtils.ShowDialogAsync(
                     LanguageUtil.GetI18n(Constants.I18n.Dialog_Content_Import_NeedUpdate),
-                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_Prompt),
-                    LanguageUtil.GetI18n(Constants.I18n.Text_Confirm),
+                    LanguageUtil.GetI18n(Constants.I18n.Dialog_Title_LibraryUpgrade),
+                    LanguageUtil.GetI18n(Constants.I18n.Text_Upgrade),
                     LanguageUtil.GetI18n(Constants.I18n.Text_Cancel));
                 if (dialogRes == DialogResult.Primary)
                     await UpdateAsync(data);
@@ -716,6 +749,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly WpSettingsViewModel _wpSettingsViewModel;
         private readonly IWallpaperIndexService _wallpaperIndexService;
+        private readonly IGlobalDialogService _dialogService;
         private List<string> _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
         private readonly Dictionary<string, ArcWindow> _edits = [];

@@ -5,7 +5,8 @@ namespace VirtualPaper.Services.Interfaces {
         /// </summary>
         /// <typeparam name="TWindow">窗口类型</typeparam>
         /// <param name="parameter">传递给 ViewModel 的初始化参数</param>
-        void Show<TWindow>(object? parameter = null) where TWindow : class;
+        /// <param name="bringToFront">是否将窗口带到前台（跨进程生效）</param>
+        void Show<TWindow>(object? parameter = null, bool bringToFront = false) where TWindow : class;
 
         /// <summary>
         /// 打开一个模态窗口

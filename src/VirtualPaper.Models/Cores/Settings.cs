@@ -25,6 +25,7 @@ namespace VirtualPaper.Models.Cores {
         public bool IsUpdated { get; set; }
         public bool IsAutoStart { get; set; }
         public bool IsFirstRun { get; set; }
+        public bool NavigationAnimationsEnabled { get; set; } = true;
         #endregion
 
         #region dirs

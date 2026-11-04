@@ -3,8 +3,7 @@
 		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<RootNamespace>VirtualPaper.WpSettingsPanel</RootNamespace>
-		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &gt;= 8">win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-		<RuntimeIdentifiers Condition="$([MSBuild]::GetTargetFrameworkVersion('$(TargetFramework)')) &lt; 8">win10-x86;win10-x64;win10-arm64</RuntimeIdentifiers>
+		<WinUISDKReferences>false</WinUISDKReferences>
 		<UseWinUI>true</UseWinUI>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Nullable>enable</Nullable>
@@ -13,6 +12,7 @@
 	  <None Remove="Views\AddToLib.xaml" />
 	  <None Remove="Views\LibraryContents.xaml" />
 	  <None Remove="Views\ScreenSaver.xaml" />
+	  <None Remove="Views\ScreenFitDialog.xaml" />
 	  <None Remove="WpSettings.xaml" />
 	</ItemGroup>
 
@@ -30,6 +30,9 @@
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
 			<_Parameter1>VirtualPaper.UI.Test</_Parameter1>
+		</AssemblyAttribute>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+			<_Parameter1>VirtualPaper.Core.Test</_Parameter1>
 		</AssemblyAttribute>
 	</ItemGroup>
 

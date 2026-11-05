@@ -27,6 +27,7 @@ internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBa
             if (files.Length != 1) return false;
             try {
                 data = JsonSerializer.Deserialize(await AppProcessSession.ReadTextSharedAsync(files[0]), WpBasicDataContext.Default.WpBasicData);
+                data?.ResolvePaths(files[0]);
                 return data != null && File.Exists(data.ThumbnailPath) && File.Exists(data.FilePath)
                     && sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath)));
             }

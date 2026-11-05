@@ -133,7 +133,7 @@ namespace VirtualPaper.Common {
 
         public static class CoreField {
             public static string AppName => "VirtualPaper";
-            public static string FileVersion => "18";
+            public static string FileVersion => "19";
             public static string DraftFileVersion => "D18";
             public static string GrpcPipeServerName => "Grpc_" + PipeServerName;
             public static string PipeServerName => UniqueAppUid + Environment.UserName;

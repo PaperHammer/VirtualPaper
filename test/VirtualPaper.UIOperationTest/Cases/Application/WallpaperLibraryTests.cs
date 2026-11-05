@@ -37,6 +37,7 @@ internal static class WallpaperLibraryTests {
             if (files.Length != 1) return false;
             try {
                 imported = JsonSerializer.Deserialize(await File.ReadAllTextAsync(files[0]), WpBasicDataContext.Default.WpBasicData);
+                imported?.ResolvePaths(files[0]);
                 return imported != null && File.Exists(imported.ThumbnailPath);
             }
             catch (IOException) { return false; }
@@ -44,6 +45,30 @@ internal static class WallpaperLibraryTests {
         }, "UI import metadata and thumbnail");
         var data = imported!;
         Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Imported image differs from the source");
+
+        // Exercise a real pre-existing format-18 folder, not just a format-19 import.
+        await session.CloseUiAsync();
+        data.AppInfo.FileVersion = "18";
+        string metadataPath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName);
+        await File.WriteAllTextAsync(metadataPath, JsonSerializer.Serialize(data, WpBasicDataContext.Default.WpBasicData));
+        ui = await session.OpenUiAsync();
+        ownerWindow = ui.MainWindowHandle;
+        root = await Task.Run(() => {
+            var window = AutomationElement.FromHandle(ownerWindow);
+            ApplicationUi.Select(ApplicationUi.Find(window, "App.Navigation.Library"));
+            FindItem(window, data.WallpaperUid);
+            OpenItemMenu(ownerWindow, window, data.WallpaperUid, "Library.Item.Update");
+            return window;
+        });
+        var upgradedJson = await AppProcessSession.WaitForJsonAsync(metadataPath,
+            json => json["AppInfo"]?["FileVersion"]?.GetValue<string>() == "19");
+        foreach (string field in new[] { "FolderPath", "FilePath", "ThumbnailPath" })
+            Check(!Path.IsPathRooted(upgradedJson[field]!.GetValue<string>()), "Upgrade kept an absolute " + field);
+        Check(upgradedJson["WallpaperUid"]!.GetValue<string>() == data.WallpaperUid, "Upgrade changed the wallpaper UID");
+        data = WpBasicData.Load(metadataPath);
+        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Upgrade changed source pixels");
+        context.Evidence["Format18AbsoluteLoadedAndUpgradedThroughContextMenu"] = true;
+
         await Task.Run(() => {
             FindItem(root, data.WallpaperUid);
             ApplicationUi.SetText(ApplicationUi.Find(root, "Library.Search"), "no-such-wallpaper");

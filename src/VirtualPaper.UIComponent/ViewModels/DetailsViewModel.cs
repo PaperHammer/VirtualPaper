@@ -115,7 +115,7 @@ namespace VirtualPaper.UIComponent.ViewModels {
         }
 
         private async void InitData() {
-            _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_wpBasicDataFilePath, WpBasicDataContext.Default);
+            _wpBasicData ??= await WpBasicData.LoadAsync(_wpBasicDataFilePath);
             Title = _wpBasicData.Title;
             Desc = _wpBasicData.Desc;
             Authors = _wpBasicData.Authors;

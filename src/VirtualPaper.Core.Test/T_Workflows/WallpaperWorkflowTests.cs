@@ -1,8 +1,12 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using Grpc.Core;
 using Moq;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Core.Test.Infrastructure;
+using VirtualPaper.DataAssistor;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.Core.Test.T_Workflows;
@@ -11,6 +15,91 @@ namespace VirtualPaper.Core.Test.T_Workflows;
 [DoNotParallelize]
 [TestCategory("Workflow")]
 public class WallpaperWorkflowTests {
+    [TestMethod]
+    [DataRow(FileType.FImage)]
+    [DataRow(FileType.FWebZip)]
+    public async Task Upgrade18ThroughRpc_PreservesContentAndConvertsEveryRuntime(FileType type) {
+        using var environment = new WallpaperWorkflowEnvironment();
+        var data = await environment.ImportAsync();
+        data.WallpaperUid = "existing-user-wallpaper";
+        data.Title = "My saved title";
+        data.FType = type;
+        if (type == FileType.FWebZip) {
+            data.FilePath = Path.Combine(data.FolderPath, "index.html");
+            File.WriteAllText(data.FilePath, "<html>Existing Web wallpaper</html>");
+            File.WriteAllText(Path.Combine(data.FolderPath, "project.json"), "{\"title\":\"My saved title\",\"file\":\"index.html\",\"customField\":42}");
+        }
+        data.AppInfo.FileVersion = "18";
+        string basicPath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName);
+        JsonSaver.Save(basicPath, data, WpBasicDataContext.Default);
+        string depth = Path.Combine(data.FolderPath, "depth-existing.png");
+        File.WriteAllText(depth, "preserve the existing depth cache");
+        RuntimeType[] runtimeTypes = type == FileType.FImage ? [RuntimeType.RImage, RuntimeType.RImage3D] : [RuntimeType.RWeb];
+        foreach (string monitor in new[] { "display-a", "display-b" }) {
+            foreach (var runtimeType in runtimeTypes) {
+                var runtime = environment.Control.CreateRuntimeData(data.FilePath, data.FolderPath, runtimeType,
+                    runtimeType == RuntimeType.RImage3D ? depth : null, false, monitor);
+                runtime.AppInfo.FileVersion = "18";
+                File.WriteAllText(runtime.WpEffectFilePathUsing, "{\"KeepMyEffect\":73}");
+                JsonSaver.Save(Path.Combine(data.FolderPath, monitor, runtimeType.ToString(), Constants.Field.WpRuntimeDataFileName),
+                    runtime, WpRuntimeDataContext.Default);
+            }
+        }
+        var contentHashes = Directory.GetFiles(data.FolderPath, "*", SearchOption.AllDirectories)
+            .Where(path => Path.GetFileName(path) != Constants.Field.WpBasicDataFileName && Path.GetFileName(path) != Constants.Field.WpRuntimeDataFileName)
+            .ToDictionary(path => path, path => SHA256.HashData(File.ReadAllBytes(path)));
+        var legacyLibrary = await environment.OpenLibraryAsync();
+        Assert.AreEqual("18", legacyLibrary.Library.LibraryWallpapers.Single().AppInfo.FileVersion);
+        Assert.AreEqual(data.FilePath, legacyLibrary.Library.LibraryWallpapers.Single().FilePath);
+
+        var response = await environment.Client.UpdateBasicDataAsync(data.FolderPath, data.FolderName, data.FilePath, type);
+        var upgraded = DataAssist.GrpcToBasicData(response!);
+        Assert.AreEqual(data.WallpaperUid, upgraded.WallpaperUid);
+        Assert.AreEqual(data.Title, upgraded.Title);
+        Assert.AreEqual(data.CreatedTime, upgraded.CreatedTime);
+        Assert.AreEqual("19", upgraded.AppInfo.FileVersion);
+        AssertStoredRelative(basicPath, "FolderPath", "FilePath", "ThumbnailPath");
+        foreach (string runtimePath in Directory.GetFiles(data.FolderPath, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories)) {
+            AssertStoredRelative(runtimePath, "FolderPath", "DepthFilePath", "WpEffectFilePathUsing", "WpEffectFilePathTemplate", "WpEffectFilePathTemporary");
+            var runtime = WpRuntimeData.Load(runtimePath);
+            Assert.AreEqual("19", runtime.AppInfo.FileVersion);
+            Assert.AreEqual("{\"KeepMyEffect\":73}", File.ReadAllText(runtime.WpEffectFilePathUsing));
+        }
+        foreach (var (path, hash) in contentHashes) CollectionAssert.AreEqual(hash, SHA256.HashData(File.ReadAllBytes(path)), path);
+        // Clicking Update again must be idempotent, including for Web folders.
+        await environment.Client.UpdateBasicDataAsync(upgraded.FolderPath, upgraded.FolderName, upgraded.FilePath, type);
+        var reopened = await environment.OpenLibraryAsync();
+        Assert.AreEqual(data.WallpaperUid, reopened.Library.LibraryWallpapers.Single().WallpaperUid);
+        Assert.AreEqual("19", reopened.Library.LibraryWallpapers.Single().AppInfo.FileVersion);
+    }
+
+    [TestMethod]
+    public async Task Upgrade18WithBrokenRuntime_ReportsFailureAndPreservesOriginalFiles() {
+        using var environment = new WallpaperWorkflowEnvironment();
+        var data = await environment.ImportAsync();
+        data.AppInfo.FileVersion = "18";
+        string basicPath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName);
+        JsonSaver.Save(basicPath, data, WpBasicDataContext.Default);
+        string brokenPath = Path.Combine(data.FolderPath, "display", "RImage", Constants.Field.WpRuntimeDataFileName);
+        Directory.CreateDirectory(Path.GetDirectoryName(brokenPath)!);
+        File.WriteAllText(brokenPath, "broken runtime JSON");
+        byte[] before = File.ReadAllBytes(basicPath);
+
+        await Assert.ThrowsAsync<RpcException>(async () =>
+            await environment.Client.UpdateBasicDataAsync(data.FolderPath, data.FolderName, data.FilePath, data.FType));
+
+        CollectionAssert.AreEqual(before, File.ReadAllBytes(basicPath));
+        Assert.AreEqual("broken runtime JSON", File.ReadAllText(brokenPath));
+        Assert.IsTrue(File.Exists(data.FilePath));
+        Assert.IsTrue(File.Exists(data.ThumbnailPath));
+    }
+
+    private static void AssertStoredRelative(string metadataPath, params string[] names) {
+        using var json = JsonDocument.Parse(File.ReadAllText(metadataPath));
+        Assert.AreEqual("19", json.RootElement.GetProperty("AppInfo").GetProperty("FileVersion").GetString());
+        foreach (string name in names) Assert.IsFalse(Path.IsPathRooted(json.RootElement.GetProperty(name).GetString()!), name);
+    }
+
     [TestMethod]
     public async Task Import_Index_Apply_Close_Delete_AndReopenLibrary() {
         using var environment = new WallpaperWorkflowEnvironment();

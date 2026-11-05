@@ -84,6 +84,7 @@ internal static class ModelInferenceTests {
             if (metadata.Length != 1) return false;
             try {
                 imported = JsonSerializer.Deserialize(await AppProcessSession.ReadTextSharedAsync(metadata[0]), WpBasicDataContext.Default.WpBasicData);
+                imported?.ResolvePaths(metadata[0]);
                 return imported != null && File.Exists(imported.FilePath) && File.Exists(imported.ThumbnailPath);
             }
             catch (IOException) { return false; }

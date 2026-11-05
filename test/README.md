@@ -170,6 +170,7 @@ Each real control is changed, confirmed through Core RPC and persisted JSON, and
 `Application.WallpaperLibrary.ImportApplyCloseDelete`:
 
 1. Import an isolated PNG through the actual Add button and system picker. Check metadata, thumbnail, and the source hash.
+   Reopen a format-18 absolute-path fixture, invoke the real context-menu Update action, and verify format 19, relative stored paths, the same UID and unchanged source pixels.
 2. Search for a nonmatch and clear the search to restore the entry. An ordinary image may initially have an empty title, so this does not validate nonempty-title matching.
 3. Focus the card, open its production menu with Shift+F10, cancel deletion and check that files remain, then apply it as an ordinary image.
 4. Check layout JSON, the PlayerWeb PID directly created by Core, and the player's actual WorkerW parent window.
@@ -328,6 +329,10 @@ Captures come only from the owned player and are retained under the report's `lo
 Always-move input forwarding is disabled; screen saver activity notifications must still work. The case uses the screen saver's visible HWND, accounting for its hidden WPF owner. Each round waits at most two minutes. Real keyboard or mouse activity resets the timer; observed OS idle seconds are reported to identify interference. Only non-locking screen savers run. Locking, startup registration, and persistent system-setting writes are skipped.
 
 ## Isolation, results, and limits
+
+Core metadata tests verify relative basic/runtime JSON paths, relocation of a complete wallpaper directory, legacy absolute-path loading, and empty optional paths. Runtime consumers use resolved absolute paths; packaging must preserve the complete directory and its relative layout. The UI cases independently resolve paths read from raw JSON against that JSON file's directory before checking actual files.
+
+Migration tests cover legacy rebuild routing, unchanged current-version files, invalid/future version rejection, runtime version validation before writes, cancellation, and retry after a partial migration. Failed writes must not advance the live metadata version.
 
 `Passed` means the case's stated interaction and persistence assertions passed, not that the whole application is healthy. An environment skip is not a pass. `Evidence.RuntimeErrors` retains ERROR logs separately, and the runner warns about them even when the exit code is 0. Failed cases snapshot Core/UI logs and configuration before later process generations can rotate the logs.
 

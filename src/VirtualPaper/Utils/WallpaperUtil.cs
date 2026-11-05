@@ -18,8 +18,7 @@ namespace VirtualPaper.Utils {
             WpBasicData data = new();
             string basicDataFilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
             if (File.Exists(basicDataFilePath)) {
-                data = JsonSaver.Load<WpBasicData>(basicDataFilePath, WpBasicDataContext.Default)
-                    ?? throw new Exception("Corrupted wallpaper bacis-_data");
+                data = WpBasicData.Load(basicDataFilePath);
             }
 
             return data;
@@ -29,14 +28,12 @@ namespace VirtualPaper.Utils {
             WpMetadata data = new();
             string basicDataFilePath = Path.Combine(folderPath, Constants.Field.WpBasicDataFileName);
             if (File.Exists(basicDataFilePath)) {
-                data.BasicData = JsonSaver.Load<WpBasicData>(basicDataFilePath, WpBasicDataContext.Default)
-                    ?? throw new Exception("Corrupted wallpaper bacis-_data");
+                data.BasicData = WpBasicData.Load(basicDataFilePath);
             }
 
             string runtimeDataFilePath = Path.Combine(folderPath, monitorContent, rtype, Constants.Field.WpRuntimeDataFileName);
             if (File.Exists(runtimeDataFilePath)) {
-                data.RuntimeData = JsonSaver.Load<WpRuntimeData>(runtimeDataFilePath, WpRuntimeDataContext.Default)
-                    ?? throw new Exception("Corrupted wallpaper runtime-_data");
+                data.RuntimeData = WpRuntimeData.Load(runtimeDataFilePath);
             }
 
             return data;

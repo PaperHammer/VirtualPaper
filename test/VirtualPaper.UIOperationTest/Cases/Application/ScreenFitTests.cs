@@ -67,13 +67,15 @@ internal static class ScreenFitTests {
             "Screen fit applied to a different monitor");
         var data = JsonSerializer.Deserialize(await File.ReadAllTextAsync(Path.Combine(folder, Constants.Field.WpBasicDataFileName)),
             WpBasicDataContext.Default.WpBasicData)!;
+        data.ResolvePaths(Path.Combine(folder, Constants.Field.WpBasicDataFileName));
         Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))),
             "Screen fit changed the source pixels despite enhancement being disabled");
         var runtimePath = Directory.GetFiles(library, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories)
             .Single(path => Path.GetDirectoryName(path)!.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
         var runtime = JsonNode.Parse(await File.ReadAllTextAsync(runtimePath))!;
-        string[] effectPaths = [runtime["WpEffectFilePathUsing"]!.GetValue<string>(),
-            runtime["WpEffectFilePathTemplate"]!.GetValue<string>(), runtime["WpEffectFilePathTemporary"]!.GetValue<string>()];
+        string[] effectPaths = new[] { runtime["WpEffectFilePathUsing"]!.GetValue<string>(),
+            runtime["WpEffectFilePathTemplate"]!.GetValue<string>(), runtime["WpEffectFilePathTemporary"]!.GetValue<string>() }
+            .Select(path => Path.GetFullPath(path, Path.GetDirectoryName(runtimePath)!)).ToArray();
         foreach (string path in effectPaths) await AssertContainAsync(path);
 
         Process? player = null;

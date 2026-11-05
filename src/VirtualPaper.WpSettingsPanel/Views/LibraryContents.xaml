@@ -161,6 +161,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="UpdateConfig"
+                AutomationProperties.AutomationId="Library.Item.Update"
                 l:Uids.Uid="Ui_Text_UpdateConfig_Text"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>

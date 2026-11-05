@@ -59,7 +59,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         }
 
         private async void AfterFeReady() {
-            _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_startArgs.WpBasicDataFilePath, WpBasicDataContext.Default);
+            _wpBasicData ??= await WpBasicData.LoadAsync(_startArgs.WpBasicDataFilePath);
             UpdateWindowTitle();
         }
 

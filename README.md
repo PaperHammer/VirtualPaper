@@ -115,13 +115,13 @@ Keep your wallpaper on screen when you step away. Use your primary display's wal
 - **Improve image quality.** Enlarge small images, restore details, or try a different look with reference-image style transfer.
 - **Match your desktop.** Choose a light or dark interface and set a library image as your Windows lock screen background.
 
-AI image tools process pictures locally on your PC. Results and processing time depend on the image and your hardware.
-
 <img src="resources/readme/editor-light-mica.jpg" alt="VirtualPaper image editor with an original blue mountain and lake drawing, brush settings, palette, and layers" width="760" />
 
-Save your work as an editable project, or export the finished image as PNG, BMP, or JPEG. You can also create a Web wallpaper, preview it, and export it for your library.
+Save your work as an editable project. Export images as PNG, BMP, JPEG, or JPEG XR, and Web wallpapers as packages for your library.
 
-#### Image enhancement
+### Image enhancement
+
+AI image tools process pictures locally on your PC. Results and processing time depend on the image and your hardware.
 
 **Style transfer**
 

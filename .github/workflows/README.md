@@ -6,8 +6,8 @@ The repository has two workflows, both triggered only by `workflow_dispatch`. Co
 
 | File | Manual inputs | Purpose |
 | --- | --- | --- |
-| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → ISS → install/startup/UI/uninstall → report PR status |
-| `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/install/startup/UI/uninstall → strict gate → sync versions → draft |
+| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → ISS → install/startup/reinstall/language/UI/uninstall → report PR status |
+| `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/install/startup/reinstall/language/UI/uninstall → strict gate → sync versions → draft |
 
 ## Everyday workflow
 
@@ -36,9 +36,9 @@ Each manual run reads the current source, labels, PR head, and base branch, then
 The test phases run in sequence:
 
 1. **Parallel tests**: seven independent jobs for Core, UI, StaticImg, WebBackdrop, UIComponent, ML, and Shader. Artifact checks run in parallel; Web player script checks run with the UI job.
-2. **Installed app acceptance**: after those tests and raw reports pass, compile `InnoSetup/setup.iss`, install once, and launch installed Core. First-run behavior must open a responding UI, and UI/Core must exit normally. The prebuilt `test/VirtualPaper.UIOperationTest` host then runs its extended suite against the installed executables. Finally, run the actual uninstaller, including after installation, startup or UI failures. Forced recovery or leftover files/processes fail acceptance.
+2. **Installed app acceptance**: compile ISS once, install in English, verify first-run language and normal exit while retaining test settings and an imported wallpaper. Reinstall the same package in Chinese over the same directory. Verify that the original profile retains English, preferences and wallpaper files, then verify Chinese initialization with a separate new profile. Run the extended UI suite once against the installed executables, then uninstall. Failures block later checks; uninstall cleanup still runs. Program hashes, package identity, shortcuts, registration and residue are checked.
 
-Desktop runs operate the actual installation/uninstallation wizards. Headless runs silently check files, versions, shortcuts, registration, and removal; startup and real UI interaction are explicitly `Skipped`, not passed. Locking and registry-modification UI test cases remain skipped. The test installer is retained as `test-installer-package`.
+Desktop runs operate both installation wizards and the uninstaller. Headless runs silently install, reinstall and uninstall; all application-startup, retained-profile and real UI checks are explicitly skipped with desktop evidence. This is accepted only by Pre-merge, never by the strict release gate.
 
 Failure blocks later test phases. Reports are still collected; missing, empty, failed, aborted, or exceptional test results fail the final check. The seven regular test projects retain their separate Cobertura coverage reports.
 
@@ -80,7 +80,7 @@ Only a merged, same-repository `dev → main` PR is accepted. Its head must have
 1. Calculate the target product version from `AssemblyVersion` at the fixed merge commit and the selected label. Plugin updates keep the product version. Read published component manifests and historical release titles/plugin tags to allocate the next `YYMMRxx` build number; numbers used by drafts are reserved too. Check target tag/release conflicts before building.
 2. Temporarily update `VirtualPaper.csproj` before compilation and `InnoSetup/setup.iss` before packaging so the binaries and installer use the target version.
 3. Retest the new build through the same eight project jobs/actions as Pre-merge Check: artifact checks plus seven regular test projects. Release includes ML integration tests and Web player script checks. No test job rebuilds the application.
-4. Compile ISS and verify the actual release installer: install → first-run startup and normal exit → extended UI suite against installed executables → uninstall. Failures still trigger uninstall. Validate all raw reports using `Summarize-TestResults.ps1 -RequireFullAcceptance`: failed/missing reports, skipped project tests, unavailable-desktop startup/UI skips, or uninstall failures block progress. A usable interactive Windows runner is required for release acceptance. Then create any requested plugin patch packages.
+4. Compile ISS and verify the actual release installer: English install/first launch → same-package Chinese reinstall → preserved/fresh-profile checks → one extended UI suite → uninstall. Failures still trigger uninstall. Validate all raw reports using `Summarize-TestResults.ps1 -RequireFullAcceptance`: failed/missing reports, skipped project tests, unavailable-desktop startup/UI skips, or uninstall failures block progress. A usable interactive Windows runner is required for release acceptance. Then create any requested plugin patch packages.
 5. Recheck tag/release conflicts before version synchronization. For a regular release, update only these fields on `main` and `dev`, then push both atomically with `git push --atomic`. If either update is rejected, neither branch advances:
    - `src/VirtualPaper/VirtualPaper.csproj`: `AssemblyVersion`
    - `InnoSetup/setup.iss`: `MyAppVersion`, `MyAppVersionText`
@@ -125,7 +125,7 @@ pwsh -NoProfile -File test/Run-Tests.ps1
 pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-It validates contracts → rebuilds Release → runs the same eight project jobs in parallel → compiles ISS → installs/opens → runs extended UI against installed executables → uninstalls → validates reports. Unlike CI it tests the local working tree; it does not validate an open PR, post GitHub status, change product versions or create a draft. It also does not download missing UI inference models. Default local/Pre-merge summaries permit explicit desktop skips; Pre-release's `-RequireFullAcceptance` gate rejects them and any skipped selected project tests.
+It validates contracts → rebuilds Release → runs the same eight project jobs in parallel → compiles ISS → installs in English → retains test data → reinstalls in Chinese → verifies original and fresh profiles → runs one extended UI suite against installed executables → uninstalls → validates reports. Unlike CI it tests the local working tree; it does not validate an open PR, post GitHub status, change product versions or create a draft. It also does not download missing UI inference models. Default local/Pre-merge summaries permit explicit desktop skips; Pre-release's `-RequireFullAcceptance` gate rejects them and any skipped selected project tests.
 
 See the [testing guide](../../test/README.md) for prerequisites, focused runners and report paths, and the [repository test skill](../../.agents/skills/virtualpaper-testing/SKILL.md) for AI instructions. Changes to testing behavior should update these guides and their Chinese versions together.
 

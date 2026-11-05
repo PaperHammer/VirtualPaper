@@ -10,7 +10,10 @@ internal sealed class ApplicationResult {
     public string? ActualLanguage { get; set; }
     public string? PersistedLanguage { get; set; }
     public bool LanguageVerified { get; set; }
+    public string ProfileMode { get; set; } = "first-run";
+    public bool PersistenceVerified { get; set; }
     public long DurationMilliseconds { get; set; }
     public string? Error { get; set; }
-    public bool Passed => OpenedNormally && ExitedNormally && LanguageVerified && !ForcedCleanup && Error is null;
+    public bool Passed => OpenedNormally && ExitedNormally && LanguageVerified &&
+        (ProfileMode == "first-run" || PersistenceVerified) && !ForcedCleanup && Error is null;
 }

@@ -14,6 +14,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $InstallerLanguage = $InstallerLanguage.ToLowerInvariant()
+$reinstallLanguage = if ($InstallerLanguage -eq 'english') { 'chinese' } else { 'english' }
 . "$PSScriptRoot/InstallerTestSupport.ps1"
 if (-not $IsWindows) { throw 'Installer lifecycle tests require Windows.' }
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
@@ -52,6 +53,10 @@ Assert-CleanInstallerEnvironment $setupScriptPath
 $appId = Get-InstallerAppId $setupScriptPath
 $shortcutPaths = @(Get-InstallerShortcutPaths)
 $packageVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($InstallerPath).FileVersion
+$packageHash = (Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA256).Hash
+$installedHashes = @{}
+$preservedRoot = Join-Path $artifacts 'preserved-profile'
+$freshRoot = Join-Path $artifacts 'fresh-profile'
 $installedVersion = $null
 $environment = Get-UIOperationEnvironment
 $mode = if ($environment.Available) { 'InteractiveWizard' } else { 'Silent' }
@@ -100,18 +105,17 @@ function Get-InstallerTestProcesses {
     }
 }
 
-function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall) {
+function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall,
+    [string] $Language = $InstallerLanguage, [string] $Stage = 'install') {
     $action = if ($Uninstall) { '--wizard-uninstall' } else { '--wizard-install' }
-    $stage = if ($Uninstall) { 'uninstall' } else { 'install' }
-    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" $action `"$Executable`" --language $InstallerLanguage --install-dir `"$installDir`" --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 10)) --results-file `"$artifacts/$stage-wizard.json`""
+    if ($Uninstall) { $Stage = 'uninstall' }
+    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" $action `"$Executable`" --language $Language --install-dir `"$installDir`" --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 10)) --results-file `"$artifacts/$Stage-wizard.json`""
 }
 
-$report = Invoke-InstallerLifecycle -Install {
-    if ($environment.Available) { Invoke-InstallerWizard $InstallerPath }
-    else { Invoke-BoundedProcess $InstallerPath "/LANG=$InstallerLanguage /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/install.log`"" }
+function Assert-InstalledApplication([string] $Language) {
     $languageMarker = Join-Path $installDir 'installer-language.txt'
     if (-not (Test-Path -LiteralPath $languageMarker) -or
-        [IO.File]::ReadAllText($languageMarker).Trim() -cne $InstallerLanguage) {
+        [IO.File]::ReadAllText($languageMarker).Trim() -cne $Language) {
         throw 'The installed language marker does not match the selected installer language.'
     }
     if (@(Get-ChildItem -LiteralPath $installDir -Directory -Recurse -Filter '*.WebView2').Count) {
@@ -124,6 +128,11 @@ $report = Invoke-InstallerLifecycle -Install {
         if (-not (Test-Path -LiteralPath $path -PathType Leaf) -or (Get-Item -LiteralPath $path).Length -eq 0) {
             throw "Installed file is missing or empty: $file"
         }
+        $hash = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+        if ($installedHashes.ContainsKey($file) -and $installedHashes[$file] -cne $hash) {
+            throw "Reinstall changed the packaged application file: $file"
+        }
+        $installedHashes[$file] = $hash
     }
     $script:installedVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $installDir 'VirtualPaper.exe')).FileVersion
     if ([version]$installedVersion -ne [version]$packageVersion) { throw "Installed version $installedVersion does not match package $packageVersion." }
@@ -157,15 +166,49 @@ $report = Invoke-InstallerLifecycle -Install {
             } finally { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut) | Out-Null }
         }
     } finally { [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) | Out-Null }
-} -Open {
-    $openReport = Join-Path $artifacts 'application-results.json'
-    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" --install-dir `"$installDir`" --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 40)) --results-file `"$openReport`""
+}
+
+function Invoke-InstallPackage([string] $Language, [string] $Stage) {
+    if ((Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA256).Hash -cne $packageHash) {
+        throw 'The installer changed between lifecycle stages.'
+    }
+    if ($environment.Available) { Invoke-InstallerWizard $InstallerPath -Language $Language -Stage $Stage }
+    else { Invoke-BoundedProcess $InstallerPath "/LANG=$Language /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/$Stage.log`"" }
+    Assert-InstalledApplication $Language
+}
+
+function Invoke-ApplicationProbe([string] $Stage, [string] $DataRoot, [string] $ProfileMode, [string] $ExpectedLanguage) {
+    $openReport = Join-Path $artifacts "$Stage-application.json"
+    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" --install-dir `"$installDir`" --data-root `"$DataRoot`" --profile-mode $ProfileMode --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 40)) --results-file `"$openReport`""
     $application = Get-Content -LiteralPath $openReport -Raw | ConvertFrom-Json
     if ($application.Passed -cne $true -or $application.OpenedNormally -cne $true -or
         $application.ExitedNormally -cne $true -or $application.ForcedCleanup -cne $false -or
-        $application.CoreProcessId -lt 1 -or $application.UiProcessId -lt 1 -or $application.LanguageVerified -cne $true -or $application.Error) {
+        $application.CoreProcessId -lt 1 -or $application.UiProcessId -lt 1 -or $application.LanguageVerified -cne $true -or
+        $application.ExpectedLanguage -cne $ExpectedLanguage -or $application.ActualLanguage -cne $ExpectedLanguage -or
+        $application.PersistedLanguage -cne $ExpectedLanguage -or $application.ProfileMode -cne $ProfileMode -or
+        ($ProfileMode -ne 'first-run' -and $application.PersistenceVerified -cne $true) -or $application.Error) {
         throw 'Installed application did not open and exit normally.'
     }
+}
+
+$firstAppLanguage = if ($InstallerLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
+$secondAppLanguage = if ($reinstallLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
+$report = Invoke-InstallerLifecycle -Install {
+    Invoke-InstallPackage $InstallerLanguage 'install'
+} -Open {
+    Invoke-ApplicationProbe 'first' $preservedRoot 'prepare' $firstAppLanguage
+} -Reinstall {
+    # Only overwrite this run's registered installation, never relax the initial clean-install guard.
+    $registrations = @(Get-InstallRegistrations $appId)
+    if (-not $registrations.Count -or @($registrations | Where-Object {
+        -not $_.Location -or [IO.Path]::GetFullPath($_.Location).TrimEnd('\') -ine $installDir.TrimEnd('\')
+    }).Count) { throw 'Reinstall must target the installation created by this acceptance run.' }
+    if (@(Get-InstallerTestProcesses).Count) { throw 'Application processes must exit normally before reinstall.' }
+    Invoke-InstallPackage $reinstallLanguage 'reinstall'
+} -VerifyPreserved {
+    Invoke-ApplicationProbe 'preserved' $preservedRoot 'preserve' $firstAppLanguage
+} -OpenFresh {
+    Invoke-ApplicationProbe 'fresh' $freshRoot 'first-run' $secondAppLanguage
 } -Uninstall {
     $cleanupErrors = [Collections.Generic.List[string]]::new()
     foreach ($process in @(Get-InstallerTestProcesses)) {
@@ -205,6 +248,9 @@ $report | Add-Member NoteProperty InstallDir $installDir
 $report | Add-Member NoteProperty Mode $mode
 $report | Add-Member NoteProperty PackageVersion $packageVersion
 $report | Add-Member NoteProperty InstalledVersion $installedVersion
+$report | Add-Member NoteProperty InstallerLanguage $InstallerLanguage
+$report | Add-Member NoteProperty ReinstallLanguage $reinstallLanguage
+$report | Add-Member NoteProperty InstallerSha256 $packageHash
 $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8
 if ($env:GITHUB_STEP_SUMMARY) {
     $sequence = $report.Checks.Name -join ' → '

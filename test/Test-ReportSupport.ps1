@@ -62,8 +62,8 @@ try {
     Assert-ReviewCondition (@(Get-ProjectTestReports $rawRoot).Count -eq 8) 'A previous summary must not duplicate project reports.'
     Assert-ReviewCondition (@(Get-TestCoverageRows $rawRoot).Count -eq 7) 'Count one canonical coverage report per project.'
 
-    $checks = @('Install', 'Open', 'UIOperation', 'Uninstall') | ForEach-Object { @{ Name = $_; Passed = $true; Status = 'Passed' } }
-    $installer = @{ SchemaVersion = 1; Suite = 'InstallerLifecycle'; Total = 4; Passed = 4; Failed = 0; Checks = @($checks); UIOperationRequested = $true }
+    $checks = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh', 'UIOperation', 'Uninstall') | ForEach-Object { @{ Name = $_; Passed = $true; Status = 'Passed' } }
+    $installer = @{ SchemaVersion = 2; Suite = 'InstallerLifecycle'; Total = 7; Passed = 7; Failed = 0; Checks = @($checks); UIOperationRequested = $true }
     $ui = @{ Passed = $true; ExpectedCount = 1; Results = @(@{
         Name = 'Application.Fixture.Run'; Passed = $true
         Evidence = @{ CoreProcessId = 10; UiProcessIds = @(11); ProcessesExitedNormally = $true }
@@ -88,7 +88,7 @@ try {
     Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Passed')) 'Complete release acceptance must pass.'
     $installerFile = Join-Path $rawRoot 'test-results-installer/installer-results.json'
     $headless = Resolve-UIOperationEnvironment ([pscustomobject]@{ Windows = $true; UserInteractive = $false })
-    $headlessInstaller = Invoke-InstallerLifecycle -Install {} -Open { throw 'No UI in this contract.' } -UIOperation { throw 'No UI in this contract.' } -Uninstall {} -Environment $headless
+    $headlessInstaller = Invoke-InstallerLifecycle -Install {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Open { throw 'No UI in this contract.' } -UIOperation { throw 'No UI in this contract.' } -Uninstall {} -Environment $headless
     $headlessInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
     $uiFile = Join-Path $rawRoot 'test-results-ui-operation/ui-operation-results.json'
     New-UIOperationSkipReport $headless | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
@@ -105,7 +105,7 @@ try {
     Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot } 'Installer UI stage and UI report must agree'
     Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Inconsistent reports must not emit success outputs.'
     $ui | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
-    $legacyInstaller = Invoke-InstallerLifecycle -Install {} -Open {} -Uninstall {}
+    $legacyInstaller = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Uninstall {}
     $legacyInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
     Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot } 'CI must require installed UI, not standalone installer acceptance'
     $installer | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile

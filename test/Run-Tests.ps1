@@ -69,7 +69,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "ISS packaging failed. See $ResultsRoot/installer-build.log" }
     $installers = @(Get-ChildItem -LiteralPath $packageDir -Filter '*.exe' -File)
     if ($installers.Count -ne 1) { throw 'Expected exactly one freshly built installer.' }
-    Write-Host 'Installing, opening, running extended UI acceptance and uninstalling...'
+    Write-Host 'Installing, verifying reinstall/languages, running extended UI acceptance and uninstalling...'
     & ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -RunUIOperationTests `
         -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
         -ReportPath "$ResultsRoot/test-results-installer/installer-results.json" `

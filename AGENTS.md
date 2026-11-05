@@ -27,7 +27,7 @@ For requests to run, select, extend or diagnose tests, read the repository skill
 - Workflow/script contracts: `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1`.
 - Details and prerequisites: [testing guide](test/README.md) / [中文](test/README.zh-CN.md).
 
-Complete local acceptance follows the current scripts: workflow contracts → Release rebuild → eight parallel project jobs → ISS package → install → first launch and normal exit → extended UI against installed executables → uninstall → report summary. Failures block later phases; installation cleanup still runs after failures. A focused test run does not replace this acceptance.
+Complete local acceptance follows the current scripts: workflow contracts → Release rebuild → eight parallel project jobs → ISS package → English install → first launch with retained data and normal exit → Chinese same-package reinstall → preserved-profile and fresh Chinese startup checks → one extended UI suite against installed executables → uninstall → report summary. Failures block later phases; installation cleanup still runs after failures. A focused test run does not replace this acceptance.
 
 Use Visual Studio MSBuild on `src/VirtualPaper.sln` with `Configuration=Release` and `Platform="Any CPU"`. Solution mappings supply the individual project architectures. Building a WinUI test host alone with a different platform can produce incompatible dependency copies; rebuild the complete solution when host/application hashes differ.
 

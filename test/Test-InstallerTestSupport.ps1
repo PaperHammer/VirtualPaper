@@ -1,97 +1,77 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/InstallerTestSupport.ps1"
 
-# Contract tests use callbacks only: no installer, GUI, registry or system configuration is touched.
-foreach ($failure in @('', 'Install', 'Open', 'Uninstall')) {
-    $calls = [Collections.Generic.List[string]]::new()
-    $report = Invoke-InstallerLifecycle -Install {
-        $calls.Add('Install')
-        if ($failure -eq 'Install') { throw 'Expected install failure' }
-    } -Open {
-        $calls.Add('Open')
-        if ($failure -eq 'Open') { throw 'Expected open failure' }
-    } -Uninstall {
-        $calls.Add('Uninstall')
-        if ($failure -eq 'Uninstall') { throw 'Expected uninstall failure' }
+# Callbacks only: no installer, GUI, registry or system configuration is touched.
+foreach ($withUI in @($false, $true)) {
+    $stages = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh')
+    if ($withUI) { $stages += 'UIOperation' }
+    $stages += 'Uninstall'
+    foreach ($failure in (@('') + $stages)) {
+        $calls = [Collections.Generic.List[string]]::new()
+        $handlers = @{}
+        foreach ($name in $stages) {
+            $handlers[$name] = {
+                $calls.Add($name)
+                if ($failure -eq $name) { throw "Expected $name failure" }
+            }.GetNewClosure()
+        }
+        $report = Invoke-InstallerLifecycle @handlers
+        $expected = [Collections.Generic.List[string]]::new()
+        foreach ($name in $stages) {
+            if ($name -eq 'Uninstall' -or $failure -eq '' -or $expected -notcontains $failure) { $expected.Add($name) }
+        }
+        if (($calls -join ',') -cne ($expected -join ',') -or ($report.Checks.Name -join ',') -cne ($stages -join ',')) {
+            throw "Incorrect failure/cleanup order: $failure, UI=$withUI"
+        }
+        $accepted = $true
+        try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
+        if ($accepted -ne ($failure -eq '')) { throw "Incorrect result gate: $failure, UI=$withUI" }
     }
-    $expected = if ($failure -eq 'Install') { 'Install,Uninstall' } else { 'Install,Open,Uninstall' }
-    if (($calls -join ',') -cne $expected) { throw "Incorrect failure/cleanup order: $failure" }
-    if (($report.Checks.Name -join ',') -cne 'Install,Open,Uninstall') { throw 'Incomplete lifecycle report.' }
-    $accepted = $true
-    try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
-    if ($accepted -ne ($failure -eq '')) { throw "Incorrect installer gate for failure: $failure" }
 }
 
-$good = Invoke-InstallerLifecycle -Install {} -Open {} -Uninstall {}
-foreach ($mutation in @('MissingStage', 'DuplicateStage', 'FalsePass', 'WrongSuite', 'WrongCount', 'SkippedStage')) {
+$handlers = @{ Install = {}; Open = {}; Reinstall = {}; VerifyPreserved = {}; OpenFresh = {}; UIOperation = {}; Uninstall = {} }
+$good = Invoke-InstallerLifecycle @handlers
+foreach ($mutation in @('MissingReinstall', 'DuplicateStage', 'FalsePass', 'WrongSchema', 'WrongCount', 'SkippedStage')) {
     $report = $good | ConvertTo-Json -Depth 10 | ConvertFrom-Json
     switch ($mutation) {
-        MissingStage { $report.Checks = @($report.Checks | Select-Object -First 2) }
+        MissingReinstall { $report.Checks = @($report.Checks | Where-Object Name -NE 'Reinstall') }
         DuplicateStage { $report.Checks[2].Name = 'Open' }
         FalsePass { $report.Checks[1].Passed = $false }
-        WrongSuite { $report.Suite = 'Open' }
-        WrongCount { $report.Total = 2 }
+        WrongSchema { $report.SchemaVersion = 1 }
+        WrongCount { $report.Total = 4 }
         SkippedStage { $report.Checks[1].Status = 'Skipped' }
-    }
-    $rejected = $false
-    try { Assert-InstallerReportPassed $report } catch { $rejected = $true }
-    if (-not $rejected) { throw "Malformed installer report was accepted: $mutation" }
-}
-Write-Host '[OK] Installer lifecycle success/failure ordering, unconditional cleanup and report acceptance contracts.'
-
-$headless = Resolve-UIOperationEnvironment ([pscustomobject]@{ Windows = $true; UserInteractive = $false })
-$calls = [Collections.Generic.List[string]]::new()
-$report = Invoke-InstallerLifecycle -Install { $calls.Add('Install') } -Open { throw 'Headless Open must not execute.' } -Uninstall { $calls.Add('Uninstall') } -Environment $headless
-if (($calls -join ',') -cne 'Install,Uninstall' -or (Get-InstallerReportOutcome $report) -cne 'OpenSkipped') {
-    throw 'Headless acceptance must install and uninstall, explicitly skipping window acceptance.'
-}
-foreach ($mutation in @('MissingEnvironment', 'FalseEnvironment', 'InstallSkipped', 'UninstallSkipped', 'BadCount', 'Failure')) {
-    $bad = $report | ConvertTo-Json -Depth 10 | ConvertFrom-Json
-    switch ($mutation) {
-        MissingEnvironment { $bad.Environment = $null }
-        FalseEnvironment { $bad.Environment.Checks.Windows = $false }
-        InstallSkipped { $bad.Checks[0].Status = 'Skipped' }
-        UninstallSkipped { $bad.Checks[2].Status = 'Skipped' }
-        BadCount { $bad.Skipped = 0 }
-        Failure { $bad.Failed = 1 }
-    }
-    $accepted = $true
-    try { Assert-InstallerReportPassed $bad } catch { $accepted = $false }
-    if ($accepted) { throw "Invalid headless report accepted: $mutation" }
-}
-Write-Host '[OK] Headless install/uninstall, explicit Open skip and forged-skip rejection.'
-
-foreach ($failure in @('', 'Install', 'Open', 'UIOperation', 'Uninstall')) {
-    $calls = [Collections.Generic.List[string]]::new()
-    $report = Invoke-InstallerLifecycle -Install {
-        $calls.Add('Install'); if ($failure -eq 'Install') { throw 'Expected install failure' }
-    } -Open {
-        $calls.Add('Open'); if ($failure -eq 'Open') { throw 'Expected startup failure' }
-    } -UIOperation {
-        $calls.Add('UIOperation'); if ($failure -eq 'UIOperation') { throw 'Expected UI failure' }
-    } -Uninstall {
-        $calls.Add('Uninstall'); if ($failure -eq 'Uninstall') { throw 'Expected uninstall failure' }
-    }
-    $expected = switch ($failure) {
-        Install { 'Install,Uninstall' }
-        Open { 'Install,Open,Uninstall' }
-        default { 'Install,Open,UIOperation,Uninstall' }
-    }
-    if (($calls -join ',') -cne $expected -or $report.UIOperationRequested -cne $true -or $report.Total -ne 4) {
-        throw "Incorrect installed UI lifecycle: $failure"
     }
     $accepted = $true
     try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
-    if ($accepted -ne ($failure -eq '')) { throw "Incorrect installed UI result: $failure" }
+    if ($accepted) { throw "Malformed installer report accepted: $mutation" }
 }
-$report = Invoke-InstallerLifecycle -Install {} -Open { throw 'No desktop' } -UIOperation { throw 'No desktop' } -Uninstall {} -Environment $headless
-if ((Get-InstallerReportOutcome $report) -cne 'OpenSkipped' -or $report.Skipped -ne 2 -or
-    ($report.Checks.Name -join ',') -cne 'Install,Open,UIOperation,Uninstall') {
-    throw 'Headless installed UI must explicitly skip both Open and UIOperation.'
+
+$headless = Resolve-UIOperationEnvironment ([pscustomobject]@{ Windows = $true; UserInteractive = $false })
+foreach ($withUI in @($false, $true)) {
+    $calls = [Collections.Generic.List[string]]::new()
+    $handlers = @{
+        Install = { $calls.Add('Install') }; Reinstall = { $calls.Add('Reinstall') }; Uninstall = { $calls.Add('Uninstall') }
+        Open = { throw 'Headless Open must not execute.' }; VerifyPreserved = { throw 'Headless profile verification must not execute.' }
+        OpenFresh = { throw 'Headless fresh startup must not execute.' }; Environment = $headless
+    }
+    if ($withUI) { $handlers.UIOperation = { throw 'Headless UI must not execute.' } }
+    $report = Invoke-InstallerLifecycle @handlers
+    if (($calls -join ',') -cne 'Install,Reinstall,Uninstall' -or (Get-InstallerReportOutcome $report) -cne 'OpenSkipped' -or
+        $report.Skipped -ne (3 + [int]$withUI)) { throw 'Headless acceptance must reinstall while explicitly skipping all application/UI stages.' }
+    foreach ($mutation in @('MissingEnvironment', 'FalseEnvironment', 'InstallSkipped', 'ReinstallSkipped', 'UninstallSkipped', 'BadCount', 'Failure')) {
+        $bad = $report | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+        switch ($mutation) {
+            MissingEnvironment { $bad.Environment = $null }
+            FalseEnvironment { $bad.Environment.Checks.Windows = $false }
+            InstallSkipped { $bad.Checks[0].Status = 'Skipped' }
+            ReinstallSkipped { $bad.Checks[2].Status = 'Skipped' }
+            UninstallSkipped { $bad.Checks[-1].Status = 'Skipped' }
+            BadCount { $bad.Skipped = 0 }
+            Failure { $bad.Failed = 1 }
+        }
+        $accepted = $true
+        try { Assert-InstallerReportPassed $bad } catch { $accepted = $false }
+        if ($accepted) { throw "Invalid headless report accepted: $mutation" }
+    }
 }
-$report.Checks = @($report.Checks | Where-Object Name -NE 'UIOperation')
-$report.Total = 3; $report.Skipped = 1
-$accepted = $true
-try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
-if ($accepted) { throw 'Requested UI stage must not be omitted from acceptance.' }
-Write-Host '[OK] Installed UI ordering, prerequisite failure gates, UI-failure cleanup and mandatory UI stage.'
+Write-Host '[OK] Install/startup/reinstall/profile/fresh-start/UI/uninstall ordering, failure cleanup, mandatory stages and headless skip contracts.'

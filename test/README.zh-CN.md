@@ -36,7 +36,7 @@ test/
 | 完整本地验收 | `test/Run-Tests.ps1` | 重新构建 Release、并行项目测试、ISS 和安装后的扩展 UI 验收 |
 | 单个项目回归 | `test/Run-ProjectTests.ps1 -JobId <id>` | 使用已有 Release 产物，不构建 |
 | 真实 UI 模块或测试集 | `test/Run-UIOperationTests.ps1` | 默认先构建解决方案，`-NoBuild` 跳过构建 |
-| 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 真实安装、首次启动和卸载；加 `-RunUIOperationTests` 执行扩展 UI |
+| 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 真实安装、覆盖安装、语言与数据保留验证及卸载；加 `-RunUIOperationTests` 执行扩展 UI |
 | 工作流与脚本契约 | `.github/scripts/validate-test-workflow.ps1` | 隔离校验，不安装、不执行真实 UI |
 
 本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
@@ -47,7 +47,7 @@ test/
 ./test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-此入口每次重新构建完整 **Release** 解决方案，并行运行与 CI 相同的八个项目测试，编译 `InnoSetup/setup.iss`，安装生成的安装包，检查首次启动及正常退出，对安装后的 Core/UI 执行**扩展真实 UI 测试**，最后卸载。前置阶段失败时不再进入后续阶段；安装、启动或 UI 失败后仍执行卸载。每轮在 `TestResults/local-acceptance-*` 下生成独立报告。需要 Visual Studio MSBuild、.NET 8、Node.js 和 Inno Setup 6.7.1；非标准编译器位置可用 `-InnoSetupCompiler <ISCC.exe>` 指定。
+此入口每次重新构建完整 **Release** 解决方案，并行运行与 CI 相同的八个项目测试，编译 `InnoSetup/setup.iss`，英文安装并验证首次启动、保留测试数据，再用同包中文覆盖安装、检查原配置保留及全新中文初始化，对安装后的 Core/UI 执行一次**扩展真实 UI 测试**，最后卸载。前置阶段失败时不再进入后续阶段；安装、启动或 UI 失败后仍执行卸载。每轮在 `TestResults/local-acceptance-*` 下生成独立报告。需要 Visual Studio MSBuild、.NET 8、Node.js 和 Inno Setup 6.7.1；非标准编译器位置可用 `-InnoSetupCompiler <ISCC.exe>` 指定。
 
 检测到已有 Virtual Paper 安装或开始菜单快捷方式时会拒绝运行。应先明确卸载日常版本并保留用户数据，或使用干净测试机。安装和卸载会修改系统安装注册信息与快捷方式；UI 用例仍不执行启动项注册、锁屏等持久系统设置操作。没有可用桌面时与 Pre-merge Check 一样明确跳过 UI，不视为完整 UI 验收通过。
 
@@ -60,8 +60,9 @@ flowchart LR
     A[工作流契约] --> B[Release 重构建]
     B --> C[8 个并行项目测试]
     C --> D[ISS 打包]
-    D --> E[安装与首次启动]
-    E --> F[安装后的扩展 UI]
+    D --> E[英文安装与首次启动]
+    E --> R[中文覆盖安装及配置验证]
+    R --> F[一次完整扩展 UI]
     F --> G[卸载与汇总]
 ```
 
@@ -346,24 +347,24 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 ## CI 与安装包验收
 
-Pre-merge Check 按 **构建一次 → 七个并行常规测试项目 → 编译 ISS → 安装 → 首次启动 → 安装目录 UI 测试 → 卸载 → 汇总** 执行。产物完整性检查与常规测试并行，Web 播放器脚本检查随 UI 单元测试任务执行。前置失败会阻止打包和安装；同一验收任务负责从安装到清理的完整过程，不为 UI 测试重复安装。
+Pre-merge Check 按 **构建一次 → 并行项目测试 → 编译 ISS → 英文安装 → 首次启动并准备保留数据 → 中文覆盖安装 → 验证原配置 → 全新配置中文启动 → 一次完整扩展 UI → 卸载 → 汇总** 执行。产物检查与常规测试并行，Web 播放器脚本检查随 UI 单元测试执行。前置失败阻止后续验收，卸载清理仍执行。
 
-Pre-merge Check 基于共用构建编译 `InnoSetup/setup.iss`，将安装包保留为 `test-installer-package`。使用 `Run-InstallerTests.ps1` 安装该包，从安装目录启动 Core，由首次运行逻辑打开 UI，检查窗口持续响应三秒，然后关闭 UI，并通过正式 RPC 关闭 Core。随后预构建 UI 宿主通过 `-CoreExe <安装目录>/VirtualPaper.exe` 运行扩展测试集；应用用例启动的是安装后的 Core、UI 和播放器。宿主保留在安装目录外，不重复构建。强制清理是失败恢复，不算正常关闭。
+`Run-InstallerTests.ps1` 共用一个安装包和一个临时安装目录。首次安装后，由 Core 的正式首次运行逻辑自动打开 UI；探针检查界面、RPC 和持久化设置中的英文，通过 RPC 修改主题与动画偏好、真实导入 PNG，再正常退出 UI/Core。保留这份隔离配置，并记录壁纸元数据、图片和缩略图的哈希。
 
-Pre-release 会对设置新版本后生成的构建和实际发布安装包重新验收。复用同一项目测试 action，包含 ML 集成测试和 Web 播放器脚本检查，并运行同一扩展安装目录 UI 测试集。`Summarize-TestResults.ps1 -RequireFullAcceptance` 除了拒绝失败、缺报告，也拒绝项目测试跳过及无桌面导致启动/UI 跳过。完整验收通过后才允许同步版本、创建草稿；插件发布同样需要验收，但跳过产品版本同步。
+随后用同一安装包选择中文，覆盖本轮创建的安装目录，检查安装包与程序文件哈希、版本、注册信息、快捷方式和新语言标记。仅允许覆盖本轮自己的安装，不放宽日常安装保护。通过 Core 正式 ShowUI RPC 打开原配置，必须保留英文、偏好、壁纸目录及全部壁纸文件，真实壁纸库中仍显示相同 UID。再使用另一份空配置，验证首次中文初始化和正常退出。
 
-每次安装测试使用唯一临时安装目录和隔离应用数据。首次启动失败会跳过 UI 测试。安装、启动或 UI 测试失败仍会触发卸载，卸载残留同样会导致失败。组合报告包含 Install、Open、UIOperation、Uninstall 结果，并保留详细 UI 报告；单独安装验收仍使用三阶段报告。
+上述检查通过后，预构建 UI 宿主针对安装后的 Core/UI/播放器运行一次完整扩展测试。各 UI 用例仍使用独立配置，不作为覆盖安装保留数据的证据。宿主位于安装目录外，不重复构建和打包。Pre-release 复用相同流程，严格报告门禁在同步版本及生成草稿前拒绝任何失败、缺阶段和无桌面跳过。
 
-有交互桌面时，测试操作真实英文安装向导：接受许可、继续、安装和完成。卸载时确认移除、保留用户数据并完成。仅操作安装器及其子进程窗口，未知对话框或超时会失败。无桌面时静默安装、卸载，Open 和 UIOperation 均明确为 `Skipped`，UI 报告保留同一份桌面预检证据。
+版本 2 生命周期报告包含 Install、Open（含准备保留数据）、Reinstall、VerifyPreserved、OpenFresh、可选 UIOperation、Uninstall，各阶段分别保存向导轨迹及应用报告。强制清理仅用于失败恢复，不算正常退出。卸载后检查文件、进程、快捷方式和注册残留，诊断配置保留在产物目录。
 
-两种模式都会检查必要的 Core/UI 文件、包与程序版本一致性、开始菜单快捷方式、卸载注册信息和安装语言记录。桌面运行还验证首次启动时的界面、Core 设置和持久化设置均使用安装语言。升级时保留已有用户配置的语言。卸载后检查文件、进程、快捷方式和注册残留。保留报告和安装器日志；桌面运行还保留向导轨迹。
+有桌面时操作两次真实安装向导及卸载向导；无桌面时静默安装、覆盖安装和卸载，Open、VerifyPreserved、OpenFresh、UIOperation 明确跳过。仍验证文件、程序哈希、版本、注册信息、快捷方式及语言标记，不声称运行时语言和用户数据保留已验收。可选 `-InstallerLanguage chinese` 会反转两次安装的语言。
 
 **安装包验收会实际执行系统安装和卸载。** 应使用干净 CI 机器或明确准备好的本地管理员会话。已存在相同 AppId 安装或开始菜单快捷方式时会拒绝执行。这与 UI 宿主不写注册表的用例不同，不应在禁止安装相关注册表修改的环境中运行。
 
 ```powershell
 # 仅限一次性 Windows 安装测试机器：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
-# 使用中文安装向导，并验证应用首次启动时使用中文：
+# 可选反向顺序：先中文安装，再英文覆盖安装：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -InstallerLanguage chinese -ReportPath TestResults/InstallerChinese/installer-results.json
 # 完整验收，使用预构建的 UI 宿主；UI 阶段结束后始终执行卸载：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `

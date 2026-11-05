@@ -36,7 +36,7 @@ Run commands from the repository root. AI agents should start with [AGENTS.md](.
 | Complete local acceptance | `test/Run-Tests.ps1` | Fresh Release rebuild, parallel project tests, ISS and installed extended UI acceptance |
 | Focused project regression | `test/Run-ProjectTests.ps1 -JobId <id>` | One project using existing Release output; no build |
 | Real UI module or suite | `test/Run-UIOperationTests.ps1` | Builds the solution unless `-NoBuild`; runs component/application cases |
-| Existing installer | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | Real installation, first launch and uninstall; add `-RunUIOperationTests` for extended UI |
+| Existing installer | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | Real install/reinstall, language and data retention, and uninstall; add `-RunUIOperationTests` for extended UI |
 | Workflow/script contracts | `.github/scripts/validate-test-workflow.ps1` | Isolated checks; no install or real UI |
 
 For the complete local acceptance used before merging, start PowerShell 7.2 or later **as administrator** and run:
@@ -47,7 +47,7 @@ For the complete local acceptance used before merging, start PowerShell 7.2 or l
 ./test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-This entry point rebuilds the full solution in **Release**, runs the same eight project test jobs in parallel as CI, compiles `InnoSetup/setup.iss`, installs the resulting package, checks first launch and normal exit, runs the **extended** real UI suite against the installed Core/UI, then uninstalls. A failed phase blocks subsequent phases; uninstall still runs after installation, startup or UI failures. Each invocation writes fresh reports below `TestResults/local-acceptance-*`. Visual Studio MSBuild, .NET 8, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
+This entry point rebuilds the full solution in **Release**, runs the same eight project test jobs in parallel as CI, compiles `InnoSetup/setup.iss`, installs in English, verifies first launch and retains test data, reinstalls the same package in Chinese, checks preserved and fresh-profile behavior, runs one **extended** real UI suite against the installed Core/UI, then uninstalls. A failed phase blocks subsequent phases; uninstall still runs after installation, startup or UI failures. Each invocation writes fresh reports below `TestResults/local-acceptance-*`. Visual Studio MSBuild, .NET 8, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
 
 It refuses an existing Virtual Paper installation or Start menu shortcut. Remove a daily installation explicitly while preserving its data, or use a clean Windows test machine. Installation and uninstallation change the OS uninstall registration and shortcuts; UI cases still exclude startup registration, session locking and other persistent system-setting writes. A missing desktop produces the same explicit UI skip as Pre-merge Check; it is not full UI acceptance.
 
@@ -60,8 +60,9 @@ flowchart LR
     A[Workflow contracts] --> B[Release rebuild]
     B --> C[8 parallel project jobs]
     C --> D[ISS package]
-    D --> E[Install and first launch]
-    E --> F[Extended installed UI]
+    D --> E[English install and first launch]
+    E --> R[Chinese reinstall and profile checks]
+    R --> F[One extended installed UI suite]
     F --> G[Uninstall and summary]
 ```
 
@@ -346,24 +347,24 @@ The default suite does not validate WebView rendering quality, multi-monitor lay
 
 ## CI and installer acceptance
 
-Pre-merge Check runs **build once → seven parallel regular test projects → compile ISS → install → first launch → installed UI tests → uninstall → summary**. Artifact integrity checks run alongside regular tests; Web player script checks run with the UI unit-test job. A failed prerequisite prevents packaging/installation. One acceptance job owns the installation through cleanup; there is no second installation for UI tests.
+Pre-merge Check runs **build once → parallel project tests → compile ISS → English install → first launch and persistence fixture → Chinese reinstall → preserved-profile verification → fresh Chinese launch → one extended UI suite → uninstall → summary**. Artifact integrity checks run alongside regular tests; Web player script checks run with the UI unit-test job. Failed prerequisites block later stages; uninstall still runs as cleanup.
 
-Pre-merge Check compiles `InnoSetup/setup.iss` from the shared build and retains the installer as `test-installer-package`. It uses `Run-InstallerTests.ps1` to install that package, launch Core from the installed location, let first-run behavior open UI, check that the window remains responsive for three seconds, then close UI and shut down Core through the production RPC. Next, the prebuilt UI host runs the extended suite with `-CoreExe <installation>/VirtualPaper.exe`; application cases start the installed Core/UI/player executables. The host stays outside the installation, and nothing is rebuilt. Forced cleanup is failure recovery, not a successful shutdown.
+`Run-InstallerTests.ps1` uses one installer and one temporary installation directory. The first installed Core opens UI through its real first-run path. The probe verifies English in UI, Core RPC and saved settings, sets a nondefault theme/animation preference through RPC, imports an actual PNG through Core, and exits UI/Core normally. It retains that isolated profile and hashes its wallpaper metadata, image and thumbnail.
 
-Pre-release repeats these checks against its newly versioned build and actual release installer. It reuses the same project action, includes ML integration and Web player script tests, and runs the same extended installed-UI suite. `Summarize-TestResults.ps1 -RequireFullAcceptance` rejects skipped project tests or desktop-unavailable startup/UI skips as well as failures and missing reports. Only successful full acceptance permits version synchronization and draft creation, including for plugin releases (which skip product-version synchronization).
+The same package is then installed over the same directory in Chinese. The runner checks the package hash, installed program hashes, versions, registration, shortcuts and the new language marker. Only the installation owned by this run may be overwritten. Reopening the retained profile through Core's production ShowUI RPC must keep English, preferences, the library directory and all wallpaper hashes; the actual library UI must still show the same wallpaper UID. A separate empty profile must initialize in Chinese and exit normally.
 
-Each installer run uses a unique temporary installation and isolated application data. Startup failure skips UI tests. Install, startup, or UI failure still triggers uninstall; uninstall residue also fails. Combined reports contain Install, Open, UIOperation, and Uninstall results, alongside the detailed UI report. Standalone installation checks retain the three-stage report.
+After those checks, the prebuilt UI host runs the extended suite once against the installed Core/UI/player executables. Its per-case profiles remain isolated; they are not used as evidence that reinstall preserved data. The host stays outside the installation, and neither build nor packaging is repeated. Pre-release uses this same sequence and its strict report gate rejects every failed/missing stage and desktop-unavailable skip before version synchronization or draft creation.
 
-With an interactive desktop, the test operates the real English installation wizard: accept the license, proceed, install, and finish. Uninstall confirms removal, preserves user data, and completes. Only the installer and its child-process windows are operated; unknown dialogs or timeouts fail. Without a desktop, install and uninstall run silently, and both Open and UIOperation are explicitly `Skipped`, with matching desktop evidence in the UI report.
+Schema-2 lifecycle reports contain Install, Open (including persistence fixture preparation), Reinstall, VerifyPreserved, OpenFresh, optional UIOperation, and Uninstall. Wizard traces and application results are separate for each phase. Forced process cleanup is failure recovery, not normal exit. Uninstall checks file, process, shortcut and registration residue, while retaining diagnostic profiles.
 
-Both modes check required Core/UI files, package/program version agreement, Start menu shortcuts, uninstall registration, and the recorded installer language. Desktop runs also verify that a fresh application's UI, Core settings, and persisted settings use that language. Existing user settings retain their language during upgrades. After uninstall, the runner checks file, process, shortcut, and registration residue. Reports and installer logs are retained; desktop runs also retain wizard traces.
+With a desktop, both real installation wizards and the uninstaller are operated. Without a desktop, both installations and uninstall run silently; Open, VerifyPreserved, OpenFresh and UIOperation are explicitly skipped. Files, program hashes, versions, registration, shortcuts and language markers are still checked; runtime language/data preservation is not claimed as verified. `-InstallerLanguage chinese` reverses the two language choices for an optional Chinese-first run.
 
 **Installer acceptance performs actual system installation and uninstallation.** Use a clean CI machine or an explicitly prepared local administrator session. It refuses an existing installation with the same AppId or an existing Start menu shortcut. This is separate from the UI host's registry-free cases and must not be run where installation-related registry changes are prohibited.
 
 ```powershell
 # Disposable Windows installation-test machine only:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
-# Use the Chinese wizard and verify that the application starts in Chinese:
+# Optional reverse order: Chinese first, then English reinstall:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -InstallerLanguage chinese -ReportPath TestResults/InstallerChinese/installer-results.json
 # Full acceptance, using a prebuilt UI host; always uninstalls after the UI stage:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `

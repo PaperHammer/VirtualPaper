@@ -77,6 +77,6 @@ UI / Panels / Workloads
 
 ## 测试与发布边界
 
-本地完整入口为 `test/Run-Tests.ps1`：校验工作流契约，通过 MSBuild 重构建完整 Release 解决方案，并行运行 8 个项目测试，再编译 Inno Setup 安装包，实际安装、首次启动并正常退出、对安装后的 Core/UI 执行扩展真实交互测试，最后卸载和汇总。应用测试保持真实多进程通信，不直接以独立 UI 替代 Core 启动链路。
+本地完整入口为 `test/Run-Tests.ps1`：校验工作流契约，通过 MSBuild 重构建完整 Release 解决方案，并行运行 8 个项目测试，再编译 Inno Setup 安装包，英文安装、首次启动并保留配置和壁纸、同包中文覆盖安装、验证原配置保留及全新配置中文初始化，再对安装后的 Core/UI 执行一次扩展真实交互测试，最后卸载和汇总。应用测试保持真实多进程通信，不直接以独立 UI 替代 Core 启动链路。
 
 Pre-merge Check 和 Pre-release 均只允许手动触发。发布流程会对设置新版本后的构建和安装包重新验收，只有选中测试全部执行通过，才同步版本并生成发布草稿；桌面跳过也会阻止发布。详细边界见[测试说明](../test/README.zh-CN.md)与[工作流说明](../.github/workflows/README.zh-CN.md)。

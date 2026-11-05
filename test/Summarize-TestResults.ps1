@@ -19,7 +19,7 @@ $coverage = @(Get-TestCoverageRows -Root $Root)
 $covered = ($coverage | Measure-Object Covered -Sum).Sum
 $valid = ($coverage | Measure-Object Valid -Sum).Sum
 $rate = if ($valid -eq 0) { 0 } else { [math]::Round(100 * $covered / $valid, 2) }
-$installerSummary = if ($installerOutcome -eq 'OpenSkipped') { 'installed and uninstalled; **Open skipped** (no interactive desktop)' } else { 'passed' }
+$installerSummary = if ($installerOutcome -eq 'OpenSkipped') { 'installed, reinstalled and uninstalled; **Open skipped** (no interactive desktop)' } else { 'passed' }
 $summary = @('### Test results', '', "- Installer lifecycle: $installerSummary", "- Project reports: $($reports.Count) passed")
 if ($uiOutcome -eq 'Skipped') {
     $summary += "- WinUI: **Skipped** [$($ui.SkipReason)]: $($ui.Environment.Reason)"

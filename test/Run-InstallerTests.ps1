@@ -3,6 +3,7 @@
 param(
     [Parameter(Mandatory)][string] $InstallerPath,
     [string] $ReportPath = 'TestResults/Installer/installer-results.json',
+    [ValidateSet('english', 'chinese')][string] $InstallerLanguage = 'english',
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
     [ValidateRange(10, 600)][int] $TimeoutSeconds = 120,
     [switch] $RunUIOperationTests,
@@ -12,6 +13,7 @@ param(
     [switch] $NoBuild
 )
 $ErrorActionPreference = 'Stop'
+$InstallerLanguage = $InstallerLanguage.ToLowerInvariant()
 . "$PSScriptRoot/InstallerTestSupport.ps1"
 if (-not $IsWindows) { throw 'Installer lifecycle tests require Windows.' }
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
@@ -67,7 +69,8 @@ if ($RunUIOperationTests) {
         $installedCore = Join-Path $installDir 'VirtualPaper.exe'
         & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
             -CoreExe $installedCore -HostExe $UIHostExe -ReportPath $UIReportPath -TimeoutSeconds $UITimeoutSeconds
-        if ($LASTEXITCODE -ne 0) { throw "Installed UI acceptance failed (exit $LASTEXITCODE)." }
+        # The runner checks its process exit code and throws on failure. As a
+        # PowerShell script it need not set LASTEXITCODE (which may be stale/null).
         $ui = Get-Content -LiteralPath $UIReportPath -Raw | ConvertFrom-Json
         if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') {
             throw 'The desktop became unavailable after startup; installed UI acceptance did not run.'
@@ -100,12 +103,17 @@ function Get-InstallerTestProcesses {
 function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall) {
     $action = if ($Uninstall) { '--wizard-uninstall' } else { '--wizard-install' }
     $stage = if ($Uninstall) { 'uninstall' } else { 'install' }
-    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" $action `"$Executable`" --install-dir `"$installDir`" --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 10)) --results-file `"$artifacts/$stage-wizard.json`""
+    Invoke-BoundedProcess (Get-Command dotnet).Source "`"$probe`" $action `"$Executable`" --language $InstallerLanguage --install-dir `"$installDir`" --timeout-seconds $([math]::Max(1, $TimeoutSeconds - 10)) --results-file `"$artifacts/$stage-wizard.json`""
 }
 
 $report = Invoke-InstallerLifecycle -Install {
     if ($environment.Available) { Invoke-InstallerWizard $InstallerPath }
-    else { Invoke-BoundedProcess $InstallerPath "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/install.log`"" }
+    else { Invoke-BoundedProcess $InstallerPath "/LANG=$InstallerLanguage /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/install.log`"" }
+    $languageMarker = Join-Path $installDir 'installer-language.txt'
+    if (-not (Test-Path -LiteralPath $languageMarker) -or
+        [IO.File]::ReadAllText($languageMarker).Trim() -cne $InstallerLanguage) {
+        throw 'The installed language marker does not match the selected installer language.'
+    }
     if (@(Get-ChildItem -LiteralPath $installDir -Directory -Recurse -Filter '*.WebView2').Count) {
         throw 'The installer contains WebView2 user data from the build machine.'
     }
@@ -155,7 +163,7 @@ $report = Invoke-InstallerLifecycle -Install {
     $application = Get-Content -LiteralPath $openReport -Raw | ConvertFrom-Json
     if ($application.Passed -cne $true -or $application.OpenedNormally -cne $true -or
         $application.ExitedNormally -cne $true -or $application.ForcedCleanup -cne $false -or
-        $application.CoreProcessId -lt 1 -or $application.UiProcessId -lt 1 -or $application.Error) {
+        $application.CoreProcessId -lt 1 -or $application.UiProcessId -lt 1 -or $application.LanguageVerified -cne $true -or $application.Error) {
         throw 'Installed application did not open and exit normally.'
     }
 } -Uninstall {

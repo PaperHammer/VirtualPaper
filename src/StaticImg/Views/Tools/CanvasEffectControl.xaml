@@ -3,10 +3,10 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.CanvasEffectControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
     xmlns:collection="using:VirtualPaper.UIComponent.Collection"
     mc:Ignorable="d">
@@ -176,7 +176,7 @@
 
     <Expander Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock Text="{markup:I18n Key=Project_StaticImg_ToolName_CanvasEffect}"/>
+            <TextBlock l:Uids.Uid="Ui_Project_StaticImg_ToolName_CanvasEffect_Text"/>
         </Expander.Header>
         <Expander.Content>
             <StackPanel Orientation="Vertical" Spacing="8">
@@ -190,14 +190,14 @@
                     </Grid.ColumnDefinitions>
 
                     <Button
-                        Content="{markup:I18n Key=Text_Cancel}"
+                        l:Uids.Uid="Ui_Text_Cancel_Content"
                         Height="36"
                         HorizontalAlignment="Stretch"
                         Click="SelectCancelBtn_Click"/>
 
                     <Button
                         Grid.Column="2"
-                        Content="{markup:I18n Key=Text_Complete}"
+                        l:Uids.Uid="Ui_Text_Complete_Content"
                         Height="36"
                         HorizontalAlignment="Stretch"
                         Style="{ThemeResource AccentButtonStyle}"
@@ -212,7 +212,7 @@
                     <ToggleButton
                         x:Name="Header_Adjust"
                         Style="{StaticResource AccordionHeaderStyle}"
-                        Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Adjust}"
+                        l:Uids.Uid="Ui_Project_StaticImg_EffectGroup_Adjust_Content"
                         Checked="GroupHeader_Checked"
                         Unchecked="GroupHeader_Unchecked"/>
                     <Grid x:Name="Content_Adjust" MaxHeight="0">
@@ -234,7 +234,7 @@
                     <ToggleButton
                         x:Name="Header_Special"
                         Style="{StaticResource AccordionHeaderStyle}"
-                        Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Special}"
+                        l:Uids.Uid="Ui_Project_StaticImg_EffectGroup_Special_Content"
                         Checked="GroupHeader_Checked"
                         Unchecked="GroupHeader_Unchecked"/>
                     <Grid x:Name="Content_Special" MaxHeight="0">
@@ -256,7 +256,7 @@
                     <ToggleButton
                         x:Name="Header_Blend"
                         Style="{StaticResource AccordionHeaderStyle}"
-                        Content="{markup:I18n Key=Project_StaticImg_EffectGroup_Blend}"
+                        l:Uids.Uid="Ui_Project_StaticImg_EffectGroup_Blend_Content"
                         Checked="GroupHeader_Checked"
                         Unchecked="GroupHeader_Unchecked"/>
                     <Grid x:Name="Content_Blend" MaxHeight="0">

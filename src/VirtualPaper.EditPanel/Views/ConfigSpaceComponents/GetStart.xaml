@@ -3,11 +3,11 @@
     x:Class="VirtualPaper.EditPanel.Views.ConfigSpaceComponents.GetStart"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.EditPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:data="using:VirtualPaper.UIComponent.Data"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:edit="using:VirtualPaper.Models.EditPanel"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     Loaded="Page_Loaded"
@@ -17,15 +17,15 @@
     <Page.Resources>
         <MenuFlyout x:Key="MenuFlyoutRecentUsedItem">
             <MenuFlyoutItem 
-                Text="{markup:I18n Key=SIG_Text_RemoveFromList}"
+                l:Uids.Uid="Ui_SIG_Text_RemoveFromList_Text"
                 Command="{x:Bind _viewModel.RemoveFromListCommand}"
                 CommandParameter="{Binding}"/>
             <MenuFlyoutItem 
-                Text="{markup:I18n Key=SIG_Text_CopyPath}" 
+                l:Uids.Uid="Ui_SIG_Text_CopyPath_Text"
                 Command="{x:Bind _viewModel.CopyPathCommand}"
                 CommandParameter="{Binding}"/>
             <MenuFlyoutItem
-                Text="{markup:I18n Key=Text_ShowOnDisk}"
+                l:Uids.Uid="Ui_Text_ShowOnDisk_Text"
                 Command="{x:Bind _viewModel.ShowOnDiskCommand}"
                 CommandParameter="{Binding}"/>
         </MenuFlyout>
@@ -66,14 +66,14 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="{markup:I18n Key=Project_RecentUsed}" FontSize="20"/>
+            <TextBlock l:Uids.Uid="Ui_Project_RecentUsed_Text" FontSize="20"/>
 
             <TextBox x:Name="tbSearchName"
                 Grid.Row="1"               
                 Margin="0 20 0 0"
                 Height="30"
                 Width="340"
-                PlaceholderText="{markup:I18n Key=Project_SearchRecentUsed}"
+                l:Uids.Uid="Ui_Project_SearchRecentUsed_PlaceholderText"
                 FontSize="12"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
@@ -96,7 +96,7 @@
                 <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <TextBlock Text="{markup:I18n Key=Project_StartUp}" FontSize="20"/>
+            <TextBlock l:Uids.Uid="Ui_Project_StartUp_Text" FontSize="20"/>
 
             <Grid x:Name="gridStartup"
                 Grid.Row="1"
@@ -109,7 +109,7 @@
 
                 <input:ArcButton x:Name="btnStartupNew"
                     AutomationProperties.AutomationId="Projects.New"
-                    Content="{markup:I18n Key=Project_Create_New}"
+                    l:Uids.Uid="Ui_Project_Create_New_Content"
                     HorizontalAlignment="Stretch"
                     Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
                     Background="{ThemeResource AccentFillColorTertiaryBrush}"
@@ -118,7 +118,7 @@
                 <Button x:Name="btnStartupOpen"
                     AutomationProperties.AutomationId="Projects.Open"
                     Grid.Column="2"
-                    Content="{markup:I18n Key=Project_Open}"
+                    l:Uids.Uid="Ui_Project_Open_Content"
                     HorizontalAlignment="Stretch"
                     Click="BtnStartupOpen_Click"/>
             </Grid>
@@ -136,7 +136,7 @@
                     Stroke="{ThemeResource ControlStrongStrokeColorDefaultBrush}" 
                     Width="auto" Height="auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                 <TextBlock 
-                    Text="{markup:I18n Key=Text_Drop_Files}"
+                    l:Uids.Uid="Ui_Text_Drop_Files_Text"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
                     FontSize="16" 
@@ -145,7 +145,7 @@
                     Margin="5"
                     IsClosable="False"
                     IsOpen="{x:Bind _viewModel.IsElevated}"
-                    Message="{markup:I18n Key=RunningAsAdminWarning}"
+                    l:Uids.Uid="Ui_RunningAsAdminWarning_Message"
                     Severity="Warning" />
             </Grid>
         </Grid>

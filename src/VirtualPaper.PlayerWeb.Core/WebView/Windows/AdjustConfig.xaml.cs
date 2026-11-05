@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
@@ -32,7 +33,11 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             _startArgs = JsonSerializer.Deserialize<StartArgsWeb>(jsonString);
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCoreAdjust, _startArgs.FilePath + _startArgs.RuntimeType);
             this.InitializeComponent();
+            UpdateWindowTitle();
             InitializeWindow();
+
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
+            Closed += (_, _) => LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
 
             AfterFeReady();
         }
@@ -55,8 +60,15 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
 
         private async void AfterFeReady() {
             _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_startArgs.WpBasicDataFilePath, WpBasicDataContext.Default);
-            string windowTitle = !string.IsNullOrEmpty(_wpBasicData?.Title) ? $"{_wpBasicData.Title} (Adjust)" :
-                (!string.IsNullOrEmpty(_startArgs.FilePath) ? $"{Path.GetFileName(_startArgs.FilePath)} (Adjust)" : "Virtual Paper PlayerWeb (Adjust)");
+            UpdateWindowTitle();
+        }
+
+        private void OnLanguageUpdated(object? sender, EventArgs args) => UpdateWindowTitle();
+
+        private void UpdateWindowTitle() {
+            string name = !string.IsNullOrEmpty(_wpBasicData?.Title) ? _wpBasicData.Title :
+                (!string.IsNullOrEmpty(_startArgs.FilePath) ? Path.GetFileName(_startArgs.FilePath) : "Virtual Paper PlayerWeb");
+            string windowTitle = $"{name} ({LanguageUtil.GetI18n(Constants.I18n.Text_Adjust)})";
             this.Title = this.MainHost.Title = windowTitle;
         }
 

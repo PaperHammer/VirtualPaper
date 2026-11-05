@@ -95,6 +95,9 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             return _ui.MainWindowHandle != IntPtr.Zero;
         }, "Real UI process window");
         _uiIds.Add(_ui!.Id);
+        // Module-only runs do not execute the component cases that activate the
+        // host first. Acquire real focus before operating this process's pickers.
+        await Task.Run(() => ApplicationUi.ActivateOwnedWindowAsync(_ui.MainWindowHandle));
         return _ui;
     }
 

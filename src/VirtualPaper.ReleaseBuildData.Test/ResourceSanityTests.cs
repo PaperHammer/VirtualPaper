@@ -47,6 +47,24 @@ namespace VirtualPaper.ReleaseBuildData.Test {
 
         [TestMethod]
         [TestCategory("ReleaseBuild")]
+        [DataRow("zh-CN")]
+        [DataRow("en-US")]
+        public void Plugin_UI_LiveTranslations_MatchTheirSourceStrings(string locale) {
+            string path = Path.Combine(PluginsDir, "UI", "VirtualPaper.UIComponent", "Strings", locale, "Resources.resw");
+            var entries = System.Xml.Linq.XDocument.Load(path).Root!.Elements("data")
+                .ToDictionary(element => (string)element.Attribute("name")!, element => element);
+            var translatedProperties = entries.Where(pair => pair.Key.StartsWith("Ui_", StringComparison.Ordinal)).ToArray();
+            Assert.IsGreaterThan(0, translatedProperties.Length, "Live XAML translations are missing from the package.");
+            foreach (var (name, entry) in translatedProperties) {
+                string source = ((string?)entry.Element("comment") ?? "").Replace("Source: ", "");
+                Assert.IsTrue(entries.TryGetValue(source, out var original), $"Missing source string for {name}: {source}");
+                Assert.AreEqual((string?)original!.Element("value"), (string?)entry.Element("value"),
+                    $"Live and programmatic translations differ: {name}");
+            }
+        }
+
+        [TestMethod]
+        [TestCategory("ReleaseBuild")]
         public void Plugin_UI_EditPanelConfigs_Exists() {
             ReleaseBuildSanityTests.AssertDirExists(
                 Path.Combine(PluginsDir, "UI", "EditPanelConfigs"),

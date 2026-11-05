@@ -181,6 +181,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public int SeletedSystemBackdropIndx {
             get => _seletedSystemBackdropIndx;
             set {
+                if (_isRefreshingLanguage || value < 0) return;
                 _seletedSystemBackdropIndx = value;
                 if (_userSettingsClient.Settings.SystemBackdrop == (AppSystemBackdrop)value) return;
 
@@ -194,16 +195,46 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public LanguagesModel SelectedLanguage {
             get => _selectedLanguage;
             set {
-                _selectedLanguage = value;
-                if (_userSettingsClient.Settings.Language == value.Language) return;
-
-                if (value.Codes.FirstOrDefault(x => x == _userSettingsClient.Settings.Language) == null) {
-                    _userSettingsClient.Settings.Language = value.Codes[0];
-                    UpdateSettingsConfigFile();
-                    LanguageUtil.LanguageChanged(value.Codes[0]);
-                    OnPropertyChanged();
-                }
+                if (value == null || !IsLanguageChangeEnabled || value.Codes.Length == 0) return;
+                if (value.Codes.Contains(_userSettingsClient.Settings.Language, StringComparer.OrdinalIgnoreCase)) return;
+                _ = ChangeLanguageAsync(value);
             }
+        }
+
+        private bool _isLanguageChangeEnabled = true;
+        public bool IsLanguageChangeEnabled {
+            get => _isLanguageChangeEnabled;
+            private set { _isLanguageChangeEnabled = value; OnPropertyChanged(); }
+        }
+
+        internal async Task ChangeLanguageAsync(LanguagesModel language) {
+            var previousSelection = _selectedLanguage;
+            string previousLanguage = _userSettingsClient.Settings.Language;
+            // Guard reentry now, but let the selection provider finish before
+            // notifying the binding that its control has become disabled.
+            _isLanguageChangeEnabled = false;
+            _selectedLanguage = language;
+            _userSettingsClient.Settings.Language = language.Codes[0];
+            OnPropertyChanged(nameof(SelectedLanguage));
+            try {
+                // Finish the two-way binding before restoring it after a save failure.
+                await Task.Yield();
+                OnPropertyChanged(nameof(IsLanguageChangeEnabled));
+                await LanguageUtil.SetLanguageAsync(language.Codes[0]);
+                await _userSettingsClient.SaveAsync<ISettings>();
+            }
+            catch (Exception exception) {
+                _selectedLanguage = previousSelection;
+                _userSettingsClient.Settings.Language = previousLanguage;
+                try { await LanguageUtil.SetLanguageAsync(previousLanguage); }
+                catch (Exception rollbackException) {
+                    ArcLog.GetLogger<GeneralSettingViewModel>().Error("Language rollback failed", rollbackException);
+                }
+                OnPropertyChanged(nameof(SelectedLanguage));
+                ArcLog.GetLogger<GeneralSettingViewModel>().Error("Language settings could not be saved", exception);
+                GlobalMessageUtil.ShowException(exception);
+            }
+            finally { IsLanguageChangeEnabled = true; }
         }
 
         private string _wallpaperDir = string.Empty;
@@ -254,6 +285,26 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             InitCollections();
             InitContent();
             InitCommand();
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
+        }
+
+        private bool _isRefreshingLanguage;
+        private AppUpdateStatus _lastUpdateStatus = AppUpdateStatus.Notchecked;
+        private ReleaseInfo? _lastUpdateRelease;
+
+        private void OnLanguageUpdated(object? sender, EventArgs args) {
+            _isRefreshingLanguage = true;
+            try {
+                InitText();
+                SystemBackdrops = [_sysbdDefault, _sysbdMica, _sysbdAcrylic];
+                OnPropertyChanged(nameof(SystemBackdrops));
+                OnPropertyChanged(nameof(SeletedSystemBackdropIndx));
+                ChangeAutoShartStatu(_isAutoStart);
+                OnPropertyChanged(nameof(NavigationAnimationsStatus));
+                OnPropertyChanged(nameof(AppVersionText));
+                MenuUpdate(_lastUpdateStatus, _lastUpdateRelease);
+            }
+            finally { _isRefreshingLanguage = false; }
         }
 
         private void InitCommand() {
@@ -330,6 +381,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void MenuUpdate(AppUpdateStatus status, ReleaseInfo? release) {
+            _lastUpdateStatus = status;
+            _lastUpdateRelease = release;
             //CurrentVersionState = VersionState.FindNew;
 
             switch (status) {
@@ -504,6 +557,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             if (_disposed) return;
 
             if (disposing) {
+                LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
                 _appUpdater.UpdateChecked -= AppUpdater_UpdateChecked;
                 WallpaperInstallDirChanged = null;
             }

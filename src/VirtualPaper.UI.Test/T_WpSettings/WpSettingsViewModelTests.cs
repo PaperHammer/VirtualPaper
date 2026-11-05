@@ -19,6 +19,9 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         private Mock<IStoragePicker> _storagePicker = null!;
         private WpSettingsViewModel _vm = null!;
 
+        [TestCleanup]
+        public void Cleanup() => _vm?.Dispose();
+
         [TestInitialize]
         public void Setup() {
             CrossThreadInvoker.Initialize(new TUiSynchronizationContext());

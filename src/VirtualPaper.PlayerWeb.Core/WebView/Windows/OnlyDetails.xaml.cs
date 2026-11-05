@@ -1,5 +1,6 @@
 using System;
 using Microsoft.UI.Xaml;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -29,7 +30,17 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             _windowKey = new ArcWindowManagerKey(arcKey, wpBasicData.FilePath);
 
             this.InitializeComponent();
+            UpdateWindowTitle();
             InitializeWindow();
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
+            Closed += (_, _) => LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
+        }
+
+        private void OnLanguageUpdated(object? sender, EventArgs args) => UpdateWindowTitle();
+
+        private void UpdateWindowTitle() {
+            Title = LanguageUtil.GetI18n(Constants.I18n.PlayerWeb_DetailsWindowTitle);
+            MainHost.Title = LanguageUtil.GetI18n(Constants.I18n.Text_Details);
         }
 
         private void NaviContent_Loaded(object sender, RoutedEventArgs e) {

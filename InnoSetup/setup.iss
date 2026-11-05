@@ -75,7 +75,18 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall; Check: AutoLaunch
 
+[UninstallDelete]
+Type: files; Name: "{app}\installer-language.txt"
+
 [Code]
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    // Read only when the application creates a new user settings file.
+    if not SaveStringToFile(ExpandConstant('{app}\installer-language.txt'), ActiveLanguage, False) then
+      RaiseException('Could not save the initial application language.');
+end;
 
 // InnoDependencyInstaller 初始化向导 UI
 procedure InitializeWizard;

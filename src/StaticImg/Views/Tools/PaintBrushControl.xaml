@@ -3,12 +3,12 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.PaintBrushControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:extension="using:VirtualPaper.UIComponent.Extensions"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -20,7 +20,7 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBlock                    
-                    Text="{x:Bind Name, Mode=OneWay}" 
+                    l:Uids.Uid="{x:Bind NameUid, Mode=OneWay}"
                     VerticalAlignment="Center" />
 
                 <ContentPresenter 
@@ -32,7 +32,7 @@
         </DataTemplate>
 
         <extension:XList x:Key="PaintBrushItems">
-            <lcl_models:PaintBrushItem Name="{markup:I18n Key=Project_StaticImg_Text_Paintbrush}" Type="General" ConfigKey="common_brush_config">
+            <lcl_models:PaintBrushItem NameUid="Ui_Project_StaticImg_Text_Paintbrush_Text" Type="General" ConfigKey="common_brush_config">
                 <lcl_models:PaintBrushItem.Example>
                     <Path 
                         x:Name="CommonBrushPath"
@@ -56,15 +56,16 @@
         Loaded="PaintBrushExpander_Loaded"
         Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock Text="{markup:I18n Key=Project_StaticImg_Text_PaintbrushBox}"/>
+            <TextBlock l:Uids.Uid="Ui_Project_StaticImg_Text_PaintbrushBox_Text"/>
         </Expander.Header>
         <Expander.Content>
             <StackPanel
                 Spacing="10"
                 Orientation="Vertical">
-                <DropDownButton
-                    Width="200"
-                    Content="{x:Bind SelectedBrush.Name, Mode=OneWay, FallbackValue={x:Null}}">
+                <DropDownButton Width="200">
+                    <DropDownButton.Content>
+                        <TextBlock l:Uids.Uid="{x:Bind SelectedBrush.NameUid, Mode=OneWay}" />
+                    </DropDownButton.Content>
                     <DropDownButton.Flyout>
                         <Flyout  
                             x:Name="paintBrushFlyout"
@@ -94,7 +95,7 @@
                         <TextBlock 
                             VerticalAlignment="Center"
                             FontSize="12"
-                            Text="{markup:I18n Key=Project_StaticImg_Text_ThicknessPixel}"/>
+                            l:Uids.Uid="Ui_Project_StaticImg_Text_ThicknessPixel_Text"/>
 
                         <TextBox
                             x:Name="paintBrushThicknessTextBox"
@@ -125,7 +126,7 @@
                         <TextBlock 
                             VerticalAlignment="Center"
                             FontSize="12"
-                            Text="{markup:I18n Key=Project_StaticImg_Text_OpacityPercent}"/>
+                            l:Uids.Uid="Ui_Project_StaticImg_Text_OpacityPercent_Text"/>
 
                         <TextBox
                             x:Name="paintBrushOpacityTextBox"

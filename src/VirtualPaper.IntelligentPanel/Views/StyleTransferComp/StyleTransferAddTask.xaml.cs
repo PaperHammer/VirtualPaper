@@ -34,9 +34,19 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
             InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<StyleTransferAddTaskViewModel>();
             this.DataContext = _viewModel;
+            Loaded += Page_Loaded;
         }
 
+        private void Page_Loaded(object sender, RoutedEventArgs e) {
+            _viewModel.RefreshLanguage();
+            LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
+        }
+
+        private void OnLanguageUpdated(object? sender, EventArgs args) => _viewModel.RefreshLanguage();
+
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
             CleanupImageResources();
             CleanupBindings();
             CleanViewModel();

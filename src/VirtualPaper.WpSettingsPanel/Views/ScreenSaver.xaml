@@ -3,12 +3,12 @@
     x:Class="VirtualPaper.WpSettingsPanel.Views.ScreenSaver"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     Loaded="Page_Loaded" Unloaded="Page_Unloaded" NavigationCacheMode="Enabled">
     <arc:ArcPage.Resources>
         <MenuFlyout x:Key="MF_FilteredListView">
-            <MenuFlyoutItem Text="{markup:I18n Key=ScreenSaver_Remove}" Click="RightClickMenuItem_Click"/>
+            <MenuFlyoutItem l:Uids.Uid="Ui_ScreenSaver_Remove_Text" Click="RightClickMenuItem_Click"/>
         </MenuFlyout>
         <Style x:Key="WhitelistItemStyle" TargetType="ListViewItem">
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -34,15 +34,15 @@
                         </Grid.ColumnDefinitions>
                         <FontIcon Glyph="&#xF182;" FontSize="20"/>
                         <StackPanel Grid.Column="1" Spacing="4" Margin="0 12 0 12" VerticalAlignment="Center">
-                            <TextBlock Text="{markup:I18n Key=ScreenSaver_Server}" FontWeight="SemiBold"/>
-                            <TextBlock Text="{markup:I18n Key=ScreenSaver_ServerExplain}" TextWrapping="Wrap"
+                            <TextBlock l:Uids.Uid="Ui_ScreenSaver_Server_Text" FontWeight="SemiBold"/>
+                            <TextBlock l:Uids.Uid="Ui_ScreenSaver_ServerExplain_Text" TextWrapping="Wrap"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                         </StackPanel>
                         <ToggleButton Grid.Column="2" Width="200" VerticalAlignment="Center"
                             AutomationProperties.AutomationId="ScreenSaver.Enabled"
                             Content="{x:Bind _viewModel.ScreenSaverStatu, Mode=OneWay}"
                             IsChecked="{x:Bind _viewModel.IsScreenSaverOn, Mode=TwoWay}"
-                            AutomationProperties.Name="{markup:I18n Key=ScreenSaver_Server}"/>
+                            l:Uids.Uid="Ui_ScreenSaver_Server_AutomationProperties_Name"/>
                     </Grid>
                 </Expander.Header>
                 <Expander.Content>
@@ -51,23 +51,23 @@
                         <StackPanel Margin="44 4 0 16" Spacing="16">
                             <NumberBox Width="200" HorizontalAlignment="Left"
                                 AutomationProperties.AutomationId="ScreenSaver.WaitMinutes"
-                                Header="{markup:I18n Key=ScreenSaver_WaitingTime}"
+                                l:Uids.Uid="Ui_ScreenSaver_WaitingTime_Header"
                                 Value="{x:Bind _viewModel.WaitingTime, Mode=TwoWay}"
                                 SpinButtonPlacementMode="Inline" Minimum="1" Maximum="60" SmallChange="1" LargeChange="1"/>
                             <CheckBox IsChecked="{x:Bind _viewModel.IsRunningLock, Mode=TwoWay}">
                                 <StackPanel Spacing="4">
-                                    <TextBlock Text="{markup:I18n Key=ScreenSaver_RunningLock}" TextWrapping="Wrap"/>
-                                    <TextBlock Text="{markup:I18n Key=ScreenSaver_RunningLockExplain}" TextWrapping="Wrap"
+                                    <TextBlock l:Uids.Uid="Ui_ScreenSaver_RunningLock_Text" TextWrapping="Wrap"/>
+                                    <TextBlock l:Uids.Uid="Ui_ScreenSaver_RunningLockExplain_Text" TextWrapping="Wrap"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                 </StackPanel>
                             </CheckBox>
                             <StackPanel x:Name="DynamicEffects" Spacing="4">
-                                <TextBlock Text="{markup:I18n Key=ScreenSaver_DynamicEffects}"/>
-                                <TextBlock Text="{markup:I18n Key=ScreenSaver_DynamicEffectsExplain}" TextWrapping="Wrap"
+                                <TextBlock l:Uids.Uid="Ui_ScreenSaver_DynamicEffects_Text"/>
+                                <TextBlock l:Uids.Uid="Ui_ScreenSaver_DynamicEffectsExplain_Text" TextWrapping="Wrap"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                 <ComboBox x:Name="DynamicEffectsCombo" Width="200" Margin="0 4 0 0"
                                     AutomationProperties.AutomationId="ScreenSaver.Effect"
-                                    ItemsSource="{x:Bind _viewModel.Effects}"
+                                    ItemsSource="{x:Bind _viewModel.Effects, Mode=OneWay}"
                                     SelectedIndex="{x:Bind _viewModel.SeletedEffectIndx, Mode=TwoWay}"/>
                             </StackPanel>
                         </StackPanel>
@@ -80,8 +80,8 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <StackPanel Spacing="16">
                     <StackPanel Spacing="4">
-                        <TextBlock Text="{markup:I18n Key=ScreenSaver_WhiteListTitle}" FontWeight="SemiBold"/>
-                        <TextBlock Text="{markup:I18n Key=ScreenSaver_WhiteListExplain}" TextWrapping="Wrap"
+                        <TextBlock l:Uids.Uid="Ui_ScreenSaver_WhiteListTitle_Text" FontWeight="SemiBold"/>
+                        <TextBlock l:Uids.Uid="Ui_ScreenSaver_WhiteListExplain_Text" TextWrapping="Wrap"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
                     <Grid ColumnSpacing="12" HorizontalAlignment="Left">
@@ -92,15 +92,15 @@
                         <TextBox x:Name="TargetProName" Width="360"
                             AutomationProperties.AutomationId="ScreenSaver.Whitelist.Search"
                             VerticalAlignment="Center"
-                            PlaceholderText="{markup:I18n Key=ScreenSaver_SeekFromList}"
-                            AutomationProperties.Name="{markup:I18n Key=ScreenSaver_SeekFromList}"
+                            l:Uids.Uid="Ui_ScreenSaver_SeekFromList_PlaceholderText__ScreenSaver_SeekFromList_AutomationProperties_Name"
+
                             TextChanged="OnFilterChanged"/>
                         <Button Grid.Column="1" MinWidth="120" Padding="12 8" CornerRadius="8"
                             AutomationProperties.AutomationId="ScreenSaver.Whitelist.Add"
                             Command="{x:Bind _viewModel.AddToWhiteListCommand}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon Glyph="&#xE710;" FontSize="14"/>
-                                <TextBlock Text="{markup:I18n Key=ScreenSaver_Add}"/>
+                                <TextBlock l:Uids.Uid="Ui_ScreenSaver_Add_Text"/>
                             </StackPanel>
                         </Button>
                     </Grid>
@@ -128,8 +128,8 @@
                                     </StackPanel>
                                     <Button Grid.Column="2" Width="36" Height="36" Padding="8" VerticalAlignment="Center"
                                         AutomationProperties.AutomationId="ScreenSaver.Whitelist.Remove"
-                                        Click="RemoveWhiteListItem_Click" ToolTipService.ToolTip="{markup:I18n Key=ScreenSaver_Remove}"
-                                        AutomationProperties.Name="{markup:I18n Key=ScreenSaver_Remove}">
+                                        Click="RemoveWhiteListItem_Click" l:Uids.Uid="Ui_ScreenSaver_Remove_ToolTipService_ToolTip__ScreenSaver_Remove_AutomationProperties_Name"
+                                        >
                                         <FontIcon Glyph="&#xE74D;" FontSize="16"/>
                                     </Button>
                                 </Grid>

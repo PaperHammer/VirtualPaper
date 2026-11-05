@@ -20,7 +20,7 @@ using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIComponent.Utils.PanelBus.WpSettingsArgs;
 
 namespace VirtualPaper.IntelligentPanel.ViewModels {
-    public partial class StyleTranferViewModel : ObservableObject {
+    public partial class StyleTranferViewModel : ObservableObject, IDisposable {
         public ObservableCollection<StyleTransferTaskItem> Tasks { get; } = [];
 
         private bool _hasTasks;
@@ -40,6 +40,11 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         private void InitEvent() {
             Tasks.CollectionChanged += OnTasksCollectionChanged;
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
+        }
+
+        private void OnLanguageUpdated(object? sender, EventArgs args) {
+            foreach (var task in Tasks) task.RefreshLanguage();
         }
 
         internal bool AddTask(StyleTransferData data) {
@@ -253,6 +258,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             if (_disposed) return;
 
             Tasks.CollectionChanged -= OnTasksCollectionChanged;
+            LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
             Tasks.Clear();
             _disposed = true;
         }

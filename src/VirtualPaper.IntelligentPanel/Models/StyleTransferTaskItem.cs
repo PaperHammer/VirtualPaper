@@ -22,7 +22,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public string SourceResolution => $"{Data.Width} * {Data.Height}";
 
         public string StyleFilePath => Data.StyleFilePath;
-        public string? StyleName => Data.StyleName;
+        public string? StyleName => Data.StyleNameKey != null ? LanguageUtil.GetI18n(Data.StyleNameKey) : Data.StyleName;
         public string StyleFileSize => Data.StyleFileSize;
         public string StyleFileExt => Data.StyleFileExt;
 
@@ -110,6 +110,11 @@ namespace VirtualPaper.IntelligentPanel.Models {
 
         public StyleTransferTaskItem(StyleTransferData data) {
             Data = data ?? throw new ArgumentNullException(nameof(data));
+        }
+
+        internal void RefreshLanguage() {
+            OnPropertyChanged(nameof(StyleName));
+            OnPropertyChanged(nameof(StatusText));
         }
 
         private void NotifyCommandsCanExecuteChanged() {

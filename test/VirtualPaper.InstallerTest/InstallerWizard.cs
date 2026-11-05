@@ -24,10 +24,10 @@ internal static class InstallerWizard {
         try {
             string log = Path.Combine(Path.GetDirectoryName(options.ResultsFile!)!, options.Uninstall ? "uninstall.log" : "install.log");
             Directory.CreateDirectory(Path.GetDirectoryName(log)!);
-            // English makes control matching deterministic; it is a shipped installer language.
+            // Both shipped installer languages use the same required wizard interactions.
             // No silent switches here: license, Next, Install, Finish and uninstall dialogs are real.
             string arguments = options.Uninstall ? $"/NORESTART /LOG=\"{log}\""
-                : $"/LANG=english /NORESTART /NOAUTOLAUNCH /DIR=\"{options.InstallDir}\" /LOG=\"{log}\"";
+                : $"/LANG={options.Language} /NORESTART /NOAUTOLAUNCH /DIR=\"{options.InstallDir}\" /LOG=\"{log}\"";
             var process = Process.Start(new ProcessStartInfo(options.WizardExecutable!, arguments) {
                 UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(options.WizardExecutable!)!,
                 WindowStyle = ProcessWindowStyle.Normal
@@ -110,24 +110,24 @@ internal static class InstallerWizard {
         AutomationElement? target = null;
         string? action = null;
         if (uninstall) {
-            if (text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase)) {
+            if (text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase) || text.Contains("删除数据文件夹", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "no", "7"); action = "keep-user-data";
-            } else if (text.Contains("completely remove", StringComparison.OrdinalIgnoreCase)) {
+            } else if (text.Contains("completely remove", StringComparison.OrdinalIgnoreCase) || text.Contains("完全移除", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "yes", "6"); action = "confirm-uninstall";
-            } else if (text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase)) {
+            } else if (text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase) || text.Contains("已顺利从您的电脑中移除", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "ok", "1"); action = "acknowledge-uninstall";
             }
         } else {
-            if (text.Contains("this will install", StringComparison.OrdinalIgnoreCase) &&
-                text.Contains("continue", StringComparison.OrdinalIgnoreCase)) {
+            if (text.Contains("this will install", StringComparison.OrdinalIgnoreCase) && text.Contains("continue", StringComparison.OrdinalIgnoreCase)
+                || text.Contains("现在将安装", StringComparison.Ordinal) && text.Contains("继续", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "yes", "6"); action = "confirm-install";
             }
             var accept = controls.FirstOrDefault(e => e.Current.IsEnabled && e.Current.ControlType == ControlType.RadioButton &&
-                Normalize(e.Current.Name) == "i accept the agreement");
+                Normalize(e.Current.Name) is "i accept the agreement" or "我同意此协议");
             if (target is null && accept != null && !result.Actions.Contains("accept-license")) {
                 target = accept; action = "accept-license";
             } else if (target is null) {
-                foreach (var (label, step) in new[] { ("finish", "finish"), ("install", "install"), ("next", "next") }) {
+                foreach (var (label, step) in new[] { ("finish", "finish"), ("完成", "finish"), ("install", "install"), ("安装", "install"), ("next", "next"), ("下一步", "next") }) {
                     target = Find(buttons, label);
                     if (target != null) { action = step; break; }
                 }
@@ -171,9 +171,9 @@ internal static class InstallerWizard {
             return true;
         }, 0);
         string text = string.Join("\n", labels);
-        var (action, id) = text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase) ? ("keep-user-data", 7)
-            : text.Contains("completely remove", StringComparison.OrdinalIgnoreCase) ? ("confirm-uninstall", 6)
-            : text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase) ? ("acknowledge-uninstall", 1)
+        var (action, id) = text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase) || text.Contains("删除数据文件夹", StringComparison.Ordinal) ? ("keep-user-data", 7)
+            : text.Contains("completely remove", StringComparison.OrdinalIgnoreCase) || text.Contains("完全移除", StringComparison.Ordinal) ? ("confirm-uninstall", 6)
+            : text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase) || text.Contains("已顺利从您的电脑中移除", StringComparison.Ordinal) ? ("acknowledge-uninstall", 1)
             : ((string?)null, 0);
         if (action == null || action == previous && sinceAction < TimeSpan.FromSeconds(1)) return null;
         // The single OK button can use IDCANCEL (2), including on Chinese Windows.
@@ -190,7 +190,8 @@ internal static class InstallerWizard {
     private static AutomationElement? FindDialogButton(AutomationElement[] controls, string name, string id) =>
         Find(controls, name) ?? controls.FirstOrDefault(e => e.Current.AutomationId == id);
 
-    private static string Normalize(string text) => text.Replace("&", "").Trim().Trim('<', '>').Trim().ToLowerInvariant();
+    private static string Normalize(string text) => System.Text.RegularExpressions.Regex.Replace(text.Replace("&", ""), @"\([A-Za-z]\)", "")
+        .Trim().Trim('<', '>').Trim().ToLowerInvariant();
 
     private static IEnumerable<int> Descendants(HashSet<int> roots) {
         IntPtr snapshot = CreateToolhelp32Snapshot(2, 0);

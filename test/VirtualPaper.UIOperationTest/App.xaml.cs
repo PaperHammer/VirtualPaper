@@ -25,6 +25,7 @@ public partial class App : Application {
         }
 
         var cases = new[] {
+            new UiTestCase("Localization.LiveText.RefreshAndPreserveState", LocalizationTests.RefreshAndPreserveStateAsync),
             new UiTestCase("GeneralEffect.RImage.EditRestoreSaveAndReopen",
                 context => GeneralEffectTests.EditRestoreSaveAndReopenAsync(context, RuntimeType.RImage)),
             new UiTestCase("GeneralEffect.RImage3D.EditRestoreSaveAndReopen",

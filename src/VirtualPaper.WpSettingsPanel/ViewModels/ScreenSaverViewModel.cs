@@ -73,6 +73,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public int SeletedEffectIndx {
             get => _seletedEffectIndx;
             set {
+                if (_isRefreshingLanguage || value < 0) return;
                 _seletedEffectIndx = value;
                 OnPropertyChanged();
                 if (_userSettingsClient.Settings.ScreenSaverEffect == (ScrEffect)value) return;
@@ -100,6 +101,20 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             InitCollections();
             InitContent();
             InitCommand();
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
+        }
+
+        private bool _isRefreshingLanguage;
+        private void OnLanguageUpdated(object? sender, EventArgs args) {
+            _isRefreshingLanguage = true;
+            try {
+                InitText();
+                Effects = [_effectNone, _effectBubble];
+                OnPropertyChanged(nameof(Effects));
+                OnPropertyChanged(nameof(SeletedEffectIndx));
+                ChangeScreenSaverStatu(_isScreenSaverOn);
+            }
+            finally { _isRefreshingLanguage = false; }
         }
 
         private void InitCommand() {
@@ -266,6 +281,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 if (_isDisposed) return;
                 _isDisposed = true;
                 if (disposing) {
+                    LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
                     _ctsListen?.Cancel();
                 }
             }

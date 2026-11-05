@@ -307,9 +307,9 @@ internal static class ApplicationUi {
             return label;
         }
         finally {
-            // Settings such as language can synchronously close their UI as a
-            // result of Select. Their caller must observe the actual restart.
-            if (!closesWindow) expand.Collapse();
+            // Backdrop changes close the UI; language changes temporarily disable
+            // this control while saving. Neither permits a trailing Collapse call.
+            if (!closesWindow && combo.Current.IsEnabled) expand.Collapse();
         }
     }
 

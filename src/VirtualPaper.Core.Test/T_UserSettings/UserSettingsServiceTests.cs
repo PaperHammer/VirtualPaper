@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using System.Text.Json.Serialization;
 using Moq;
@@ -5,6 +6,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Models.Cores;
+using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services;
 using Monitor = VirtualPaper.Models.Cores.Monitor;
 
@@ -175,6 +177,60 @@ namespace VirtualPaper.Core.Test.T_UserSettings {
 
             Assert.AreEqual(secondMonitor, service.Settings.SelectedMonitor,
                 "When a non-primary SelectedMonitor is found in the monitor list, it should be kept as-is");
+        }
+
+        [TestMethod]
+        [DataRow("english", "en-US")]
+        [DataRow("chinese", "zh-CN")]
+        public void FirstLaunch_UsesInstallerLanguageAndPersistsIt(string installerLanguage, string expectedLanguage) {
+            string marker = Path.GetTempFileName();
+            try {
+                File.WriteAllText(marker, installerLanguage);
+                _mockJsonSaver.Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                    .Throws(new FileNotFoundException());
+
+                var service = new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object, _ => { }, marker);
+
+                Assert.AreEqual(expectedLanguage, service.Settings.Language);
+                _mockJsonSaver.Verify(s => s.Save(It.IsAny<string>(),
+                    It.Is<ISettings>(settings => settings.Language == expectedLanguage), It.IsAny<JsonSerializerContext>()), Times.Once);
+            }
+            finally { File.Delete(marker); }
+        }
+
+        [TestMethod]
+        [DataRow("english", "zh-CN")]
+        [DataRow("chinese", "en-US")]
+        public void ExistingSettings_KeepLanguageRegardlessOfInstallerLanguage(string installerLanguage, string savedLanguage) {
+            string marker = Path.GetTempFileName();
+            try {
+                File.WriteAllText(marker, installerLanguage);
+                _mockJsonSaver.Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                    .Returns(new Settings { Language = savedLanguage });
+
+                var service = new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object, _ => { }, marker);
+
+                Assert.AreEqual(savedLanguage, service.Settings.Language);
+            }
+            finally { File.Delete(marker); }
+        }
+
+        [TestMethod]
+        [DataRow("unsupported")]
+        [DataRow("")]
+        public void InvalidInstallerLanguage_UsesTheNormalDefault(string installerLanguage) {
+            string marker = Path.GetTempFileName();
+            try {
+                File.WriteAllText(marker, installerLanguage);
+                _mockJsonSaver.Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                    .Throws(new FileNotFoundException());
+                string expected = SupportedLanguages.GetLanguage(new Settings().Language).Codes[0];
+
+                var service = new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object, _ => { }, marker);
+
+                Assert.AreEqual(expected, service.Settings.Language);
+            }
+            finally { File.Delete(marker); }
         }
 
         private UserSettingsService CreateService() =>

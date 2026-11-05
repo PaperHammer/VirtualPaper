@@ -141,6 +141,7 @@ namespace VirtualPaper.Common {
             public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM" + TestSessionSuffix;
             private static string TestSessionSuffix => TestProcessEnvironment.IsEnabled ? ":" + TestProcessEnvironment.SessionId : string.Empty;
             public static string AppBuildFile => "app_build.json";
+            public const string InstallerLanguageFileName = "installer-language.txt";
         }
 
         public static class PipeControlField {
@@ -206,6 +207,9 @@ namespace VirtualPaper.Common {
             public const string Text_AspectRatio = nameof(Text_AspectRatio);
             public const string Text_Cancel = nameof(Text_Cancel);
             public const string Text_Confirm = nameof(Text_Confirm);
+            public const string Text_Adjust = nameof(Text_Adjust);
+            public const string Text_Details = nameof(Text_Details);
+            public const string PlayerWeb_DetailsWindowTitle = nameof(PlayerWeb_DetailsWindowTitle);
             public const string Text_Create = nameof(Text_Create);
             public const string Text_Delete = nameof(Text_Delete);
             public const string Text_RemoveRecord = nameof(Text_RemoveRecord);
@@ -255,6 +259,8 @@ namespace VirtualPaper.Common {
             public const string Project_SI_Text_BackgroundLayer = nameof(Project_SI_Text_BackgroundLayer);
             public const string Project_FileLoad_FileCorrupted = nameof(Project_FileLoad_FileCorrupted);
             public const string Project_StaticImg_Text_LayerNew = nameof(Project_StaticImg_Text_LayerNew);
+            public const string Project_StaticImg_Text_Paintbrush = nameof(Project_StaticImg_Text_Paintbrush);
+            public const string Intelligent_Task_Style_Img_Import = nameof(Intelligent_Task_Style_Img_Import);
             public const string Project_StaticImg_Text_LayerCopy = nameof(Project_StaticImg_Text_LayerCopy);
             public const string Project_Unsave_Intercept_Content = nameof(Project_Unsave_Intercept_Content);
             public const string Project_Unsave_Intercept_Title = nameof(Project_Unsave_Intercept_Title);

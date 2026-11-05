@@ -54,7 +54,7 @@ Use `-ReportPath` to specify a new JSON report path; the default is in the syste
 
 The default overall timeout is 180 seconds, or 900 seconds for `-Suite Extended`. Set `-TimeoutSeconds` to a value from 30 to 900 as needed. The report's adjacent `.artifacts` directory retains isolated settings and Core/UI logs; temporary runtime directories are cleaned up.
 
-The standard suite contains 16 cases. The extended suite contains those cases plus real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
+The standard suite contains 17 cases. The extended suite contains those cases plus real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
 
 ### Machines without a usable desktop
 
@@ -65,6 +65,10 @@ An unsuitable environment produces a report with `Status: Skipped`, `Passed: fal
 Only real UI acceptance is skipped; regular tests can still run. The CI summary explicitly reports the skip rather than claiming full acceptance. Preflight errors, missing reports, and failures or timeouts after startup remain failures. Detection does not lock or unlock the session, switch input desktops, modify the registry, or create virtual displays.
 
 ## Default coverage
+
+### Live language changes
+
+`Localization.LiveText.RefreshAndPreserveState` switches between Chinese and English on production controls. It checks brush labels, preset style names, unnamed-style prompts, and queued task labels, while preserving brush settings, selected styles, input paths, and custom names.
 
 ### Component effects
 
@@ -151,7 +155,7 @@ Changes use production RPC/IPC while the player remains running. The case does n
 
 1. Switch light/dark theme and change backdrop, startup preference, and language. Check each change through Core RPC and JSON.
 2. Navigate among General, System, and Other, then verify retained settings and the About image's accessible name.
-3. After backdrop and language changes, observe Core automatically relaunch UI and check each old process's exit code without issuing a substitute ShowUI request.
+3. After a backdrop change, observe Core automatically relaunch UI. Switch Chinese/English in the same UI process and verify that tab labels and backdrop choices update immediately without restarting.
 4. Close and reopen UI, check Chinese labels, backdrop options, language, and startup preference, then restore English and disable the startup preference.
 
 Explicit test sessions skip OS startup registration. This case does not validate real registration, backdrop pixels, About image decoding, or update downloads.
@@ -280,13 +284,15 @@ Each installer run uses a unique temporary installation and isolated application
 
 With an interactive desktop, the test operates the real English installation wizard: accept the license, proceed, install, and finish. Uninstall confirms removal, preserves user data, and completes. Only the installer and its child-process windows are operated; unknown dialogs or timeouts fail. Without a desktop, install and uninstall run silently, and both Open and UIOperation are explicitly `Skipped`, with matching desktop evidence in the UI report.
 
-Both modes check required Core/UI files, package/program version agreement, Start menu shortcuts, and uninstall registration. After uninstall, they check file, process, shortcut, and registration residue. Reports and installer logs are retained; desktop runs also retain wizard traces.
+Both modes check required Core/UI files, package/program version agreement, Start menu shortcuts, uninstall registration, and the recorded installer language. Desktop runs also verify that a fresh application's UI, Core settings, and persisted settings use that language. Existing user settings retain their language during upgrades. After uninstall, the runner checks file, process, shortcut, and registration residue. Reports and installer logs are retained; desktop runs also retain wizard traces.
 
 **Installer acceptance performs actual system installation and uninstallation.** Use a clean CI machine or an explicitly prepared local administrator session. It refuses an existing installation with the same AppId or an existing Start menu shortcut. This is separate from the UI host's registry-free cases and must not be run where installation-related registry changes are prohibited.
 
 ```powershell
 # Disposable Windows installation-test machine only:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
+# Use the Chinese wizard and verify that the application starts in Chinese:
+./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -InstallerLanguage chinese -ReportPath TestResults/InstallerChinese/installer-results.json
 # Full acceptance, using a prebuilt UI host; always uninstalls after the UI stage:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `
   -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe

@@ -54,7 +54,7 @@ test/
 
 默认总超时为 180 秒，`-Suite Extended` 为 900 秒。可按需将 `-TimeoutSeconds` 设置为 30 至 900。报告旁的 `.artifacts` 目录会保留隔离设置和 Core/UI 日志，临时运行目录会被清理。
 
-标准测试集包含 16 个用例。扩展测试集在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。Real-ESRGAN 和 Depth Anything 模型必须预先安装；缺失模型会使扩展验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
+标准测试集包含 17 个用例。扩展测试集在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。Real-ESRGAN 和 Depth Anything 模型必须预先安装；缺失模型会使扩展验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
 
 ### 没有可用桌面的机器
 
@@ -65,6 +65,10 @@ test/
 仅跳过真实 UI 验收，常规测试仍可运行。CI 汇总会明确报告跳过，不会宣称完整验收通过。预检错误、报告缺失，以及启动后的失败或超时仍按失败处理。检测不会锁定或解锁会话、切换输入桌面、修改注册表或创建虚拟显示器。
 
 ## 默认覆盖范围
+
+### 语言即时切换
+
+`Localization.LiveText.RefreshAndPreserveState` 在正式组件上往返切换中英文，检查画笔名称、预设风格名称、无名称时的提示和队列任务文字，同时检查画笔参数、风格选择、输入路径和自定义名称保持不变。
 
 ### 组件效果
 
@@ -151,7 +155,7 @@ test/
 
 1. 切换亮色、深色主题，修改背景材质、自启动偏好和语言，通过 Core RPC 和 JSON 检查每次变更。
 2. 在 General、System、Other 页面之间导航，核验设置保留及 About 图片的无障碍名称。
-3. 修改材质和语言后，观察 Core 自动重启 UI，检查旧进程退出码，不额外发送 ShowUI 请求替代自动重启。
+3. 修改材质后，观察 Core 自动重启 UI；中英文切换保持同一个 UI 进程，检查页签和材质选项立即更新，无需重启。
 4. 关闭并重新打开 UI，检查中文标签、材质选项、语言和自启动偏好，再恢复英文并关闭自启动偏好。
 
 显式测试会话跳过系统自启动注册。此用例不验证真实注册、材质像素、About 图片解码或更新下载。
@@ -280,13 +284,15 @@ Pre-release 会对设置新版本后生成的构建和实际发布安装包重�
 
 有交互桌面时，测试操作真实英文安装向导：接受许可、继续、安装和完成。卸载时确认移除、保留用户数据并完成。仅操作安装器及其子进程窗口，未知对话框或超时会失败。无桌面时静默安装、卸载，Open 和 UIOperation 均明确为 `Skipped`，UI 报告保留同一份桌面预检证据。
 
-两种模式都会检查必要的 Core/UI 文件、包与程序版本一致性、开始菜单快捷方式和卸载注册信息。卸载后检查文件、进程、快捷方式和注册残留。保留报告和安装器日志；桌面运行还保留向导轨迹。
+两种模式都会检查必要的 Core/UI 文件、包与程序版本一致性、开始菜单快捷方式、卸载注册信息和安装语言记录。桌面运行还验证首次启动时的界面、Core 设置和持久化设置均使用安装语言。升级时保留已有用户配置的语言。卸载后检查文件、进程、快捷方式和注册残留。保留报告和安装器日志；桌面运行还保留向导轨迹。
 
 **安装包验收会实际执行系统安装和卸载。** 应使用干净 CI 机器或明确准备好的本地管理员会话。已存在相同 AppId 安装或开始菜单快捷方式时会拒绝执行。这与 UI 宿主不写注册表的用例不同，不应在禁止安装相关注册表修改的环境中运行。
 
 ```powershell
 # 仅限一次性 Windows 安装测试机器：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
+# 使用中文安装向导，并验证应用首次启动时使用中文：
+./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -InstallerLanguage chinese -ReportPath TestResults/InstallerChinese/installer-results.json
 # 完整验收，使用预构建的 UI 宿主；UI 阶段结束后始终执行卸载：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `
   -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe

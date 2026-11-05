@@ -3,11 +3,11 @@
     x:Class="VirtualPaper.IntelligentPanel.Views.StyleTransferComp.StyleTransferTasksView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.IntelligentPanel.Views.StyleTransferComp"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:lcl_models="using:VirtualPaper.IntelligentPanel.Models"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d">
 
@@ -61,7 +61,7 @@
                                         <StackPanel VerticalAlignment="Center" Spacing="8">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock 
-                                                    Text="{markup:I18n Key=Intelligent_Task_Scr_Img}" 
+                                                    l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Text"
                                                     FontSize="14" 
                                                     Width="60"/>
                                                 <TextBlock
@@ -75,11 +75,11 @@
 
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <TextBlock
-                                                    Text="{markup:I18n Key=Intelligent_Task_Style}"
+                                                    l:Uids.Uid="Ui_Intelligent_Task_Style_Text"
                                                     FontSize="14"
                                                     Width="60"/>
                                                 <TextBlock
-                                                    Text="{x:Bind StyleName}"
+                                                    Text="{x:Bind StyleName, Mode=OneWay}"
                                                     FontSize="14"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     TextTrimming="CharacterEllipsis"
@@ -110,19 +110,19 @@
 
                                             <input:ArcButton Command="{x:Bind PreviewCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="{markup:I18n Key=Text_Preview}" FontSize="14"/>
+                                                    <TextBlock l:Uids.Uid="Ui_Text_Preview_Text" FontSize="14"/>
                                                 </StackPanel>
                                             </input:ArcButton>
 
                                             <input:ArcButton Command="{x:Bind ImportCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="{markup:I18n Key=Text_ImportLib}" FontSize="14"/>
+                                                    <TextBlock l:Uids.Uid="Ui_Text_ImportLib_Text" FontSize="14"/>
                                                 </StackPanel>
                                             </input:ArcButton>
 
                                             <input:ArcButton Command="{x:Bind SaveCommand}">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="{markup:I18n Key=Text_Save}" FontSize="14"/>
+                                                    <TextBlock l:Uids.Uid="Ui_Text_Save_Text" FontSize="14"/>
                                                 </StackPanel>
                                             </input:ArcButton>
 
@@ -132,7 +132,7 @@
                                                 Background="#20FF4D6A"
                                                 Foreground="#FFD13438">
                                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock Text="{markup:I18n Key=Text_Delete}" FontSize="14" Foreground="#FFD13438"/>
+                                                    <TextBlock l:Uids.Uid="Ui_Text_Delete_Text" FontSize="14" Foreground="#FFD13438"/>
                                                 </StackPanel>
                                             </input:ArcButton>
                                         </StackPanel>
@@ -166,7 +166,7 @@
                                         <StackPanel HorizontalAlignment="Center" Spacing="6">
 
                                             <TextBlock 
-                                                Text="{markup:I18n Key=Intelligent_Task_Scr_Img}"
+                                                l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Text"
                                                 FontSize="16"
                                                 FontWeight="SemiBold"
                                                 HorizontalAlignment="Center"/>
@@ -230,7 +230,7 @@
 
                                             <Grid HorizontalAlignment="Stretch">
                                                 <TextBlock 
-                                                    Text="{markup:I18n Key=Intelligent_Task_Style}"
+                                                    l:Uids.Uid="Ui_Intelligent_Task_Style_Text"
                                                     FontSize="16"
                                                     FontWeight="SemiBold"
                                                     HorizontalAlignment="Center"
@@ -267,12 +267,22 @@
                                                     Spacing="16">
                                                     <StackPanel Orientation="Horizontal" Spacing="4">
                                                         <FontIcon Glyph="&#xE790;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                                        <TextBlock 
-                                                            Text="{x:Bind StyleName, TargetNullValue={markup:I18n Key=Intelligent_Task_Style_Img_Import}, Mode=OneWay}" 
-                                                            FontSize="14"
-                                                            MaxWidth="120"
-                                                            TextTrimming="CharacterEllipsis"
-                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                                        <Grid>
+                                                            <TextBlock x:Name="styleName"
+                                                                Text="{x:Bind StyleName, Mode=OneWay}"
+                                                                Visibility="{x:Bind StyleName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}"
+                                                                FontSize="14"
+                                                                MaxWidth="120"
+                                                                TextTrimming="CharacterEllipsis"
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                            <TextBlock x:Name="styleNameFallback"
+                                                                l:Uids.Uid="Ui_Intelligent_Task_Style_Img_Import_Text"
+                                                                Visibility="{x:Bind StyleName, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}"
+                                                                FontSize="14"
+                                                                MaxWidth="120"
+                                                                TextTrimming="CharacterEllipsis"
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                        </Grid>
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                                         <FontIcon Glyph="&#xEB05;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
@@ -296,7 +306,7 @@
                                     <StackPanel HorizontalAlignment="Center" Spacing="6">
 
                                         <TextBlock 
-                                            Text="{markup:I18n Key=Text_Result}"
+                                            l:Uids.Uid="Ui_Text_Result_Text"
                                             FontSize="16"
                                             FontWeight="SemiBold"
                                             HorizontalAlignment="Center"/>

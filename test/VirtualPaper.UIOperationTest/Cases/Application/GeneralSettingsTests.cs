@@ -36,15 +36,22 @@ internal static class GeneralSettingsTests {
         });
         await AppProcessSession.WaitAsync(async () => (await session.Settings.GetSettingsAsync(new Empty(),
             deadline: DateTime.UtcNow.AddSeconds(1))).IsAutoStart, "Auto start preference saved through Core");
-        await Task.Run(() => ApplicationUi.SelectComboIndex(ApplicationUi.Find(root, "Settings.General.Language"), 0, SupportedLanguages.Languages.Count, closesWindow: true));
+        int languageUiId = ui.Id;
+        await Task.Run(() => ApplicationUi.SelectComboIndex(ApplicationUi.Find(root, "Settings.General.Language"), 0, SupportedLanguages.Languages.Count));
         await AppProcessSession.WaitAsync(async () => (await session.Settings.GetSettingsAsync(new Empty(),
             deadline: DateTime.UtcNow.AddSeconds(1))).Language == "zh-CN", "Chinese language saved through Core");
+        // The language control is re-enabled after SaveAsync completes. Wait for
+        // it before reading JSON, so the observer cannot block an exclusive write.
+        await AppProcessSession.WaitAsync(() => Task.Run(() =>
+            ApplicationUi.Find(root, "Settings.Tab.General").Current.Name == "通用"
+            && ApplicationUi.Find(root, "Settings.General.Language").Current.IsEnabled
+            && ApplicationUi.SelectedLabel(ApplicationUi.Find(root, "Settings.General.Backdrop")) == "亚克力"),
+            "Chinese labels updated in the existing UI");
         await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
             json["ApplicationTheme"]?.GetValue<string>() == nameof(AppTheme.Dark)
             && json["SystemBackdrop"]?.GetValue<string>() == nameof(AppSystemBackdrop.Acrylic)
             && json["IsAutoStart"]?.GetValue<bool>() == true && json["Language"]?.GetValue<string>() == "zh-CN");
-        ui = await session.WaitForUiRestartAsync();
-        root = await Task.Run(() => OpenGeneral(ui.MainWindowHandle));
+        Check(!ui.HasExited && ui.Id == languageUiId, "Changing language restarted the UI process");
         await Task.Run(() => {
             ApplicationUi.Select(ApplicationUi.Find(root, "Settings.Tab.System"));
             ApplicationUi.Find(root, "Settings.System.ExportLogs", visible: true);
@@ -69,19 +76,26 @@ internal static class GeneralSettingsTests {
             Check(Toggle(root).Current.ToggleState == ToggleState.On, "Reopened UI did not retain auto start preference");
             Toggle(root).Toggle();
         });
-        // Finish this save before changing a setting that restarts the UI.
+        // Finish the preceding save before changing language again.
         await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
             json["IsAutoStart"]?.GetValue<bool>() == false && json["Language"]?.GetValue<string>() == "zh-CN");
-        await Task.Run(() => ApplicationUi.SelectComboIndex(ApplicationUi.Find(root, "Settings.General.Language"), 1, SupportedLanguages.Languages.Count, closesWindow: true));
+        languageUiId = ui.Id;
+        await Task.Run(() => ApplicationUi.SelectComboIndex(ApplicationUi.Find(root, "Settings.General.Language"), 1, SupportedLanguages.Languages.Count));
+        await AppProcessSession.WaitAsync(() => Task.Run(() =>
+            ApplicationUi.Find(root, "Settings.Tab.General").Current.Name == "General"
+            && ApplicationUi.Find(root, "Settings.General.Language").Current.IsEnabled
+            && ApplicationUi.SelectedLabel(ApplicationUi.Find(root, "Settings.General.Backdrop")) == "Acrylic"),
+            "English labels updated in the existing UI");
         await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
             json["Language"]?.GetValue<string>() == "en-US" && json["IsAutoStart"]?.GetValue<bool>() == false);
-        ui = await session.WaitForUiRestartAsync();
+        Check(!ui.HasExited && ui.Id == languageUiId, "Changing back to English restarted the UI process");
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["Theme"] = nameof(AppTheme.Dark);
         context.Evidence["Backdrop"] = nameof(AppSystemBackdrop.Acrylic);
         context.Evidence["ChineseLanguageAndReopenedResourcesVerified"] = true;
-        context.Evidence["CoreAutomaticallyRestartedUiForBackdropAndLanguage"] = true;
+        context.Evidence["CoreAutomaticallyRestartedUiForBackdrop"] = true;
+        context.Evidence["LanguageUpdatedWithoutUiRestart"] = true;
         context.Evidence["AutoStartOsRegistrationTested"] = false;
         context.Evidence["BackdropPixelsAndAboutImageDecodeVerified"] = false;
     }

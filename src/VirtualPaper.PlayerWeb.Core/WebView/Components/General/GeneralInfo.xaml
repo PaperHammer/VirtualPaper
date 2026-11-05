@@ -3,11 +3,11 @@
     x:Class="VirtualPaper.PlayerWeb.Core.WebView.Components.General.GeneralInfo"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.PlayerWeb.Core.WebView.Components.General"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
@@ -102,7 +102,7 @@
 
                         <TextBlock 
                             Grid.Column="1" 
-                            Text="{markup:I18n Key=Details_Text_FileProperty}"
+                            l:Uids.Uid="Ui_Details_Text_FileProperty_Text"
                             Style="{StaticResource CaptionTextBlockStyle}" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
 
@@ -116,7 +116,7 @@
                 <StackPanel Orientation="Vertical" Spacing="10">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock 
-                            Text="{markup:I18n Key=Text_Resolution}"
+                            l:Uids.Uid="Ui_Text_Resolution_Text"
                             Style="{StaticResource BodyTextBlockStyle}"/>
                         <TextBlock
                             Text="{x:Bind _viewModel.Resolution, Mode=OneWay}"
@@ -125,7 +125,7 @@
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock 
-                            Text="{markup:I18n Key=Text_AspectRatio}"
+                            l:Uids.Uid="Ui_Text_AspectRatio_Text"
                             Style="{StaticResource BodyTextBlockStyle}"/>
                         <TextBlock
                             Text="{x:Bind _viewModel.AspectRatio, Mode=OneWay}"
@@ -134,7 +134,7 @@
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock 
-                            Text="{markup:I18n Key=Text_FileExtension}"
+                            l:Uids.Uid="Ui_Text_FileExtension_Text"
                             Style="{StaticResource BodyTextBlockStyle}"/>
                         <TextBlock
                             Text="{x:Bind _viewModel.FileExtension, Mode=OneWay}"
@@ -143,7 +143,7 @@
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock 
-                            Text="{markup:I18n Key=Text_FileSize}"
+                            l:Uids.Uid="Ui_Text_FileSize_Text"
                             Style="{StaticResource BodyTextBlockStyle}"/>
                         <TextBlock
                             Text="{x:Bind _viewModel.FileSize, Mode=OneWay}"
@@ -152,7 +152,7 @@
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock 
-                            Text="{markup:I18n Key=Text_VersionInfo}"
+                            l:Uids.Uid="Ui_Text_VersionInfo_Text"
                             Style="{StaticResource BodyTextBlockStyle}"/>
                         <TextBlock
                             Text="{x:Bind _viewModel.VersionInfo, Mode=OneWay}"

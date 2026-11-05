@@ -1,9 +1,12 @@
 using System.Diagnostics;
 using System.IO;
+using System.Text.Json;
+using System.Windows.Automation;
 using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Service.Commands;
+using VirtualPaper.Grpc.Service.UserSettings;
 
 namespace VirtualPaper.InstallerTest;
 
@@ -20,6 +23,12 @@ internal static class ApplicationLifecycle {
             if (!File.Exists(corePath) || !File.Exists(uiPath)) throw new FileNotFoundException("Installed Core/UI executable is missing.");
             Environment.SetEnvironmentVariable(TestProcessEnvironment.SessionVariable, Guid.NewGuid().ToString("N"));
             Environment.SetEnvironmentVariable(TestProcessEnvironment.DataRootVariable, Path.GetFullPath(dataRoot));
+            string marker = File.ReadAllText(Path.Combine(installDir, Constants.CoreField.InstallerLanguageFileName)).Trim();
+            result.ExpectedLanguage = marker switch {
+                "english" => "en-US",
+                "chinese" => "zh-CN",
+                _ => throw new InvalidDataException($"Unsupported installer language: {marker}")
+            };
             commands = new(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
             core = Process.Start(new ProcessStartInfo(corePath) { WorkingDirectory = installDir, UseShellExecute = false })
                 ?? throw new InvalidOperationException("The installed application did not start.");
@@ -46,6 +55,24 @@ internal static class ApplicationLifecycle {
             result.UiProcessId = ui.Id;
             result.OpenedNormally = true;
             Console.WriteLine($"First-run UI ready: PID {ui.Id}, HWND {ui.MainWindowHandle}");
+            var settings = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
+            result.ActualLanguage = settings.GetSettings(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5)).Language;
+            if (result.ActualLanguage != result.ExpectedLanguage)
+                throw new InvalidOperationException($"First-run language: expected {result.ExpectedLanguage}, got {result.ActualLanguage}.");
+            var window = AutomationElement.FromHandle(ui.MainWindowHandle);
+            var navigation = window.FindFirst(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.AutomationIdProperty, "App.Navigation.Settings"))
+                ?? throw new InvalidOperationException("The installed UI has no Settings navigation item.");
+            ((SelectionItemPattern)navigation.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
+            string expectedTab = result.ExpectedLanguage == "zh-CN" ? "通用" : "General";
+            bool localized = false;
+            while (clock.Elapsed < timeout) {
+                var tab = window.FindFirst(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.AutomationIdProperty, "Settings.Tab.General"));
+                if (tab?.Current.Name == expectedTab) { localized = true; break; }
+                Thread.Sleep(100);
+            }
+            if (!localized) throw new InvalidOperationException("The installed UI did not display the installer-selected language.");
             // WM_CLOSE uses the same production path as the user's window close button.
             if (!ui.CloseMainWindow()) throw new InvalidOperationException("UI rejected the normal close request.");
             if (!ui.WaitForExit(15000)) throw new TimeoutException("UI did not exit after its window was closed.");
@@ -60,6 +87,11 @@ internal static class ApplicationLifecycle {
             if (!core.WaitForExit(15000)) throw new TimeoutException("Core did not exit after the normal quit request.");
             if (core.ExitCode != 0) throw new InvalidOperationException($"Core exited abnormally: {core.ExitCode}");
             result.ExitedNormally = true;
+            using var saved = JsonDocument.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath));
+            result.PersistedLanguage = saved.RootElement.GetProperty("Language").GetString();
+            if (result.PersistedLanguage != result.ExpectedLanguage)
+                throw new InvalidOperationException("The installer-selected language was not persisted.");
+            result.LanguageVerified = true;
         } catch (Exception exception) {
             result.Error = exception.ToString();
             Console.Error.WriteLine(exception);

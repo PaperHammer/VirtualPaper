@@ -24,7 +24,7 @@ using Windows.Storage;
 using WinUIEx;
 
 namespace VirtualPaper.WpSettingsPanel.ViewModels {
-    public partial class WpSettingsViewModel : ObservableObject {
+    public partial class WpSettingsViewModel : ObservableObject, IDisposable {
         public ObservableCollection<IMonitor> Monitors { get; set; } = [];
         public List<WpArrangeDataModel> WpArrangements { get; set; } = [];
 
@@ -80,7 +80,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             InitMonitors();
             InitCommand();
             InitTypeFilters();
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
         }
+
+        private void OnLanguageUpdated(object? sender, EventArgs args) {
+            string[] keys = [Constants.I18n.WpLib_TypeFilter_StaticImage, Constants.I18n.WpLib_TypeFilter_DynamicImage,
+                Constants.I18n.WpLib_TypeFilter_Video, Constants.I18n.WpLib_TypeFilter_WebInteractive];
+            for (int i = 0; i < TypeFilters.Count; i++) TypeFilters[i].UpdateLabel(LanguageUtil.GetI18n(keys[i]));
+            UpdateTypeFilterLabel();
+        }
+
+        public void Dispose() => LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
 
         #region Init
         public void InitFlyoutData() {
@@ -169,7 +179,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
             // 任一 item 的 IsSelected 变化时重新广播
             foreach (var item in TypeFilters) {
-                item.PropertyChanged += (_, _) => OnTypeFilterChanged();
+                item.PropertyChanged += (_, args) => {
+                    if (args.PropertyName == nameof(WpTypeFilterItem.IsSelected)) OnTypeFilterChanged();
+                };
             }
         }
         #endregion

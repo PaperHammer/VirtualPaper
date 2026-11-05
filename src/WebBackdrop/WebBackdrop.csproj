@@ -109,7 +109,7 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<!-- Ship the runtime distribution and its license metadata only. -->
-		<Content Include="Assets\monaco-editor-*\package\min\**\*;Assets\monaco-editor-*\package\LICENSE;Assets\monaco-editor-*\package\ThirdPartyNotices.txt;Assets\monaco-editor-*\package\package.json">
+		<Content Include="Assets\monaco-editor-*\package\min\**\*;Assets\monaco-editor-*\package\LICENSE;Assets\monaco-editor-*\package\DOMPurify.LICENSE;Assets\monaco-editor-*\package\ThirdPartyNotices.txt;Assets\monaco-editor-*\package\package.json">
 			<TargetPath>$([System.Text.RegularExpressions.Regex]::Replace('%(FullPath)', '^.*\\Assets\\monaco-editor-[^\\]+\\package\\', 'Assets\\monaco-editor\\'))</TargetPath>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<ExcludeFromResourceIndex>true</ExcludeFromResourceIndex>

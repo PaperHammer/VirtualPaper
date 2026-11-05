@@ -13,6 +13,7 @@ using VirtualPaper.EditPanel;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.TwoWay;
 using VirtualPaper.IntelligentPanel;
+using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
@@ -32,10 +33,11 @@ namespace VirtualPaper.UI {
         public override bool IsMainWindow => true;
         public override ArcWindowManagerKey Key => _windowKey;
 
-        public MainWindow(IUserSettingsClient userSettings, ICommandsClient commandsClient, ITwoWayClient twoWayClient)
+        public MainWindow(IUserSettingsClient userSettings, ICommandsClient commandsClient, ITwoWayClient twoWayClient, IntelligentTaskCloseCoordinator intelligentTasks)
             : base(userSettings.Settings.ApplicationTheme, userSettings.Settings.SystemBackdrop) {
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.Main);
             _userSettings = userSettings;
+            _intelligentTasks = intelligentTasks;
             this.InitializeComponent();
             this.InitWindowConst();
             base.InitializeWindow();
@@ -74,15 +76,22 @@ namespace VirtualPaper.UI {
             }
         }
 
+        private readonly IntelligentTaskCloseCoordinator _intelligentTasks;
         private Task<bool>? _closeCheckTask;
         private Task<bool> CheckCanCloseAsync() => CrossThreadInvoker.InvokeOnUIThreadAsync(async () => {
             // IPC arrives on a receive thread. All editor access and dialogs belong
             // to the UI thread; concurrent exit requests share the same decision.
+            if (Volatile.Read(ref _isClosing) != 0) return true;
             if (_closeCheckTask != null) return await _closeCheckTask;
-            _closeCheckTask = NaviContent.CheckAllPagesCanCloseAsync();
+            _closeCheckTask = CheckPagesAndTasksAsync();
             try { return await _closeCheckTask; }
             finally { _closeCheckTask = null; }
         });
+
+        private async Task<bool> CheckPagesAndTasksAsync() {
+            if (!await NaviContent.CheckAllPagesCanCloseAsync()) return false;
+            return await _intelligentTasks.CanCloseAsync();
+        }
 
         private int _isClosing;
         private async Task CloseConfirmedAsync(TwoWayMessage? closeResult = null) {
@@ -97,6 +106,7 @@ namespace VirtualPaper.UI {
                     ArcLog.GetLogger<MainWindow>().Warn($"Could not notify Core that UI is closing: {ex.Message}");
                 }
             }
+            if (initiateClose) await CrossThreadInvoker.InvokeOnUIThreadAsync(() => _intelligentTasks.CommitCloseAsync());
             if (closeResult != null) {
                 try {
                     // The response stream must not prevent an approved close forever.

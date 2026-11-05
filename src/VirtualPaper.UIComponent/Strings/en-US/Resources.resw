@@ -2275,4 +2275,20 @@ Author: PaperHammer</value><comment>Source: Settings_Others_About_Basic</comment
   <data name="Ui_WpSettings_NavTitle_LibraryContents_Content.Content" xml:space="preserve"><value>Library contents</value><comment>Source: WpSettings_NavTitle_LibraryContents</comment></data>
   <data name="Ui_WpSettings_NavTitle_ScrSettings_Content.Content" xml:space="preserve"><value>Screen saver</value><comment>Source: WpSettings_NavTitle_ScrSettings</comment></data>
   <data name="Ui_Project_StaticImg_Text_Paintbrush_Text.Text" xml:space="preserve"><value>Paintbrush</value><comment>Source: Project_StaticImg_Text_Paintbrush</comment></data>
+  <data name="Intelligent_Result_Temporary" xml:space="preserve"><value>Temporary only</value></data>
+  <data name="Intelligent_Result_Exported" xml:space="preserve"><value>Exported</value></data>
+  <data name="Intelligent_Result_Imported" xml:space="preserve"><value>Added to library</value></data>
+  <data name="Intelligent_Result_ExportedAndImported" xml:space="preserve"><value>Exported · In library</value></data>
+  <data name="Intelligent_Close_Title" xml:space="preserve"><value>Close intelligent tasks?</value></data>
+  <data name="Intelligent_Close_Active" xml:space="preserve"><value>{0} task(s) are queued, processing, or saving. Closing will stop unfinished work.</value></data>
+  <data name="Intelligent_Close_Temporary" xml:space="preserve"><value>{0} completed result(s) have not been exported or added to the library. They cannot be restored from the task list after closing, and temporary files are cleared on the next application startup.</value></data>
+  <data name="Intelligent_Close_DontRemind" xml:space="preserve"><value>Do not remind me about unsaved completed results</value></data>
+  <data name="Intelligent_Close_Return" xml:space="preserve"><value>Return to tasks</value></data>
+  <data name="Intelligent_Close_Confirm" xml:space="preserve"><value>Close anyway</value></data>
+  <data name="Intelligent_Remove_Title" xml:space="preserve"><value>Delete temporary result?</value></data>
+  <data name="Intelligent_Remove_Temporary" xml:space="preserve"><value>This result has not been exported or added to the library. Deleting the task also deletes its temporary result.</value></data>
+  <data name="Ui_Intelligent_Result_PreservationTooltip.ToolTipService.ToolTip" xml:space="preserve"><value>Export or add results to the library to keep them after closing.</value></data>
+  <data name="Ui_Settings_General_IntelligentResultReminder_Text.Text" xml:space="preserve"><value>Unsaved intelligent results</value></data>
+  <data name="Ui_Settings_General_IntelligentResultReminder_Description.Text" xml:space="preserve"><value>Remind me before closing results that have not been exported or added to the library. Unfinished tasks always require confirmation.</value></data>
+  <data name="Ui_Settings_General_IntelligentResultReminder_AutomationName.AutomationProperties.Name" xml:space="preserve"><value>Remind about unsaved intelligent results</value></data>
 </root>

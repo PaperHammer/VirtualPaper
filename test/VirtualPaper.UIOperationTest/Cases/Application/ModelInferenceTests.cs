@@ -53,6 +53,22 @@ internal static class ModelInferenceTests {
             ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[2]), "Intelligent.Task.Remove"));
             ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[1]), "Intelligent.Task.Remove"));
         });
+        // Both the tray/Core path and WM_CLOSE must protect tasks even after
+        // navigating away from the intelligent page.
+        await Task.Run(() => {
+            ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Library"));
+            var menu = TrayUi.Open(session.CoreId);
+            ApplicationUi.Invoke(ApplicationUi.Find(menu.Element, "Tray.Exit", visible: true));
+            ApplicationUi.Find(root, "Intelligent.Close.Dialog", visible: true);
+            ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "PrimaryButton"));
+            ApplicationUi.WaitUntilGone(root, "Intelligent.Close.Dialog");
+        });
+        await session.WaitForShutdownCancellationAsync(1);
+        Check(!ui.HasExited, "Returning from the intelligent exit dialog terminated UI");
+        await Task.Run(() => {
+            ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Intelligent"));
+            ApplicationUi.Select(ApplicationUi.Find(root, "Intelligent.Tab.SuperResolution"));
+        });
         await AppProcessSession.WaitAsync(() => Task.Run(() => FindRows(root).Count == 1), "Queued and running tasks removed");
         context.Evidence["QueuedAndRunningCancellationVerified"] = true;
         await AppProcessSession.WaitAsync(() => Task.Run(() => {
@@ -61,6 +77,34 @@ internal static class ModelInferenceTests {
             return state == LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed);
         }), "Real model result completed", TimeSpan.FromMinutes(6));
         context.Evidence["InferenceMilliseconds"] = timer.ElapsedMilliseconds;
+        await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_Temporary);
+        // Ticking the suppression box and returning must neither save the
+        // preference nor discard the temporary result. The next close asks again.
+        await Task.Run(() => {
+            ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Library"));
+            Check(ui.CloseMainWindow(), "UI rejected the close request");
+            ApplicationUi.Find(root, "Intelligent.Close.Dialog", visible: true);
+            var checkbox = ApplicationUi.Find(root, "Intelligent.Close.DontRemind", visible: true);
+            ((TogglePattern)checkbox.GetCurrentPattern(TogglePattern.Pattern)).Toggle();
+            ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "PrimaryButton"));
+            ApplicationUi.WaitUntilGone(root, "Intelligent.Close.Dialog");
+            Check(ui.CloseMainWindow(), "UI rejected the repeated close request");
+            ApplicationUi.Find(root, "Intelligent.Close.Dialog", visible: true);
+            ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "PrimaryButton"));
+            ApplicationUi.WaitUntilGone(root, "Intelligent.Close.Dialog");
+            ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Intelligent"));
+            ApplicationUi.Select(ApplicationUi.Find(root, "Intelligent.Tab.SuperResolution"));
+            ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[0]), "Intelligent.Task.Remove"));
+            ApplicationUi.Find(root, "Intelligent.Remove.Dialog", visible: true);
+            ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "PrimaryButton"));
+            ApplicationUi.WaitUntilGone(root, "Intelligent.Remove.Dialog");
+            ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[0]), "Intelligent.Task.Save"));
+            NativeFileDialog.Cancel(ui, owner);
+        });
+        Check((await session.Settings.GetSettingsAsync(new Empty())).RemindUnpreservedIntelligentResults,
+            "Cancelled exit changed the reminder preference");
+        await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_Temporary);
+        context.Evidence["TemporaryResultCloseAndDeleteCancellationVerified"] = true;
         await Task.Run(() => {
             ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[0]), "Intelligent.Task.Save"));
             NativeFileDialog.SaveFile(ui, owner, output);
@@ -76,6 +120,7 @@ internal static class ModelInferenceTests {
             catch (IOException) { return false; }
             catch (FileFormatException) { return false; }
         }), "Real result exported as PNG");
+        await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_Exported);
         await Task.Run(() => ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[0]), "Intelligent.Task.Import")));
         string library = (await session.Settings.GetSettingsAsync(new Empty())).WallpaperDir;
         WpBasicData? imported = null;
@@ -91,14 +136,49 @@ internal static class ModelInferenceTests {
             catch (JsonException) { return false; }
         }, "Real result imported into library");
         Check(SHA256.HashData(await File.ReadAllBytesAsync(output)).SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(imported!.FilePath))), "Imported image differs from the actual exported result");
+        await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_ExportedAndImported);
         await Task.Run(() => ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[0]), "Intelligent.Task.Remove")));
-        await session.CloseUiAsync();
+        // A second real result exercises confirmed suppression and persisted settings.
+        await Task.Run(() => {
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Intelligent.AddTask"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Intelligent.SuperResolution.Source", visible: true));
+            NativeFileDialog.OpenFile(ui, owner, inputs[0]);
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Intelligent.Task.Confirm", visible: true));
+        });
+        await AppProcessSession.WaitAsync(() => Task.Run(() => !ApplicationUi.Find(root,
+            "Intelligent.Task.Confirm", visible: true, enabled: false).Current.IsEnabled), "Second task accepted");
+        await Task.Run(() => {
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Intelligent.Task.Cancel", visible: true));
+            ApplicationUi.WaitUntilGone(root, "Intelligent.Task.Cancel");
+        });
+        await AppProcessSession.WaitAsync(() => Task.Run(() => Status(root, inputs[0]) ==
+            LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed)), "Second real inference completed", TimeSpan.FromMinutes(6));
+        Task close = session.CloseUiAsync();
+        await Task.Run(() => {
+            ApplicationUi.Find(root, "Intelligent.Close.Dialog", visible: true);
+            var checkbox = ApplicationUi.Find(root, "Intelligent.Close.DontRemind", visible: true);
+            ((TogglePattern)checkbox.GetCurrentPattern(TogglePattern.Pattern)).Toggle();
+            ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "SecondaryButton"));
+        });
+        await close;
+        Check(!(await session.Settings.GetSettingsAsync(new Empty())).RemindUnpreservedIntelligentResults,
+            "Confirmed suppression was not persisted through Core");
         ui = await session.OpenUiAsync();
         await Task.Run(() => {
             var window = AutomationElement.FromHandle(ui.MainWindowHandle);
             ApplicationUi.Select(ApplicationUi.Find(window, "App.Navigation.Library"));
             WallpaperLibraryTests.FindItem(window, imported.WallpaperUid);
+            ApplicationUi.Select(ApplicationUi.Find(window, "App.Navigation.Settings"));
+            var toggle = ApplicationUi.Find(window, "Settings.General.IntelligentResultReminder");
+            ApplicationUi.BringIntoView(toggle);
+            Check(((TogglePattern)toggle.GetCurrentPattern(TogglePattern.Pattern)).Current.ToggleState == ToggleState.Off,
+                "Reopened UI did not reflect the saved reminder preference");
+            ((TogglePattern)toggle.GetCurrentPattern(TogglePattern.Pattern)).Toggle();
         });
+        await AppProcessSession.WaitAsync(async () => (await session.Settings.GetSettingsAsync(new Empty())).RemindUnpreservedIntelligentResults,
+            "Reminder re-enabled from settings");
+        context.Evidence["ActiveTaskTrayExitCancellationVerified"] = true;
+        context.Evidence["PreservationBadgesAndReminderPersistenceVerified"] = true;
         Check(originalHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(inputs[0]))), "Inference modified the source file");
         await session.StopAsync();
         session.RecordEvidence(context);
@@ -106,8 +186,25 @@ internal static class ModelInferenceTests {
         context.Evidence["RealInferenceSaveImportAndReopenVerified"] = true;
     }
 
+    private static Task WaitForPreservationAsync(AutomationElement root, string path, string key) =>
+        AppProcessSession.WaitAsync(() => Task.Run(() => ApplicationUi.Find(Row(root, path),
+            "Intelligent.Task.Preservation", visible: true).Current.Name == LanguageUtil.GetI18n(key)), "Result preservation " + key);
+
     private static List<AutomationElement> FindRows(AutomationElement root) => root.FindAll(TreeScope.Descendants,
         new PropertyCondition(AutomationElement.AutomationIdProperty, "Intelligent.SuperResolution.Task")).Cast<AutomationElement>().ToList();
-    private static AutomationElement Row(AutomationElement root, string path) => FindRows(root).Single(item => item.Current.Name == path);
+    private static AutomationElement Row(AutomationElement root, string path) {
+        // Navigation can finish after Select returns. Wait for the specific row,
+        // while still rejecting duplicate tasks with the same source path.
+        var timer = Stopwatch.StartNew();
+        while (timer.Elapsed < TimeSpan.FromSeconds(10)) {
+            try {
+                var row = FindRows(root).SingleOrDefault(item => item.Current.Name == path);
+                if (row != null) return row;
+            }
+            catch (ElementNotAvailableException) { }
+            Thread.Sleep(100);
+        }
+        throw new TimeoutException($"Intelligent task row not found: {path}");
+    }
     private static string Status(AutomationElement root, string path) => ApplicationUi.Find(Row(root, path), "Intelligent.Task.Status").Current.Name;
 }

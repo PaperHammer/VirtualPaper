@@ -293,6 +293,8 @@ These cases are excluded from the default suite. Select a module explicitly, or 
 3. Export PNG through the system save picker, check 2× dimensions, import through the production button, and compare exported/imported hashes.
 4. Delete the completed task, reopen UI, and verify the library entry, unchanged source, normal shutdown, and absence of ERROR logs.
 
+The same case also cancels tray exit while inference is active, navigates away before checking window close, and checks temporary/exported/imported result badges. Cancelling exit or a save picker preserves the result and reminder preference; deleting a temporary result requires confirmation. A second real result verifies confirmed reminder suppression, UI reopening, and re-enabling the reminder in settings. Unfinished tasks always require confirmation, independently of this preference.
+
 ```powershell
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```

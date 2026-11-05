@@ -20,6 +20,7 @@ using VirtualPaper.EditPanel.ViewModels;
 using VirtualPaper.Grpc.Client;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
+using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
 using VirtualPaper.ML.StyleTransfer;
@@ -113,6 +114,8 @@ namespace VirtualPaper.UI {
                 .AddSingleton<LibraryContentsViewModel>()
                 .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
+                .AddSingleton<IIntelligentTaskDialogs, IntelligentTaskDialogs>()
+                .AddSingleton<IntelligentTaskCloseCoordinator>()
                 .AddTransient<EditPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<GetStartViewModel>()

@@ -93,12 +93,20 @@
                                             VerticalAlignment="Center"
                                             Margin="20,0,16,0"
                                             Spacing="2">
-                                            <StackPanel Spacing="2" Orientation="Horizontal">
+                                            <StackPanel Spacing="6">
                                                 <TextBlock
                                                     Text="{x:Bind StatusText, Mode=OneWay}"
                                                     FontSize="14"
                                                     FontWeight="SemiBold"
                                                     Foreground="{x:Bind StatusColor, Mode=OneWay, Converter={StaticResource ByteArrayToBrushConverter}}"/>
+                                                <Border CornerRadius="4" Padding="6 2" HorizontalAlignment="Left"
+                                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                    Visibility="{x:Bind IsCompleted, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                                                    <TextBlock AutomationProperties.AutomationId="Intelligent.Task.Preservation"
+                                                        Text="{x:Bind PreservationText, Mode=OneWay}" FontSize="12"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        l:Uids.Uid="Ui_Intelligent_Result_PreservationTooltip"/>
+                                                </Border>
                                             </StackPanel>
                                         </StackPanel>
 

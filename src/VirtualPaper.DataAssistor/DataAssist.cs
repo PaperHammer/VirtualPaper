@@ -207,6 +207,7 @@ namespace VirtualPaper.DataAssistor {
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
                 NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
+                RemindUnpreservedIntelligentResults = settings.RemindUnpreservedIntelligentResults,
 
                 WallpaperDir = settings.WallpaperDir,
 
@@ -275,6 +276,7 @@ namespace VirtualPaper.DataAssistor {
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
                 NavigationAnimationsEnabled = !settings.HasNavigationAnimationsEnabled || settings.NavigationAnimationsEnabled,
+                RemindUnpreservedIntelligentResults = !settings.HasRemindUnpreservedIntelligentResults || settings.RemindUnpreservedIntelligentResults,
 
                 WallpaperDir = settings.WallpaperDir,
 

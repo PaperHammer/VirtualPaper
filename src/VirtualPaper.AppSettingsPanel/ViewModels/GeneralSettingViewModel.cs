@@ -163,6 +163,20 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
+        public string IntelligentResultReminderStatus => LanguageUtil.GetI18n(
+            RemindUnpreservedIntelligentResults ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
+
+        public bool RemindUnpreservedIntelligentResults {
+            get => _userSettingsClient.Settings.RemindUnpreservedIntelligentResults;
+            set {
+                if (_userSettingsClient.Settings.RemindUnpreservedIntelligentResults == value) return;
+                _userSettingsClient.Settings.RemindUnpreservedIntelligentResults = value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IntelligentResultReminderStatus));
+            }
+        }
+
         public string NavigationAnimationsStatus => LanguageUtil.GetI18n(
             NavigationAnimationsEnabled ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
 
@@ -301,6 +315,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 OnPropertyChanged(nameof(SeletedSystemBackdropIndx));
                 ChangeAutoShartStatu(_isAutoStart);
                 OnPropertyChanged(nameof(NavigationAnimationsStatus));
+                OnPropertyChanged(nameof(IntelligentResultReminderStatus));
                 OnPropertyChanged(nameof(AppVersionText));
                 MenuUpdate(_lastUpdateStatus, _lastUpdateRelease);
             }

@@ -2275,4 +2275,20 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Ui_WpSettings_NavTitle_LibraryContents_Content.Content" xml:space="preserve"><value>库内容</value><comment>Source: WpSettings_NavTitle_LibraryContents</comment></data>
   <data name="Ui_WpSettings_NavTitle_ScrSettings_Content.Content" xml:space="preserve"><value>屏幕保护</value><comment>Source: WpSettings_NavTitle_ScrSettings</comment></data>
   <data name="Ui_Project_StaticImg_Text_Paintbrush_Text.Text" xml:space="preserve"><value>画笔</value><comment>Source: Project_StaticImg_Text_Paintbrush</comment></data>
+  <data name="Intelligent_Result_Temporary" xml:space="preserve"><value>仅临时保存</value></data>
+  <data name="Intelligent_Result_Exported" xml:space="preserve"><value>已导出</value></data>
+  <data name="Intelligent_Result_Imported" xml:space="preserve"><value>已入库</value></data>
+  <data name="Intelligent_Result_ExportedAndImported" xml:space="preserve"><value>已导出 · 已入库</value></data>
+  <data name="Intelligent_Close_Title" xml:space="preserve"><value>关闭智能任务？</value></data>
+  <data name="Intelligent_Close_Active" xml:space="preserve"><value>还有 {0} 个任务正在排队、处理或保存。关闭将中断尚未完成的操作。</value></data>
+  <data name="Intelligent_Close_Temporary" xml:space="preserve"><value>还有 {0} 个已完成的结果尚未导出或加入壁纸库。关闭后无法从任务列表恢复，临时文件将在下次应用启动时清理。</value></data>
+  <data name="Intelligent_Close_DontRemind" xml:space="preserve"><value>不再提醒未保存的已完成结果</value></data>
+  <data name="Intelligent_Close_Return" xml:space="preserve"><value>返回处理</value></data>
+  <data name="Intelligent_Close_Confirm" xml:space="preserve"><value>仍然关闭</value></data>
+  <data name="Intelligent_Remove_Title" xml:space="preserve"><value>删除临时结果？</value></data>
+  <data name="Intelligent_Remove_Temporary" xml:space="preserve"><value>此结果尚未导出或加入壁纸库。删除任务也会删除临时结果。</value></data>
+  <data name="Ui_Intelligent_Result_PreservationTooltip.ToolTipService.ToolTip" xml:space="preserve"><value>导出结果或加入壁纸库，即可在关闭后保留。</value></data>
+  <data name="Ui_Settings_General_IntelligentResultReminder_Text.Text" xml:space="preserve"><value>智能任务未保存结果提醒</value></data>
+  <data name="Ui_Settings_General_IntelligentResultReminder_Description.Text" xml:space="preserve"><value>关闭时提醒尚未导出或入库的结果。未完成的任务始终需要确认。</value></data>
+  <data name="Ui_Settings_General_IntelligentResultReminder_AutomationName.AutomationProperties.Name" xml:space="preserve"><value>提醒未保存的智能任务结果</value></data>
 </root>

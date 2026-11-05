@@ -12,6 +12,7 @@ using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.IntelligentPanel.Models;
+using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.Models.Mvvm;
@@ -47,17 +48,19 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             foreach (var task in Tasks) task.RefreshLanguage();
         }
 
+        internal bool IsClosing { get; set; }
+
         internal bool AddTask(StyleTransferData data) {
-            if (data == null || string.IsNullOrEmpty(data.SourceFilePath) || string.IsNullOrEmpty(data.StyleFilePath)) return false;
+            if (IsClosing || _disposed || data == null || string.IsNullOrEmpty(data.SourceFilePath) || string.IsNullOrEmpty(data.StyleFilePath)) return false;
 
             var taskItem = new StyleTransferTaskItem(data);
-            taskItem.RemoveCommand = new RelayCommand(() => RemoveTask(taskItem));
+            taskItem.RemoveCommand = new RelayCommand(() => RemoveTask(taskItem), () => !taskItem.IsPreserving);
             taskItem.PreviewCommand = new RelayCommand(() => PreviewResult(taskItem), () => taskItem.IsCompleted);
-            taskItem.SaveCommand = new RelayCommand(async () => await SaveResultAsync(taskItem), () => taskItem.IsCompleted);
-            taskItem.ImportCommand = new RelayCommand(() => ImportResult(taskItem), () => taskItem.IsCompleted);
+            taskItem.SaveCommand = new RelayCommand(async () => await SaveResultAsync(taskItem), () => taskItem.IsCompleted && !taskItem.IsPreserving);
+            taskItem.ImportCommand = new RelayCommand(() => ImportResult(taskItem), () => taskItem.IsCompleted && !taskItem.IsPreserving);
 
             Tasks.Add(taskItem);
-            _ = ProcessTaskAsync(taskItem);
+            taskItem.Execution = ProcessTaskAsync(taskItem);
 
             return true;
         }
@@ -74,6 +77,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
             catch (OperationCanceledException) {
                 // 还没拿到信号量就被取消了（排队中删除），无需 Release
+                taskItem.Status = TaskStatus.Canceled;
                 CleanupAfterCancel(taskItem, tempDir);
                 return;
             }
@@ -132,6 +136,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 _ = FileUtil.TryDeleteFileAsync(tmpOutPath_style);
             }
             catch (OperationCanceledException) {
+                taskItem.Status = TaskStatus.Canceled;
                 CleanupAfterCancel(taskItem, tempDir);
                 GlobalMessageUtil.ShowCanceled();
             }
@@ -166,14 +171,24 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
         }
 
-        private void RemoveTask(StyleTransferTaskItem taskItem) {
-            // 发出取消信号（如果任务还在运行或排队）
-            if (!taskItem.Cts.IsCancellationRequested) {
+        private async void RemoveTask(StyleTransferTaskItem taskItem) {
+            if (taskItem.IsClosing || taskItem.IsRemoving || taskItem.IsPreserving || !Tasks.Contains(taskItem)) return;
+            taskItem.IsRemoving = true;
+            try {
+                if (taskItem.IsTemporaryResult && !await AppServiceLocator.Services
+                    .GetRequiredService<IIntelligentTaskDialogs>().ConfirmRemoveAsync()) return;
                 taskItem.Cts.Cancel();
+                await taskItem.Execution;
+                Tasks.Remove(taskItem);
             }
-            taskItem.Cts.Dispose();
+            catch (Exception ex) {
+                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+                return;
+            }
+            finally { taskItem.IsRemoving = false; }
 
-            Tasks.Remove(taskItem);
+            taskItem.Cts.Dispose();
 
             // 对于已完成的任务，结果文件也需要清理
             if (taskItem.IsCompleted && taskItem.Data.ResultFilePath != null) {
@@ -199,9 +214,17 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         }
 
         private async Task SaveResultAsync(StyleTransferTaskItem taskItem) {
+            try { await taskItem.PreserveAsync(() => ExportResultAsync(taskItem), import: false); }
+            catch (Exception ex) {
+                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+        }
+
+        private async Task<bool> ExportResultAsync(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
                 GlobalMessageUtil.ShowError(Constants.I18n.Text_File_Not_Available, isNeedLocalizer: true);
-                return;
+                return false;
             }
 
             var suggestFilename = Path.GetFileName(taskItem.SourceFilePath);
@@ -214,22 +237,32 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             );
 
             if (saveFile == null || string.IsNullOrEmpty(saveFile.Path))
-                return;
+                return false;
 
             try {
                 await Task.Run(() => File.Copy(taskItem.Data.ResultFilePath, saveFile.Path, overwrite: true));
                 GlobalMessageUtil.ShowSuccess($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Success)} {saveFile.Path}");
+                return true;
             }
+            catch (Exception ex) {
+                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+                return false;
+            }
+        }
+
+        private async void ImportResult(StyleTransferTaskItem taskItem) {
+            try { await taskItem.PreserveAsync(() => ImportResultAsync(taskItem), import: true); }
             catch (Exception ex) {
                 ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
         }
 
-        private async void ImportResult(StyleTransferTaskItem taskItem) {
+        private async Task<bool> ImportResultAsync(StyleTransferTaskItem taskItem) {
             if (string.IsNullOrEmpty(taskItem.Data.ResultFilePath)) {
                 GlobalMessageUtil.ShowError(Constants.I18n.Text_File_Not_Available, isNeedLocalizer: true);
-                return;
+                return false;
             }
 
             var (found, success) = await PanelMessageCenter.TryInvokeAsync<string, bool>(
@@ -240,13 +273,14 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             if (!found) {
                 GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
-                return;
+                return false;
             }
 
             if (success)
                 GlobalMessageUtil.ShowSuccess(LanguageUtil.GetI18n(Constants.I18n.Add_To_Lib_Success));
             else
                 GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true);
+            return success;
         }
 
         private void OnTasksCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
@@ -259,6 +293,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             Tasks.CollectionChanged -= OnTasksCollectionChanged;
             LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
+            foreach (var task in Tasks) task.Cts.Cancel();
             Tasks.Clear();
             _disposed = true;
         }

@@ -293,6 +293,8 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 3. 通过系统保存选择器导出 PNG，检查 2× 尺寸，通过正式按钮导入，并比较导出、导入哈希。
 4. 删除已完成任务，重新打开 UI，核验壁纸库条目、源文件未变、正常关闭且没有 ERROR 日志。
 
+同一用例还会在推理进行时取消托盘退出，切换到其他页面后检查窗口关闭，并检查临时、已导出、已入库标记。取消退出或保存选择器会保留结果及提醒设置；删除临时结果需要确认。第二次真实推理验证确认关闭后保存“不再提示”、重新打开 UI，以及在设置中重新开启提醒。未完成的任务始终需要确认，不受该设置影响。
+
 ```powershell
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```

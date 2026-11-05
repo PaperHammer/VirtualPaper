@@ -7,10 +7,9 @@ using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.IntelligentPanel.Models {
-    public partial class SuperResolutionTaskItem : ObservableObject {
+    public partial class SuperResolutionTaskItem : IntelligentTaskItem {
         public SuperResolutionData Data { get; }
         public Guid Id => Data.Id;
-        public CancellationTokenSource Cts { get; } = new();
 
         #region data
         public string SourceFilePath => Data.SourceFilePath;
@@ -45,13 +44,14 @@ namespace VirtualPaper.IntelligentPanel.Models {
                 OnPropertyChanged(nameof(IsCompleted));
                 OnPropertyChanged(nameof(IsFailed));
 
+                RefreshPreservation();
                 UpdateProgressBarState();
                 NotifyCommandsCanExecuteChanged();
             }
         }
 
         public string StatusText => Status switch {
-            TaskStatus.Created => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
+            TaskStatus.Created => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Queue),
             TaskStatus.WaitingToRun => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Queue),
             TaskStatus.Running => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Processing),
             TaskStatus.RanToCompletion => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
@@ -59,9 +59,9 @@ namespace VirtualPaper.IntelligentPanel.Models {
             _ => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Unknown)
         };
 
-        public bool IsPending => Status is TaskStatus.Created or TaskStatus.WaitingToRun;
-        public bool IsProcessing => Status == TaskStatus.Running;
-        public bool IsCompleted => Status == TaskStatus.RanToCompletion;
+        public override bool IsPending => Status is TaskStatus.Created or TaskStatus.WaitingToRun;
+        public override bool IsProcessing => Status == TaskStatus.Running;
+        public override bool IsCompleted => Status == TaskStatus.RanToCompletion;
         public bool IsFailed => Status == TaskStatus.Faulted;
         #endregion
 
@@ -111,7 +111,14 @@ namespace VirtualPaper.IntelligentPanel.Models {
             Data = data ?? throw new ArgumentNullException(nameof(data));
         }
 
-        private void NotifyCommandsCanExecuteChanged() {
+        internal void RefreshLanguage() {
+            OnPropertyChanged(nameof(ModeText));
+            OnPropertyChanged(nameof(StatusText));
+            RefreshPreservation();
+        }
+
+        protected override void NotifyCommandsCanExecuteChanged() {
+            (RemoveCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (PreviewCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (ImportCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();

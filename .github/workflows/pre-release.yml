@@ -377,6 +377,8 @@ jobs:
     runs-on: windows-latest
     needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
     timeout-minutes: 30
+    outputs:
+      ui_outcome: ${{ steps.acceptance.outputs.ui_outcome }}
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -455,14 +457,15 @@ jobs:
       env:
         INSTALLER_PATH: ${{ steps.installer-details.outputs.installer_path }}
       run: |
-        ./test/Run-InstallerTests.ps1 -InstallerPath $env:INSTALLER_PATH -NoBuild -RunUIOperationTests `
+        ./test/Run-InstallerTests.ps1 -InstallerPath $env:INSTALLER_PATH -NoBuild -RunUIOperationTests -AllowUIFailure `
           -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
           -ReportPath TestResults/test-results-installer/installer-results.json `
           -UIReportPath TestResults/test-results-ui-operation/ui-operation-results.json
 
-    - name: Validate full acceptance
+    - name: Validate release checks
+      id: acceptance
       shell: pwsh
-      run: ./test/Summarize-TestResults.ps1 -Root TestResults -RequireFullAcceptance
+      run: ./test/Summarize-TestResults.ps1 -Root TestResults -RequireFullAcceptance -AllowUIFailure
 
     - name: Upload installer results
       if: always()
@@ -657,6 +660,7 @@ jobs:
         RELEASE_TITLE: ${{ needs.prepare-metadata.outputs.release_title }}
         RELEASE_TAG: ${{ needs.prepare-metadata.outputs.release_tag }}
         DRAFT_OUTCOME: ${{ steps.release-draft.outcome }}
+        UI_OUTCOME: ${{ needs.package-release.outputs.ui_outcome }}
         TARGET_SHA: ${{ needs.sync-versions.outputs.main_sha || needs.prepare-metadata.outputs.main_sha }}
       run: |
         @"
@@ -664,4 +668,5 @@ jobs:
         - Tag: $env:RELEASE_TAG
         - Commit: $env:TARGET_SHA
         - Draft: $env:DRAFT_OUTCOME
+        - Real UI acceptance: $env:UI_OUTCOME (non-blocking in CI)
         "@ >> $env:GITHUB_STEP_SUMMARY

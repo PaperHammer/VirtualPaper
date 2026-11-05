@@ -66,7 +66,7 @@ flowchart LR
     F --> G[卸载与汇总]
 ```
 
-失败会阻止后续阶段；一旦尝试安装，仍会执行安装清理路径。本地使用工作区代码；Pre-merge Check 使用 PR 合并快照；Pre-release 使用设置新版本后的构建，并要求选中测试全部执行、不能跳过。本地测试不会修改 GitHub PR 状态或同步版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+本地失败阻止后续阶段，一旦尝试安装仍执行清理。本地使用工作区代码，CI 使用 PR 合并快照或设置新版本后的构建。两个 CI 工作流仅对扩展 UI 阶段显式添加 `-AllowUIFailure`；必需项目测试和安装阶段仍阻塞。本地默认仍拒绝 UI 失败，不修改 GitHub 状态或版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 可用 `-ResultsRoot <新目录>` 指定完整链路的报告根目录。其中保留 `build.log`、`workflow-contracts.log`、8 份 `test-*.log`、`installer-build.log`、`installed-acceptance.log`、本轮 `installer-package` 和原始 `test-results-*` 报告。失败报告也会保留。按发布要求校验一轮已完成的结果：
 
@@ -130,7 +130,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 环境不适用时，生成包含 `Status: Skipped`、`Passed: false`、`ExpectedCount: 0` 及原因的报告，并以退出码 0 结束。原因包括 `WindowsRequired`、`NoInteractiveDesktop`、`NoDisplay` 和 `NoDesktopShell`。详细信息写入 `.artifacts/environment.json`。
 
-仅跳过真实 UI 验收，常规测试仍可运行。CI 汇总会明确报告跳过，不会宣称完整验收通过。预检错误、报告缺失，以及启动后的失败或超时仍按失败处理。检测不会锁定或解锁会话、切换输入桌面、修改注册表或创建虚拟显示器。
+仅跳过真实 UI 验收，常规测试仍可运行。汇总明确报告跳过，不宣称完整验收通过。独立/本地 UI 失败、超时、报告缺失仍失败；CI 显式使用 `-AllowUIFailure`，仅将扩展 UI 阶段的这些问题记录为非阻塞失败。安装、启动、覆盖安装、配置验证及卸载失败仍阻塞。检测不修改会话、注册表或显示配置。
 
 ## 默认覆盖范围
 
@@ -357,7 +357,7 @@ Pre-merge Check 按 **构建一次 → 并行项目测试 → 编译 ISS → 英
 
 随后用同一安装包选择中文，覆盖本轮创建的安装目录，检查安装包与程序文件哈希、版本、注册信息、快捷方式和新语言标记。仅允许覆盖本轮自己的安装，不放宽日常安装保护。通过 Core 正式 ShowUI RPC 打开原配置，必须保留英文、偏好、壁纸目录及全部壁纸文件，真实壁纸库中仍显示相同 UID。再使用另一份空配置，验证首次中文初始化和正常退出。
 
-上述检查通过后，预构建 UI 宿主针对安装后的 Core/UI/播放器运行一次完整扩展测试。各 UI 用例仍使用独立配置，不作为覆盖安装保留数据的证据。宿主位于安装目录外，不重复构建和打包。Pre-release 复用相同流程，严格报告门禁在同步版本及生成草稿前拒绝任何失败、缺阶段和无桌面跳过。
+配置检查通过后，预构建宿主对安装后的 Core/UI/播放器运行一次扩展测试，各用例配置不作为覆盖安装保留数据的证据。CI 在安装入口及汇总显式使用 `-AllowUIFailure`，将 UI 失败、超时、报告缺失保留为非阻塞警告。Pre-release 在同步版本及生成草稿前仍拒绝必需阶段失败、项目跳过及无桌面导致的启动/配置跳过。本地默认仍拒绝 UI 失败。
 
 版本 2 生命周期报告包含 Install、Open（含准备保留数据）、Reinstall、VerifyPreserved、OpenFresh、可选 UIOperation、Uninstall，各阶段分别保存向导轨迹及应用报告。强制清理仅用于失败恢复，不算正常退出。卸载后检查文件、进程、快捷方式和注册残留，诊断配置保留在产物目录。
 
@@ -380,7 +380,7 @@ Pre-merge Check 按 **构建一次 → 并行项目测试 → 编译 ISS → 英
 ./.github/scripts/validate-test-workflow.ps1
 ```
 
-WinUI 失败或报告缺失会导致最终 CI 检查失败。Pre-merge Check 可接受预检明确报告的环境跳过，最终状态包含 `[SKIPPED]`；Pre-release 会拒绝跳过，必须使用可交互桌面。WinUI 启动前，还会检查常规 TRX 报告中的未处理异常，防止通过的断言掩盖 testhost 崩溃。
+两个 CI 工作流保留真实 WinUI 验收，但通过 `-AllowUIFailure` 仅放宽该生命周期阶段。原始 JSON 仍为失败，摘要显示 **Failed (non-blocking)**；必需检查通过后，PR 成功状态、版本同步及草稿生成可继续。安装报告已记录 UI 失败时，UI 报告缺失/不可读或宿主超时同样明确警告。项目测试及安装必需阶段失败仍阻塞，不对整个 job 使用 `continue-on-error`。本地入口及未添加该开关的 `-RequireFullAcceptance` 仍严格拒绝 UI 失败。Pre-merge 接受明确的环境跳过；Pre-release 仍拒绝必需启动/配置阶段被跳过。TRX 未处理异常检查保持不变。
 
 ## 添加覆盖
 

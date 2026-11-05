@@ -92,7 +92,7 @@ English installation followed by Chinese same-package reinstall is the default. 
 
 ## Workflow changes
 
-Both workflows are manual `workflow_dispatch` only. Pre-merge Check validates an open PR and its fixed merge snapshot, builds once, shares that output across project tests and installed acceptance, then reports status on the PR head. Pre-release verifies the checked merged `dev → main` PR, sets the target version before build/package, repeats tests and installed acceptance including same-package reinstall and both profile checks, rejects selected-test skips, then synchronizes product versions for a regular release and creates a draft. Plugin-only releases retain the product version and skip product-version synchronization. Local acceptance performs no remote release/status actions.
+Both workflows are manual `workflow_dispatch` only. Pre-merge Check tests a fixed PR merge snapshot and reports status on the PR head. Pre-release retests the versioned release build/package before version synchronization and draft creation. Both explicitly pass `-AllowUIFailure` to the installer runner and summary: extended UI case failures, host timeouts and missing/unreadable UI reports remain failed non-blocking warnings. Required build/project/package/install/startup/reinstall/profile/uninstall checks remain blocking; Pre-release still rejects skipped required stages and selected project tests. Do not use whole-job `continue-on-error` or relabel UI failure as passed/skipped. Local runners stay strict for UI failures by default. Plugin-only releases skip product-version synchronization. Local acceptance performs no remote release/status actions.
 
 After changes to scripts, reports or workflow dependencies, run:
 

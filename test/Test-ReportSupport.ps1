@@ -87,6 +87,37 @@ try {
     & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance
     Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Passed')) 'Complete release acceptance must pass.'
     $installerFile = Join-Path $rawRoot 'test-results-installer/installer-results.json'
+    $uiFile = Join-Path $rawRoot 'test-results-ui-operation/ui-operation-results.json'
+    $uiFailedInstaller = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} `
+        -UIOperation { throw 'Expected UI failure' } -Uninstall {}
+    $uiFailedInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
+    $failedUI = @{ Passed = $false; ExpectedCount = 1; Results = @(@{ Name = 'Application.Fixture.Run'; Passed = $false; Error = 'Expected UI failure' }) }
+    $failedUI | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
+    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Local strict acceptance must still reject real UI failures'
+    foreach ($uiContent in @('failed', 'missing', 'malformed', 'host-failed-after-report')) {
+        switch ($uiContent) {
+            missing { Remove-Item -LiteralPath $uiFile }
+            malformed { Set-Content -LiteralPath $uiFile -Value '{broken' }
+            host-failed-after-report { $ui | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile }
+        }
+        [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
+        [IO.File]::WriteAllText($env:GITHUB_STEP_SUMMARY, '')
+        & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure
+        $outputs = Get-Content $env:GITHUB_OUTPUT -Raw
+        Assert-ReviewCondition ($outputs.Contains('ui_outcome=Failed') -and $outputs.Contains('installer_outcome=UIFailed')) 'Optional UI failure must remain a failed result, including timeout/missing reports.'
+        Assert-ReviewCondition ((Get-Content $env:GITHUB_STEP_SUMMARY -Raw).Contains('**Failed (non-blocking)**')) 'Optional UI failures must remain visible.'
+    }
+    foreach ($stage in @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh', 'Uninstall')) {
+        $bad = $uiFailedInstaller | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+        $check = $bad.Checks | Where-Object Name -EQ $stage
+        $check.Passed = $false; $check.Status = 'Failed'; $bad.Passed--; $bad.Failed++
+        $bad | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
+        [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
+        Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure } "Mandatory $stage failure must still block CI"
+        Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Mandatory failures must not emit success outputs.'
+    }
+    $installer | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
+    $ui | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
     $headless = Resolve-UIOperationEnvironment ([pscustomobject]@{ Windows = $true; UserInteractive = $false })
     $headlessInstaller = Invoke-InstallerLifecycle -Install {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Open { throw 'No UI in this contract.' } -UIOperation { throw 'No UI in this contract.' } -Uninstall {} -Environment $headless
     $headlessInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
@@ -99,6 +130,7 @@ try {
     Assert-ReviewCondition ((Get-Content $env:GITHUB_STEP_SUMMARY -Raw).Contains('**Open skipped**')) 'Summary must not claim full installation UI acceptance on a headless runner.'
     [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
     Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Release must reject desktop-unavailable startup/UI skips'
+    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure } 'Optional UI must not permit skipped mandatory startup/profile stages in release'
     Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Skipped release UI must not emit success outputs.'
     $installer | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
     [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')

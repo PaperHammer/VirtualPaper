@@ -9,6 +9,8 @@ The repository has two workflows, both triggered only by `workflow_dispatch`. Co
 | `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → ISS → install/startup/reinstall/language/UI/uninstall → report PR status |
 | `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/install/startup/reinstall/language/UI/uninstall → strict gate → sync versions → draft |
 
+Both CI workflows still run the extended real UI suite. They explicitly use `-AllowUIFailure` in the installer runner and summary: UI case failures, host timeouts and missing/unreadable UI reports remain failed results and warnings, but do not block PR success, version synchronization or draft creation. Required build, project tests, packaging, install/startup/reinstall/profile/uninstall stages remain blocking. Local runners stay strict by default; no whole installer/job uses `continue-on-error`.
+
 ## Everyday workflow
 
 1. Open a feature or fix PR targeting `dev`.
@@ -40,11 +42,11 @@ The test phases run in sequence:
 
 Desktop runs operate both installation wizards and the uninstaller. Headless runs silently install, reinstall and uninstall; all application-startup, retained-profile and real UI checks are explicitly skipped with desktop evidence. This is accepted only by Pre-merge, never by the strict release gate.
 
-Failure blocks later test phases. Reports are still collected; missing, empty, failed, aborted, or exceptional test results fail the final check. The seven regular test projects retain their separate Cobertura coverage reports.
+Required-stage failures block later phases. Reports are still collected; missing, empty, failed, aborted, or exceptional project/installer results fail the final check. Extended UI failures are non-blocking warnings and retain their raw errors. The seven regular test projects retain separate Cobertura coverage reports.
 
 The eight project jobs share `test/actions/run-project` and `test/Run-ProjectTests.ps1`. `test/TestReportSupport.ps1` maps projects to reports, and `test/Summarize-TestResults.ps1` creates the summary. Project jobs and the summary use the same TRX validation logic.
 
-`build-output` preserves the repository-root `src/` layout, shared test entry points, and Release binaries for both test hosts. Consumers download it to the repository root. Packaging uses this same build. The UI host stays outside the installation; its application cases receive `-CoreExe <installation>/VirtualPaper.exe` and run installed Core/UI/player binaries without rebuilding. Installer and detailed UI reports must agree before the summary can pass.
+`build-output` preserves the repository-root `src/` layout, shared test entry points, and Release binaries for both test hosts. Packaging reuses this build. The UI host stays outside the installation and runs installed Core/UI/player binaries through `-CoreExe`, without rebuilding. Installer/detailed UI outcomes are cross-checked; a recorded failed UI stage takes precedence even if its report is missing or the host failed after writing it.
 
 Raw reports use `test-results-*`; combined summaries use `test-summary-*`, so raw-report downloads do not include earlier summaries. Uploads set `overwrite: true` to support rerunning jobs within the same run. The summary reads designated project report paths rather than recursively including other packages.
 
@@ -80,14 +82,14 @@ Only a merged, same-repository `dev → main` PR is accepted. Its head must have
 1. Calculate the target product version from `AssemblyVersion` at the fixed merge commit and the selected label. Plugin updates keep the product version. Read published component manifests and historical release titles/plugin tags to allocate the next `YYMMRxx` build number; numbers used by drafts are reserved too. Check target tag/release conflicts before building.
 2. Temporarily update `VirtualPaper.csproj` before compilation and `InnoSetup/setup.iss` before packaging so the binaries and installer use the target version.
 3. Retest the new build through the same eight project jobs/actions as Pre-merge Check: artifact checks plus seven regular test projects. Release includes ML integration tests and Web player script checks. No test job rebuilds the application.
-4. Compile ISS and verify the actual release installer: English install/first launch → same-package Chinese reinstall → preserved/fresh-profile checks → one extended UI suite → uninstall. Failures still trigger uninstall. Validate all raw reports using `Summarize-TestResults.ps1 -RequireFullAcceptance`: failed/missing reports, skipped project tests, unavailable-desktop startup/UI skips, or uninstall failures block progress. A usable interactive Windows runner is required for release acceptance. Then create any requested plugin patch packages.
+4. Compile ISS and verify the actual release installer: English install/first launch → same-package Chinese reinstall → preserved/fresh-profile checks → one extended UI suite → uninstall. Uninstall still runs on failure. Validate raw reports with `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure`: project skips, required-stage failures and unavailable-desktop startup/profile skips block progress. Only the extended UI stage is non-blocking; keep its failures and warning in the summaries. Then create requested plugin patch packages.
 5. Recheck tag/release conflicts before version synchronization. For a regular release, update only these fields on `main` and `dev`, then push both atomically with `git push --atomic`. If either update is rejected, neither branch advances:
    - `src/VirtualPaper/VirtualPaper.csproj`: `AssemblyVersion`
    - `InnoSetup/setup.iss`: `MyAppVersion`, `MyAppVersionText`
    - `README.md`: release badge
 6. Create a draft release using the PR description. Every release includes the installer and complete `app_comp_manifest.json`; plugin releases also include patch packages. The tag targets the synchronized `main` commit, or the original merge commit for plugin updates. Publishing remains manual.
 
-The stages are `prepare-metadata → build-release → parallel project tests → package-release → sync-versions → draft-release`. Plugin releases also require full acceptance but skip product-version synchronization. Installer verification and optional plugin packaging share one job. A failed packaging/acceptance job can be retried without rebuilding or rerunning successful project jobs. The draft job writes the Actions summary. Pre-merge may accept an explicit unavailable-desktop skip; Pre-release never accepts a skipped selected test.
+The stages are `prepare-metadata → build-release → parallel project tests → package-release → sync-versions → draft-release`. Plugin releases use the same required checks and non-blocking UI policy, but skip product-version synchronization. Installer verification and optional plugin packaging share one job. Retry failed packaging/required acceptance without rerunning successful jobs. Both package and draft summaries show the UI outcome. Pre-merge may accept an explicit unavailable-desktop skip; Pre-release rejects skipped required stages and selected project tests.
 
 One root-layout build artifact contains application/plugin output, all project tests, and both test hosts. Parallel tests and packaging download that same build; only the application output is packaged. The component manifest is generated once and reused for release assets and plugin patches. Locking, registry-modification UI cases and real idle screen-saver tests remain excluded under the existing test policy.
 
@@ -125,7 +127,7 @@ pwsh -NoProfile -File test/Run-Tests.ps1
 pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-It validates contracts → rebuilds Release → runs the same eight project jobs in parallel → compiles ISS → installs in English → retains test data → reinstalls in Chinese → verifies original and fresh profiles → runs one extended UI suite against installed executables → uninstalls → validates reports. Unlike CI it tests the local working tree; it does not validate an open PR, post GitHub status, change product versions or create a draft. It also does not download missing UI inference models. Default local/Pre-merge summaries permit explicit desktop skips; Pre-release's `-RequireFullAcceptance` gate rejects them and any skipped selected project tests.
+The local chain uses the working tree and does not validate PRs, post GitHub status, synchronize versions or create drafts. It runs the same build/project/installer/extended-UI stages, without downloading missing models. Local defaults still reject UI failures. CI explicitly opts into `-AllowUIFailure`; Pre-release additionally uses `-RequireFullAcceptance` to reject skipped required stages and selected project tests.
 
 See the [testing guide](../../test/README.md) for prerequisites, focused runners and report paths, and the [repository test skill](../../.agents/skills/virtualpaper-testing/SKILL.md) for AI instructions. Changes to testing behavior should update these guides and their Chinese versions together.
 

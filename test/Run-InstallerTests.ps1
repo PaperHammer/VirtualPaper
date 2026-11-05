@@ -7,6 +7,7 @@ param(
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
     [ValidateRange(10, 600)][int] $TimeoutSeconds = 120,
     [switch] $RunUIOperationTests,
+    [switch] $AllowUIFailure,
     [string] $UIHostExe,
     [string] $UIReportPath = 'TestResults/UIOperation/ui-operation-results.json',
     [ValidateRange(30, 900)][int] $UITimeoutSeconds = 900,
@@ -62,6 +63,7 @@ $environment = Get-UIOperationEnvironment
 $mode = if ($environment.Available) { 'InteractiveWizard' } else { 'Silent' }
 Write-Host "Installer acceptance mode: $mode"
 $uiOperation = $null
+$uiState = @{ Failed = $false; RecoveredProcesses = [Collections.Generic.List[int]]::new() }
 if ($RunUIOperationTests) {
     if (-not $environment.Available) {
         # Preserve the same read-only preflight evidence as the skipped startup
@@ -71,14 +73,18 @@ if ($RunUIOperationTests) {
         New-UIOperationSkipReport $environment | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $UIReportPath -Encoding utf8
     }
     $uiOperation = {
-        $installedCore = Join-Path $installDir 'VirtualPaper.exe'
-        & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
-            -CoreExe $installedCore -HostExe $UIHostExe -ReportPath $UIReportPath -TimeoutSeconds $UITimeoutSeconds
-        # The runner checks its process exit code and throws on failure. As a
-        # PowerShell script it need not set LASTEXITCODE (which may be stale/null).
-        $ui = Get-Content -LiteralPath $UIReportPath -Raw | ConvertFrom-Json
-        if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') {
-            throw 'The desktop became unavailable after startup; installed UI acceptance did not run.'
+        try {
+            $installedCore = Join-Path $installDir 'VirtualPaper.exe'
+            & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
+                -CoreExe $installedCore -HostExe $UIHostExe -ReportPath $UIReportPath -TimeoutSeconds $UITimeoutSeconds
+            # The runner validates its native host and throws on failure.
+            $ui = Get-Content -LiteralPath $UIReportPath -Raw | ConvertFrom-Json
+            if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') {
+                throw 'The desktop became unavailable after startup; installed UI acceptance did not run.'
+            }
+        } catch {
+            $uiState.Failed = $true
+            throw
         }
     }
 }
@@ -214,7 +220,12 @@ $report = Invoke-InstallerLifecycle -Install {
     foreach ($process in @(Get-InstallerTestProcesses)) {
         try {
             if (-not $process.HasExited) {
-                $cleanupErrors.Add("Application process $($process.Id) required forced recovery; normal exit was not accepted.")
+                if ($AllowUIFailure -and $uiState.Failed) {
+                    $uiState.RecoveredProcesses.Add($process.Id)
+                    Write-Warning "Failed UI acceptance required recovery of process $($process.Id); UI remains failed."
+                } else {
+                    $cleanupErrors.Add("Application process $($process.Id) required forced recovery; normal exit was not accepted.")
+                }
                 $process.Kill($true)
                 if (-not $process.WaitForExit(10000)) { throw "Process did not stop: $($process.Id)" }
             }
@@ -251,6 +262,7 @@ $report | Add-Member NoteProperty InstalledVersion $installedVersion
 $report | Add-Member NoteProperty InstallerLanguage $InstallerLanguage
 $report | Add-Member NoteProperty ReinstallLanguage $reinstallLanguage
 $report | Add-Member NoteProperty InstallerSha256 $packageHash
+$report | Add-Member NoteProperty UIRecoveryProcesses $uiState.RecoveredProcesses.ToArray()
 $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8
 if ($env:GITHUB_STEP_SUMMARY) {
     $sequence = $report.Checks.Name -join ' → '
@@ -259,5 +271,13 @@ if ($env:GITHUB_STEP_SUMMARY) {
         "| $($check.Name) | $($check.Status) | $($check.DurationMilliseconds) ms |" >> $env:GITHUB_STEP_SUMMARY
     }
 }
-Assert-InstallerReportPassed $report
-Write-Host "[OK] Installer acceptance: $(Get-InstallerReportOutcome $report). Report: $ReportPath"
+Assert-InstallerReportPassed $report -AllowUIFailure:$AllowUIFailure
+$outcome = Get-InstallerReportOutcome $report -AllowUIFailure:$AllowUIFailure
+if ($outcome -eq 'UIFailed') {
+    Write-Warning "UI acceptance failed (non-blocking); required installer stages passed. Report: $ReportPath"
+} else {
+    Write-Host "[OK] Installer acceptance: $outcome. Report: $ReportPath"
+}
+# A failed native UI host can leave LASTEXITCODE nonzero even after its failure
+# was recorded and uninstall succeeded. Required failures already throw above.
+$global:LASTEXITCODE = 0

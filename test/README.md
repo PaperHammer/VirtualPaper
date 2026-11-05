@@ -66,7 +66,7 @@ flowchart LR
     F --> G[Uninstall and summary]
 ```
 
-Failures block later phases; once installation is attempted, its cleanup path still runs. Local execution uses the working tree; Pre-merge Check uses the PR merge snapshot, while Pre-release tests the versioned release build and requires all selected tests to run without skips. Local tests do not set GitHub PR status or synchronize versions. See the [workflow guide](../.github/workflows/README.md).
+Failures block later local phases; installation cleanup still runs. Local execution uses the working tree; CI uses the PR snapshot or versioned release build. Both CI workflows explicitly tolerate only extended UI failures with `-AllowUIFailure`; required project/installer stages remain blocking. Local defaults still reject UI failures. Local testing does not set PR status or synchronize versions. See the [workflow guide](../.github/workflows/README.md).
 
 Use `-ResultsRoot <new-directory>` to choose the complete run's report root. It contains `build.log`, `workflow-contracts.log`, eight `test-*.log` files, `installer-build.log`, `installed-acceptance.log`, the fresh `installer-package`, and raw `test-results-*` reports. Failed reports are retained. To validate a completed run with the release no-skip gate:
 
@@ -130,7 +130,7 @@ Before building or launching test processes, a read-only preflight checks the Wi
 
 An unsuitable environment produces a report with `Status: Skipped`, `Passed: false`, `ExpectedCount: 0`, and a reason, then exits with code 0. Reasons include `WindowsRequired`, `NoInteractiveDesktop`, `NoDisplay`, and `NoDesktopShell`. Details are saved to `.artifacts/environment.json`.
 
-Only real UI acceptance is skipped; regular tests can still run. The CI summary explicitly reports the skip rather than claiming full acceptance. Preflight errors, missing reports, and failures or timeouts after startup remain failures. Detection does not lock or unlock the session, switch input desktops, modify the registry, or create virtual displays.
+Only real UI acceptance is skipped; regular tests can still run. Summaries report the skip instead of claiming full acceptance. Standalone/local UI failures, timeouts and missing reports still fail. CI explicitly opts into `-AllowUIFailure` for the extended UI stage and records these as failed non-blocking outcomes; mandatory install/startup/reinstall/profile/uninstall failures remain blocking. Detection does not modify the session, registry or display configuration.
 
 ## Default coverage
 
@@ -357,7 +357,7 @@ Pre-merge Check runs **build once → parallel project tests → compile ISS →
 
 The same package is then installed over the same directory in Chinese. The runner checks the package hash, installed program hashes, versions, registration, shortcuts and the new language marker. Only the installation owned by this run may be overwritten. Reopening the retained profile through Core's production ShowUI RPC must keep English, preferences, the library directory and all wallpaper hashes; the actual library UI must still show the same wallpaper UID. A separate empty profile must initialize in Chinese and exit normally.
 
-After those checks, the prebuilt UI host runs the extended suite once against the installed Core/UI/player executables. Its per-case profiles remain isolated; they are not used as evidence that reinstall preserved data. The host stays outside the installation, and neither build nor packaging is repeated. Pre-release uses this same sequence and its strict report gate rejects every failed/missing stage and desktop-unavailable skip before version synchronization or draft creation.
+After the profile checks, the prebuilt host runs the extended UI suite once against installed Core/UI/player executables. Its isolated case profiles do not prove reinstall preservation. CI uses `-AllowUIFailure` in both the installer runner and summary, retaining UI failure/timeout/missing-report evidence as non-blocking warnings. Pre-release still rejects required-stage failures, project skips and unavailable-desktop startup/profile skips before version synchronization/draft creation. Local defaults remain strict for UI failures.
 
 Schema-2 lifecycle reports contain Install, Open (including persistence fixture preparation), Reinstall, VerifyPreserved, OpenFresh, optional UIOperation, and Uninstall. Wizard traces and application results are separate for each phase. Forced process cleanup is failure recovery, not normal exit. Uninstall checks file, process, shortcut and registration residue, while retaining diagnostic profiles.
 
@@ -380,7 +380,7 @@ With a desktop, both real installation wizards and the uninstaller are operated.
 ./.github/scripts/validate-test-workflow.ps1
 ```
 
-A WinUI failure or missing report fails the final CI check. Pre-merge Check may accept an explicit environment skip from preflight, with `[SKIPPED]` in the final status; Pre-release rejects it and requires an interactive desktop. Before WinUI starts, regular TRX reports are also checked for unhandled exceptions so passing assertions cannot hide a crashed testhost.
+Both CI workflows retain real WinUI acceptance, but `-AllowUIFailure` makes only that lifecycle stage non-blocking. Raw JSON stays failed and summaries show **Failed (non-blocking)**; PR success and release draft/version synchronization may continue after required checks pass. Missing/unreadable UI reports or host timeouts also produce warnings when the installer recorded UI failure. Required project and installer failures still block; no entire job uses `continue-on-error`. Local runners and `-RequireFullAcceptance` without the opt-in remain strict. Pre-merge accepts explicit environment skips; Pre-release still rejects skipped required startup/profile checks. TRX checks continue detecting unhandled testhost exceptions.
 
 ## Adding coverage
 

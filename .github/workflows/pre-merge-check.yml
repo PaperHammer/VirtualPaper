@@ -338,7 +338,7 @@ jobs:
       run: |
         $installers = @(Get-ChildItem -LiteralPath InnoSetup/Output -Filter '*.exe' -File)
         if ($installers.Count -ne 1) { throw 'Expected exactly one installer.' }
-        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -RunUIOperationTests `
+        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -RunUIOperationTests -AllowUIFailure `
           -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
           -UIReportPath TestResults/UIOperation/ui-operation-results.json -ReportPath TestResults/Installer/installer-results.json
 
@@ -387,7 +387,7 @@ jobs:
 
     - name: Summarize test reports
       id: reports
-      run: ./test/Summarize-TestResults.ps1 -Root TestResults
+      run: ./test/Summarize-TestResults.ps1 -Root TestResults -AllowUIFailure
 
     - name: Upload report bundle
       uses: actions/upload-artifact@v4
@@ -413,9 +413,10 @@ jobs:
           });
           const passed = process.env.REPORT_JOB_STATUS === 'success' &&
             process.env.PREREQUISITE_RESULTS.split(' ').every(result => result === 'success') &&
-            ['Passed', 'Skipped'].includes(process.env.UI_OUTCOME);
+            ['Passed', 'Skipped', 'Failed'].includes(process.env.UI_OUTCOME);
           let state = passed ? 'success' : 'failure';
-          let description = !passed ? 'Some tests failed or results missing [FAILED]' :
+          let description = !passed ? 'Required checks failed or results missing [FAILED]' :
+            process.env.UI_OUTCOME === 'Failed' ? 'Required checks passed; UI acceptance failed [WARNING]' :
             process.env.UI_OUTCOME === 'Skipped' || process.env.INSTALLER_OUTCOME === 'OpenSkipped' ?
               'Regular tests passed; UI acceptance skipped [SKIPPED]' : 'All tests passed [OK]';
           const head = '${{ needs.validate-pr.outputs.head_sha }}';

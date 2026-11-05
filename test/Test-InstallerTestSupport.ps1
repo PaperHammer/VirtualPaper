@@ -26,11 +26,40 @@ foreach ($withUI in @($false, $true)) {
         $accepted = $true
         try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
         if ($accepted -ne ($failure -eq '')) { throw "Incorrect result gate: $failure, UI=$withUI" }
+        $accepted = $true
+        try { $outcome = Get-InstallerReportOutcome $report -AllowUIFailure } catch { $accepted = $false }
+        $uiOnly = $withUI -and $failure -eq 'UIOperation'
+        if ($accepted -ne ($failure -eq '' -or $uiOnly) -or ($uiOnly -and $outcome -cne 'UIFailed')) {
+            throw "Only the extended UI stage may be non-blocking: $failure, UI=$withUI"
+        }
     }
 }
 
 $handlers = @{ Install = {}; Open = {}; Reinstall = {}; VerifyPreserved = {}; OpenFresh = {}; UIOperation = {}; Uninstall = {} }
 $good = Invoke-InstallerLifecycle @handlers
+# Exercise the production runner's final report/exit-code gate without any
+# installation. A native UI host's stale exit code must not fail an opted-in CI.
+$report = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} `
+    -UIOperation { throw 'Expected native UI host failure' } -Uninstall {}
+$runnerText = Get-Content -LiteralPath "$PSScriptRoot/Run-InstallerTests.ps1" -Raw
+$finishAt = $runnerText.IndexOf('Assert-InstallerReportPassed $report ')
+if ($finishAt -lt 0) { throw 'Installer runner result gate missing.' }
+$finish = [scriptblock]::Create($runnerText.Substring($finishAt))
+$previousExitCode = Get-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue
+try {
+    foreach ($AllowUIFailure in @($false, $true)) {
+        $global:LASTEXITCODE = 17
+        $ReportPath = 'fixture-report.json'
+        $accepted = $true
+        try { & $finish } catch { $accepted = $false }
+        if ($accepted -ne $AllowUIFailure -or ($AllowUIFailure -and $global:LASTEXITCODE -ne 0)) {
+            throw 'UI opt-in must reset native exit status only after mandatory report checks pass.'
+        }
+    }
+} finally {
+    if ($null -ne $previousExitCode) { $global:LASTEXITCODE = $previousExitCode.Value }
+    else { Remove-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue }
+}
 foreach ($mutation in @('MissingReinstall', 'DuplicateStage', 'FalsePass', 'WrongSchema', 'WrongCount', 'SkippedStage')) {
     $report = $good | ConvertTo-Json -Depth 10 | ConvertFrom-Json
     switch ($mutation) {

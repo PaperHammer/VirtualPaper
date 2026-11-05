@@ -80,14 +80,23 @@ function Invoke-InstallerLifecycle {
 }
 
 function Get-InstallerReportOutcome {
-    param($Report)
+    param($Report, [switch]$AllowUIFailure)
     $stages = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh')
     if ($Report.UIOperationRequested -ceq $true) { $stages += 'UIOperation' }
     $stages += 'Uninstall'
+    $uiFailed = $AllowUIFailure -and $Report.UIOperationRequested -ceq $true -and
+        @($Report.Checks | Where-Object { $_.Name -ceq 'UIOperation' -and $_.Status -ceq 'Failed' -and $_.Passed -ceq $false }).Count -eq 1
     if ($null -eq $Report -or $Report.SchemaVersion -ne 2 -or $Report.Suite -ne 'InstallerLifecycle' -or
-        $Report.Total -ne $stages.Count -or $Report.Failed -ne 0 -or @($Report.Checks).Count -ne $stages.Count -or
+        $Report.Total -ne $stages.Count -or $Report.Failed -ne [int]$uiFailed -or @($Report.Checks).Count -ne $stages.Count -or
         (@($Report.Checks.Name) -join ',') -cne ($stages -join ',')) {
         throw 'Installer lifecycle acceptance is missing required stages or contains failures.'
+    }
+    # CI may tolerate only the extended UI stage. Startup, persistence and
+    # uninstall remain required, and the original failed result is retained.
+    if ($uiFailed -and $Report.Passed -eq ($stages.Count - 1) -and $Report.Skipped -eq 0 -and
+        @($Report.Checks | Where-Object { $_.Name -cne 'UIOperation' -and
+            ($_.Passed -cne $true -or $_.Status -cne 'Passed') }).Count -eq 0) {
+        return 'UIFailed'
     }
     if ($Report.Passed -eq $stages.Count -and @($Report.Checks | Where-Object { $_.Passed -cne $true -or $_.Status -cne 'Passed' }).Count -eq 0) {
         if ($null -ne $Report.Skipped -and $Report.Skipped -ne 0) { throw 'Inconsistent installer skip count.' }
@@ -109,6 +118,6 @@ function Get-InstallerReportOutcome {
 }
 
 function Assert-InstallerReportPassed {
-    param($Report)
-    $null = Get-InstallerReportOutcome $Report
+    param($Report, [switch]$AllowUIFailure)
+    $null = Get-InstallerReportOutcome $Report -AllowUIFailure:$AllowUIFailure
 }

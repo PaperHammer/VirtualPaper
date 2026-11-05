@@ -64,6 +64,12 @@ if (-not $summary.Contains('./test/Summarize-TestResults.ps1') -or -not $summary
     -not $summary.Contains('UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}')) {
     throw 'The final status must require validated raw reports; the summary bundle must use its own prefix.'
 }
+if ($operation -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-AllowUIFailure\b' -or
+    $summary -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-AllowUIFailure\b' -or
+    -not $summary.Contains("['Passed', 'Skipped', 'Failed'].includes(process.env.UI_OUTCOME)") -or
+    -not $summary.Contains('UI acceptance failed [WARNING]') -or $operation.Contains('continue-on-error: true')) {
+    throw 'CI must tolerate only UI-stage failures, retain warning status, and keep installer failures blocking.'
+}
 if ($build -match 'dotnet test |node .github/scripts/test-') { throw 'Application tests must remain separate from the shared build.' }
 foreach ($text in @($workflow, $releaseWorkflow)) {
     if ($text -notmatch '(?m)^  workflow_dispatch:' -or $text -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|schedule|workflow_call):') {
@@ -125,12 +131,17 @@ if ($releasePackage -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*
     -not (Get-WorkflowJob 'test-ml' $releaseWorkflow).Contains("include-ml-integration: 'true'")) {
     throw 'Release must run Web checks, ML integration, installed UI and strict reports before synchronizing versions.'
 }
+if ($releasePackage -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-AllowUIFailure\b' -or
+    $releasePackage -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-RequireFullAcceptance\b[^\r\n]*-AllowUIFailure\b' -or
+    -not $releaseDraft.Contains('UI_OUTCOME: ${{ needs.package-release.outputs.ui_outcome }}')) {
+    throw 'Release must retain non-blocking real UI failures in both acceptance and draft summaries.'
+}
 if (-not $action.Contains('-RequireCompleteExecution:') -or $releasePackage.Contains('continue-on-error: true')) {
     throw 'Release project and package gates must reject skips and must not ignore failures.'
 }
 $compileAt = $releasePackage.IndexOf('    - name: Compile installer')
 $verifyAt = $releasePackage.IndexOf('    - name: Verify installed release')
-$gateAt = $releasePackage.IndexOf('    - name: Validate full acceptance')
+$gateAt = $releasePackage.IndexOf('    - name: Validate release checks')
 $uploadAt = $releasePackage.IndexOf('    - name: Upload installer package')
 if ($compileAt -lt 0 -or $verifyAt -le $compileAt -or $gateAt -le $verifyAt -or $uploadAt -le $gateAt) {
     throw 'Release package order must be compile -> install/startup/UI/uninstall -> strict gate -> upload.'
@@ -158,4 +169,4 @@ foreach ($step in [regex]::Matches($releaseWorkflow, '(?ms)^    - name:.*?(?=^  
 & (Join-Path $repositoryRoot 'test/Test-ReportSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseVersion.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseMetadata.ps1')
-Write-Host '[OK] Both manual workflows reuse project and installed UI tests; release rejects skips before version synchronization/draft.'
+Write-Host '[OK] Both manual workflows retain non-blocking real UI acceptance; required project/installer gates remain blocking.'

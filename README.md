@@ -183,6 +183,10 @@ You can also help by improving translations, contributing fixes, or sharing Virt
 
 See the [developer documentation](doc/README.md) for source setup and builds, and the [testing guide](test/README.md) for running tests. Some detailed developer guides are in Chinese.
 
+For complete local acceptance, run `pwsh -NoProfile -File test/Run-Tests.ps1` from elevated PowerShell 7.2+ on a clean Windows test installation. See the testing guide for required tools, models and the install/UI/uninstall stages.
+
+AI contributors can start with [AGENTS.md](AGENTS.md) and the [repository testing skill](.agents/skills/virtualpaper-testing/SKILL.md). CI and release behavior is documented in the [workflow guide](.github/workflows/README.md).
+
 Open pull requests against `dev`. Please discuss larger changes in an issue first.
 
 ## Made possible by open source

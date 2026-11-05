@@ -7,6 +7,7 @@
 - .NET 8 SDK。
 - 与项目引用匹配的 Windows SDK；当前项目引用 Windows SDK Build Tools `10.0.26100.7175` 和 Windows App SDK `1.8.251106002`。
 - 调试 Web 播放相关功能时，需要 WebView2 Runtime。
+- 完整安装验收还需要 PowerShell 7.2+、Node.js、Inno Setup 6.7.1；扩展真实 UI 需要对应推理模型及可用桌面，详见[测试说明](../test/README.zh-CN.md)。
 
 首次拉取后应使用 Visual Studio 打开 `src/VirtualPaper.sln` 并还原 NuGet 包。仓库包含 WPF、WinUI、原生 Windows API 和多进程项目，不适合在非 Windows 环境完整构建。
 
@@ -24,29 +25,27 @@ CI 明确使用 MSBuild，因为 `.sln` 中的 Platform Mapping 会把部分项�
 
 系统由核心进程和 UI 进程协作组成。Release 版本的 `VirtualPaper.UI` 会检查核心进程是否存在，不能把 UI 当作完全独立的应用启动。常见调试入口：
 
-- 完整程序：先启动 `VirtualPaper`，再由其拉起或手动启动 `VirtualPaper.UI`。
+- 完整程序：先启动 `VirtualPaper`，由 Core 的正式启动路径拉起 `VirtualPaper.UI`。
 - WebBackdrop 编辑与预览：使用 `VirtualPaper.UI` 的草稿工作区。
-- 安装产物验证：使用 `VirtualPaper.SmokeTest`，参数格式可参考发布工作流。
+- 安装产物验证：使用 `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe> -RunUIOperationTests`，实际安装、首次启动、执行真实 UI 并卸载；完整链路使用 `test/Run-Tests.ps1`。
 
 实际启动项目、架构（通常为 x64）和打包模式以对应 `.csproj.user`、解决方案配置及本机调试目标为准。
 
 ## 测试
 
-测试项目可分别执行：
+完整本地验收请在干净 Windows 测试环境，以管理员身份打开 PowerShell 7.2+ 后，从仓库根目录执行：
 
 ```powershell
-dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj -c Release
-dotnet test src/VirtualPaper.UI.Test/VirtualPaper.UI.Test.csproj -c Release
-dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj -c Release
-dotnet test src/VirtualPaper.Shader.Test/VirtualPaper.Shader.Test.csproj -c Release
-dotnet test src/VirtualPaper.ReleaseBuildData.Test/VirtualPaper.ReleaseBuildData.Test.csproj -c Release
+pwsh -NoProfile -File test/Run-Tests.ps1
+# 额外选择常规 ML 集成测试：
+pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-若先完成完整 Release 构建，可像 CI 一样增加 `--no-build`。ML 测试可能依赖模型或本机运行时资源；WinUI 测试也可能受 Windows App SDK 环境影响。
+流程为工作流契约校验、完整 Release 重构建、8 个并行项目测试、ISS 打包、安装、首次启动和正常退出、安装后的扩展真实 UI、卸载及报告汇总。失败会阻止后续阶段，安装后的清理仍会执行。已有日常安装时入口会拒绝运行；不要绕过保护或未经授权删除用户数据。
 
-真实 WinUI 交互测试位于独立的物理 `test` 目录，包含组件宿主和真实 Core + UI 进程用例。
-运行 `./test/Run-UIOperationTests.ps1 -Configuration Release`；用例范围及运行要求见 [test/README.md](../test/README.md)。
-CI 在七项常规测试全部通过后运行该阶段。
+单项开发可在完整 Release 构建后运行 `test/Run-ProjectTests.ps1 -JobId test-core`，或通过 `test/Run-UIOperationTests.ps1 -Configuration Release -Module GeneralSettings` 测试一个真实 UI 模块。真实 WinUI 宿主位于独立的 `test` 目录，不使用 `dotnet test` 启动。无可用桌面时真实 UI 明确跳过，不视为 UI 验收通过。
+
+准确的项目清单、模块范围、模型要求、结果判定和报告路径见[测试说明](../test/README.zh-CN.md)。AI 请阅读 [AGENTS.md](../AGENTS.md) 和[仓库测试 skill](../.agents/skills/virtualpaper-testing/SKILL.md)。两条 CI 流程均为手动触发，详细规则见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 ## 推荐阅读顺序
 

@@ -1,6 +1,8 @@
-# WinUI 交互测试
+# 测试与本地完整验收
 
 [English](README.md) | [简体中文](README.zh-CN.md)
+
+本地测试链路由 MSTest 项目测试、真实安装包验收和 WinUI 交互测试组成。完整运行使用 `Run-Tests.ps1`，下面的单项入口复用其中各阶段。
 
 `VirtualPaper.UIOperationTest` 是独立、非打包的 WinUI 可执行程序，同时充当测试宿主。组件用例通过项目引用加载正式页面；应用用例启动隔离的真实 Core 进程，再由 Core 拉起真实 UI。两者都不使用 Sandbox，也不会连接用户正在运行的 VirtualPaper 实例。
 
@@ -8,7 +10,12 @@
 
 ```text
 test/
+  Run-Tests.ps1                      完整本地 Release / 安装包验收
+  Run-ProjectTests.ps1               运行一个已构建的项目测试
+  Run-InstallerTests.ps1             真实安装、启动、UI、卸载
   Run-UIOperationTests.ps1
+  Summarize-TestResults.ps1          校验原始报告与覆盖率
+  VirtualPaper.InstallerTest/        安装向导和首次启动验证
   VirtualPaper.UIOperationTest/
     App.xaml / App.xaml.cs          UI 线程、用例注册、JSON 结果
     Cases/
@@ -22,6 +29,16 @@ test/
 
 ## 运行测试
 
+命令均从仓库根目录执行。AI 应先阅读 [AGENTS.md](../AGENTS.md) 和 [VirtualPaper 测试 skill](../.agents/skills/virtualpaper-testing/SKILL.md)，了解测试选择、进程隔离、结果判定及工作流门禁。
+
+| 目标 | 入口 | 范围 |
+| --- | --- | --- |
+| 完整本地验收 | `test/Run-Tests.ps1` | 重新构建 Release、并行项目测试、ISS 和安装后的扩展 UI 验收 |
+| 单个项目回归 | `test/Run-ProjectTests.ps1 -JobId <id>` | 使用已有 Release 产物，不构建 |
+| 真实 UI 模块或测试集 | `test/Run-UIOperationTests.ps1` | 默认先构建解决方案，`-NoBuild` 跳过构建 |
+| 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 真实安装、首次启动和卸载；加 `-RunUIOperationTests` 执行扩展 UI |
+| 工作流与脚本契约 | `.github/scripts/validate-test-workflow.ps1` | 隔离校验，不安装、不执行真实 UI |
+
 本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
 
 ```powershell
@@ -33,6 +50,56 @@ test/
 此入口每次重新构建完整 **Release** 解决方案，并行运行与 CI 相同的八个项目测试，编译 `InnoSetup/setup.iss`，安装生成的安装包，检查首次启动及正常退出，对安装后的 Core/UI 执行**扩展真实 UI 测试**，最后卸载。前置阶段失败时不再进入后续阶段；安装、启动或 UI 失败后仍执行卸载。每轮在 `TestResults/local-acceptance-*` 下生成独立报告。需要 Visual Studio MSBuild、.NET 8、Node.js 和 Inno Setup 6.7.1；非标准编译器位置可用 `-InnoSetupCompiler <ISCC.exe>` 指定。
 
 检测到已有 Virtual Paper 安装或开始菜单快捷方式时会拒绝运行。应先明确卸载日常版本并保留用户数据，或使用干净测试机。安装和卸载会修改系统安装注册信息与快捷方式；UI 用例仍不执行启动项注册、锁屏等持久系统设置操作。没有可用桌面时与 Pre-merge Check 一样明确跳过 UI，不视为完整 UI 验收通过。
+
+`-IncludeMLIntegration` 只控制常规 ML 项目的可选集成类别，不控制安装后的 UI 测试集：完整本地入口始终选择 **Extended**，包含真实推理和深度渲染。即使未传该开关，扩展 UI 也需要对应模型文件。
+
+完整链路如下：
+
+```mermaid
+flowchart LR
+    A[工作流契约] --> B[Release 重构建]
+    B --> C[8 个并行项目测试]
+    C --> D[ISS 打包]
+    D --> E[安装与首次启动]
+    E --> F[安装后的扩展 UI]
+    F --> G[卸载与汇总]
+```
+
+失败会阻止后续阶段；一旦尝试安装，仍会执行安装清理路径。本地使用工作区代码；Pre-merge Check 使用 PR 合并快照；Pre-release 使用设置新版本后的构建，并要求选中测试全部执行、不能跳过。本地测试不会修改 GitHub PR 状态或同步版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+
+可用 `-ResultsRoot <新目录>` 指定完整链路的报告根目录。其中保留 `build.log`、`workflow-contracts.log`、8 份 `test-*.log`、`installer-build.log`、`installed-acceptance.log`、本轮 `installer-package` 和原始 `test-results-*` 报告。失败报告也会保留。按发布要求校验一轮已完成的结果：
+
+```powershell
+./test/Summarize-TestResults.ps1 -Root '<本轮结果目录>' -RequireFullAcceptance
+```
+
+这只校验已有证据，不会补跑测试或准备发布；桌面不可用导致跳过，或选中的项目测试存在跳过，都会使严格校验失败。
+
+### 单个项目测试
+
+先通过 Visual Studio MSBuild 构建完整 Release 解决方案，再使用新的报告目录：
+
+```powershell
+msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any CPU' /restore /m
+./test/Run-ProjectTests.ps1 -JobId test-core -ResultsDirectory "TestResults/core-review-$([guid]::NewGuid().ToString('N'))"
+```
+
+请在 Developer PowerShell 中使用 `msbuild`。应保留解决方案的平台映射；单独以不同架构构建宿主可能留下不匹配的依赖副本。
+
+| Job ID | 项目 |
+| --- | --- |
+| `test-artifacts` | `VirtualPaper.ReleaseBuildData.Test` |
+| `test-core` | `VirtualPaper.Core.Test` |
+| `test-ui-logic` | `VirtualPaper.UI.Test` |
+| `test-images` | `StaticImg.Test` |
+| `test-web-backdrop` | `WebBackdrop.Test` |
+| `test-ui-components` | `VirtualPaper.UIComponent.Test` |
+| `test-ml` | `VirtualPaper.ML.Test` |
+| `test-shader` | `VirtualPaper.Shader.Test` |
+
+准确映射以 `TestReportSupport.ps1` 中的 `Get-ProjectTestSpecs` 为准。CI 和完整本地入口还会随 UI 逻辑测试执行 `node .github/scripts/test-atmosphere.cjs`、`node .github/scripts/test-depth-player.cjs`；单独运行项目入口不会执行这两项脚本检查。
+
+### 单个真实 UI 模块或测试集
 
 以下独立 UI 入口用于模块开发，不替代安装包完整验收：
 

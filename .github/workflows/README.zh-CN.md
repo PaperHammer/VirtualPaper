@@ -116,6 +116,21 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 ## 本地校验
 
+本地执行对应的完整测试、打包及安装验收：
+
+```powershell
+# 管理员 PowerShell 7.2+，干净的 Windows 测试安装环境：
+pwsh -NoProfile -File test/Run-Tests.ps1
+# 同时选择常规 ML 项目的集成类别：
+pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
+```
+
+链路为：契约校验 → Release 重构建 → 相同的 8 个并行项目测试 → ISS → 安装、启动 → 对安装后的程序运行扩展 UI → 卸载 → 汇总。与 CI 不同，本地使用工作区代码，不校验开放 PR、不回写 GitHub 状态、不修改产品版本、不创建发布草稿，也不会下载缺失的 UI 推理模型。本地和 Pre-merge 默认汇总允许明确的桌面跳过；Pre-release 使用 `-RequireFullAcceptance`，拒绝桌面跳过及选中项目测试的跳过。
+
+环境要求、单项入口和报告路径见[测试说明](../../test/README.zh-CN.md)，AI 使用方式见[仓库测试 skill](../../.agents/skills/virtualpaper-testing/SKILL.md)。修改测试行为时，应同步更新这些说明及其中英文版本。
+
+只校验工作流与脚本契约，不安装、不操作 UI：
+
 ```powershell
 pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1
 ```

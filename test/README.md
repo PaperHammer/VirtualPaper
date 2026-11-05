@@ -1,6 +1,8 @@
-# WinUI operation tests
+# Testing and local acceptance
 
 [English](README.md) | [简体中文](README.zh-CN.md)
+
+The local test chain combines MSTest project tests, real installer acceptance and WinUI interaction tests. Start with `Run-Tests.ps1` for the complete flow; the focused runners below reuse its individual stages.
 
 `VirtualPaper.UIOperationTest` is a standalone, unpackaged WinUI executable that also serves as the test host. Component cases load production pages through project references. Application cases start an isolated, real Core process, which launches the real UI. Neither uses Sandbox or connects to a user's running VirtualPaper instance.
 
@@ -8,7 +10,12 @@
 
 ```text
 test/
+  Run-Tests.ps1                      Complete local Release/installed acceptance
+  Run-ProjectTests.ps1               One prebuilt project test job
+  Run-InstallerTests.ps1             Real package install/open/UI/uninstall
   Run-UIOperationTests.ps1
+  Summarize-TestResults.ps1          Validate raw reports and coverage
+  VirtualPaper.InstallerTest/        Installation wizard and first-run probes
   VirtualPaper.UIOperationTest/
     App.xaml / App.xaml.cs          UI thread, case registration, JSON results
     Cases/
@@ -22,6 +29,16 @@ test/
 
 ## Running the tests
 
+Run commands from the repository root. AI agents should start with [AGENTS.md](../AGENTS.md) and the [VirtualPaper testing skill](../.agents/skills/virtualpaper-testing/SKILL.md). The skill explains test selection, process isolation, report interpretation and workflow gates.
+
+| Goal | Entry point | Scope |
+| --- | --- | --- |
+| Complete local acceptance | `test/Run-Tests.ps1` | Fresh Release rebuild, parallel project tests, ISS and installed extended UI acceptance |
+| Focused project regression | `test/Run-ProjectTests.ps1 -JobId <id>` | One project using existing Release output; no build |
+| Real UI module or suite | `test/Run-UIOperationTests.ps1` | Builds the solution unless `-NoBuild`; runs component/application cases |
+| Existing installer | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | Real installation, first launch and uninstall; add `-RunUIOperationTests` for extended UI |
+| Workflow/script contracts | `.github/scripts/validate-test-workflow.ps1` | Isolated checks; no install or real UI |
+
 For the complete local acceptance used before merging, start PowerShell 7.2 or later **as administrator** and run:
 
 ```powershell
@@ -33,6 +50,56 @@ For the complete local acceptance used before merging, start PowerShell 7.2 or l
 This entry point rebuilds the full solution in **Release**, runs the same eight project test jobs in parallel as CI, compiles `InnoSetup/setup.iss`, installs the resulting package, checks first launch and normal exit, runs the **extended** real UI suite against the installed Core/UI, then uninstalls. A failed phase blocks subsequent phases; uninstall still runs after installation, startup or UI failures. Each invocation writes fresh reports below `TestResults/local-acceptance-*`. Visual Studio MSBuild, .NET 8, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
 
 It refuses an existing Virtual Paper installation or Start menu shortcut. Remove a daily installation explicitly while preserving its data, or use a clean Windows test machine. Installation and uninstallation change the OS uninstall registration and shortcuts; UI cases still exclude startup registration, session locking and other persistent system-setting writes. A missing desktop produces the same explicit UI skip as Pre-merge Check; it is not full UI acceptance.
+
+`-IncludeMLIntegration` selects the regular ML project's optional integration category. It does not control the installed UI suite: complete local acceptance always requests **Extended**, including real inference and depth rendering. That suite requires its model files even when the switch is omitted.
+
+The complete flow is:
+
+```mermaid
+flowchart LR
+    A[Workflow contracts] --> B[Release rebuild]
+    B --> C[8 parallel project jobs]
+    C --> D[ISS package]
+    D --> E[Install and first launch]
+    E --> F[Extended installed UI]
+    F --> G[Uninstall and summary]
+```
+
+Failures block later phases; once installation is attempted, its cleanup path still runs. Local execution uses the working tree; Pre-merge Check uses the PR merge snapshot, while Pre-release tests the versioned release build and requires all selected tests to run without skips. Local tests do not set GitHub PR status or synchronize versions. See the [workflow guide](../.github/workflows/README.md).
+
+Use `-ResultsRoot <new-directory>` to choose the complete run's report root. It contains `build.log`, `workflow-contracts.log`, eight `test-*.log` files, `installer-build.log`, `installed-acceptance.log`, the fresh `installer-package`, and raw `test-results-*` reports. Failed reports are retained. To validate a completed run with the release no-skip gate:
+
+```powershell
+./test/Summarize-TestResults.ps1 -Root '<result-directory>' -RequireFullAcceptance
+```
+
+This checks existing evidence; it does not run omitted tests or prepare a release. A desktop skip or skipped selected project test fails this stricter gate.
+
+### Focused project tests
+
+After building the complete Release solution with Visual Studio MSBuild, use a fresh report directory:
+
+```powershell
+msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any CPU' /restore /m
+./test/Run-ProjectTests.ps1 -JobId test-core -ResultsDirectory "TestResults/core-review-$([guid]::NewGuid().ToString('N'))"
+```
+
+Use Developer PowerShell so `msbuild` is available. The solution's platform mapping must be preserved; standalone host builds with a different architecture can leave mismatched dependency copies.
+
+| Job ID | Project |
+| --- | --- |
+| `test-artifacts` | `VirtualPaper.ReleaseBuildData.Test` |
+| `test-core` | `VirtualPaper.Core.Test` |
+| `test-ui-logic` | `VirtualPaper.UI.Test` |
+| `test-images` | `StaticImg.Test` |
+| `test-web-backdrop` | `WebBackdrop.Test` |
+| `test-ui-components` | `VirtualPaper.UIComponent.Test` |
+| `test-ml` | `VirtualPaper.ML.Test` |
+| `test-shader` | `VirtualPaper.Shader.Test` |
+
+`Get-ProjectTestSpecs` in `TestReportSupport.ps1` is the authoritative job/report mapping. CI and complete local acceptance also run `node .github/scripts/test-atmosphere.cjs` and `node .github/scripts/test-depth-player.cjs` alongside UI logic tests. A focused project run does not invoke those two script checks.
+
+### Focused real UI tests
 
 The focused UI runner below is for module development; it does not replace installed-package acceptance:
 

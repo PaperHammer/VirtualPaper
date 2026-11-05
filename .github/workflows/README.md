@@ -116,6 +116,21 @@ These settings must be configured on GitHub; editing local YAML does not change 
 
 ## Local validation
 
+The complete local counterpart to the test/package stages is:
+
+```powershell
+# Elevated PowerShell 7.2+, clean Windows test installation:
+pwsh -NoProfile -File test/Run-Tests.ps1
+# Include the regular ML integration category too:
+pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
+```
+
+It validates contracts → rebuilds Release → runs the same eight project jobs in parallel → compiles ISS → installs/opens → runs extended UI against installed executables → uninstalls → validates reports. Unlike CI it tests the local working tree; it does not validate an open PR, post GitHub status, change product versions or create a draft. It also does not download missing UI inference models. Default local/Pre-merge summaries permit explicit desktop skips; Pre-release's `-RequireFullAcceptance` gate rejects them and any skipped selected project tests.
+
+See the [testing guide](../../test/README.md) for prerequisites, focused runners and report paths, and the [repository test skill](../../.agents/skills/virtualpaper-testing/SKILL.md) for AI instructions. Changes to testing behavior should update these guides and their Chinese versions together.
+
+For workflow/script contracts alone, without an installation or UI run:
+
 ```powershell
 pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1
 ```

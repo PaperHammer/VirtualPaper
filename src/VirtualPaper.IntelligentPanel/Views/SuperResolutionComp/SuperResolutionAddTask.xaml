@@ -111,16 +111,18 @@
             VerticalAlignment="Center"
             Margin="20,-40,20,0">
             <Border 
-                Width="44"
-                Height="44"
-                CornerRadius="22"
-                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                Width="48"
+                Height="48"
+                CornerRadius="14"
+                Background="{ThemeResource AccentButtonBackground}"
+                BorderBrush="{ThemeResource AccentButtonBorderBrush}"
+                BorderThickness="{ThemeResource ButtonBorderThemeThickness}"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center">
                 <FontIcon 
                     Glyph="&#xE72A;"
-                    FontSize="16"
-                    Foreground="White"
+                    FontSize="20"
+                    Foreground="{ThemeResource AccentButtonForeground}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"/>
             </Border>

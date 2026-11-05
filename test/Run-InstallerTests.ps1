@@ -6,11 +6,6 @@ param(
     [ValidateSet('english', 'chinese')][string] $InstallerLanguage = 'english',
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
     [ValidateRange(10, 600)][int] $TimeoutSeconds = 120,
-    [switch] $RunUIOperationTests,
-    [switch] $AllowUIFailure,
-    [string] $UIHostExe,
-    [string] $UIReportPath = 'TestResults/UIOperation/ui-operation-results.json',
-    [ValidateRange(30, 900)][int] $UITimeoutSeconds = 900,
     [switch] $NoBuild
 )
 $ErrorActionPreference = 'Stop'
@@ -34,19 +29,6 @@ if (-not $NoBuild) {
     if ($LASTEXITCODE -ne 0) { throw 'Installer lifecycle probe build failed; installation was not attempted.' }
 }
 if (-not (Test-Path -LiteralPath $probe)) { throw "Installer lifecycle probe not found: $probe" }
-if ($RunUIOperationTests) {
-    if (-not $UIHostExe -or -not (Test-Path -LiteralPath $UIHostExe -PathType Leaf)) {
-        throw 'Installed UI acceptance requires a prebuilt -UIHostExe.'
-    }
-    $UIHostExe = [IO.Path]::GetFullPath($UIHostExe)
-    $UIReportPath = [IO.Path]::GetFullPath($UIReportPath)
-    if (Test-Path -LiteralPath $UIReportPath) { throw "UI report already exists: $UIReportPath" }
-    if (Test-Path -LiteralPath "$UIReportPath.artifacts") { throw "UI artifacts already exist: $UIReportPath.artifacts" }
-    if ($UIReportPath -eq $ReportPath -or $UIReportPath.StartsWith("$artifacts\", [StringComparison]::OrdinalIgnoreCase)) {
-        throw 'Installer and UI reports must use separate artifact paths.'
-    }
-}
-
 # The production AppId is shared with a user's existing installation. Read all registry
 # views before installing, so this acceptance run cannot overwrite a daily installation.
 $setupScriptPath = Join-Path $repositoryRoot 'InnoSetup/setup.iss'
@@ -62,33 +44,6 @@ $installedVersion = $null
 $environment = Get-UIOperationEnvironment
 $mode = if ($environment.Available) { 'InteractiveWizard' } else { 'Silent' }
 Write-Host "Installer acceptance mode: $mode"
-$uiOperation = $null
-$uiState = @{ Failed = $false; RecoveredProcesses = [Collections.Generic.List[int]]::new() }
-if ($RunUIOperationTests) {
-    if (-not $environment.Available) {
-        # Preserve the same read-only preflight evidence as the skipped startup
-        # stage. Do not try to launch UI or retest the desktop after uninstall.
-        New-Item -ItemType Directory -Path "$UIReportPath.artifacts" -Force | Out-Null
-        $environment | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$UIReportPath.artifacts/environment.json" -Encoding utf8
-        New-UIOperationSkipReport $environment | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $UIReportPath -Encoding utf8
-    }
-    $uiOperation = {
-        try {
-            $installedCore = Join-Path $installDir 'VirtualPaper.exe'
-            & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
-                -CoreExe $installedCore -HostExe $UIHostExe -ReportPath $UIReportPath -TimeoutSeconds $UITimeoutSeconds
-            # The runner validates its native host and throws on failure.
-            $ui = Get-Content -LiteralPath $UIReportPath -Raw | ConvertFrom-Json
-            if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') {
-                throw 'The desktop became unavailable after startup; installed UI acceptance did not run.'
-            }
-        } catch {
-            $uiState.Failed = $true
-            throw
-        }
-    }
-}
-
 function Invoke-BoundedProcess([string] $Executable, [string] $Arguments) {
     $process = Start-Process -FilePath $Executable -ArgumentList $Arguments -WindowStyle Hidden -PassThru
     try {
@@ -220,12 +175,7 @@ $report = Invoke-InstallerLifecycle -Install {
     foreach ($process in @(Get-InstallerTestProcesses)) {
         try {
             if (-not $process.HasExited) {
-                if ($AllowUIFailure -and $uiState.Failed) {
-                    $uiState.RecoveredProcesses.Add($process.Id)
-                    Write-Warning "Failed UI acceptance required recovery of process $($process.Id); UI remains failed."
-                } else {
-                    $cleanupErrors.Add("Application process $($process.Id) required forced recovery; normal exit was not accepted.")
-                }
+                $cleanupErrors.Add("Application process $($process.Id) required forced recovery; normal exit was not accepted.")
                 $process.Kill($true)
                 if (-not $process.WaitForExit(10000)) { throw "Process did not stop: $($process.Id)" }
             }
@@ -254,7 +204,7 @@ $report = Invoke-InstallerLifecycle -Install {
     if (@(Get-InstallRegistrations $appId).Count) { $cleanupErrors.Add('Application uninstall registration remains after uninstall.') }
     if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) { $cleanupErrors.Add('Start menu shortcut remains after uninstall.') }
     if ($cleanupErrors.Count) { throw ($cleanupErrors -join [Environment]::NewLine) }
-} -UIOperation $uiOperation -Environment $environment
+} -Environment $environment
 $report | Add-Member NoteProperty InstallDir $installDir
 $report | Add-Member NoteProperty Mode $mode
 $report | Add-Member NoteProperty PackageVersion $packageVersion
@@ -262,22 +212,14 @@ $report | Add-Member NoteProperty InstalledVersion $installedVersion
 $report | Add-Member NoteProperty InstallerLanguage $InstallerLanguage
 $report | Add-Member NoteProperty ReinstallLanguage $reinstallLanguage
 $report | Add-Member NoteProperty InstallerSha256 $packageHash
-$report | Add-Member NoteProperty UIRecoveryProcesses $uiState.RecoveredProcesses.ToArray()
 $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8
 if ($env:GITHUB_STEP_SUMMARY) {
     $sequence = $report.Checks.Name -join ' → '
-    "### Installed application: $sequence`n`n| Stage | Result | Duration |`n| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
+    "### Installer smoke: $sequence`n`n| Stage | Result | Duration |`n| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
     foreach ($check in $report.Checks) {
         "| $($check.Name) | $($check.Status) | $($check.DurationMilliseconds) ms |" >> $env:GITHUB_STEP_SUMMARY
     }
 }
-Assert-InstallerReportPassed $report -AllowUIFailure:$AllowUIFailure
-$outcome = Get-InstallerReportOutcome $report -AllowUIFailure:$AllowUIFailure
-if ($outcome -eq 'UIFailed') {
-    Write-Warning "UI acceptance failed (non-blocking); required installer stages passed. Report: $ReportPath"
-} else {
-    Write-Host "[OK] Installer acceptance: $outcome. Report: $ReportPath"
-}
-# A failed native UI host can leave LASTEXITCODE nonzero even after its failure
-# was recorded and uninstall succeeded. Required failures already throw above.
+Assert-InstallerReportPassed $report
+Write-Host "[OK] Installer smoke passed. Report: $ReportPath"
 $global:LASTEXITCODE = 0

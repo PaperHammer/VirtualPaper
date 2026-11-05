@@ -69,11 +69,13 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "ISS packaging failed. See $ResultsRoot/installer-build.log" }
     $installers = @(Get-ChildItem -LiteralPath $packageDir -Filter '*.exe' -File)
     if ($installers.Count -ne 1) { throw 'Expected exactly one freshly built installer.' }
-    Write-Host 'Installing, verifying reinstall/languages, running extended UI acceptance and uninstalling...'
-    & ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -RunUIOperationTests `
-        -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
-        -ReportPath "$ResultsRoot/test-results-installer/installer-results.json" `
-        -UIReportPath "$ResultsRoot/test-results-ui-operation/ui-operation-results.json" *> "$ResultsRoot/installed-acceptance.log"
+    Write-Host 'Running required installer smoke (including reinstall, profiles and normal exits)...'
+    & ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild `
+        -ReportPath "$ResultsRoot/test-results-installer/installer-results.json" *> "$ResultsRoot/installer-smoke.log"
+    Write-Host 'Running independent extended UI acceptance against the Release build...'
+    & ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
+        -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
+        -ReportPath "$ResultsRoot/test-results-ui-operation/ui-operation-results.json" *> "$ResultsRoot/ui-acceptance.log"
     & ./test/Summarize-TestResults.ps1 -Root $ResultsRoot
 } finally {
     $jobs | Where-Object State -EQ 'Running' | Stop-Job

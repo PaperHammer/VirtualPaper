@@ -62,8 +62,7 @@ try {
     Assert-ReviewCondition (@(Get-ProjectTestReports $rawRoot).Count -eq 8) 'A previous summary must not duplicate project reports.'
     Assert-ReviewCondition (@(Get-TestCoverageRows $rawRoot).Count -eq 7) 'Count one canonical coverage report per project.'
 
-    $checks = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh', 'UIOperation', 'Uninstall') | ForEach-Object { @{ Name = $_; Passed = $true; Status = 'Passed' } }
-    $installer = @{ SchemaVersion = 2; Suite = 'InstallerLifecycle'; Total = 7; Passed = 7; Failed = 0; Checks = @($checks); UIOperationRequested = $true }
+    $installer = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Uninstall {}
     $ui = @{ Passed = $true; ExpectedCount = 1; Results = @(@{
         Name = 'Application.Fixture.Run'; Passed = $true
         Evidence = @{ CoreProcessId = 10; UiProcessIds = @(11); ProcessesExitedNormally = $true }
@@ -77,7 +76,7 @@ try {
     $env:GITHUB_OUTPUT = Join-Path $fixture 'summary-output'
     $env:GITHUB_STEP_SUMMARY = Join-Path $fixture 'summary.md'
     & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot
-    Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Passed')) 'Summary must validate installed UI results.'
+    Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Passed')) 'Summary must validate independent UI results.'
     [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
     Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Release must reject skipped project tests'
     Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Skipped release tests must not emit success outputs.'
@@ -88,58 +87,52 @@ try {
     Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Passed')) 'Complete release acceptance must pass.'
     $installerFile = Join-Path $rawRoot 'test-results-installer/installer-results.json'
     $uiFile = Join-Path $rawRoot 'test-results-ui-operation/ui-operation-results.json'
-    $uiFailedInstaller = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} `
-        -UIOperation { throw 'Expected UI failure' } -Uninstall {}
-    $uiFailedInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
     $failedUI = @{ Passed = $false; ExpectedCount = 1; Results = @(@{ Name = 'Application.Fixture.Run'; Passed = $false; Error = 'Expected UI failure' }) }
     $failedUI | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
     Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Local strict acceptance must still reject real UI failures'
-    foreach ($uiContent in @('failed', 'missing', 'malformed', 'host-failed-after-report')) {
+    foreach ($uiContent in @('failed', 'missing', 'malformed', 'host-failed-after-report', 'job-cancelled', 'job-skipped')) {
+        $jobResult = 'success'
         switch ($uiContent) {
             missing { Remove-Item -LiteralPath $uiFile }
             malformed { Set-Content -LiteralPath $uiFile -Value '{broken' }
-            host-failed-after-report { $ui | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile }
+            host-failed-after-report { $ui | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile; $jobResult = 'failure' }
+            job-cancelled { $jobResult = 'cancelled' }
+            job-skipped { $jobResult = 'skipped' }
         }
         [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
         [IO.File]::WriteAllText($env:GITHUB_STEP_SUMMARY, '')
-        & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure
+        & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure -UIJobResult $jobResult
         $outputs = Get-Content $env:GITHUB_OUTPUT -Raw
-        Assert-ReviewCondition ($outputs.Contains('ui_outcome=Failed') -and $outputs.Contains('installer_outcome=UIFailed')) 'Optional UI failure must remain a failed result, including timeout/missing reports.'
+        Assert-ReviewCondition ($outputs.Contains('ui_outcome=Failed') -and $outputs.Contains('installer_outcome=Passed')) 'Independent UI failure must never change the passing smoke result.'
         Assert-ReviewCondition ((Get-Content $env:GITHUB_STEP_SUMMARY -Raw).Contains('**Failed (non-blocking)**')) 'Optional UI failures must remain visible.'
     }
     foreach ($stage in @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh', 'Uninstall')) {
-        $bad = $uiFailedInstaller | ConvertTo-Json -Depth 10 | ConvertFrom-Json
+        $bad = $installer | ConvertTo-Json -Depth 10 | ConvertFrom-Json
         $check = $bad.Checks | Where-Object Name -EQ $stage
         $check.Passed = $false; $check.Status = 'Failed'; $bad.Passed--; $bad.Failed++
         $bad | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
         [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
-        Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure } "Mandatory $stage failure must still block CI"
-        Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Mandatory failures must not emit success outputs.'
+        Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure } "Mandatory smoke $stage failure must still block CI"
+        Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Smoke failures must not emit success outputs.'
     }
     $installer | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
-    $ui | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
     $headless = Resolve-UIOperationEnvironment ([pscustomobject]@{ Windows = $true; UserInteractive = $false })
-    $headlessInstaller = Invoke-InstallerLifecycle -Install {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Open { throw 'No UI in this contract.' } -UIOperation { throw 'No UI in this contract.' } -Uninstall {} -Environment $headless
-    $headlessInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
-    $uiFile = Join-Path $rawRoot 'test-results-ui-operation/ui-operation-results.json'
     New-UIOperationSkipReport $headless | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
     [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
-    & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot
-    Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('installer_outcome=OpenSkipped')) 'Summary must preserve installer Open skip.'
-    Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Skipped')) 'Summary must preserve the UI skip outcome.'
-    Assert-ReviewCondition ((Get-Content $env:GITHUB_STEP_SUMMARY -Raw).Contains('**Open skipped**')) 'Summary must not claim full installation UI acceptance on a headless runner.'
+    & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -AllowUIFailure
+    Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Skipped')) 'Independent UI environment skip must remain explicit.'
+    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Strict local validation must reject UI skips'
+    & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure
+    $headlessInstaller = Invoke-InstallerLifecycle -Install {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Open {} -Uninstall {} -Environment $headless
+    $headlessInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
     [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
-    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Release must reject desktop-unavailable startup/UI skips'
-    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure } 'Optional UI must not permit skipped mandatory startup/profile stages in release'
-    Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Skipped release UI must not emit success outputs.'
+    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -AllowUIFailure } 'Smoke startup skips must block pre-merge'
+    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance -AllowUIFailure } 'Smoke startup skips must block release'
+    Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Skipped smoke must not emit success outputs.'
     $installer | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
-    [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
-    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot } 'Installer UI stage and UI report must agree'
-    Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Inconsistent reports must not emit success outputs.'
     $ui | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $uiFile
-    $legacyInstaller = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Uninstall {}
-    $legacyInstaller | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
-    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot } 'CI must require installed UI, not standalone installer acceptance'
+    Remove-Item -LiteralPath $installerFile
+    Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -AllowUIFailure } 'Missing smoke must still block CI'
     $installer | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $installerFile
     $extraCoverage = Join-Path $rawRoot 'test-results-core/extra.cobertura.xml'
     [IO.File]::WriteAllText($extraCoverage, '<coverage lines-covered="5" lines-valid="10"/>')

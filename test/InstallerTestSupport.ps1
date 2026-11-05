@@ -43,25 +43,24 @@ function Invoke-InstallerLifecycle {
         [Parameter(Mandatory)][scriptblock] $Reinstall,
         [Parameter(Mandatory)][scriptblock] $VerifyPreserved,
         [Parameter(Mandatory)][scriptblock] $OpenFresh,
-        [scriptblock] $UIOperation = $null, $Environment = $null)
+        $Environment = $null)
     $started = [DateTimeOffset]::UtcNow
     $timer = [Diagnostics.Stopwatch]::StartNew()
     $checks = [Collections.Generic.List[object]]::new()
     $stages = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh')
-    if ($null -ne $UIOperation) { $stages += 'UIOperation' }
     $stages += 'Uninstall'
     foreach ($stage in $stages) {
         if ($stage -ne 'Uninstall' -and @($checks | Where-Object Status -EQ 'Failed').Count) {
             $checks.Add([pscustomobject]@{ Name = $stage; Passed = $false; Status = 'Skipped'; DurationMilliseconds = 0; Error = 'A prerequisite stage failed.' })
             continue
         }
-        if ($stage -in @('Open', 'VerifyPreserved', 'OpenFresh', 'UIOperation') -and $null -ne $Environment -and $Environment.Available -ceq $false) {
+        if ($stage -in @('Open', 'VerifyPreserved', 'OpenFresh') -and $null -ne $Environment -and $Environment.Available -ceq $false) {
             $checks.Add([pscustomobject]@{ Name = $stage; Passed = $false; Status = 'Skipped'; DurationMilliseconds = 0; Error = $Environment.Reason })
             continue
         }
         $stageTimer = [Diagnostics.Stopwatch]::StartNew()
         try {
-            # Uninstall always runs after install, startup or UI failures.
+            # Uninstall always runs after install or startup failures.
             & (Get-Variable -Name $stage -ValueOnly) | Out-Host
             $checks.Add([pscustomobject]@{ Name = $stage; Passed = $true; Status = 'Passed'; DurationMilliseconds = $stageTimer.ElapsedMilliseconds; Error = $null })
         } catch {
@@ -72,52 +71,27 @@ function Invoke-InstallerLifecycle {
     $passed = @($checks | Where-Object Passed).Count
     $skipped = @($checks | Where-Object Status -EQ 'Skipped').Count
     [pscustomobject]@{
-        SchemaVersion = 2; Suite = 'InstallerLifecycle'; StartedAtUtc = $started
+        SchemaVersion = 3; Suite = 'InstallerSmoke'; StartedAtUtc = $started
         DurationMilliseconds = $timer.ElapsedMilliseconds; Total = $stages.Count; Passed = $passed
         Failed = @($checks | Where-Object Status -EQ 'Failed').Count; Skipped = $skipped
-        Checks = $checks.ToArray(); Environment = $Environment; UIOperationRequested = $null -ne $UIOperation
+        Checks = $checks.ToArray(); Environment = $Environment
     }
 }
 
 function Get-InstallerReportOutcome {
-    param($Report, [switch]$AllowUIFailure)
-    $stages = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh')
-    if ($Report.UIOperationRequested -ceq $true) { $stages += 'UIOperation' }
-    $stages += 'Uninstall'
-    $uiFailed = $AllowUIFailure -and $Report.UIOperationRequested -ceq $true -and
-        @($Report.Checks | Where-Object { $_.Name -ceq 'UIOperation' -and $_.Status -ceq 'Failed' -and $_.Passed -ceq $false }).Count -eq 1
-    if ($null -eq $Report -or $Report.SchemaVersion -ne 2 -or $Report.Suite -ne 'InstallerLifecycle' -or
-        $Report.Total -ne $stages.Count -or $Report.Failed -ne [int]$uiFailed -or @($Report.Checks).Count -ne $stages.Count -or
-        (@($Report.Checks.Name) -join ',') -cne ($stages -join ',')) {
-        throw 'Installer lifecycle acceptance is missing required stages or contains failures.'
+    param($Report)
+    $stages = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh', 'Uninstall')
+    if ($null -eq $Report -or $Report.SchemaVersion -ne 3 -or $Report.Suite -cne 'InstallerSmoke' -or
+        $Report.Total -ne $stages.Count -or $Report.Passed -ne $stages.Count -or
+        $Report.Failed -ne 0 -or $Report.Skipped -ne 0 -or @($Report.Checks).Count -ne $stages.Count -or
+        (@($Report.Checks.Name) -join ',') -cne ($stages -join ',') -or
+        @($Report.Checks | Where-Object { $_.Passed -cne $true -or $_.Status -cne 'Passed' }).Count -ne 0) {
+        throw 'Installer smoke requires install, startup/normal exit, reinstall, profile checks and uninstall to pass without skips.'
     }
-    # CI may tolerate only the extended UI stage. Startup, persistence and
-    # uninstall remain required, and the original failed result is retained.
-    if ($uiFailed -and $Report.Passed -eq ($stages.Count - 1) -and $Report.Skipped -eq 0 -and
-        @($Report.Checks | Where-Object { $_.Name -cne 'UIOperation' -and
-            ($_.Passed -cne $true -or $_.Status -cne 'Passed') }).Count -eq 0) {
-        return 'UIFailed'
-    }
-    if ($Report.Passed -eq $stages.Count -and @($Report.Checks | Where-Object { $_.Passed -cne $true -or $_.Status -cne 'Passed' }).Count -eq 0) {
-        if ($null -ne $Report.Skipped -and $Report.Skipped -ne 0) { throw 'Inconsistent installer skip count.' }
-        return 'Passed'
-    }
-    $environment = $Report.Environment
-    if ($null -ne $environment -and $null -ne $environment.Checks) {
-        $verified = Resolve-UIOperationEnvironment $environment.Checks
-        if ($environment.Available -ceq $false -and $verified.Available -ceq $false -and
-            $environment.ReasonCode -eq $verified.ReasonCode -and $environment.Reason -eq $verified.Reason -and
-            $Report.Passed -eq 3 -and $Report.Skipped -eq ($stages.Count - 3) -and
-            $Report.Checks[0].Passed -ceq $true -and $Report.Checks[0].Status -ceq 'Passed' -and
-            $Report.Checks[2].Passed -ceq $true -and $Report.Checks[2].Status -ceq 'Passed' -and
-            @($Report.Checks | Where-Object { $_.Name -in @('Open', 'VerifyPreserved', 'OpenFresh', 'UIOperation') -and
-                ($_.Passed -cne $false -or $_.Status -cne 'Skipped' -or $_.Error -ne $verified.Reason) }).Count -eq 0 -and
-            $Report.Checks[-1].Passed -ceq $true -and $Report.Checks[-1].Status -ceq 'Passed') { return 'OpenSkipped' }
-    }
-    throw 'Installer lifecycle failed or has no valid desktop-unavailable evidence for skipping Open.'
+    return 'Passed'
 }
 
 function Assert-InstallerReportPassed {
-    param($Report, [switch]$AllowUIFailure)
-    $null = Get-InstallerReportOutcome $Report -AllowUIFailure:$AllowUIFailure
+    param($Report)
+    $null = Get-InstallerReportOutcome $Report
 }

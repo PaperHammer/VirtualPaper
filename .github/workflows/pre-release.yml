@@ -373,12 +373,10 @@ jobs:
         require-complete-execution: 'true'
 
   package-release:
-    name: Package and Verify
+    name: Package and Smoke Test
     runs-on: windows-latest
     needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
     timeout-minutes: 30
-    outputs:
-      ui_outcome: ${{ steps.acceptance.outputs.ui_outcome }}
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -452,20 +450,13 @@ jobs:
         (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content InnoSetup/Output/SHA256.txt -Encoding utf8NoBOM
         "installer_path=$($installer.FullName)" >> $env:GITHUB_OUTPUT
 
-    - name: Verify installed release
+    - name: Run installer smoke
       shell: pwsh
       env:
         INSTALLER_PATH: ${{ steps.installer-details.outputs.installer_path }}
       run: |
-        ./test/Run-InstallerTests.ps1 -InstallerPath $env:INSTALLER_PATH -NoBuild -RunUIOperationTests -AllowUIFailure `
-          -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
-          -ReportPath TestResults/test-results-installer/installer-results.json `
-          -UIReportPath TestResults/test-results-ui-operation/ui-operation-results.json
-
-    - name: Validate release checks
-      id: acceptance
-      shell: pwsh
-      run: ./test/Summarize-TestResults.ps1 -Root TestResults -RequireFullAcceptance -AllowUIFailure
+        ./test/Run-InstallerTests.ps1 -InstallerPath $env:INSTALLER_PATH -NoBuild `
+          -ReportPath TestResults/test-results-installer/installer-results.json
 
     - name: Upload installer results
       if: always()
@@ -476,26 +467,6 @@ jobs:
         path: TestResults/test-results-installer/
         if-no-files-found: warn
         retention-days: 7
-
-    - name: Upload WinUI results
-      if: always() && hashFiles('TestResults/test-results-ui-operation/**') != ''
-      uses: actions/upload-artifact@v4
-      with:
-        overwrite: true
-        name: test-results-ui-operation
-        path: TestResults/test-results-ui-operation/
-        if-no-files-found: warn
-        retention-days: 7
-
-    - name: Upload release test summary
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        overwrite: true
-        name: release-test-summary
-        path: TestResults/
-        if-no-files-found: warn
-        retention-days: 30
 
     - name: Upload installer package
       uses: actions/upload-artifact@v4
@@ -550,11 +521,93 @@ jobs:
           PLUGINS_PATCH_SHS256.txt
         retention-days: 30
 
+  test-ui-operation:
+    name: Real UI Acceptance
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    timeout-minutes: 25
+    # This job contains only optional UI acceptance; installer smoke is separate.
+    continue-on-error: true
+    outputs:
+      result: ${{ steps.ui-tests.outcome }}
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
+        persist-credentials: false
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-release-output
+        path: .
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run real UI acceptance
+      id: ui-tests
+      shell: pwsh
+      run: |
+        ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
+          -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
+          -ReportPath TestResults/UIOperation/ui-operation-results.json
+
+    - name: Upload WinUI results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        overwrite: true
+        name: test-results-ui-operation
+        path: TestResults/UIOperation/
+        if-no-files-found: warn
+        retention-days: 7
+
+  summarize-tests:
+    name: Release Test Summary
+    runs-on: ubuntu-latest
+    needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, package-release, test-ui-operation]
+    if: always() && needs.prepare-metadata.result == 'success'
+    outputs:
+      ui_outcome: ${{ steps.reports.outputs.ui_outcome }}
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
+        persist-credentials: false
+
+    - name: Download test reports
+      uses: actions/download-artifact@v4
+      with:
+        pattern: test-results-*
+        path: TestResults/
+
+    - name: Validate release checks
+      id: reports
+      shell: pwsh
+      env:
+        UI_JOB_RESULT: ${{ needs.test-ui-operation.outputs.result || needs.test-ui-operation.result }}
+      run: ./test/Summarize-TestResults.ps1 -Root TestResults -RequireFullAcceptance -AllowUIFailure -UIJobResult $env:UI_JOB_RESULT
+
+    - name: Upload release test summary
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        overwrite: true
+        name: release-test-summary
+        path: TestResults/
+        if-no-files-found: warn
+        retention-days: 30
+
   # Push only version fields to main and dev together. A failure leaves both remote refs unchanged.
   sync-versions:
     name: Sync Versions
     runs-on: windows-latest
-    needs: [prepare-metadata, package-release]
+    needs: [prepare-metadata, package-release, summarize-tests]
     if: needs.prepare-metadata.outputs.has_plugin_update != 'true'
     outputs:
       main_sha: ${{ steps.sync-versions.outputs.main_sha }}
@@ -591,11 +644,12 @@ jobs:
   draft-release:
     name: Draft Release
     runs-on: ubuntu-latest
-    needs: [prepare-metadata, package-release, sync-versions]
+    needs: [prepare-metadata, package-release, summarize-tests, sync-versions]
     if: |
       !cancelled() &&
       needs.prepare-metadata.result == 'success' &&
       needs.package-release.result == 'success' &&
+      needs.summarize-tests.result == 'success' &&
       (needs.prepare-metadata.outputs.has_plugin_update == 'true' || needs.sync-versions.result == 'success')
 
     steps:
@@ -660,7 +714,7 @@ jobs:
         RELEASE_TITLE: ${{ needs.prepare-metadata.outputs.release_title }}
         RELEASE_TAG: ${{ needs.prepare-metadata.outputs.release_tag }}
         DRAFT_OUTCOME: ${{ steps.release-draft.outcome }}
-        UI_OUTCOME: ${{ needs.package-release.outputs.ui_outcome }}
+        UI_OUTCOME: ${{ needs.summarize-tests.outputs.ui_outcome }}
         TARGET_SHA: ${{ needs.sync-versions.outputs.main_sha || needs.prepare-metadata.outputs.main_sha }}
       run: |
         @"

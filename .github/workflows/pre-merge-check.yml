@@ -144,7 +144,7 @@ jobs:
           test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj
           test/VirtualPaper.InstallerTest/bin/Release/
 
-  # Build once, run regular tests in parallel, then test one actual installation.
+  # Build once; installer smoke and real UI acceptance run independently after project tests.
   test-artifacts:
     name: Artifact Tests
     runs-on: windows-latest
@@ -281,8 +281,8 @@ jobs:
       with:
         job-id: test-shader
 
-  test-installed-app:
-    name: Installed App Acceptance
+  test-installer-smoke:
+    name: Installer Smoke
     runs-on: windows-latest
     needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
     timeout-minutes: 30
@@ -333,14 +333,13 @@ jobs:
         if-no-files-found: error
         retention-days: 7
 
-    - name: Verify installed application
+    - name: Run installer smoke
       shell: pwsh
       run: |
         $installers = @(Get-ChildItem -LiteralPath InnoSetup/Output -Filter '*.exe' -File)
         if ($installers.Count -ne 1) { throw 'Expected exactly one installer.' }
-        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -RunUIOperationTests -AllowUIFailure `
-          -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
-          -UIReportPath TestResults/UIOperation/ui-operation-results.json -ReportPath TestResults/Installer/installer-results.json
+        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild `
+          -ReportPath TestResults/Installer/installer-results.json
 
     - name: Upload installer results
       uses: actions/upload-artifact@v4
@@ -352,14 +351,49 @@ jobs:
         if-no-files-found: warn
         retention-days: 7
 
+  test-ui-operation:
+    name: Real UI Acceptance
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    timeout-minutes: 25
+    # This job contains only optional UI acceptance; installer smoke is separate.
+    continue-on-error: true
+    outputs:
+      result: ${{ steps.ui-tests.outcome }}
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+
+    - name: Download build output
+      uses: actions/download-artifact@v4
+      with:
+        name: build-output
+        path: .
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run real UI acceptance
+      id: ui-tests
+      shell: pwsh
+      run: |
+        ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
+          -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
+          -ReportPath TestResults/UIOperation/ui-operation-results.json
+
     - name: Upload WinUI results
+      if: always()
       uses: actions/upload-artifact@v4
-      if: always() && hashFiles('TestResults/UIOperation/**') != ''
       with:
         overwrite: true
         name: test-results-ui-operation
         path: TestResults/UIOperation/
-        if-no-files-found: error
+        if-no-files-found: warn
         retention-days: 7
 
   summarize-tests:
@@ -369,7 +403,7 @@ jobs:
       statuses: write
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-installed-app]
+    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-installer-smoke, test-ui-operation]
     if: always() && needs.validate-pr.result == 'success'
 
     steps:
@@ -387,7 +421,9 @@ jobs:
 
     - name: Summarize test reports
       id: reports
-      run: ./test/Summarize-TestResults.ps1 -Root TestResults -AllowUIFailure
+      env:
+        UI_JOB_RESULT: ${{ needs.test-ui-operation.outputs.result || needs.test-ui-operation.result }}
+      run: ./test/Summarize-TestResults.ps1 -Root TestResults -AllowUIFailure -UIJobResult $env:UI_JOB_RESULT
 
     - name: Upload report bundle
       uses: actions/upload-artifact@v4
@@ -403,7 +439,7 @@ jobs:
       uses: actions/github-script@v7
       env:
         REPORT_JOB_STATUS: ${{ job.status }}
-        PREREQUISITE_RESULTS: ${{ join(needs.*.result, ' ') }}
+        JOB_RESULTS: ${{ toJSON(needs) }}
         UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}
         INSTALLER_OUTCOME: ${{ steps.reports.outputs.installer_outcome }}
       with:
@@ -412,13 +448,13 @@ jobs:
             ...context.repo, pull_number: Number(context.payload.inputs.pr_number)
           });
           const passed = process.env.REPORT_JOB_STATUS === 'success' &&
-            process.env.PREREQUISITE_RESULTS.split(' ').every(result => result === 'success') &&
+            Object.entries(JSON.parse(process.env.JOB_RESULTS)).filter(([name]) => name !== 'test-ui-operation').every(([, job]) => job.result === 'success') &&
             ['Passed', 'Skipped', 'Failed'].includes(process.env.UI_OUTCOME);
           let state = passed ? 'success' : 'failure';
           let description = !passed ? 'Required checks failed or results missing [FAILED]' :
             process.env.UI_OUTCOME === 'Failed' ? 'Required checks passed; UI acceptance failed [WARNING]' :
-            process.env.UI_OUTCOME === 'Skipped' || process.env.INSTALLER_OUTCOME === 'OpenSkipped' ?
-              'Regular tests passed; UI acceptance skipped [SKIPPED]' : 'All tests passed [OK]';
+            process.env.UI_OUTCOME === 'Skipped' ?
+              'Required checks passed; UI acceptance skipped [SKIPPED]' : 'All tests passed [OK]';
           const head = '${{ needs.validate-pr.outputs.head_sha }}';
           const selected = pr.labels.map(label => label.name).filter(name =>
             ['version:major', 'version:minor', 'version:build', 'version:revision'].includes(name));

@@ -31,11 +31,11 @@ pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 pwsh -NoProfile -File test/Run-Tests.ps1 -InnoSetupCompiler 'C:\tools\InnoSetup\ISCC.exe'
 ```
 
-The runner validates workflow contracts, rebuilds the full Release solution, runs eight project jobs in parallel, compiles the production ISS, then installs in English → verifies first launch and retains settings/imported wallpaper data → reinstalls the same package in Chinese → verifies the original profile is unchanged and a fresh profile initializes in Chinese → runs one extended UI suite against the installed Core/UI → uninstalls → validates the combined reports. A failure blocks later phases, while installation cleanup still executes. It creates a fresh `TestResults/local-acceptance-*` directory; report the exact directory used.
+The runner validates workflow contracts, rebuilds Release, runs eight project jobs in parallel, compiles ISS, then completes mandatory smoke: English install/startup/normal exit → Chinese same-package reinstall → preserved/fresh-profile startup/normal exits → uninstall. It then runs independent extended UI against the Release output with its own real Core/UI sessions. Local failures block later phases; smoke cleanup still runs. Reports use a fresh `TestResults/local-acceptance-*` directory. Do not describe UI as borrowing the smoke installation.
 
 Installer runs change actual installed files, shortcuts and uninstall registration. Check the user's authorization and any current constraints before executing them. The clean-install guard rejects an existing daily installation; do not bypass it or automatically uninstall that application. Preserve user data. Test runs may occupy the foreground; honor any request to defer real UI interaction.
 
-`-IncludeMLIntegration` controls the regular ML project only. The complete runner always requests the extended UI suite, which already includes real inference and depth rendering. Missing UI models fail that suite. Do not silently substitute the standard suite.
+`-IncludeMLIntegration` controls the regular ML project only. The complete runner always requests the independent extended UI suite, which already includes real inference and depth rendering. Missing UI models fail that suite. Do not silently substitute the standard suite.
 
 To inspect the result with release-strength no-skip validation, use the same completed result directory:
 
@@ -71,28 +71,27 @@ pwsh -NoProfile -File test/Run-UIOperationTests.ps1 -Configuration Release -NoBu
 
 Omit `-NoBuild` to have the UI runner build the complete solution first. `-Module` selects application cases by name; consult `test/VirtualPaper.UIOperationTest/App.xaml.cs` for valid names. It cannot be combined with `-Suite Extended`. Component cases run with the standard/extended suites. `VirtualPaper.UIOperationTest` is a WinUI executable, not a `dotnet test` project. Do not use Sandbox, mock away the backend or directly launch UI in place of the Core production path. Tests must retain session isolation, real persistence checks and normal-exit assertions.
 
-For an existing installer plus matching prebuilt hosts:
+For required smoke against an existing installer:
 
 ```powershell
-pwsh -NoProfile -File test/Run-InstallerTests.ps1 -InstallerPath '<setup.exe>' -NoBuild -RunUIOperationTests `
-  -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe
+pwsh -NoProfile -File test/Run-InstallerTests.ps1 -InstallerPath '<setup.exe>' -NoBuild
 ```
 
-English installation followed by Chinese same-package reinstall is the default. `-InstallerLanguage chinese` reverses those two languages. The retained profile must keep its language, theme, animation preference and wallpaper files; a separate fresh profile must follow the second installer language. Extended UI runs once after both profile checks. Application and host dependencies must match; if hash checks fail, rebuild the complete solution and regenerate the installer. Rerunning an old installer does not test a new source fix.
+English installation followed by Chinese same-package reinstall is the default; `-InstallerLanguage chinese` reverses the order. Retained profiles must keep their language, preferences and wallpaper files; a fresh profile must follow the second installer language. Each session must exit normally. Smoke uninstalls before the independent UI suite starts locally. Application/host dependencies must match; rebuild the solution and installer if hashes differ.
 
 ## Results, failures and skips
 
 - Read exit status **and** fresh raw reports. A process exit code of zero alone does not establish that UI ran.
 - Project jobs produce TRX and, for the seven regular projects, Cobertura. Coverage measures executed source lines, not UI completeness. `TestReportSupport.ps1` validates counts, outcomes and unhandled exceptions.
-- `test-results-installer/installer-results.json` records install/open/reinstall/preserved-profile/fresh-start/UI/uninstall; `test-results-ui-operation/ui-operation-results.json` records actual cases. `.artifacts` folders retain logs, isolated settings and environment evidence. Use `Summarize-TestResults.ps1` for combined validation.
-- Headless runs install/reinstall/uninstall silently and explicitly skip startup, retained-profile and real UI checks. A valid UI skip has `Status=Skipped`, `Passed=false`, `ExpectedCount=0` and desktop evidence. Never report it as UI passed. An activation failure or timeout after startup remains a failure.
+- `test-results-installer/installer-results.json` records required install/open/reinstall/preserved-profile/fresh-start/uninstall; `test-results-ui-operation/ui-operation-results.json` records actual cases. `.artifacts` folders retain logs, isolated settings and environment evidence. Use `Summarize-TestResults.ps1` for combined validation.
+- Headless smoke runs retain silent install/reinstall/uninstall diagnostics but fail because startup/profile checks were skipped. Independent UI may explicitly skip when its desktop is unavailable. A valid UI skip has `Status=Skipped`, `Passed=false`, `ExpectedCount=0` and desktop evidence. Never report it as UI passed. An activation failure or timeout after startup remains a failure.
 - A Codex sandbox desktop is not the interactive Default desktop. If execution is authorized, use the environment's supported elevated/unsandboxed execution path for real desktop tests; do not change desktop eligibility checks.
 - Session locking, startup registration and persistent system-setting UI cases remain excluded. Real idle tests are opt-in and require no input; do not include them in routine acceptance without the user's arrangement.
 - Preserve failed reports. Fix the demonstrated failure and rerun with a new report path. Do not mask problems by deleting checks, increasing timeouts without evidence, or treating forced cleanup as normal exit.
 
 ## Workflow changes
 
-Both workflows are manual `workflow_dispatch` only. Pre-merge Check tests a fixed PR merge snapshot and reports status on the PR head. Pre-release retests the versioned release build/package before version synchronization and draft creation. Both explicitly pass `-AllowUIFailure` to the installer runner and summary: extended UI case failures, host timeouts and missing/unreadable UI reports remain failed non-blocking warnings. Required build/project/package/install/startup/reinstall/profile/uninstall checks remain blocking; Pre-release still rejects skipped required stages and selected project tests. Do not use whole-job `continue-on-error` or relabel UI failure as passed/skipped. Local runners stay strict for UI failures by default. Plugin-only releases skip product-version synchronization. Local acceptance performs no remote release/status actions.
+Both workflows are manual `workflow_dispatch` only. Pre-merge tests the fixed PR merge snapshot; Pre-release tests its versioned release build/package. Installer smoke is mandatory and independent of extended UI: every install/startup/normal-exit/reinstall/profile/uninstall stage must pass without skips. The separate `test-ui-operation` job uses Release output and real isolated Core/UI sessions, with job-level `continue-on-error`; retain runner outcome and raw failed/skipped reports. CI summaries explicitly use `-AllowUIFailure -UIJobResult` and tolerate only independent UI failure/skip/missing reports. Never apply `continue-on-error` to smoke, project tests, packaging, summary or release work. Version synchronization/drafts depend on packaging and validated summary success. Local UI remains strict by default. Plugin-only releases skip product-version synchronization; local tests perform no remote status/release actions.
 
 After changes to scripts, reports or workflow dependencies, run:
 

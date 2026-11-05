@@ -6,10 +6,10 @@ The repository has two workflows, both triggered only by `workflow_dispatch`. Co
 
 | File | Manual inputs | Purpose |
 | --- | --- | --- |
-| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → ISS → install/startup/reinstall/language/UI/uninstall → report PR status |
-| `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/install/startup/reinstall/language/UI/uninstall → strict gate → sync versions → draft |
+| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → required installer smoke + independent UI acceptance → report PR status |
+| `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/smoke + independent UI → summary gate → sync versions → draft |
 
-Both CI workflows still run the extended real UI suite. They explicitly use `-AllowUIFailure` in the installer runner and summary: UI case failures, host timeouts and missing/unreadable UI reports remain failed results and warnings, but do not block PR success, version synchronization or draft creation. Required build, project tests, packaging, install/startup/reinstall/profile/uninstall stages remain blocking. Local runners stay strict by default; no whole installer/job uses `continue-on-error`.
+Both workflows have independent installer-smoke and real-UI jobs. Installer smoke is mandatory: install → open/normal exit → same-package reinstall → preserved/fresh-profile startup/normal exit → uninstall. Every smoke stage must pass without skips. Only `test-ui-operation` uses job-level `continue-on-error`; its runner outcome and raw reports remain visible. Summaries use `-AllowUIFailure -UIJobResult` so UI failures/timeouts or missing reports do not block required checks, version synchronization or drafts. Local runners remain strict by default.
 
 ## Everyday workflow
 
@@ -35,18 +35,18 @@ Only same-repository PRs are supported:
 
 Each manual run reads the current source, labels, PR head, and base branch, then verifies that GitHub's merge snapshot matches both current commits. All builds and tests use that fixed snapshot.
 
-The test phases run in sequence:
+After the shared build, eight project jobs run in parallel. When they pass, two independent jobs run:
 
-1. **Parallel tests**: seven independent jobs for Core, UI, StaticImg, WebBackdrop, UIComponent, ML, and Shader. Artifact checks run in parallel; Web player script checks run with the UI job.
-2. **Installed app acceptance**: compile ISS once, install in English, verify first-run language and normal exit while retaining test settings and an imported wallpaper. Reinstall the same package in Chinese over the same directory. Verify that the original profile retains English, preferences and wallpaper files, then verify Chinese initialization with a separate new profile. Run the extended UI suite once against the installed executables, then uninstall. Failures block later checks; uninstall cleanup still runs. Program hashes, package identity, shortcuts, registration and residue are checked.
+1. **Installer Smoke** compiles ISS, installs in English, opens the installed Core/UI, retains test settings and a wallpaper, and verifies normal exit. The same package reinstalls in Chinese; the original profile must preserve its language/settings/wallpaper, while a separate fresh profile initializes in Chinese. Both sessions must exit normally, then the real uninstaller runs. Package/file hashes, shortcuts, registration and residue are checked.
+2. **Real UI Acceptance** runs the extended suite against the Release build in its own runner, starts real Core/UI/player processes with isolated profiles, and cleans up its own sessions. It does not use the smoke installation or installer. Failures are non-blocking warnings; unavailable desktops produce explicit UI skips.
 
-Desktop runs operate both installation wizards and the uninstaller. Headless runs silently install, reinstall and uninstall; all application-startup, retained-profile and real UI checks are explicitly skipped with desktop evidence. This is accepted only by Pre-merge, never by the strict release gate.
+Desktop smoke runs operate the install/reinstall/uninstall wizards. Without a desktop, silent install/reinstall/uninstall diagnostics are retained, but skipped startup/profile checks **fail smoke in both workflows**. Forced recovery never counts as normal exit.
 
 Required-stage failures block later phases. Reports are still collected; missing, empty, failed, aborted, or exceptional project/installer results fail the final check. Extended UI failures are non-blocking warnings and retain their raw errors. The seven regular test projects retain separate Cobertura coverage reports.
 
 The eight project jobs share `test/actions/run-project` and `test/Run-ProjectTests.ps1`. `test/TestReportSupport.ps1` maps projects to reports, and `test/Summarize-TestResults.ps1` creates the summary. Project jobs and the summary use the same TRX validation logic.
 
-`build-output` preserves the repository-root `src/` layout, shared test entry points, and Release binaries for both test hosts. Packaging reuses this build. The UI host stays outside the installation and runs installed Core/UI/player binaries through `-CoreExe`, without rebuilding. Installer/detailed UI outcomes are cross-checked; a recorded failed UI stage takes precedence even if its report is missing or the host failed after writing it.
+`build-output` preserves the repository-root `src/` layout and both test hosts. Smoke packages this build; independent UI runs its Release executables directly without rebuilding. The two reports are validated independently. The actual UI runner outcome takes precedence over a nominally passing report if the host or cleanup failed.
 
 Raw reports use `test-results-*`; combined summaries use `test-summary-*`, so raw-report downloads do not include earlier summaries. Uploads set `overwrite: true` to support rerunning jobs within the same run. The summary reads designated project report paths rather than recursively including other packages.
 
@@ -82,14 +82,14 @@ Only a merged, same-repository `dev → main` PR is accepted. Its head must have
 1. Calculate the target product version from `AssemblyVersion` at the fixed merge commit and the selected label. Plugin updates keep the product version. Read published component manifests and historical release titles/plugin tags to allocate the next `YYMMRxx` build number; numbers used by drafts are reserved too. Check target tag/release conflicts before building.
 2. Temporarily update `VirtualPaper.csproj` before compilation and `InnoSetup/setup.iss` before packaging so the binaries and installer use the target version.
 3. Retest the new build through the same eight project jobs/actions as Pre-merge Check: artifact checks plus seven regular test projects. Release includes ML integration tests and Web player script checks. No test job rebuilds the application.
-4. Compile ISS and verify the actual release installer: English install/first launch → same-package Chinese reinstall → preserved/fresh-profile checks → one extended UI suite → uninstall. Uninstall still runs on failure. Validate raw reports with `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure`: project skips, required-stage failures and unavailable-desktop startup/profile skips block progress. Only the extended UI stage is non-blocking; keep its failures and warning in the summaries. Then create requested plugin patch packages.
+4. Compile ISS and run mandatory installer smoke, then create requested plugin packages. Independently, `test-ui-operation` runs extended real UI acceptance against the release build. `summarize-tests` downloads both sets of reports and uses `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure -UIJobResult <outcome>`: failed/missing/skipped smoke or project checks block progress; independent UI failures and skips remain explicit non-blocking results.
 5. Recheck tag/release conflicts before version synchronization. For a regular release, update only these fields on `main` and `dev`, then push both atomically with `git push --atomic`. If either update is rejected, neither branch advances:
    - `src/VirtualPaper/VirtualPaper.csproj`: `AssemblyVersion`
    - `InnoSetup/setup.iss`: `MyAppVersion`, `MyAppVersionText`
    - `README.md`: release badge
 6. Create a draft release using the PR description. Every release includes the installer and complete `app_comp_manifest.json`; plugin releases also include patch packages. The tag targets the synchronized `main` commit, or the original merge commit for plugin updates. Publishing remains manual.
 
-The stages are `prepare-metadata → build-release → parallel project tests → package-release → sync-versions → draft-release`. Plugin releases use the same required checks and non-blocking UI policy, but skip product-version synchronization. Installer verification and optional plugin packaging share one job. Retry failed packaging/required acceptance without rerunning successful jobs. Both package and draft summaries show the UI outcome. Pre-merge may accept an explicit unavailable-desktop skip; Pre-release rejects skipped required stages and selected project tests.
+The stages are `prepare-metadata → build-release → parallel project tests → package-release + test-ui-operation → summarize-tests → sync-versions → draft-release`. Packaging/smoke and optional UI run independently. Version synchronization and draft creation require successful packaging and the validated summary. Plugin releases use the same gates but skip product-version synchronization. Required smoke and selected release project tests cannot be skipped; only independent UI may fail or skip.
 
 One root-layout build artifact contains application/plugin output, all project tests, and both test hosts. Parallel tests and packaging download that same build; only the application output is packaged. The component manifest is generated once and reused for release assets and plugin patches. Locking, registry-modification UI cases and real idle screen-saver tests remain excluded under the existing test policy.
 
@@ -127,7 +127,7 @@ pwsh -NoProfile -File test/Run-Tests.ps1
 pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-The local chain uses the working tree and does not validate PRs, post GitHub status, synchronize versions or create drafts. It runs the same build/project/installer/extended-UI stages, without downloading missing models. Local defaults still reject UI failures. CI explicitly opts into `-AllowUIFailure`; Pre-release additionally uses `-RequireFullAcceptance` to reject skipped required stages and selected project tests.
+The local chain uses the working tree and does not validate PRs, post status, synchronize versions or create drafts. It builds, runs project tests, packages and completes smoke including uninstall, then runs independent extended UI against Release output. It downloads no models. Smoke skips/failures and local UI failures remain blocking; CI explicitly opts into non-blocking UI at the job/summary level.
 
 See the [testing guide](../../test/README.md) for prerequisites, focused runners and report paths, and the [repository test skill](../../.agents/skills/virtualpaper-testing/SKILL.md) for AI instructions. Changes to testing behavior should update these guides and their Chinese versions together.
 

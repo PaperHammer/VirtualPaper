@@ -6,10 +6,10 @@
 
 | 文件 | 手动输入 | 用途 |
 | --- | --- | --- |
-| `pre-merge-check.yml` | 未合并的 PR 编号；是否包含模型集成测试 | 检查来源与版本标签 → 构建 → 并行测试 → ISS → 安装/启动/覆盖安装/语言/UI/卸载 → 回写 PR 状态 |
-| `pre-release.yml` | 已合并的 `dev → main` PR 编号 | 核验 PR → 设置版本并构建 → 并行测试 → 打包/安装/启动/覆盖安装/语言/UI/卸载 → 严格检查 → 同步版本 → 草稿 |
+| `pre-merge-check.yml` | 未合并的 PR 编号；是否包含模型集成测试 | 检查来源与版本标签 → 构建 → 并行测试 → 必需安装冒烟 + 独立真实 UI → 回写 PR 状态 |
+| `pre-release.yml` | 已合并的 `dev → main` PR 编号 | 核验 PR → 设置版本并构建 → 并行测试 → 打包/冒烟 + 独立 UI → 汇总检查 → 同步版本 → 草稿 |
 
-两个 CI 工作流仍执行扩展真实 UI 测试，并在安装入口和汇总中显式使用 `-AllowUIFailure`：UI 用例失败、宿主超时、UI 报告缺失或不可读仍记录为失败和警告，但不阻塞 PR 检查、版本同步及草稿生成。构建、项目测试、打包、安装、启动、覆盖安装、配置验证及卸载仍是必需门禁。本地入口默认仍拒绝 UI 失败，不对整个安装步骤或 job 使用 `continue-on-error`。
+两个工作流均拆分为独立的安装冒烟与真实 UI 任务。安装冒烟必须通过：安装 → 打开并正常退出 → 同包覆盖安装 → 原配置/新配置启动并正常退出 → 卸载，不能以跳过代替通过。仅 `test-ui-operation` 使用 job 级 `continue-on-error`，保留入口实际结果与原始报告；汇总通过 `-AllowUIFailure -UIJobResult` 将 UI 失败、超时、报告缺失记录为非阻塞警告。本地默认仍严格拒绝 UI 失败。
 
 ## 日常流程
 
@@ -35,18 +35,18 @@ Run workflow 表单中选择的分支决定使用哪一份工作流定义。输�
 
 每次手动运行都会读取当前来源、标签、PR head 和目标分支，并核验 GitHub 的合并快照是否匹配双方当前提交。所有构建与测试均使用该固定快照。
 
-测试阶段按顺序执行：
+共享构建后，八个项目测试任务并行运行；通过后独立运行两个任务：
 
-1. **并行测试**：Core、UI、StaticImg、WebBackdrop、UIComponent、ML、Shader 七个独立任务。产物检查并行执行；Web 播放器脚本检查随 UI 任务执行。
-2. **安装后应用验收**：编译一次 ISS，英文安装并验证首次启动、正常退出，保留测试配置和真实导入的壁纸；同包选择中文覆盖原目录，验证原配置仍保留英文、主题、动画偏好和全部壁纸文件，再用全新配置验证中文初始化。随后针对安装后的程序运行一次完整扩展 UI，最后卸载。前置失败阻止后续验收，卸载清理仍执行；检查程序哈希、安装包身份、快捷方式、注册信息及残留。
+1. **Installer Smoke** 编译 ISS，英文安装，启动真实 Core/UI，保存配置和壁纸，并验证正常退出。同包选择中文覆盖安装，验证原配置的语言/偏好/壁纸保留，以及全新配置的中文初始化；每次启动均须正常退出，最后执行真实卸载。保留包体/程序哈希、快捷方式、注册和残留检查。
+2. **Real UI Acceptance** 在独立 runner 上使用 Release 输出运行扩展测试，自行拉起真实 Core/UI/播放器并隔离配置、清理会话，不借用冒烟测试的安装包或安装目录。失败为非阻塞警告；无桌面时明确记录 UI 跳过。
 
-有桌面时操作两次真实安装向导及卸载向导；无桌面时静默安装、覆盖安装和卸载，应用启动、原配置保留及真实 UI 明确跳过，仍检查文件、版本、快捷方式、注册信息和安装语言标记。跳过可由 Pre-merge 接受，Pre-release 严格门禁拒绝。锁屏和持久系统设置 UI 用例仍排除。
+有桌面时操作安装、覆盖安装和卸载向导。无桌面时保留静默安装/卸载诊断，但启动/配置检查被跳过将导致两个工作流的冒烟门禁失败；强制清理不能算正常退出。
 
 必需阶段失败会阻止后续阶段，并继续收集报告。项目测试或安装必需阶段的报告缺失、为空、失败、中止或异常仍导致最终检查失败；扩展 UI 失败为非阻塞警告，保留原始错误。七个常规测试项目分别保留各自的 Cobertura 覆盖率报告。
 
 八个项目任务共用 `test/actions/run-project` 和 `test/Run-ProjectTests.ps1`。`test/TestReportSupport.ps1` 负责项目与报告映射，`test/Summarize-TestResults.ps1` 生成汇总。项目任务和汇总使用同一套 TRX 校验逻辑。
 
-`build-output` 保留仓库根目录下的 `src/` 布局、共用测试入口和两个测试宿主的 Release 输出。打包复用同一份构建；UI 宿主位于安装目录外，通过 `-CoreExe` 运行安装后的 Core/UI/播放器，不重复构建。汇总核对安装与 UI 结果；若 UI 阶段已记录失败，即使报告缺失或宿主在写完报告后失败，仍显示为 UI 失败。
+`build-output` 保留仓库根目录下的 `src/` 布局和两个测试宿主。冒烟使用该构建打包，独立 UI 直接运行 Release 程序，不重复构建。两份报告分别验证；宿主或清理失败时以真实 UI 入口结果为准，不因报告已写为通过而隐藏失败。
 
 原始报告使用 `test-results-*`，汇总报告使用 `test-summary-*`，因此下载原始报告时不会包含之前的汇总。上传设置 `overwrite: true`，支持在同一次运行中重跑任务。汇总读取各项目指定的报告路径，不递归收集其他包中的报告。
 
@@ -82,14 +82,14 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 1. 根据固定合并提交中的 `AssemblyVersion` 和所选标签计算目标产品版本。插件更新保留产品版本。读取已发布组件清单、历史发布标题及插件标签，分配下一个 `YYMMRxx` 构建号；草稿占用的号码也予以保留。构建前检查目标标签和发布是否冲突。
 2. 编译前临时更新 `VirtualPaper.csproj`，打包前临时更新 `InnoSetup/setup.iss`，使二进制文件和安装包使用目标版本。
 3. 对新构建复用 Pre-merge Check 的八个项目任务/action：产物检查加七个常规测试项目。发布包含 ML 集成测试及 Web 播放器脚本检查，测试任务不重新构建应用。
-4. 编译 ISS 并验收实际发布安装包：英文安装与首启 → 中文同包覆盖安装 → 原配置保留与全新中文初始化 → 一次扩展 UI → 卸载。失败仍执行卸载。使用 `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure` 校验原始报告：项目测试跳过、必需阶段失败及无桌面导致的启动/配置跳过仍阻塞；仅扩展 UI 阶段失败不阻塞，并在摘要中明确警告。然后生成可选插件补丁包。
+4. 编译 ISS 并执行必需安装冒烟，通过后生成可选插件补丁。独立的 `test-ui-operation` 对发布构建运行完整真实 UI。`summarize-tests` 下载两类报告，通过 `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure -UIJobResult <结果>` 校验：冒烟/项目失败、报告缺失或跳过仍阻塞，仅独立 UI 失败或跳过不阻塞并明确报告。
 5. 同步版本前再次检查标签和发布冲突。常规发布仅更新 `main`、`dev` 中的以下字段，再通过 `git push --atomic` 原子推送两个分支。任一更新被拒绝，两个分支均不前进：
    - `src/VirtualPaper/VirtualPaper.csproj`：`AssemblyVersion`
    - `InnoSetup/setup.iss`：`MyAppVersion`、`MyAppVersionText`
    - `README.md`：发布版本徽章
 6. 根据 PR 描述创建发布草稿。每次发布都包含安装包和完整的 `app_comp_manifest.json`，插件发布还包含补丁包。标签指向同步后的 `main` 提交；插件更新则指向原始合并提交。最终发布仍需手动执行。
 
-阶段顺序为 `prepare-metadata → build-release → 并行项目测试 → package-release → sync-versions → draft-release`。插件发布使用相同必需门禁及非阻塞 UI 策略，但跳过产品版本同步。安装验证与可选插件打包共用一个任务；打包或必需验收失败可单独重试。打包与草稿摘要均显示 UI 结果。Pre-merge 可接受明确的无桌面跳过；Pre-release 仍拒绝必需阶段及选中项目测试被跳过。
+阶段为 `prepare-metadata → build-release → 并行项目测试 → package-release + test-ui-operation → summarize-tests → sync-versions → draft-release`。打包/冒烟与可选 UI 独立运行；同步版本和生成草稿必须同时满足打包成功及汇总通过。插件发布沿用相同门禁但跳过产品版本同步。安装冒烟和选中的发布项目测试不允许跳过，仅独立 UI 可失败或跳过。
 
 一份保留仓库根目录布局的构建产物包含应用/插件输出、全部项目测试及两个测试宿主。并行测试和打包下载同一份构建，只有应用输出进入安装包。组件清单仅生成一次，供发布附件和插件补丁共用。锁屏、修改注册表的 UI 用例及真实空闲屏保测试仍按既有策略排除。
 
@@ -127,7 +127,7 @@ pwsh -NoProfile -File test/Run-Tests.ps1
 pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-本地完整链路使用工作区代码，执行相同的构建、项目测试、安装、扩展 UI 与卸载，不校验 PR、不回写 GitHub 状态、不同步版本或创建草稿，也不下载缺失模型。本地默认仍拒绝 UI 失败；CI 显式添加 `-AllowUIFailure`。Pre-release 同时使用 `-RequireFullAcceptance`，继续拒绝必需阶段及选中项目测试被跳过。
+本地链路使用工作区代码，不校验 PR、不回写状态、不同步版本或创建草稿。完成构建、并行项目测试、ISS 打包与冒烟卸载后，再对 Release 输出运行独立扩展 UI，不下载缺失模型。冒烟失败/跳过及本地 UI 失败仍阻塞；CI 仅在 UI job 与汇总显式允许 UI 失败。
 
 环境要求、单项入口和报告路径见[测试说明](../../test/README.zh-CN.md)，AI 使用方式见[仓库测试 skill](../../.agents/skills/virtualpaper-testing/SKILL.md)。修改测试行为时，应同步更新这些说明及其中英文版本。
 

@@ -38,39 +38,61 @@ foreach ($spec in $specs) {
         throw "$($spec.Id) must reuse the build through the shared project action before installed acceptance."
     }
 }
-Assert-JobNeeds 'test-installed-app' ($gates + $specs.Id)
-Assert-JobNeeds 'summarize-tests' ($gates + $specs.Id + 'test-installed-app')
-$operation = Get-WorkflowJob 'test-installed-app'
+Assert-JobNeeds 'test-installer-smoke' ($gates + $specs.Id)
+Assert-JobNeeds 'test-ui-operation' ($gates + $specs.Id)
+Assert-JobNeeds 'summarize-tests' ($gates + $specs.Id + @('test-installer-smoke', 'test-ui-operation'))
+$operation = Get-WorkflowJob 'test-installer-smoke'
+$uiJob = Get-WorkflowJob 'test-ui-operation'
 $build = Get-WorkflowJob 'build-solution'
 $summary = Get-WorkflowJob 'summarize-tests'
 if ($operation -match '(?m)^    if:' -or -not $operation.Contains('Get-ProjectTestReports -Root PrerequisiteTestResults') -or
-    $operation -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-RunUIOperationTests\b' -or
-    $operation -notmatch '-UIHostExe\s+test/VirtualPaper.UIOperationTest/bin/' -or
+    $operation -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild\b' -or
+    $operation -match 'RunUIOperationTests|AllowUIFailure|continue-on-error: true' -or
     -not $operation.Contains('InnoSetup/setup.iss') -or -not $operation.Contains('name: test-installer-package') -or
-    $installerRunner -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-Suite\s+Extended\b' -or
-    -not $installerRunner.Contains("`$installedCore = Join-Path `$installDir 'VirtualPaper.exe'") -or
-    -not $installerRunner.Contains('-CoreExe $installedCore') -or -not $installerRunner.Contains('-UIOperation $uiOperation')) {
-    throw 'Installed acceptance must compile ISS, reuse both hosts and run extended UI against the installed Core before uninstall.'
+    $installerRunner -match 'Run-UIOperationTests|AllowUIFailure|UIRecoveryProcesses') {
+    throw 'Required installer smoke must compile ISS, validate normal exits and uninstall independently of extended UI.'
 }
 if (-not $build.Contains('test/VirtualPaper.UIOperationTest/bin/x64/Release/') -or
     -not $build.Contains('test/VirtualPaper.InstallerTest/bin/Release/') -or
     -not $build.Contains('test/actions/run-project/action.yml') -or -not $build.Contains('test/TestReportSupport.ps1')) {
     throw 'The root-layout build artifact must include the shared action, runners and both test hosts.'
 }
-if ($workflow -match '(?m)^  (test-installer|test-winui):') {
-    throw 'Pre-merge installer and UI acceptance must share one installation job.'
-}
 if (-not $summary.Contains('./test/Summarize-TestResults.ps1') -or -not $summary.Contains('name: test-summary-') -or
-    -not $summary.Contains('UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}')) {
-    throw 'The final status must require validated raw reports; the summary bundle must use its own prefix.'
-}
-if ($operation -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-AllowUIFailure\b' -or
-    $summary -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-AllowUIFailure\b' -or
-    -not $summary.Contains("['Passed', 'Skipped', 'Failed'].includes(process.env.UI_OUTCOME)") -or
-    -not $summary.Contains('UI acceptance failed [WARNING]') -or $operation.Contains('continue-on-error: true')) {
-    throw 'CI must tolerate only UI-stage failures, retain warning status, and keep installer failures blocking.'
+    -not $summary.Contains('UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}') -or
+    -not $summary.Contains("filter(([name]) => name !== 'test-ui-operation')") -or
+    $summary -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-AllowUIFailure\b[^\r\n]*-UIJobResult\b' -or
+    -not $summary.Contains('UI acceptance failed [WARNING]')) {
+    throw 'PR summary must require smoke/project reports, exclude only the optional UI job and preserve its failures.'
 }
 if ($build -match 'dotnet test |node .github/scripts/test-') { throw 'Application tests must remain separate from the shared build.' }
+# Evaluate the actual PR status expression with failed optional/required jobs.
+# This catches a graph that looks separated but still blocks on UI in the final gate.
+$statusExpression = [regex]::Match($summary, '(?s)const passed = (.*?);').Groups[1].Value
+if (-not $statusExpression) { throw 'PR status expression missing.' }
+@{ Expression = $statusExpression; Required = @($gates + $specs.Id + 'test-installer-smoke') } |
+    ConvertTo-Json -Depth 5 -Compress | & node -e @'
+const fs = require('fs');
+const fixture = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const evaluate = new Function('process', `return (${fixture.Expression});`);
+function check(expected, jobs, ui = 'Failed', report = 'success') {
+  const env = { JOB_RESULTS: JSON.stringify(jobs), UI_OUTCOME: ui, REPORT_JOB_STATUS: report };
+  if (evaluate({ env }) !== expected) throw Error(`Incorrect PR gate: ${JSON.stringify(env)}`);
+}
+const jobs = Object.fromEntries(fixture.Required.map(name => [name, { result: 'success' }]));
+for (const result of ['success', 'failure', 'cancelled', 'skipped']) {
+  jobs['test-ui-operation'] = { result };
+  for (const ui of ['Passed', 'Failed', 'Skipped']) check(true, jobs, ui);
+}
+for (const name of fixture.Required) {
+  for (const result of ['failure', 'cancelled', 'skipped']) {
+    check(false, { ...jobs, [name]: { result } });
+  }
+}
+check(false, jobs, 'Failed', 'failure');
+check(false, jobs, '');
+console.log('[OK] Actual PR status gate tolerates only independent UI failure and requires smoke/project/summary success.');
+'@
+if ($LASTEXITCODE -ne 0) { throw 'PR status gate contract failed.' }
 foreach ($text in @($workflow, $releaseWorkflow)) {
     if ($text -notmatch '(?m)^  workflow_dispatch:' -or $text -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|schedule|workflow_call):') {
         throw 'Both workflows must be manually dispatched without automatic triggers.'
@@ -97,6 +119,7 @@ $releaseBuild = Get-WorkflowJob 'build-release' $releaseWorkflow
 $releasePackage = Get-WorkflowJob 'package-release' $releaseWorkflow
 $releaseSync = Get-WorkflowJob 'sync-versions' $releaseWorkflow
 $releaseDraft = Get-WorkflowJob 'draft-release' $releaseWorkflow
+$releaseSummary = Get-WorkflowJob 'summarize-tests' $releaseWorkflow
 Assert-JobNeeds 'build-release' @('prepare-metadata') $releaseWorkflow
 foreach ($spec in $specs) {
     Assert-JobNeeds $spec.Id @('prepare-metadata', 'build-release') $releaseWorkflow
@@ -109,8 +132,10 @@ foreach ($spec in $specs) {
     }
 }
 Assert-JobNeeds 'package-release' (@('prepare-metadata', 'build-release') + $specs.Id) $releaseWorkflow
-Assert-JobNeeds 'sync-versions' @('prepare-metadata', 'package-release') $releaseWorkflow
-Assert-JobNeeds 'draft-release' @('prepare-metadata', 'package-release', 'sync-versions') $releaseWorkflow
+Assert-JobNeeds 'test-ui-operation' (@('prepare-metadata', 'build-release') + $specs.Id) $releaseWorkflow
+Assert-JobNeeds 'summarize-tests' (@('prepare-metadata', 'build-release') + $specs.Id + @('package-release', 'test-ui-operation')) $releaseWorkflow
+Assert-JobNeeds 'sync-versions' @('prepare-metadata', 'package-release', 'summarize-tests') $releaseWorkflow
+Assert-JobNeeds 'draft-release' @('prepare-metadata', 'package-release', 'summarize-tests', 'sync-versions') $releaseWorkflow
 if ($releaseWorkflow -match '(?m)^  (package-installer|package-plugins|release-summary):' -or
     -not $releasePackage.Contains('name: Build plugin package') -or
     -not $releasePackage.Contains('name: Upload installer package') -or
@@ -124,27 +149,42 @@ if (-not $releaseBuild.Contains('          src/') -or
     $releaseBuild.Contains('dotnet test ')) {
     throw 'Release tests and packaging must reuse one root-layout build with both test hosts.'
 }
-if ($releasePackage -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-RunUIOperationTests\b' -or
-    $releasePackage -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-RequireFullAcceptance\b' -or
+if ($releasePackage -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild\b' -or
+    $releasePackage -match 'RunUIOperationTests|AllowUIFailure|continue-on-error: true' -or
+    $releaseSummary -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-RequireFullAcceptance\b[^\r\n]*-AllowUIFailure\b[^\r\n]*-UIJobResult\b' -or
     -not $releasePackage.Contains('Get-ProjectTestReports -Root TestResults -RequireCompleteExecution') -or
     -not (Get-WorkflowJob 'test-ui-logic' $releaseWorkflow).Contains('node .github/scripts/test-depth-player.cjs') -or
-    -not (Get-WorkflowJob 'test-ml' $releaseWorkflow).Contains("include-ml-integration: 'true'")) {
-    throw 'Release must run Web checks, ML integration, installed UI and strict reports before synchronizing versions.'
+    -not (Get-WorkflowJob 'test-ml' $releaseWorkflow).Contains("include-ml-integration: 'true'") -or
+    -not $releaseDraft.Contains('UI_OUTCOME: ${{ needs.summarize-tests.outputs.ui_outcome }}') -or
+    -not $releaseDraft.Contains("needs.summarize-tests.result == 'success'")) {
+    throw 'Release must require project/smoke success before syncing versions or drafting, with independent UI warnings.'
 }
-if ($releasePackage -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-AllowUIFailure\b' -or
-    $releasePackage -notmatch 'Summarize-TestResults\.ps1[^\r\n]*-RequireFullAcceptance\b[^\r\n]*-AllowUIFailure\b' -or
-    -not $releaseDraft.Contains('UI_OUTCOME: ${{ needs.package-release.outputs.ui_outcome }}')) {
-    throw 'Release must retain non-blocking real UI failures in both acceptance and draft summaries.'
-}
-if (-not $action.Contains('-RequireCompleteExecution:') -or $releasePackage.Contains('continue-on-error: true')) {
-    throw 'Release project and package gates must reject skips and must not ignore failures.'
+if (-not $action.Contains('-RequireCompleteExecution:')) { throw 'Release project gates must reject skips.' }
+foreach ($text in @($workflow, $releaseWorkflow)) {
+    $ui = Get-WorkflowJob 'test-ui-operation' $text
+    if ($ui -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-Suite\s+Extended\b' -or
+        $ui -notmatch '(?m)^    continue-on-error: true' -or
+        -not $ui.Contains('result: ${{ steps.ui-tests.outcome }}') -or
+        $ui -match 'Run-InstallerTests|InstallerPath|CoreExe') {
+        throw 'Optional UI must independently run the Release build with the real Core, retaining runner outcome and artifacts.'
+    }
+    foreach ($job in [regex]::Matches($text, '(?ms)^  [\w-]+:\r?\n.*?(?=^  [\w-]+:|\z)')) {
+        if ($job.Value -match 'continue-on-error: true' -and -not $job.Value.StartsWith('  test-ui-operation:')) {
+            throw 'Only the independent real UI job may ignore failures.'
+        }
+    }
 }
 $compileAt = $releasePackage.IndexOf('    - name: Compile installer')
-$verifyAt = $releasePackage.IndexOf('    - name: Verify installed release')
-$gateAt = $releasePackage.IndexOf('    - name: Validate release checks')
+$verifyAt = $releasePackage.IndexOf('    - name: Run installer smoke')
 $uploadAt = $releasePackage.IndexOf('    - name: Upload installer package')
-if ($compileAt -lt 0 -or $verifyAt -le $compileAt -or $gateAt -le $verifyAt -or $uploadAt -le $gateAt) {
-    throw 'Release package order must be compile -> install/startup/UI/uninstall -> strict gate -> upload.'
+if ($compileAt -lt 0 -or $verifyAt -le $compileAt -or $uploadAt -le $verifyAt) {
+    throw 'Release package order must be compile -> mandatory installer smoke -> upload.'
+}
+$localRunner = Get-Content -LiteralPath (Join-Path $repositoryRoot 'test/Run-Tests.ps1') -Raw
+if ($localRunner.IndexOf('& ./test/Run-InstallerTests.ps1') -ge $localRunner.IndexOf('& ./test/Run-UIOperationTests.ps1') -or
+    $localRunner -match 'RunUIOperationTests|AllowUIFailure' -or
+    $localRunner -notmatch 'Run-UIOperationTests\.ps1[^\r\n]*-NoBuild\b[^\r\n]*-Suite\s+Extended\b') {
+    throw 'Local acceptance must finish strict smoke/uninstall before running independent strict UI acceptance.'
 }
 if (-not $releasePrepare.Contains('Assert-ReleaseTagAvailable') -or
     -not (Get-WorkflowJob 'build-release' $releaseWorkflow).Contains('needs: prepare-metadata') -or
@@ -169,4 +209,4 @@ foreach ($step in [regex]::Matches($releaseWorkflow, '(?ms)^    - name:.*?(?=^  
 & (Join-Path $repositoryRoot 'test/Test-ReportSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseVersion.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseMetadata.ps1')
-Write-Host '[OK] Both manual workflows retain non-blocking real UI acceptance; required project/installer gates remain blocking.'
+Write-Host '[OK] Both workflows require independent installer smoke; only standalone real UI acceptance is non-blocking.'

@@ -33,10 +33,10 @@ test/
 
 | 目标 | 入口 | 范围 |
 | --- | --- | --- |
-| 完整本地验收 | `test/Run-Tests.ps1` | 重新构建 Release、并行项目测试、ISS 和安装后的扩展 UI 验收 |
+| 完整本地验收 | `test/Run-Tests.ps1` | 重新构建 Release、并行项目测试、ISS/安装冒烟、独立扩展 UI |
 | 单个项目回归 | `test/Run-ProjectTests.ps1 -JobId <id>` | 使用已有 Release 产物，不构建 |
 | 真实 UI 模块或测试集 | `test/Run-UIOperationTests.ps1` | 默认先构建解决方案，`-NoBuild` 跳过构建 |
-| 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 真实安装、覆盖安装、语言与数据保留验证及卸载；加 `-RunUIOperationTests` 执行扩展 UI |
+| 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 必需安装冒烟：真实安装/覆盖安装、启动/正常退出、语言/数据保留及卸载 |
 | 工作流与脚本契约 | `.github/scripts/validate-test-workflow.ps1` | 隔离校验，不安装、不执行真实 UI |
 
 本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
@@ -47,11 +47,11 @@ test/
 ./test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-此入口每次重新构建完整 **Release** 解决方案，并行运行与 CI 相同的八个项目测试，编译 `InnoSetup/setup.iss`，英文安装并验证首次启动、保留测试数据，再用同包中文覆盖安装、检查原配置保留及全新中文初始化，对安装后的 Core/UI 执行一次**扩展真实 UI 测试**，最后卸载。前置阶段失败时不再进入后续阶段；安装、启动或 UI 失败后仍执行卸载。每轮在 `TestResults/local-acceptance-*` 下生成独立报告。需要 Visual Studio MSBuild、.NET 8、Node.js 和 Inno Setup 6.7.1；非标准编译器位置可用 `-InnoSetupCompiler <ISCC.exe>` 指定。
+此入口完整重建 **Release**，并行运行八个项目测试，编译 ISS，再执行必需安装冒烟：英文安装与首启 → 中文同包覆盖安装 → 原配置/新配置启动验证 → 卸载。冒烟完成后，再对 Release 输出运行独立的 **Extended** 真实 UI，自行拉起 Core/UI 和隔离配置。本地任一阶段失败均阻止后续执行；尝试安装后仍执行卸载清理。每次写入新的 `TestResults/local-acceptance-*`。需要 Visual Studio MSBuild、.NET 8、Node.js、Inno Setup 6.7.1；可通过 `-InnoSetupCompiler <ISCC.exe>` 指定编译器。
 
-检测到已有 Virtual Paper 安装或开始菜单快捷方式时会拒绝运行。应先明确卸载日常版本并保留用户数据，或使用干净测试机。安装和卸载会修改系统安装注册信息与快捷方式；UI 用例仍不执行启动项注册、锁屏等持久系统设置操作。没有可用桌面时与 Pre-merge Check 一样明确跳过 UI，不视为完整 UI 验收通过。
+检测到已有 Virtual Paper 安装或开始菜单快捷方式时会拒绝运行。应先明确卸载日常版本并保留用户数据，或使用干净测试机。安装和卸载会修改系统安装注册信息与快捷方式；UI 用例仍不执行启动项注册、锁屏等持久系统设置操作。无桌面时独立 UI 明确跳过，但冒烟因必需启动/配置检查未执行而失败。
 
-`-IncludeMLIntegration` 只控制常规 ML 项目的可选集成类别，不控制安装后的 UI 测试集：完整本地入口始终选择 **Extended**，包含真实推理和深度渲染。即使未传该开关，扩展 UI 也需要对应模型文件。
+`-IncludeMLIntegration` 只控制常规 ML 项目的可选集成类别，不控制独立 UI 测试集：完整本地入口始终选择 **Extended**，包含真实推理和深度渲染。即使未传该开关，扩展 UI 也需要对应模型文件。
 
 完整链路如下：
 
@@ -62,13 +62,14 @@ flowchart LR
     C --> D[ISS 打包]
     D --> E[英文安装与首次启动]
     E --> R[中文覆盖安装及配置验证]
-    R --> F[一次完整扩展 UI]
-    F --> G[卸载与汇总]
+    R --> U[卸载 - 冒烟完成]
+    U --> F[独立扩展 UI]
+    F --> G[汇总]
 ```
 
-本地失败阻止后续阶段，一旦尝试安装仍执行清理。本地使用工作区代码，CI 使用 PR 合并快照或设置新版本后的构建。两个 CI 工作流仅对扩展 UI 阶段显式添加 `-AllowUIFailure`；必需项目测试和安装阶段仍阻塞。本地默认仍拒绝 UI 失败，不修改 GitHub 状态或版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+本地失败阻止后续阶段，一旦尝试安装仍执行清理。本地使用工作区代码，CI 使用 PR 合并快照或设置新版本后的构建。两个 CI 工作流仅对独立 UI job 使用 `continue-on-error`，汇总显式添加 `-AllowUIFailure`；必需项目测试和冒烟仍阻塞。本地默认仍拒绝 UI 失败，不修改 GitHub 状态或版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
-可用 `-ResultsRoot <新目录>` 指定完整链路的报告根目录。其中保留 `build.log`、`workflow-contracts.log`、8 份 `test-*.log`、`installer-build.log`、`installed-acceptance.log`、本轮 `installer-package` 和原始 `test-results-*` 报告。失败报告也会保留。按发布要求校验一轮已完成的结果：
+可用 `-ResultsRoot <新目录>` 指定完整链路的报告根目录。其中保留 `build.log`、`workflow-contracts.log`、8 份 `test-*.log`、`installer-build.log`、`installer-smoke.log`、`ui-acceptance.log`、本轮 `installer-package` 和原始 `test-results-*` 报告。失败报告也会保留。按发布要求校验一轮已完成的结果：
 
 ```powershell
 ./test/Summarize-TestResults.ps1 -Root '<本轮结果目录>' -RequireFullAcceptance
@@ -130,7 +131,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 环境不适用时，生成包含 `Status: Skipped`、`Passed: false`、`ExpectedCount: 0` 及原因的报告，并以退出码 0 结束。原因包括 `WindowsRequired`、`NoInteractiveDesktop`、`NoDisplay` 和 `NoDesktopShell`。详细信息写入 `.artifacts/environment.json`。
 
-仅跳过真实 UI 验收，常规测试仍可运行。汇总明确报告跳过，不宣称完整验收通过。独立/本地 UI 失败、超时、报告缺失仍失败；CI 显式使用 `-AllowUIFailure`，仅将扩展 UI 阶段的这些问题记录为非阻塞失败。安装、启动、覆盖安装、配置验证及卸载失败仍阻塞。检测不修改会话、注册表或显示配置。
+无可用桌面时独立 UI 可以明确跳过，摘要如实显示。本地 UI 失败、超时和报告缺失默认仍失败；CI 仅允许独立 UI job 不阻塞。两个工作流的安装冒烟都必须完成启动、正常退出和全部配置检查，不能以跳过代替通过。检测不修改会话、注册表或显示配置。
 
 ## 默认覆盖范围
 
@@ -349,38 +350,35 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 默认测试集不验证 WebView 渲染质量、多显示器布局、视频播放策略或 AI 推理。七个常规测试项目保持现有位置。`Core.Test/T_Workflows` 继续覆盖文件、服务和 gRPC 集成，不迁入 UI 宿主。
 
-## CI 与安装包验收
+## 安装冒烟与独立 UI 验收
 
-Pre-merge Check 按 **构建一次 → 并行项目测试 → 编译 ISS → 英文安装 → 首次启动并准备保留数据 → 中文覆盖安装 → 验证原配置 → 全新配置中文启动 → 一次完整扩展 UI → 卸载 → 汇总** 执行。产物检查与常规测试并行，Web 播放器脚本检查随 UI 单元测试执行。前置失败阻止后续验收，卸载清理仍执行。
+构建及并行项目测试通过后，CI 独立运行 **Installer Smoke** 和 **Real UI Acceptance**，两者不共享安装包或安装目录，UI 直接运行 Release 输出。本地完整入口先完成冒烟并卸载，再运行独立 UI，避免争抢前台。
 
-`Run-InstallerTests.ps1` 共用一个安装包和一个临时安装目录。首次安装后，由 Core 的正式首次运行逻辑自动打开 UI；探针检查界面、RPC 和持久化设置中的英文，通过 RPC 修改主题与动画偏好、真实导入 PNG，再正常退出 UI/Core。保留这份隔离配置，并记录壁纸元数据、图片和缩略图的哈希。
+`Run-InstallerTests.ps1` 只对一个真实安装包、一个独有临时安装目录执行必需冒烟：
 
-随后用同一安装包选择中文，覆盖本轮创建的安装目录，检查安装包与程序文件哈希、版本、注册信息、快捷方式和新语言标记。仅允许覆盖本轮自己的安装，不放宽日常安装保护。通过 Core 正式 ShowUI RPC 打开原配置，必须保留英文、偏好、壁纸目录及全部壁纸文件，真实壁纸库中仍显示相同 UID。再使用另一份空配置，验证首次中文初始化和正常退出。
+1. 英文安装。安装后的 Core 走正式首启路径打开 UI，通过 UI、RPC 和持久化设置验证英文。保存主题/动画偏好，导入真实 PNG，正常退出 UI/Core，保留隔离配置和壁纸哈希。
+2. 同包选择中文覆盖本轮安装，检查包体、程序哈希、版本、注册、快捷方式和语言标记。
+3. 通过 Core 正式 ShowUI RPC 打开原配置，验证原英文、偏好及壁纸文件/UID 保留；另用空配置验证中文初始化。每次均须正常退出。
+4. 前面失败仍尝试真实卸载，检查进程、文件、快捷方式和注册残留；强制清理只是恢复，不能算正常退出通过。
 
-配置检查通过后，预构建宿主对安装后的 Core/UI/播放器运行一次扩展测试，各用例配置不作为覆盖安装保留数据的证据。CI 在安装入口及汇总显式使用 `-AllowUIFailure`，将 UI 失败、超时、报告缺失保留为非阻塞警告。Pre-release 在同步版本及生成草稿前仍拒绝必需阶段失败、项目跳过及无桌面导致的启动/配置跳过。本地默认仍拒绝 UI 失败。
+版本 3 `InstallerSmoke` 报告包含 Install、Open、Reinstall、VerifyPreserved、OpenFresh、Uninstall。两个工作流均要求**全部通过且无跳过**。无桌面时可保留静默安装/覆盖安装/卸载诊断，但启动/配置跳过会导致冒烟失败。`-InstallerLanguage chinese` 可反转语言顺序。
 
-版本 2 生命周期报告包含 Install、Open（含准备保留数据）、Reinstall、VerifyPreserved、OpenFresh、可选 UIOperation、Uninstall，各阶段分别保存向导轨迹及应用报告。强制清理仅用于失败恢复，不算正常退出。卸载后检查文件、进程、快捷方式和注册残留，诊断配置保留在产物目录。
-
-有桌面时操作两次真实安装向导及卸载向导；无桌面时静默安装、覆盖安装和卸载，Open、VerifyPreserved、OpenFresh、UIOperation 明确跳过。仍验证文件、程序哈希、版本、注册信息、快捷方式及语言标记，不声称运行时语言和用户数据保留已验收。可选 `-InstallerLanguage chinese` 会反转两次安装的语言。
-
-**安装包验收会实际执行系统安装和卸载。** 应使用干净 CI 机器或明确准备好的本地管理员会话。已存在相同 AppId 安装或开始菜单快捷方式时会拒绝执行。这与 UI 宿主不写注册表的用例不同，不应在禁止安装相关注册表修改的环境中运行。
+冒烟会真实修改安装文件、系统卸载注册及快捷方式，须在干净 CI 或明确准备好的本地管理员会话执行；保留已有安装/AppId/快捷方式保护及用户数据。它与禁止持久系统设置操作的独立 UI 用例分开。
 
 ```powershell
-# 仅限一次性 Windows 安装测试机器：
+# 干净 Windows 测试机上的必需冒烟：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
-# 可选反向顺序：先中文安装，再英文覆盖安装：
+# 可选反向语言顺序：
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -InstallerLanguage chinese -ReportPath TestResults/InstallerChinese/installer-results.json
-# 完整验收，使用预构建的 UI 宿主；UI 阶段结束后始终执行卸载：
-./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `
-  -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe
-# 仅做契约检查，不安装、不启动 UI、不写注册表。
-./test/Test-InstallerTestSupport.ps1
-# 有桌面时，使用不修改系统设置的临时向导测试程序，验证 UIA、子进程交接和超时恢复。
-./test/Test-InstallerWizard.ps1
+# 独立 UI，直接使用完整 Release 输出，无需安装：
+./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended
+# 仅契约校验，不安装、不启动 UI、不写注册：
 ./.github/scripts/validate-test-workflow.ps1
+# 有桌面时可单独验证临时向导 fixture：
+./test/Test-InstallerWizard.ps1
 ```
 
-两个 CI 工作流保留真实 WinUI 验收，但通过 `-AllowUIFailure` 仅放宽该生命周期阶段。原始 JSON 仍为失败，摘要显示 **Failed (non-blocking)**；必需检查通过后，PR 成功状态、版本同步及草稿生成可继续。安装报告已记录 UI 失败时，UI 报告缺失/不可读或宿主超时同样明确警告。项目测试及安装必需阶段失败仍阻塞，不对整个 job 使用 `continue-on-error`。本地入口及未添加该开关的 `-RequireFullAcceptance` 仍严格拒绝 UI 失败。Pre-merge 接受明确的环境跳过；Pre-release 仍拒绝必需启动/配置阶段被跳过。TRX 未处理异常检查保持不变。
+仅 CI 的 `test-ui-operation` 使用 job 级 `continue-on-error`，记录 `steps.ui-tests.outcome`，失败仍上传原始报告。汇总通过 `-AllowUIFailure -UIJobResult <结果>` 保留 UI 失败、超时、报告缺失/不可读及环境跳过，不阻塞 PR 状态、同步版本或生成草稿。冒烟/项目失败和冒烟报告缺失始终阻塞；Pre-release 还拒绝选中项目测试跳过。本地 UI 默认严格，未添加 UI 放宽开关的 `-RequireFullAcceptance` 也拒绝 UI 跳过。
 
 ## 添加覆盖
 

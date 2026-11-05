@@ -33,10 +33,10 @@ Run commands from the repository root. AI agents should start with [AGENTS.md](.
 
 | Goal | Entry point | Scope |
 | --- | --- | --- |
-| Complete local acceptance | `test/Run-Tests.ps1` | Fresh Release rebuild, parallel project tests, ISS and installed extended UI acceptance |
+| Complete local acceptance | `test/Run-Tests.ps1` | Fresh Release rebuild, parallel project tests, ISS/installer smoke and independent extended UI |
 | Focused project regression | `test/Run-ProjectTests.ps1 -JobId <id>` | One project using existing Release output; no build |
 | Real UI module or suite | `test/Run-UIOperationTests.ps1` | Builds the solution unless `-NoBuild`; runs component/application cases |
-| Existing installer | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | Real install/reinstall, language and data retention, and uninstall; add `-RunUIOperationTests` for extended UI |
+| Existing installer | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | Required installer smoke: real install/reinstall, startup/normal exit, language/data retention and uninstall |
 | Workflow/script contracts | `.github/scripts/validate-test-workflow.ps1` | Isolated checks; no install or real UI |
 
 For the complete local acceptance used before merging, start PowerShell 7.2 or later **as administrator** and run:
@@ -47,11 +47,11 @@ For the complete local acceptance used before merging, start PowerShell 7.2 or l
 ./test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-This entry point rebuilds the full solution in **Release**, runs the same eight project test jobs in parallel as CI, compiles `InnoSetup/setup.iss`, installs in English, verifies first launch and retains test data, reinstalls the same package in Chinese, checks preserved and fresh-profile behavior, runs one **extended** real UI suite against the installed Core/UI, then uninstalls. A failed phase blocks subsequent phases; uninstall still runs after installation, startup or UI failures. Each invocation writes fresh reports below `TestResults/local-acceptance-*`. Visual Studio MSBuild, .NET 8, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
+This entry point rebuilds the full solution in **Release**, runs eight project jobs in parallel, compiles ISS, then runs mandatory installer smoke: English install/first launch → Chinese same-package reinstall → preserved/fresh-profile startup checks → uninstall. After smoke completes, an independent **Extended** UI suite runs against the Release output with its own Core/UI sessions. A failed local phase blocks subsequent phases; smoke always attempts uninstall after installation. Reports use a fresh `TestResults/local-acceptance-*` directory. Visual Studio MSBuild, .NET 8, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
 
-It refuses an existing Virtual Paper installation or Start menu shortcut. Remove a daily installation explicitly while preserving its data, or use a clean Windows test machine. Installation and uninstallation change the OS uninstall registration and shortcuts; UI cases still exclude startup registration, session locking and other persistent system-setting writes. A missing desktop produces the same explicit UI skip as Pre-merge Check; it is not full UI acceptance.
+It refuses an existing Virtual Paper installation or Start menu shortcut. Remove a daily installation explicitly while preserving its data, or use a clean Windows test machine. Installation and uninstallation change the OS uninstall registration and shortcuts; UI cases still exclude startup registration, session locking and other persistent system-setting writes. Without a desktop, independent UI is explicitly skipped, but smoke cannot pass because its required startup/profile checks did not run.
 
-`-IncludeMLIntegration` selects the regular ML project's optional integration category. It does not control the installed UI suite: complete local acceptance always requests **Extended**, including real inference and depth rendering. That suite requires its model files even when the switch is omitted.
+`-IncludeMLIntegration` selects the regular ML project's optional integration category. It does not control the independent UI suite: complete local acceptance always requests **Extended**, including real inference and depth rendering. That suite requires its model files even when the switch is omitted.
 
 The complete flow is:
 
@@ -62,13 +62,14 @@ flowchart LR
     C --> D[ISS package]
     D --> E[English install and first launch]
     E --> R[Chinese reinstall and profile checks]
-    R --> F[One extended installed UI suite]
-    F --> G[Uninstall and summary]
+    R --> U[Uninstall - smoke complete]
+    U --> F[Independent extended UI suite]
+    F --> G[Summary]
 ```
 
-Failures block later local phases; installation cleanup still runs. Local execution uses the working tree; CI uses the PR snapshot or versioned release build. Both CI workflows explicitly tolerate only extended UI failures with `-AllowUIFailure`; required project/installer stages remain blocking. Local defaults still reject UI failures. Local testing does not set PR status or synchronize versions. See the [workflow guide](../.github/workflows/README.md).
+Failures block later local phases; installation cleanup still runs. Local execution uses the working tree; CI uses the PR snapshot or versioned release build. Both CI workflows tolerate only the independent UI job through `continue-on-error` and summary `-AllowUIFailure`; required project/installer stages remain blocking. Local defaults still reject UI failures. Local testing does not set PR status or synchronize versions. See the [workflow guide](../.github/workflows/README.md).
 
-Use `-ResultsRoot <new-directory>` to choose the complete run's report root. It contains `build.log`, `workflow-contracts.log`, eight `test-*.log` files, `installer-build.log`, `installed-acceptance.log`, the fresh `installer-package`, and raw `test-results-*` reports. Failed reports are retained. To validate a completed run with the release no-skip gate:
+Use `-ResultsRoot <new-directory>` to choose the complete run's report root. It contains `build.log`, `workflow-contracts.log`, eight `test-*.log` files, `installer-build.log`, `installer-smoke.log`, `ui-acceptance.log`, the fresh `installer-package`, and raw `test-results-*` reports. Failed reports are retained. To validate a completed run with the release no-skip gate:
 
 ```powershell
 ./test/Summarize-TestResults.ps1 -Root '<result-directory>' -RequireFullAcceptance
@@ -130,7 +131,7 @@ Before building or launching test processes, a read-only preflight checks the Wi
 
 An unsuitable environment produces a report with `Status: Skipped`, `Passed: false`, `ExpectedCount: 0`, and a reason, then exits with code 0. Reasons include `WindowsRequired`, `NoInteractiveDesktop`, `NoDisplay`, and `NoDesktopShell`. Details are saved to `.artifacts/environment.json`.
 
-Only real UI acceptance is skipped; regular tests can still run. Summaries report the skip instead of claiming full acceptance. Standalone/local UI failures, timeouts and missing reports still fail. CI explicitly opts into `-AllowUIFailure` for the extended UI stage and records these as failed non-blocking outcomes; mandatory install/startup/reinstall/profile/uninstall failures remain blocking. Detection does not modify the session, registry or display configuration.
+Independent UI can be skipped when no suitable desktop is available, and summaries report it explicitly. Local UI failures/timeouts/missing reports still fail by default. CI only tolerates the separate UI job; installer smoke must pass every stage, including startup/normal exit, in both workflows. Desktop detection does not modify the session, registry or display configuration.
 
 ## Default coverage
 
@@ -349,38 +350,35 @@ Component cases run serially on the UI thread. Cross-process UI Automation runs 
 
 The default suite does not validate WebView rendering quality, multi-monitor layouts, video playback policies, or AI inference. The seven regular test projects remain in their existing locations. `Core.Test/T_Workflows` continues to cover file, service, and gRPC integration rather than moving into the UI host.
 
-## CI and installer acceptance
+## Installer smoke and independent UI acceptance
 
-Pre-merge Check runs **build once → parallel project tests → compile ISS → English install → first launch and persistence fixture → Chinese reinstall → preserved-profile verification → fresh Chinese launch → one extended UI suite → uninstall → summary**. Artifact integrity checks run alongside regular tests; Web player script checks run with the UI unit-test job. Failed prerequisites block later stages; uninstall still runs as cleanup.
+After build and parallel project tests, CI runs **Installer Smoke** and **Real UI Acceptance** in independent jobs. They do not share an installation directory or installer; UI runs the Release output. The local complete runner executes smoke including uninstall first, then standalone UI to avoid foreground contention.
 
-`Run-InstallerTests.ps1` uses one installer and one temporary installation directory. The first installed Core opens UI through its real first-run path. The probe verifies English in UI, Core RPC and saved settings, sets a nondefault theme/animation preference through RPC, imports an actual PNG through Core, and exits UI/Core normally. It retains that isolated profile and hashes its wallpaper metadata, image and thumbnail.
+`Run-InstallerTests.ps1` only runs required smoke against one installer in a unique temporary installation directory:
 
-The same package is then installed over the same directory in Chinese. The runner checks the package hash, installed program hashes, versions, registration, shortcuts and the new language marker. Only the installation owned by this run may be overwritten. Reopening the retained profile through Core's production ShowUI RPC must keep English, preferences, the library directory and all wallpaper hashes; the actual library UI must still show the same wallpaper UID. A separate empty profile must initialize in Chinese and exit normally.
+1. Install in English. The installed Core opens UI through its real first-run path; verify language through UI, RPC and saved settings. Set test theme/animation preferences, import an actual PNG, and exit UI/Core normally. Retain the isolated profile and wallpaper hashes.
+2. Reinstall the same package in Chinese over this run's own installation. Check package identity, program hashes, version, registration, shortcuts and language marker.
+3. Open the retained profile through Core's production ShowUI RPC; verify original English, preferences and wallpaper files/UID. Verify Chinese initialization with a separate empty profile. Both sessions must exit normally.
+4. Always attempt the real uninstall, including after earlier failures; check process, file, shortcut and registration residue. Forced cleanup is recovery, never a passing normal exit.
 
-After the profile checks, the prebuilt host runs the extended UI suite once against installed Core/UI/player executables. Its isolated case profiles do not prove reinstall preservation. CI uses `-AllowUIFailure` in both the installer runner and summary, retaining UI failure/timeout/missing-report evidence as non-blocking warnings. Pre-release still rejects required-stage failures, project skips and unavailable-desktop startup/profile skips before version synchronization/draft creation. Local defaults remain strict for UI failures.
+Schema-3 `InstallerSmoke` reports contain Install, Open, Reinstall, VerifyPreserved, OpenFresh and Uninstall. **Every stage must pass without skips** in both workflows. Without a desktop, silent install/reinstall/uninstall diagnostics may be retained, but skipped startup/profile checks fail smoke. `-InstallerLanguage chinese` reverses the languages.
 
-Schema-2 lifecycle reports contain Install, Open (including persistence fixture preparation), Reinstall, VerifyPreserved, OpenFresh, optional UIOperation, and Uninstall. Wizard traces and application results are separate for each phase. Forced process cleanup is failure recovery, not normal exit. Uninstall checks file, process, shortcut and registration residue, while retaining diagnostic profiles.
-
-With a desktop, both real installation wizards and the uninstaller are operated. Without a desktop, both installations and uninstall run silently; Open, VerifyPreserved, OpenFresh and UIOperation are explicitly skipped. Files, program hashes, versions, registration, shortcuts and language markers are still checked; runtime language/data preservation is not claimed as verified. `-InstallerLanguage chinese` reverses the two language choices for an optional Chinese-first run.
-
-**Installer acceptance performs actual system installation and uninstallation.** Use a clean CI machine or an explicitly prepared local administrator session. It refuses an existing installation with the same AppId or an existing Start menu shortcut. This is separate from the UI host's registry-free cases and must not be run where installation-related registry changes are prohibited.
+Installer smoke changes actual installed files, OS uninstall registration and shortcuts. Use a clean CI machine or explicitly prepared local administrator session. The existing-installation/AppId/shortcut guards remain strict; preserve user data. This is separate from UI cases that exclude persistent system-setting changes.
 
 ```powershell
-# Disposable Windows installation-test machine only:
+# Required smoke on a clean Windows test machine:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -ReportPath TestResults/Installer/installer-results.json
 # Optional reverse order: Chinese first, then English reinstall:
 ./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -InstallerLanguage chinese -ReportPath TestResults/InstallerChinese/installer-results.json
-# Full acceptance, using a prebuilt UI host; always uninstalls after the UI stage:
-./test/Run-InstallerTests.ps1 -InstallerPath <installer.exe> -NoBuild -RunUIOperationTests `
-  -UIHostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe
-# Contract checks only: no installation, UI startup, or registry writes.
-./test/Test-InstallerTestSupport.ps1
-# On a desktop, validate UIA, child-process handoff, and timeout recovery with a temporary wizard fixture that does not modify system settings.
-./test/Test-InstallerWizard.ps1
+# Independent UI against the complete prebuilt Release output (no installation):
+./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended
+# Contracts only: no installation, UI startup or registry writes:
 ./.github/scripts/validate-test-workflow.ps1
+# Interactive fixture only, when a desktop is available:
+./test/Test-InstallerWizard.ps1
 ```
 
-Both CI workflows retain real WinUI acceptance, but `-AllowUIFailure` makes only that lifecycle stage non-blocking. Raw JSON stays failed and summaries show **Failed (non-blocking)**; PR success and release draft/version synchronization may continue after required checks pass. Missing/unreadable UI reports or host timeouts also produce warnings when the installer recorded UI failure. Required project and installer failures still block; no entire job uses `continue-on-error`. Local runners and `-RequireFullAcceptance` without the opt-in remain strict. Pre-merge accepts explicit environment skips; Pre-release still rejects skipped required startup/profile checks. TRX checks continue detecting unhandled testhost exceptions.
+Only the CI `test-ui-operation` job uses `continue-on-error`. It records `steps.ui-tests.outcome` and uploads raw reports even on failure. The summary takes `-AllowUIFailure -UIJobResult <outcome>` and retains UI failures, timeout, missing/unreadable reports and explicit desktop skips without blocking PR success or release version/draft work. Smoke/project failures and missing smoke reports always block. Pre-release also rejects skipped selected project tests. Local UI is strict by default; `-RequireFullAcceptance` without the UI opt-in rejects UI skips too.
 
 ## Adding coverage
 

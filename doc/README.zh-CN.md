@@ -24,6 +24,7 @@
 | Web 项目文件树 | [WebFileTreeControl.xaml.cs](../src/WebBackdrop/Views/Tools/WebFileTreeControl.xaml.cs) |
 | Web 项目清单 | [WebDesignFileUtil.cs](../src/WebBackdrop/Models/SerializableData/WebDesignFileUtil.cs) |
 | 共用项目系统与文件监视 | [ProjectSystem](../src/VirtualPaper.Common/Utils/ProjectSystem/) |
+| 源文案与 XAML 资源生成 | [语言资源](../src/VirtualPaper.UIComponent/Localization/README.zh-CN.md) |
 | CI、版本管理与发布 | [工作流指南](../.github/workflows/README.zh-CN.md) |
 
 ## 文档维护

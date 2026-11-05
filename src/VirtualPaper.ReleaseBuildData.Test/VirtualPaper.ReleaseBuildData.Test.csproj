@@ -8,4 +8,9 @@
     <UseVSTest>true</UseVSTest>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\VirtualPaper.UIComponent\Localization\XamlResources.xml"
+                      LogicalName="VirtualPaper.XamlResources.xml" />
+  </ItemGroup>
+
 </Project>

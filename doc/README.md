@@ -24,6 +24,7 @@ The detailed guides linked below are currently in Chinese.
 | Web project file tree | [WebFileTreeControl.xaml.cs](../src/WebBackdrop/Views/Tools/WebFileTreeControl.xaml.cs) |
 | Web project manifest | [WebDesignFileUtil.cs](../src/WebBackdrop/Models/SerializableData/WebDesignFileUtil.cs) |
 | Shared project system and file watching | [ProjectSystem](../src/VirtualPaper.Common/Utils/ProjectSystem/) |
+| Source translations and generated XAML resources | [Localization resources](../src/VirtualPaper.UIComponent/Localization/README.md) |
 | CI, versioning, and releases | [Workflow guide](../.github/workflows/README.md) |
 | Complete local acceptance and focused tests | [Testing guide](../test/README.md) |
 | AI project orientation and testing instructions | [AGENTS.md](../AGENTS.md), [testing skill](../.agents/skills/virtualpaper-testing/SKILL.md) |

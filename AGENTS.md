@@ -17,6 +17,8 @@ VirtualPaper is a Windows wallpaper application built with .NET 8, WPF, WinUI 3 
 
 Read [developer documentation](doc/README.md) for architecture and module details. Read source implementations when deciding behavior; generated output is not the source of truth.
 
+Maintain translations only in `src/VirtualPaper.UIComponent/Strings/<locale>/Resources.resw`; add XAML property mappings in `Localization/XamlResources.xml`. Normal builds generate complete resources under `obj`. Do not hand-edit or commit generated `Ui_...` translations. See the [localization guide](src/VirtualPaper.UIComponent/Localization/README.md) for generation and packaged validation.
+
 ## Test skill and entry points
 
 For requests to run, select, extend or diagnose tests, read the repository skill at [.agents/skills/virtualpaper-testing/SKILL.md](.agents/skills/virtualpaper-testing/SKILL.md). Follow its linked guides only for the relevant test layer. Agents without skill discovery can read that file directly.

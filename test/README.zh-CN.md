@@ -136,6 +136,8 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 ### 语言即时切换
 
+源文案只维护在 `VirtualPaper.UIComponent/Strings` 中；正常构建解决方案时，根据 `Localization/XamlResources.xml` 生成 XAML 属性资源。包体测试使用内嵌映射快照核验包内生成 key 集合及源文案一致性，不再依赖资源注释。修改方法及单独生成、校验命令见[语言资源说明](../src/VirtualPaper.UIComponent/Localization/README.zh-CN.md)。
+
 `Localization.LiveText.RefreshAndPreserveState` 在正式组件上往返切换中英文，检查画笔名称、预设风格名称、无名称时的提示和队列任务文字，同时检查画笔参数、风格选择、输入路径和自定义名称保持不变。
 
 ### 组件效果

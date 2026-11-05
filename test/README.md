@@ -136,6 +136,8 @@ Only real UI acceptance is skipped; regular tests can still run. The CI summary 
 
 ### Live language changes
 
+Source translations live only in `VirtualPaper.UIComponent/Strings`; the normal solution build generates XAML property resources from `Localization/XamlResources.xml`. Artifact tests use an embedded mapping snapshot to validate the packaged generated key set and matching source values without relying on resource comments. See [localization resources](../src/VirtualPaper.UIComponent/Localization/README.md) for editing and standalone generation/check commands.
+
 `Localization.LiveText.RefreshAndPreserveState` switches between Chinese and English on production controls. It checks brush labels, preset style names, unnamed-style prompts, and queued task labels, while preserving brush settings, selected styles, input paths, and custom names.
 
 ### Component effects

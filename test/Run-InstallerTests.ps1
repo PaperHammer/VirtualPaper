@@ -45,30 +45,10 @@ if ($RunUIOperationTests) {
 
 # The production AppId is shared with a user's existing installation. Read all registry
 # views before installing, so this acceptance run cannot overwrite a daily installation.
-$setupScript = Get-Content -LiteralPath (Join-Path $repositoryRoot 'InnoSetup/setup.iss') -Raw
-$appId = [regex]::Match($setupScript, '(?m)^#define AppId "\{\{([0-9A-Fa-f-]+)\}"').Groups[1].Value
-if (-not $appId) { throw 'Cannot determine the production installer AppId.' }
-function Get-InstallRegistrations {
-    $keyPath = "Software\Microsoft\Windows\CurrentVersion\Uninstall\{$appId}_is1"
-    foreach ($hive in @([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryHive]::CurrentUser)) {
-        foreach ($view in @([Microsoft.Win32.RegistryView]::Registry64, [Microsoft.Win32.RegistryView]::Registry32)) {
-            $root = [Microsoft.Win32.RegistryKey]::OpenBaseKey($hive, $view)
-            try {
-                $key = $root.OpenSubKey($keyPath)
-                if ($null -ne $key) {
-                    try { [pscustomobject]@{ Location = $key.GetValue('InstallLocation'); Version = $key.GetValue('DisplayVersion') } }
-                    finally { $key.Dispose() }
-                }
-            } finally { $root.Dispose() }
-        }
-    }
-}
-if (@(Get-InstallRegistrations).Count) { throw 'An existing Virtual Paper installation was found. Use a disposable Windows test machine.' }
-$shortcutPaths = @([Environment]::GetFolderPath('CommonPrograms'), [Environment]::GetFolderPath('Programs')) |
-    ForEach-Object { Join-Path $_ 'Virtual Paper.lnk' } | Sort-Object -Unique
-if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) {
-    throw 'An existing Virtual Paper Start menu shortcut was found. Use a disposable Windows test machine.'
-}
+$setupScriptPath = Join-Path $repositoryRoot 'InnoSetup/setup.iss'
+Assert-CleanInstallerEnvironment $setupScriptPath
+$appId = Get-InstallerAppId $setupScriptPath
+$shortcutPaths = @(Get-InstallerShortcutPaths)
 $packageVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($InstallerPath).FileVersion
 $installedVersion = $null
 $environment = Get-UIOperationEnvironment
@@ -126,6 +106,9 @@ function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall) {
 $report = Invoke-InstallerLifecycle -Install {
     if ($environment.Available) { Invoke-InstallerWizard $InstallerPath }
     else { Invoke-BoundedProcess $InstallerPath "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/install.log`"" }
+    if (@(Get-ChildItem -LiteralPath $installDir -Directory -Recurse -Filter '*.WebView2').Count) {
+        throw 'The installer contains WebView2 user data from the build machine.'
+    }
     foreach ($file in @('VirtualPaper.exe', 'VirtualPaper.dll', 'VirtualPaper.runtimeconfig.json', 'VirtualPaper.deps.json',
         'VirtualPaper.Common.dll', 'Plugins/UI/VirtualPaper.UI.exe', 'Plugins/UI/VirtualPaper.UI.dll',
         'Plugins/UI/VirtualPaper.UI.runtimeconfig.json', 'Plugins/UI/VirtualPaper.UI.deps.json')) {
@@ -136,7 +119,7 @@ $report = Invoke-InstallerLifecycle -Install {
     }
     $script:installedVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $installDir 'VirtualPaper.exe')).FileVersion
     if ([version]$installedVersion -ne [version]$packageVersion) { throw "Installed version $installedVersion does not match package $packageVersion." }
-    $registrations = @(Get-InstallRegistrations)
+    $registrations = @(Get-InstallRegistrations $appId)
     if ($registrations.Count -eq 0 -or @($registrations | Where-Object {
         -not $_.Location -or [IO.Path]::GetFullPath($_.Location).TrimEnd('\') -ine $installDir.TrimEnd('\') -or
         [version]$_.Version -ne [version]$packageVersion
@@ -206,7 +189,7 @@ $report = Invoke-InstallerLifecycle -Install {
         if ($files.Count -gt 0) { throw "Files remain after uninstall: $($files.FullName -join '; ')" }
     }
     if (@(Get-InstallerTestProcesses).Count -ne 0) { $cleanupErrors.Add('Application processes remain after uninstall.') }
-    if (@(Get-InstallRegistrations).Count) { $cleanupErrors.Add('Application uninstall registration remains after uninstall.') }
+    if (@(Get-InstallRegistrations $appId).Count) { $cleanupErrors.Add('Application uninstall registration remains after uninstall.') }
     if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) { $cleanupErrors.Add('Start menu shortcut remains after uninstall.') }
     if ($cleanupErrors.Count) { throw ($cleanupErrors -join [Environment]::NewLine) }
 } -UIOperation $uiOperation -Environment $environment

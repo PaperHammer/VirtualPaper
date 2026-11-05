@@ -1,6 +1,7 @@
 #requires -Version 7.2
 param(
     [Parameter(Mandatory)][string]$JobId,
+    [string]$ResultsDirectory,
     [switch]$IncludeMLIntegration,
     [switch]$RequireCompleteExecution
 )
@@ -9,8 +10,8 @@ $ErrorActionPreference = 'Stop'
 $spec = Get-ProjectTestSpecs | Where-Object Id -CEQ $JobId
 if ($null -eq $spec) { throw "Unknown test job: $JobId" }
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$resultsDirectory = "TestResults/$($spec.Directory)"
-$reportPath = Join-Path $repositoryRoot "$resultsDirectory/$($spec.Report)"
+if (-not $ResultsDirectory) { $ResultsDirectory = "TestResults/$($spec.Directory)" }
+$reportPath = Join-Path ([IO.Path]::GetFullPath($ResultsDirectory, $repositoryRoot)) $spec.Report
 if (Test-Path -LiteralPath $reportPath) { throw "Refusing to reuse an old test report: $reportPath" }
 if ($env:GITHUB_OUTPUT) {
     "artifact=$($spec.Artifact)`nresults_directory=$resultsDirectory" >> $env:GITHUB_OUTPUT

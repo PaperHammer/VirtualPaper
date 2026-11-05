@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -7,6 +8,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using Microsoft.Web.WebView2.Core;
+using VirtualPaper.Common;
 using Workloads.Creation.WebBackdrop.Core.Preview;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -133,8 +136,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
             previewWebView.DefaultBackgroundColor = WebBackdropThemeResource.GetColor(this, backgroundRole);
         }
 
-        private async Task PreparePreviewWebViewAsync() {
-            await previewWebView.EnsureCoreWebView2Async();
+        private Task PreparePreviewWebViewAsync() => _previewInitialization ??= InitializePreviewWebViewAsync();
+
+        private async Task InitializePreviewWebViewAsync() {
+            string dataFolder = System.IO.Path.Combine(Constants.CommonPaths.TempWebView2Dir, "MarkdownPreview");
+            Directory.CreateDirectory(dataFolder);
+            var environment = await CoreWebView2Environment.CreateWithOptionsAsync(null, dataFolder, new CoreWebView2EnvironmentOptions());
+            await previewWebView.EnsureCoreWebView2Async(environment);
             UpdatePreviewWebViewBackground();
         }
 
@@ -266,6 +274,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         private string _content = string.Empty;
         private string? _pendingPreviewHtml;
         private bool _previewDocumentLoaded;
+        private Task? _previewInitialization;
         private int _previewVersion;
         private int _previewUpdateVersion;
         private Pointer? _resizePointer;

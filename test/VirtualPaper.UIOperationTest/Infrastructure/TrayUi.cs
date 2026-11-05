@@ -10,35 +10,46 @@ internal static class TrayUi {
     internal sealed record OpenMenu(AutomationElement Element, nint Window);
 
     public static OpenMenu Open(int coreId) {
-        string name = $"Virtual Paper ({TestProcessEnvironment.SessionId})";
+        string name = $"Virtual Paper ({coreId}:{TestProcessEnvironment.SessionId})";
         nint taskbar = FindWindow("Shell_TrayWnd", null);
         Check(taskbar != 0, "Explorer taskbar is not available");
-        var shell = AutomationElement.FromHandle(taskbar);
-        (AutomationElement Element, nint Window)? icon = FindIcon(name, taskbar);
-        if (icon == null) {
-            var overflow = shell.FindFirst(TreeScope.Descendants, new OrCondition(
-                new PropertyCondition(AutomationElement.AutomationIdProperty, "SystemTray.OverflowButton"),
-                new PropertyCondition(AutomationElement.AutomationIdProperty, "1502"),
-                new AndCondition(
-                    new PropertyCondition(AutomationElement.AutomationIdProperty, "SystemTrayIcon"),
-                    new OrCondition(
-                        new PropertyCondition(AutomationElement.NameProperty, "显示隐藏的图标"),
-                        new PropertyCondition(AutomationElement.NameProperty, "Show hidden icons")))));
-            if (overflow == null || overflow.Current.IsOffscreen) {
-                string path = Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "tray-discovery.txt");
-                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-                File.WriteAllLines(path, shell.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
-                    .Select(e => $"{e.Current.ControlType.ProgrammaticName} id={e.Current.AutomationId} class={e.Current.ClassName} name={e.Current.Name} offscreen={e.Current.IsOffscreen} bounds={e.Current.BoundingRectangle}"));
-                throw new InvalidOperationException("Notification overflow button is unavailable; see tray-discovery.txt");
+        (AutomationElement Element, nint Window)? icon = null;
+        var discovery = Stopwatch.StartNew();
+        TimeSpan lastExpand = TimeSpan.FromSeconds(-1);
+        // Explorer registers notifications asynchronously. Server uses the classic
+        // toolbar, while desktop Windows can expose a XAML notification island.
+        while (icon == null && discovery.Elapsed < TimeSpan.FromSeconds(10)) {
+            try {
+                var windows = TrayWindows();
+                icon = FindIcon(name, windows);
+                if (icon != null) break;
+                bool overflowOpen = windows.Any(w => IsWindowVisible(w) && IsOverflowWindow(w));
+                if (!overflowOpen && discovery.Elapsed - lastExpand >= TimeSpan.FromSeconds(1)) {
+                    foreach (var handle in windows.Where(w => !IsOverflowWindow(w))) {
+                        var overflow = AutomationElement.FromHandle(handle).FindFirst(TreeScope.Descendants, new OrCondition(
+                            new PropertyCondition(AutomationElement.AutomationIdProperty, "SystemTray.OverflowButton"),
+                            new PropertyCondition(AutomationElement.AutomationIdProperty, "1502"),
+                            new AndCondition(
+                                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
+                                new OrCondition(
+                                    new PropertyCondition(AutomationElement.NameProperty, "显示隐藏的图标"),
+                                    new PropertyCondition(AutomationElement.NameProperty, "Show hidden icons"),
+                                    new PropertyCondition(AutomationElement.NameProperty, "Notification Chevron")))));
+                        if (overflow == null || overflow.Current.IsOffscreen) continue;
+                        if (overflow.TryGetCurrentPattern(InvokePattern.Pattern, out var invoke)) ((InvokePattern)invoke).Invoke();
+                        else ApplicationUi.ClickPointerElement(handle, overflow);
+                        lastExpand = discovery.Elapsed;
+                        break;
+                    }
+                }
             }
-            ApplicationUi.Invoke(overflow!);
-            var timer = Stopwatch.StartNew();
-            while (icon == null && timer.Elapsed < TimeSpan.FromSeconds(5)) {
-                icon = FindIcon(name, taskbar);
-                if (icon == null) Thread.Sleep(100);
-            }
+            catch (ElementNotAvailableException) { } // Explorer can replace its provider during expansion.
+            Thread.Sleep(100);
         }
-        Check(icon != null, "Could not find this test session's tray icon: " + name);
+        if (icon == null) {
+            SaveDiscovery(name);
+            throw new TimeoutException("The session tray icon did not appear in visible or overflow notification areas; see tray-discovery.txt: " + name);
+        }
         ApplicationUi.OpenPointerContextMenu(icon!.Value.Window, icon.Value.Element);
         var wait = Stopwatch.StartNew();
         while (wait.Elapsed < TimeSpan.FromSeconds(5)) {
@@ -55,7 +66,8 @@ internal static class TrayUi {
             }
             Thread.Sleep(100);
         }
-        throw new TimeoutException("The owned Core tray menu did not open");
+        SaveDiscovery(name);
+        throw new TimeoutException("The owned Core tray menu did not open; see tray-discovery.txt");
     }
 
     public static void Dismiss(OpenMenu menu) {
@@ -71,17 +83,60 @@ internal static class TrayUi {
         throw new TimeoutException("Tray menu did not dismiss");
     }
 
-    private static (AutomationElement Element, nint Window)? FindIcon(string name, nint taskbar) {
-        foreach (nint handle in new[] { taskbar, FindWindow("TopLevelWindowForOverflowXamlIsland", null),
-            FindWindow("NotifyIconOverflowWindow", null) }.Where(h => h != 0).Distinct()) {
-            var icon = AutomationElement.FromHandle(handle).FindAll(TreeScope.Descendants,
-                new PropertyCondition(AutomationElement.NameProperty, name)).Cast<AutomationElement>()
-                .FirstOrDefault(e => !e.Current.IsOffscreen && !e.Current.BoundingRectangle.IsEmpty);
-            if (icon != null) return (icon, handle);
+    private static (AutomationElement Element, nint Window)? FindIcon(string name, nint[] windows) {
+        foreach (nint handle in windows.Where(IsWindowVisible)) {
+            // A visible tooltip repeats the icon name and can precede the real
+            // icon in the tree. Only notification buttons are click targets.
+            foreach (AutomationElement element in AutomationElement.FromHandle(handle).FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button))) {
+                if (!element.Current.IsEnabled || element.Current.IsOffscreen || element.Current.BoundingRectangle.IsEmpty) continue;
+                string accessibleName = element.Current.Name;
+                // Some Shell versions append a notification count to the tooltip.
+                // Require the entire unique session label, never a generic app name.
+                if (accessibleName?.Contains(name, StringComparison.Ordinal) == true) return (element, handle);
+            }
         }
         return null;
     }
 
+    private static nint[] TrayWindows() {
+        var windows = new List<nint>();
+        EnumWindows((window, _) => {
+            string name = WindowClass(window);
+            if (name is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "TopLevelWindowForOverflowXamlIsland" or "NotifyIconOverflowWindow")
+                windows.Add(window);
+            return true;
+        }, 0);
+        return windows.ToArray();
+    }
+
+    private static string WindowClass(nint window) {
+        var name = new System.Text.StringBuilder(256);
+        GetClassName(window, name, name.Capacity);
+        return name.ToString();
+    }
+
+    private static bool IsOverflowWindow(nint window) => WindowClass(window) is "TopLevelWindowForOverflowXamlIsland" or "NotifyIconOverflowWindow";
+
+    private static void SaveDiscovery(string expectedName) {
+        string path = Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "tray-discovery.txt");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        using var log = new StreamWriter(path);
+        log.WriteLine($"Expected: {expectedName}; OS: {Environment.OSVersion}");
+        foreach (var handle in TrayWindows()) {
+            log.WriteLine($"Window={handle:X} class={WindowClass(handle)} visible={IsWindowVisible(handle)}");
+            try {
+                foreach (AutomationElement element in AutomationElement.FromHandle(handle).FindAll(TreeScope.Descendants, Condition.TrueCondition))
+                    log.WriteLine($"{element.Current.ControlType.ProgrammaticName} id={element.Current.AutomationId} class={element.Current.ClassName} name={element.Current.Name} offscreen={element.Current.IsOffscreen} bounds={element.Current.BoundingRectangle}");
+            }
+            catch (ElementNotAvailableException ex) { log.WriteLine(ex.Message); }
+        }
+    }
+
+    private delegate bool EnumWindowCallback(nint window, nint parameter);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowCallback callback, nint parameter);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(nint window, System.Text.StringBuilder name, int capacity);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern nint FindWindow(string className, string? title);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();

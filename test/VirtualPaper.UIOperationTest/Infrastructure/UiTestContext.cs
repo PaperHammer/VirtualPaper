@@ -36,6 +36,7 @@ internal sealed class UiTestContext : IDisposable {
         _window.Activate();
         nint window = WinRT.Interop.WindowNative.GetWindowHandle(_window);
         try {
+            await ApplicationUi.ActivateOwnedWindowAsync(window);
             await WaitAsync(() => _page.IsLoaded && _page.ActualWidth > 0 && _page.ActualHeight > 0
                 && GetForegroundWindow() == window, "Activate and lay out test window");
         }

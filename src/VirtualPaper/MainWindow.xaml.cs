@@ -30,7 +30,7 @@ namespace VirtualPaper {
             // Keep acceptance clicks scoped to their own tray icon when another
             // VirtualPaper instance is already running on the user's desktop.
             if (TestProcessEnvironment.IsEnabled)
-                notifyIcon.TooltipText = $"Virtual Paper ({TestProcessEnvironment.SessionId})";
+                notifyIcon.TooltipText = $"Virtual Paper ({Environment.ProcessId}:{TestProcessEnvironment.SessionId})";
 
             _uiRunnerService = uiRunner;
             _wpControl = wpControl;

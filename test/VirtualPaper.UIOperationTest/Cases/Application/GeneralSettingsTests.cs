@@ -69,8 +69,9 @@ internal static class GeneralSettingsTests {
             Check(Toggle(root).Current.ToggleState == ToggleState.On, "Reopened UI did not retain auto start preference");
             Toggle(root).Toggle();
         });
-        await AppProcessSession.WaitAsync(async () => !(await session.Settings.GetSettingsAsync(new Empty(),
-            deadline: DateTime.UtcNow.AddSeconds(1))).IsAutoStart, "Auto start preference disabled again");
+        // Finish this save before changing a setting that restarts the UI.
+        await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
+            json["IsAutoStart"]?.GetValue<bool>() == false && json["Language"]?.GetValue<string>() == "zh-CN");
         await Task.Run(() => ApplicationUi.SelectComboIndex(ApplicationUi.Find(root, "Settings.General.Language"), 1, SupportedLanguages.Languages.Count, closesWindow: true));
         await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
             json["Language"]?.GetValue<string>() == "en-US" && json["IsAutoStart"]?.GetValue<bool>() == false);

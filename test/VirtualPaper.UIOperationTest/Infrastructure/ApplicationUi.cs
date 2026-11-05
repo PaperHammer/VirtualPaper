@@ -8,6 +8,25 @@ namespace VirtualPaper.UIOperationTest.Infrastructure;
 internal static class ApplicationUi {
     public static IDisposable Foreground(nint window) => new ForegroundLease(window);
 
+    public static async Task ActivateOwnedWindowAsync(nint window) {
+        using var foreground = Foreground(window);
+        if (SetForegroundWindow(window) || GetForegroundWindow() == window) return;
+        // Windows may deny programmatic activation after a background build.
+        // Click only this verified window's title bar to give it real input focus.
+        var bounds = AutomationElement.FromHandle(window).Current.BoundingRectangle;
+        var point = new NativePoint { X = (int)(bounds.Left + 80), Y = (int)(bounds.Top + 12) };
+        Check(GetAncestor(WindowFromPoint(point), 2) == window, "The test host title bar is covered by another window");
+        Check(GetCursorPos(out var previous) && SetCursorPos(point.X, point.Y), "Could not position the pointer over the test host");
+        try {
+            mouse_event(0x0002, 0, 0, 0, 0);
+            mouse_event(0x0004, 0, 0, 0, 0);
+            var timer = Stopwatch.StartNew();
+            while (GetForegroundWindow() != window && timer.Elapsed < TimeSpan.FromSeconds(5)) await Task.Delay(50);
+            Check(GetForegroundWindow() == window, "The test host did not receive foreground input focus");
+        }
+        finally { SetCursorPos(previous.X, previous.Y); }
+    }
+
     private sealed class ForegroundLease : IDisposable {
         private readonly nint _window;
         private readonly bool _wasTopmost;

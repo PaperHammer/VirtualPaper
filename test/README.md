@@ -22,6 +22,20 @@ test/
 
 ## Running the tests
 
+For the complete local acceptance used before merging, start PowerShell 7.2 or later **as administrator** and run:
+
+```powershell
+./test/Run-Tests.ps1
+# Include the optional ML project integration tests as well:
+./test/Run-Tests.ps1 -IncludeMLIntegration
+```
+
+This entry point rebuilds the full solution in **Release**, runs the same eight project test jobs in parallel as CI, compiles `InnoSetup/setup.iss`, installs the resulting package, checks first launch and normal exit, runs the **extended** real UI suite against the installed Core/UI, then uninstalls. A failed phase blocks subsequent phases; uninstall still runs after installation, startup or UI failures. Each invocation writes fresh reports below `TestResults/local-acceptance-*`. Visual Studio MSBuild, .NET 8, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
+
+It refuses an existing Virtual Paper installation or Start menu shortcut. Remove a daily installation explicitly while preserving its data, or use a clean Windows test machine. Installation and uninstallation change the OS uninstall registration and shortcuts; UI cases still exclude startup registration, session locking and other persistent system-setting writes. A missing desktop produces the same explicit UI skip as Pre-merge Check; it is not full UI acceptance.
+
+The focused UI runner below is for module development; it does not replace installed-package acceptance:
+
 Use PowerShell 7.2 or later on a Windows desktop with a graphical session:
 
 ```powershell
@@ -268,7 +282,7 @@ With an interactive desktop, the test operates the real English installation wiz
 
 Both modes check required Core/UI files, package/program version agreement, Start menu shortcuts, and uninstall registration. After uninstall, they check file, process, shortcut, and registration residue. Reports and installer logs are retained; desktop runs also retain wizard traces.
 
-**Installer acceptance performs actual system installation and uninstallation. Run it only on a disposable Windows CI machine.** It refuses an existing installation with the same AppId or an existing Start menu shortcut. This is separate from the UI host's registry-free cases and must not be run on a workstation where registry changes are prohibited.
+**Installer acceptance performs actual system installation and uninstallation.** Use a clean CI machine or an explicitly prepared local administrator session. It refuses an existing installation with the same AppId or an existing Start menu shortcut. This is separate from the UI host's registry-free cases and must not be run where installation-related registry changes are prohibited.
 
 ```powershell
 # Disposable Windows installation-test machine only:

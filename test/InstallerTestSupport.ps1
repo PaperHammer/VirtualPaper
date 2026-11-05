@@ -1,5 +1,43 @@
 # Lifecycle/report contracts can be tested without installing anything.
 . (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
+function Get-InstallerAppId([string]$SetupScriptPath) {
+    $setupScript = Get-Content -LiteralPath $SetupScriptPath -Raw
+    $appId = [regex]::Match($setupScript, '(?m)^#define AppId "\{\{([0-9A-Fa-f-]+)\}"').Groups[1].Value
+    if (-not $appId) { throw 'Cannot determine the production installer AppId.' }
+    return $appId
+}
+
+function Get-InstallRegistrations([string]$AppId) {
+    $keyPath = "Software\Microsoft\Windows\CurrentVersion\Uninstall\{$AppId}_is1"
+    foreach ($hive in @([Microsoft.Win32.RegistryHive]::LocalMachine, [Microsoft.Win32.RegistryHive]::CurrentUser)) {
+        foreach ($view in @([Microsoft.Win32.RegistryView]::Registry64, [Microsoft.Win32.RegistryView]::Registry32)) {
+            $root = [Microsoft.Win32.RegistryKey]::OpenBaseKey($hive, $view)
+            try {
+                $key = $root.OpenSubKey($keyPath)
+                if ($null -ne $key) {
+                    try { [pscustomobject]@{ Location = $key.GetValue('InstallLocation'); Version = $key.GetValue('DisplayVersion') } }
+                    finally { $key.Dispose() }
+                }
+            } finally { $root.Dispose() }
+        }
+    }
+}
+
+function Get-InstallerShortcutPaths {
+    @([Environment]::GetFolderPath('CommonPrograms'), [Environment]::GetFolderPath('Programs')) |
+        ForEach-Object { Join-Path $_ 'Virtual Paper.lnk' } | Sort-Object -Unique
+}
+
+function Assert-CleanInstallerEnvironment([string]$SetupScriptPath) {
+    $appId = Get-InstallerAppId $SetupScriptPath
+    $registrations = @(Get-InstallRegistrations $appId)
+    if ($registrations.Count) {
+        throw "An existing Virtual Paper installation was found: $($registrations.Location -join '; '). Uninstall it explicitly or use a clean test machine."
+    }
+    $shortcuts = @(Get-InstallerShortcutPaths | Where-Object { Test-Path -LiteralPath $_ })
+    if ($shortcuts.Count) { throw "An existing Virtual Paper Start menu shortcut was found: $($shortcuts -join '; '). Use a clean test machine." }
+}
+
 function Invoke-InstallerLifecycle {
     param([scriptblock] $Install, [scriptblock] $Open, [scriptblock] $Uninstall,
         [scriptblock] $UIOperation = $null, $Environment = $null)

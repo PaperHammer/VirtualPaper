@@ -62,7 +62,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Name: "windowsstartup"; Description: "{cm:AutoStartProgram,{#MyAppName}}"
 
 [Files]
-Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.WebView2,*.WebView2\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

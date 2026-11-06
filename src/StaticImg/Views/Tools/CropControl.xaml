@@ -3,11 +3,11 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.CropControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:lcl_models="using:Workloads.Creation.StaticImg.Models"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -38,7 +38,7 @@
 
     <Expander Style="{StaticResource RightExpanderStyle}">
         <Expander.Header>
-            <TextBlock Text="{markup:I18n Key=Project_StaticImg_ToolName_Crop}"/>
+            <TextBlock l:Uids.Uid="Ui_Project_StaticImg_ToolName_Crop_Text"/>
         </Expander.Header>
         <Expander.Content>
             <StackPanel Orientation="Vertical" Spacing="6">
@@ -64,7 +64,7 @@
                             Orientation="Vertical"
                             Spacing="4">
                             <TextBlock 
-                                Text="{markup:I18n Key=StaticImg_EffectParam_WidthPixels}"
+                                l:Uids.Uid="Ui_StaticImg_EffectParam_WidthPixels_Text"
                                 VerticalAlignment="Center"/>
                             <TextBox
                                 Text="1135"
@@ -76,7 +76,7 @@
                             Orientation="Vertical"
                             Spacing="4">
                             <TextBlock 
-                                Text="{markup:I18n Key=StaticImg_EffectParam_HeightPixels}"
+                                l:Uids.Uid="Ui_StaticImg_EffectParam_HeightPixels_Text"
                                 VerticalAlignment="Center"/>
                             <TextBox
                                 Text="638"
@@ -94,14 +94,14 @@
                     </Grid.ColumnDefinitions>
 
                     <Button
-                        Content="{markup:I18n Key=Text_Cancel}"
+                        l:Uids.Uid="Ui_Text_Cancel_Content"
                         Height="36"
                         HorizontalAlignment="Stretch"
                         Click="CropCancelBtn_Click"/>
 
                     <Button 
                         Grid.Column="2"
-                        Content="{markup:I18n Key=Text_Complete}"
+                        l:Uids.Uid="Ui_Text_Complete_Content"
                         Height="36"
                         HorizontalAlignment="Stretch"
                         Style="{ThemeResource AccentButtonStyle}"

@@ -24,10 +24,10 @@ internal static class InstallerWizard {
         try {
             string log = Path.Combine(Path.GetDirectoryName(options.ResultsFile!)!, options.Uninstall ? "uninstall.log" : "install.log");
             Directory.CreateDirectory(Path.GetDirectoryName(log)!);
-            // English makes control matching deterministic; it is a shipped installer language.
+            // Both shipped installer languages use the same required wizard interactions.
             // No silent switches here: license, Next, Install, Finish and uninstall dialogs are real.
             string arguments = options.Uninstall ? $"/NORESTART /LOG=\"{log}\""
-                : $"/LANG=english /NORESTART /NOAUTOLAUNCH /DIR=\"{options.InstallDir}\" /LOG=\"{log}\"";
+                : $"/LANG={options.Language} /NORESTART /NOAUTOLAUNCH /DIR=\"{options.InstallDir}\" /LOG=\"{log}\"";
             var process = Process.Start(new ProcessStartInfo(options.WizardExecutable!, arguments) {
                 UseShellExecute = false, WorkingDirectory = Path.GetDirectoryName(options.WizardExecutable!)!,
                 WindowStyle = ProcessWindowStyle.Normal
@@ -43,8 +43,7 @@ internal static class InstallerWizard {
                     catch (ArgumentException) { }
                     catch (InvalidOperationException) { } // A short-lived child can exit before attachment.
                 }
-                var windows = AutomationElement.RootElement.FindAll(TreeScope.Children,
-                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Window));
+                var windows = AutomationElement.RootElement.FindAll(TreeScope.Children, Condition.TrueCondition);
                 foreach (AutomationElement window in windows) {
                     try {
                         if (!seenPids.Contains(window.Current.ProcessId) || window.Current.IsOffscreen) continue;
@@ -68,6 +67,22 @@ internal static class InstallerWizard {
             result.Passed = true;
         } catch (Exception exception) {
             result.Error = exception.ToString();
+            var windows = new List<string>();
+            EnumWindows((window, _) => {
+                GetWindowThreadProcessId(window, out int pid);
+                if (!seenPids.Contains(pid)) return true;
+                void Describe(nint handle) {
+                    var label = new System.Text.StringBuilder(1024);
+                    var type = new System.Text.StringBuilder(256);
+                    GetWindowText(handle, label, label.Capacity);
+                    GetClassName(handle, type, type.Capacity);
+                    windows.Add($"PID={pid} HWND={handle:X} class={type} id={GetDlgCtrlID(handle)} visible={IsWindowVisible(handle)} enabled={IsWindowEnabled(handle)} text={label}");
+                }
+                Describe(window);
+                EnumChildWindows(window, (child, _) => { Describe(child); return true; }, 0);
+                return true;
+            }, 0);
+            File.WriteAllLines(options.ResultsFile + ".windows.txt", windows);
             Console.Error.WriteLine(exception);
         } finally {
             foreach (var process in processes.Values) {
@@ -83,31 +98,36 @@ internal static class InstallerWizard {
     }
 
     private static string? Advance(AutomationElement window, bool uninstall, WizardResult result, string? previous, TimeSpan sinceAction) {
+        if (uninstall && AdvanceNativeUninstallDialog(window, previous, sinceAction) is { } nativeAction) {
+            result.Actions.Add(nativeAction);
+            Console.WriteLine($"Wizard: {window.Current.Name}: {nativeAction}");
+            return nativeAction;
+        }
         var controls = window.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
-            .Where(e => e.Current.IsEnabled && !e.Current.IsOffscreen).ToArray();
+            .Where(e => !e.Current.IsOffscreen).ToArray();
         string text = string.Join("\n", controls.Select(e => e.Current.Name));
-        var buttons = controls.Where(e => e.Current.ControlType == ControlType.Button).ToArray();
+        var buttons = controls.Where(e => e.Current.ControlType == ControlType.Button && e.Current.IsEnabled).ToArray();
         AutomationElement? target = null;
         string? action = null;
         if (uninstall) {
-            if (text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase)) {
+            if (IsUserDataPrompt(text)) {
                 target = FindDialogButton(buttons, "no", "7"); action = "keep-user-data";
-            } else if (text.Contains("completely remove", StringComparison.OrdinalIgnoreCase)) {
+            } else if (text.Contains("completely remove", StringComparison.OrdinalIgnoreCase) || text.Contains("完全移除", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "yes", "6"); action = "confirm-uninstall";
-            } else if (text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase)) {
+            } else if (text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase) || text.Contains("已顺利从您的电脑中移除", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "ok", "1"); action = "acknowledge-uninstall";
             }
         } else {
-            if (text.Contains("this will install", StringComparison.OrdinalIgnoreCase) &&
-                text.Contains("continue", StringComparison.OrdinalIgnoreCase)) {
+            if (text.Contains("this will install", StringComparison.OrdinalIgnoreCase) && text.Contains("continue", StringComparison.OrdinalIgnoreCase)
+                || text.Contains("现在将安装", StringComparison.Ordinal) && text.Contains("继续", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "yes", "6"); action = "confirm-install";
             }
-            var accept = controls.FirstOrDefault(e => e.Current.ControlType == ControlType.RadioButton &&
-                Normalize(e.Current.Name) == "i accept the agreement");
+            var accept = controls.FirstOrDefault(e => e.Current.IsEnabled && e.Current.ControlType == ControlType.RadioButton &&
+                Normalize(e.Current.Name) is "i accept the agreement" or "我同意此协议");
             if (target is null && accept != null && !result.Actions.Contains("accept-license")) {
                 target = accept; action = "accept-license";
             } else if (target is null) {
-                foreach (var (label, step) in new[] { ("finish", "finish"), ("install", "install"), ("next", "next") }) {
+                foreach (var (label, step) in new[] { ("finish", "finish"), ("完成", "finish"), ("install", "install"), ("安装", "install"), ("next", "next"), ("下一步", "next") }) {
                     target = Find(buttons, label);
                     if (target != null) { action = step; break; }
                 }
@@ -118,19 +138,54 @@ internal static class InstallerWizard {
         if (action == previous && sinceAction < TimeSpan.FromSeconds(1)) return null;
         string title = window.Current.Name;
         if (target.TryGetCurrentPattern(SelectionItemPattern.Pattern, out var item)) ((SelectionItemPattern)item).Select();
-        else if (target.TryGetCurrentPattern(InvokePattern.Pattern, out var invoke)) ((InvokePattern)invoke).Invoke();
         else if (target.Current.NativeWindowHandle != 0) {
-            // Some VCL controls expose a native HWND without an Invoke pattern.
-            // BM_CLICK targets only this verified button; no coordinates/global input are used.
-            if (SendMessageTimeout(new IntPtr(target.Current.NativeWindowHandle), 0x00F5, IntPtr.Zero,
-                IntPtr.Zero, 2, 1000, out _) == IntPtr.Zero)
+            // Queue the verified native button's click. Synchronous UIA/SendMessage
+            // can remain inside a modal handler while Inno opens its next dialog.
+            // Exit codes and required interactions are still checked afterwards.
+            if (!PostMessage(new IntPtr(target.Current.NativeWindowHandle), 0x00F5, IntPtr.Zero, IntPtr.Zero))
                 throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(), "Wizard button did not respond.");
         }
+        else if (target.TryGetCurrentPattern(InvokePattern.Pattern, out var invoke)) ((InvokePattern)invoke).Invoke();
         else throw new InvalidOperationException($"Wizard control cannot be operated: {target.Current.Name}");
         result.Actions.Add(action);
         Console.WriteLine($"Wizard: {title}: {action}");
         return action;
     }
+
+    private static string? AdvanceNativeUninstallDialog(AutomationElement window, string? previous, TimeSpan sinceAction) {
+        nint handle = window.Current.NativeWindowHandle;
+        var className = new System.Text.StringBuilder(256);
+        GetClassName(handle, className, className.Capacity);
+        if (className.ToString() != "#32770") return null;
+        // Standard message-box text/buttons are not consistently exposed by
+        // UIA on desktop Windows and Server. The caller already verified PID ownership.
+        var labels = new List<string>();
+        var buttons = new List<nint>();
+        EnumChildWindows(handle, (child, _) => {
+            var label = new System.Text.StringBuilder(1024);
+            GetWindowText(child, label, label.Capacity);
+            labels.Add(label.ToString());
+            var type = new System.Text.StringBuilder(256);
+            GetClassName(child, type, type.Capacity);
+            if (type.ToString() == "Button" && IsWindowVisible(child) && IsWindowEnabled(child)) buttons.Add(child);
+            return true;
+        }, 0);
+        string text = string.Join("\n", labels);
+        var (action, id) = IsUserDataPrompt(text) ? ("keep-user-data", 7)
+            : text.Contains("completely remove", StringComparison.OrdinalIgnoreCase) || text.Contains("完全移除", StringComparison.Ordinal) ? ("confirm-uninstall", 6)
+            : text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase) || text.Contains("已顺利从您的电脑中移除", StringComparison.Ordinal) ? ("acknowledge-uninstall", 1)
+            : ((string?)null, 0);
+        if (action == null || action == previous && sinceAction < TimeSpan.FromSeconds(1)) return null;
+        // The single OK button can use IDCANCEL (2), including on Chinese Windows.
+        nint button = action == "acknowledge-uninstall" ? (buttons.Count == 1 ? buttons[0] : 0) : GetDlgItem(handle, id);
+        if (button == 0 || !IsWindowEnabled(button)) return null;
+        if (!PostMessage(button, 0x00F5, 0, 0)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+        return action;
+    }
+
+    private static bool IsUserDataPrompt(string text) =>
+        text.Contains("delete user settings", StringComparison.OrdinalIgnoreCase) || text.Contains("删除用户配置信息", StringComparison.Ordinal) ||
+        text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase) || text.Contains("删除数据文件夹", StringComparison.Ordinal);
 
     private static AutomationElement? Find(AutomationElement[] controls, string name) =>
         controls.FirstOrDefault(e => Normalize(e.Current.Name) == name);
@@ -139,7 +194,8 @@ internal static class InstallerWizard {
     private static AutomationElement? FindDialogButton(AutomationElement[] controls, string name, string id) =>
         Find(controls, name) ?? controls.FirstOrDefault(e => e.Current.AutomationId == id);
 
-    private static string Normalize(string text) => text.Replace("&", "").Trim().Trim('<', '>').Trim().ToLowerInvariant();
+    private static string Normalize(string text) => System.Text.RegularExpressions.Regex.Replace(text.Replace("&", ""), @"\([A-Za-z]\)", "")
+        .Trim().Trim('<', '>').Trim().ToLowerInvariant();
 
     private static IEnumerable<int> Descendants(HashSet<int> roots) {
         IntPtr snapshot = CreateToolhelp32Snapshot(2, 0);
@@ -176,6 +232,16 @@ internal static class InstallerWizard {
     [DllImport("kernel32.dll", EntryPoint = "Process32NextW", CharSet = CharSet.Unicode)]
     [return: MarshalAs(UnmanagedType.Bool)] private static extern bool Process32Next(IntPtr snapshot, ref ProcessEntry entry);
     [DllImport("kernel32.dll")] [return: MarshalAs(UnmanagedType.Bool)] private static extern bool CloseHandle(IntPtr handle);
-    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr SendMessageTimeout(
-        IntPtr window, uint message, IntPtr wParam, IntPtr lParam, uint flags, uint timeout, out UIntPtr result);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool PostMessage(
+        IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
+    private delegate bool EnumWindowCallback(nint window, nint parameter);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowCallback callback, nint parameter);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out int processId);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(nint window);
+    [DllImport("user32.dll")] private static extern int GetDlgCtrlID(nint window);
+    [DllImport("user32.dll")] private static extern bool EnumChildWindows(nint window, EnumWindowCallback callback, nint parameter);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(nint window, System.Text.StringBuilder text, int capacity);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetClassName(nint window, System.Text.StringBuilder text, int capacity);
+    [DllImport("user32.dll")] private static extern nint GetDlgItem(nint window, int id);
+    [DllImport("user32.dll")] private static extern bool IsWindowEnabled(nint window);
 }

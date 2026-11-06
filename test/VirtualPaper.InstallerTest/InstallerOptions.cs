@@ -3,7 +3,8 @@ using System.IO;
 namespace VirtualPaper.InstallerTest;
 
 internal sealed record InstallerOptions(string InstallDir, string? ResultsFile, TimeSpan Timeout, bool ShowHelp,
-    string? WizardExecutable = null, bool Uninstall = false) {
+    string? WizardExecutable = null, bool Uninstall = false, string Language = "english",
+    string? DataRoot = null, string ProfileMode = "first-run") {
     public static bool TryParse(string[] args, out InstallerOptions options, out string? error) {
         options = new("", null, TimeSpan.FromSeconds(60), false);
         error = null;
@@ -23,6 +24,13 @@ internal sealed record InstallerOptions(string InstallDir, string? ResultsFile, 
                     break;
                 case "--install-dir": options = options with { InstallDir = Path.GetFullPath(args[i]) }; break;
                 case "--results-file": options = options with { ResultsFile = Path.GetFullPath(args[i]) }; break;
+                case "--data-root": options = options with { DataRoot = Path.GetFullPath(args[i]) }; break;
+                case "--profile-mode" when args[i] is "first-run" or "prepare" or "preserve":
+                    options = options with { ProfileMode = args[i] };
+                    break;
+                case "--language" when args[i] is "english" or "chinese":
+                    options = options with { Language = args[i] };
+                    break;
                 case "--timeout-seconds" when int.TryParse(args[i], out int seconds) && seconds is >= 1 and <= 600:
                     options = options with { Timeout = TimeSpan.FromSeconds(seconds) };
                     break;
@@ -44,7 +52,7 @@ internal sealed record InstallerOptions(string InstallDir, string? ResultsFile, 
     }
 
     public static void PrintUsage(TextWriter writer) => writer.WriteLine(
-        "Usage: dotnet run -- --install-dir <path> [--timeout-seconds 60] [--results-file <path>]\n" +
-        "Wizard: --wizard-install <setup.exe> | --wizard-uninstall <unins.exe>, plus --install-dir and --results-file.\n" +
+        "Usage: dotnet run -- --install-dir <path> [--timeout-seconds 60] [--results-file <path>] [--data-root <path>] [--profile-mode first-run|prepare|preserve]\n" +
+        "Wizard: --wizard-install <setup.exe> | --wizard-uninstall <unins.exe>, plus --install-dir, --results-file and optional --language english|chinese.\n" +
         "For install -> open -> uninstall, use test/Run-InstallerTests.ps1.");
 }

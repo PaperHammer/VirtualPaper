@@ -243,6 +243,7 @@ public class DataAssistMappingTests {
         Assert.AreEqual(src.AppVersion, restored.AppVersion);
         Assert.AreEqual(src.Language, restored.Language);
         Assert.AreEqual(src.WallpaperDir, restored.WallpaperDir);
+        Assert.AreEqual(src.BuiltInWallpapersDir, restored.BuiltInWallpapersDir);
     }
 
     [TestMethod]
@@ -296,6 +297,22 @@ public class DataAssistMappingTests {
 
         Assert.IsTrue(settings.NavigationAnimationsEnabled);
         Assert.IsTrue(DataAssist.GrpcToSettings(grpc).NavigationAnimationsEnabled);
+    }
+
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public void IntelligentReminder_JsonAndGrpc_PreservePreferenceAndLegacyDefault(bool enabled) {
+        var settings = MakeSettings();
+        settings.RemindUnpreservedIntelligentResults = enabled;
+        var json = System.Text.Json.JsonSerializer.Serialize(settings, SettingsContext.Default.Settings);
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(json, SettingsContext.Default.Settings)!;
+        var grpc = DataAssist.SettingsToGrpc(loaded);
+        Assert.IsTrue(grpc.HasRemindUnpreservedIntelligentResults);
+        Assert.AreEqual(enabled, DataAssist.GrpcToSettings(grpc).RemindUnpreservedIntelligentResults);
+        grpc.ClearRemindUnpreservedIntelligentResults();
+        Assert.IsTrue(DataAssist.GrpcToSettings(grpc).RemindUnpreservedIntelligentResults);
+        Assert.IsTrue(System.Text.Json.JsonSerializer.Deserialize("{}", SettingsContext.Default.Settings)!.RemindUnpreservedIntelligentResults);
     }
 
     [TestMethod]
@@ -507,6 +524,7 @@ public class DataAssistMappingTests {
         AppVersion = "1.0.0",
         Language = "zh-CN",
         WallpaperDir = @"C:\Wallpapers",
+        BuiltInWallpapersDir = @"D:\PreparedWallpapers",
         IsUpdated = true,
         IsAutoStart = false,
         IsFirstRun = false,

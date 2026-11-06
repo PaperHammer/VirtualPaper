@@ -19,6 +19,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         bool IsAutoStart { get; set; }
         bool IsFirstRun { get; set; }
         bool NavigationAnimationsEnabled { get; set; }
+        bool RemindUnpreservedIntelligentResults { get; set; }
         #endregion
 
         #region dirs
@@ -26,6 +27,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         /// 壁纸所在位置
         /// </summary>
         string WallpaperDir { get; set; }
+        string BuiltInWallpapersDir { get; set; }
         #endregion
 
         #region play utils

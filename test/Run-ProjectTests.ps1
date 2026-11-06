@@ -1,15 +1,17 @@
 #requires -Version 7.2
 param(
     [Parameter(Mandatory)][string]$JobId,
-    [switch]$IncludeMLIntegration
+    [string]$ResultsDirectory,
+    [switch]$IncludeMLIntegration,
+    [switch]$RequireCompleteExecution
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'TestReportSupport.ps1')
 $spec = Get-ProjectTestSpecs | Where-Object Id -CEQ $JobId
 if ($null -eq $spec) { throw "Unknown test job: $JobId" }
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
-$resultsDirectory = "TestResults/$($spec.Directory)"
-$reportPath = Join-Path $repositoryRoot "$resultsDirectory/$($spec.Report)"
+if (-not $ResultsDirectory) { $ResultsDirectory = "TestResults/$($spec.Directory)" }
+$reportPath = Join-Path ([IO.Path]::GetFullPath($ResultsDirectory, $repositoryRoot)) $spec.Report
 if (Test-Path -LiteralPath $reportPath) { throw "Refusing to reuse an old test report: $reportPath" }
 if ($env:GITHUB_OUTPUT) {
     "artifact=$($spec.Artifact)`nresults_directory=$resultsDirectory" >> $env:GITHUB_OUTPUT
@@ -26,7 +28,7 @@ try {
     }
     & dotnet @arguments
     if ($LASTEXITCODE -ne 0) { throw "$JobId failed (exit $LASTEXITCODE)." }
-    Assert-TrxReportPassed $reportPath | Format-Table Total, Executed, Passed
+    Assert-TrxReportPassed $reportPath -RequireCompleteExecution:$RequireCompleteExecution | Format-Table Total, Executed, Passed
 } finally {
     $env:RELEASE_BIN_DIR = $previousReleaseBin
     Pop-Location

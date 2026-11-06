@@ -3,6 +3,8 @@ using VirtualPaper.Models.Mvvm;
 
 namespace VirtualPaper.IntelligentPanel.Models {
     public class StyleOptionItem : ObservableObject, IEquatable<StyleOptionItem> {
+        public string? NameKey { get; init; }
+
         private string? _name;
         public string? Name {
             get => _name;

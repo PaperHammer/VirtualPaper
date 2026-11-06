@@ -13,6 +13,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
 
         public string StyleFilePath { get; }
         public string? StyleName { get; }
+        public string? StyleNameKey { get; }
         public string StyleFileSize { get; }
         public string StyleFileExt { get; }
 
@@ -26,7 +27,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
 
         public StyleTransferData(
             string sourcePath, string sourceFileSize, string sourceFileExt, uint width, uint height,
-            string styleImagePath, string? styleName, string styleFileSize, string styleFileExt) {
+            string styleImagePath, string? styleName, string styleFileSize, string styleFileExt,
+            string? styleNameKey = null) {
             Id = Guid.NewGuid();
             SourceFilePath = sourcePath;
             Width = width;
@@ -35,6 +37,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
             SourceFileExt = sourceFileExt;
             StyleFilePath = styleImagePath;
             StyleName = styleName;
+            StyleNameKey = styleNameKey;
             StyleFileSize = styleFileSize;
             StyleFileExt = styleFileExt;
         }

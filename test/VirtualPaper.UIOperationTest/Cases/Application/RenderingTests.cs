@@ -29,7 +29,9 @@ internal static class RenderingTests {
             json => json.AsArray().Count == 1 && json[0]?["RType"]?.GetValue<string>() == "RImage3D");
         string runtimePath = Directory.GetFiles(fixture.Data.FolderPath, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories).Single();
         using var runtime = JsonDocument.Parse(await File.ReadAllTextAsync(runtimePath));
-        string depthPath = runtime.RootElement.GetProperty("DepthFilePath").GetString()!;
+        string storedDepthPath = runtime.RootElement.GetProperty("DepthFilePath").GetString()!;
+        Check(!Path.IsPathRooted(storedDepthPath), "The installed depth metadata contains an absolute path");
+        string depthPath = Path.GetFullPath(storedDepthPath, Path.GetDirectoryName(runtimePath)!);
         Check(File.Exists(depthPath), "Actual depth model did not produce its cache");
         using (var depth = new Bitmap(depthPath)) {
             Check(depth.Width > 0 && depth.Height > 0, "Depth cache is not a readable image");
@@ -110,7 +112,7 @@ internal static class RenderingTests {
         context.Evidence["RealDepthInferenceRenderPauseResumeVerified"] = true;
     }
 
-    private static double Difference(string left, string right) {
+    internal static double Difference(string left, string right) {
         using var a = new Bitmap(left); using var b = new Bitmap(right);
         Check(a.Size == b.Size && a.Width >= 256 && a.Height >= 144, "Invalid rendered dimensions");
         long difference = 0; int count = 0;

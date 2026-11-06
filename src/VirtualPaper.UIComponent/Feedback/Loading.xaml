@@ -3,11 +3,11 @@
     x:Class="VirtualPaper.UIComponent.Feedback.Loading"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.UIComponent.Feedback"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters"   
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     IsHitTestVisible="True"
     mc:Ignorable="d">
 
@@ -63,7 +63,7 @@
                 Width="100" 
                 Height="40"
                 Visibility="{x:Bind CancelEnable, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
-                Content="{markup:I18n Key=Text_Cancel}"
+                l:Uids.Uid="Ui_Text_Cancel_Content"
                 Click="BtnCancel_Click"/>
         </StackPanel>
     </Grid>

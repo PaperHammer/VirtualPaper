@@ -8,4 +8,11 @@
     <UseVSTest>true</UseVSTest>
   </PropertyGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\resources\BuiltInWallpapers\**\wp_metadata_basic.json"
+                      LogicalName="VirtualPaper.BuiltIn.%(RecursiveDir)wp_metadata_basic.json" />
+    <EmbeddedResource Include="..\VirtualPaper.UIComponent\Localization\XamlResources.xml"
+                      LogicalName="VirtualPaper.XamlResources.xml" />
+  </ItemGroup>
+
 </Project>

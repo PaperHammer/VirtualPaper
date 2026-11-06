@@ -1,5 +1,9 @@
 # Hot Update Mechanism
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+> **Historical design:** The sections below describe the earlier `update_manifest.json` / `app_build.json` design, not the current update contract. Current releases use `app_comp_manifest.json`, with `pending_update_plugins_manifest.json` inside the plugin patch. For the current implementation, start with [AppBuildService.cs](AppBuildService.cs), [PluginsUpdateService.cs](Specific/PluginsUpdateService.cs), and the [workflow guide](../../../../.github/workflows/README.md). The workflow guide describes the current `YYMMRxx` build numbering; the examples below retain the older format.
+
 ## Supported Plugins
 
 | Plugin | Type | Loaded By | Hot-Updatable |

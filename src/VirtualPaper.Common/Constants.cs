@@ -57,6 +57,14 @@ namespace VirtualPaper.Common {
             /// </summary>
             public static string LibraryDir => Path.Combine(AppDataDir, "Library");
 
+            public static string GetBuiltInWallpapersDir(string wallpaperDir) {
+                string libraryRoot = string.IsNullOrWhiteSpace(wallpaperDir)
+                    ? LibraryDir
+                    : Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(wallpaperDir)))
+                        ?? Path.GetPathRoot(wallpaperDir)!;
+                return Path.Combine(libraryRoot, FolderName.BuiltInWallpapersFolderName);
+            }
+
             public static string AppRulesPath => Path.Combine(AppDataDir, "app_rules.json");
             public static string WallpaperLayoutPath => Path.Combine(AppDataDir, "wallpaper_layout.json");
             public static string UserSettingsPath => Path.Combine(AppDataDir, "user_settings.json");
@@ -105,6 +113,7 @@ namespace VirtualPaper.Common {
             /// 壁纸文件存储目录（本地导入 + 云端下载） + 壁纸自定义配置文件存储目录
             /// </summary>
             public static string WpStoreFolderName => "wallpapers";
+            public const string BuiltInWallpapersFolderName = "BuiltInWallpapers";
         }
 
         public static class WorkingDir {
@@ -133,7 +142,7 @@ namespace VirtualPaper.Common {
 
         public static class CoreField {
             public static string AppName => "VirtualPaper";
-            public static string FileVersion => "18";
+            public static string FileVersion => "19";
             public static string DraftFileVersion => "D18";
             public static string GrpcPipeServerName => "Grpc_" + PipeServerName;
             public static string PipeServerName => UniqueAppUid + Environment.UserName;
@@ -141,6 +150,7 @@ namespace VirtualPaper.Common {
             public static string UniqueAppUIUid => "Virtual:UI:WALLPAPERSYSTEM" + TestSessionSuffix;
             private static string TestSessionSuffix => TestProcessEnvironment.IsEnabled ? ":" + TestProcessEnvironment.SessionId : string.Empty;
             public static string AppBuildFile => "app_build.json";
+            public const string InstallerLanguageFileName = "installer-language.txt";
         }
 
         public static class PipeControlField {
@@ -206,6 +216,9 @@ namespace VirtualPaper.Common {
             public const string Text_AspectRatio = nameof(Text_AspectRatio);
             public const string Text_Cancel = nameof(Text_Cancel);
             public const string Text_Confirm = nameof(Text_Confirm);
+            public const string Text_Adjust = nameof(Text_Adjust);
+            public const string Text_Details = nameof(Text_Details);
+            public const string PlayerWeb_DetailsWindowTitle = nameof(PlayerWeb_DetailsWindowTitle);
             public const string Text_Create = nameof(Text_Create);
             public const string Text_Delete = nameof(Text_Delete);
             public const string Text_RemoveRecord = nameof(Text_RemoveRecord);
@@ -255,6 +268,8 @@ namespace VirtualPaper.Common {
             public const string Project_SI_Text_BackgroundLayer = nameof(Project_SI_Text_BackgroundLayer);
             public const string Project_FileLoad_FileCorrupted = nameof(Project_FileLoad_FileCorrupted);
             public const string Project_StaticImg_Text_LayerNew = nameof(Project_StaticImg_Text_LayerNew);
+            public const string Project_StaticImg_Text_Paintbrush = nameof(Project_StaticImg_Text_Paintbrush);
+            public const string Intelligent_Task_Style_Img_Import = nameof(Intelligent_Task_Style_Img_Import);
             public const string Project_StaticImg_Text_LayerCopy = nameof(Project_StaticImg_Text_LayerCopy);
             public const string Project_Unsave_Intercept_Content = nameof(Project_Unsave_Intercept_Content);
             public const string Project_Unsave_Intercept_Title = nameof(Project_Unsave_Intercept_Title);
@@ -276,6 +291,18 @@ namespace VirtualPaper.Common {
             public const string Intelligent_Style_Type_ColoredPencil = nameof(Intelligent_Style_Type_ColoredPencil);
             public const string Intelligent_Style_Type_OutlineDrawing = nameof(Intelligent_Style_Type_OutlineDrawing);
             public const string Intelligent_Style_Type_Ukiyoe = nameof(Intelligent_Style_Type_Ukiyoe);
+            public const string Intelligent_Result_Temporary = nameof(Intelligent_Result_Temporary);
+            public const string Intelligent_Result_Exported = nameof(Intelligent_Result_Exported);
+            public const string Intelligent_Result_Imported = nameof(Intelligent_Result_Imported);
+            public const string Intelligent_Result_ExportedAndImported = nameof(Intelligent_Result_ExportedAndImported);
+            public const string Intelligent_Close_Title = nameof(Intelligent_Close_Title);
+            public const string Intelligent_Close_Active = nameof(Intelligent_Close_Active);
+            public const string Intelligent_Close_Temporary = nameof(Intelligent_Close_Temporary);
+            public const string Intelligent_Close_DontRemind = nameof(Intelligent_Close_DontRemind);
+            public const string Intelligent_Close_Return = nameof(Intelligent_Close_Return);
+            public const string Intelligent_Close_Confirm = nameof(Intelligent_Close_Confirm);
+            public const string Intelligent_Remove_Title = nameof(Intelligent_Remove_Title);
+            public const string Intelligent_Remove_Temporary = nameof(Intelligent_Remove_Temporary);
             public const string Text_Task_Status_Completed = nameof(Text_Task_Status_Completed);
             public const string Text_Task_Status_Queue = nameof(Text_Task_Status_Queue);
             public const string Text_Task_Status_Processing = nameof(Text_Task_Status_Processing);

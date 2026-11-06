@@ -42,6 +42,7 @@ internal sealed class WallpaperWorkflowEnvironment : IDisposable {
         CrossThreadInvoker.Initialize(new InlineContext());
         Environment.StartSettingsServer(server => {
             Environment.Settings.Settings.WallpaperDir = Path.Combine(Environment.Root, "library");
+            Environment.Settings.Settings.BuiltInWallpapersDir = Path.Combine(Environment.Root, "curated wallpapers");
             Environment.Settings.Settings.WallpaperArrangement = WallpaperArrangement.Per;
             Directory.CreateDirectory(Environment.Settings.Settings.WallpaperDir);
             Environment.Settings.Save<ISettings>();
@@ -96,7 +97,7 @@ internal sealed class WallpaperWorkflowEnvironment : IDisposable {
         await index.Initialized.Task.WaitAsync(TimeSpan.FromSeconds(10));
         // Seed the bound collection from the real index without loading a XAML page/loading overlay.
         library.TestPopulate(index.Query(0, int.MaxValue)
-            .Select(e => JsonSaver.Load<WpBasicData>(e.JsonPath, WpBasicDataContext.Default)));
+            .Select(e => WpBasicData.Load(e.JsonPath)));
         return (library, index);
     }
 

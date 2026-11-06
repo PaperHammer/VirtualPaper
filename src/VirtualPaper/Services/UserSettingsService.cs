@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -26,8 +27,10 @@ namespace VirtualPaper.Services {
         internal UserSettingsService(
             IMonitorManager moitorManager,
             IJsonSaver jsonSaver,
-            Action<bool> configureAutoStart) {
+            Action<bool> configureAutoStart,
+            string? installerLanguagePath = null) {
             _jsonSaver = jsonSaver;
+            _installerLanguagePath = installerLanguagePath ?? Path.Combine(AppContext.BaseDirectory, Constants.CoreField.InstallerLanguageFileName);
 
             Load<ISettings>();
             Load<List<IApplicationRules>>();
@@ -60,14 +63,18 @@ namespace VirtualPaper.Services {
 
         public void Load<T>() {
             if (typeof(T) == typeof(ISettings)) {
+                bool saveRequired = false;
                 try {
                     Settings = _jsonSaver.Load<Settings>(_settingsPath, SettingsContext.Default);
                 }
                 catch (Exception e) {
                     ArcLog.GetLogger<UserSettingsService>().Error(e);
                     Settings = new Settings();
-                    Save<ISettings>();
+                    ApplyInstallerLanguage();
+                    saveRequired = true;
                 }
+                saveRequired |= SettingsDefaults.Apply(Settings);
+                if (saveRequired) Save<ISettings>();
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
                 try {
@@ -107,6 +114,20 @@ namespace VirtualPaper.Services {
             }
         }
 
+        private void ApplyInstallerLanguage() {
+            try {
+                if (!File.Exists(_installerLanguagePath)) return;
+                Settings.Language = File.ReadAllText(_installerLanguagePath).Trim() switch {
+                    "english" => "en-US",
+                    "chinese" => "zh-CN",
+                    _ => Settings.Language
+                };
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) {
+                ArcLog.GetLogger<UserSettingsService>().Error(exception);
+            }
+        }
+
         public void Save<T>() {
             if (typeof(T) == typeof(ISettings)) {
                 _jsonSaver.Save(_settingsPath, Settings, SettingsContext.Default);
@@ -130,5 +151,6 @@ namespace VirtualPaper.Services {
         private readonly string _wallpaperLayoutPath = Constants.CommonPaths.WallpaperLayoutPath;
         private readonly string _recentUsedPath = Constants.CommonPaths.RecentUsedPath;
         private readonly IJsonSaver _jsonSaver;
+        private readonly string _installerLanguagePath;
     }
 }

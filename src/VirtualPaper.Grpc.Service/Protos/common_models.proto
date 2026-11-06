@@ -142,6 +142,8 @@ message Grpc_SettingsData {
     Grpc_ScrEffectEnum screen_saver_effect = 29;
     repeated Grpc_ProcInfoData white_list_scr = 30; 
     optional bool navigation_animations_enabled = 31;
+    optional bool remind_unpreserved_intelligent_results = 32;
+    optional string built_in_wallpapers_dir = 33;
 }
 
 message Grpc_AppRulesSettings {

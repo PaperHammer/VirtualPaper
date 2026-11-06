@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="data:,"><title>Luminous Flow — VirtualPaper</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050816}canvas{display:block;width:100%;height:100%;touch-action:none}</style>
+<canvas aria-label="Interactive cyan and violet light streams"></canvas>
+<script>
+// VirtualPaper original. Inspired by the project's Interactive Glow Web template.
+const canvas=document.querySelector('canvas'),ctx=canvas.getContext('2d',{alpha:false});
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const palette=['56,189,248','129,140,248','192,132,252','240,171,252','34,211,238'];
+const particles=[];
+let width=0,height=0,time=0,last=0,frame=0,paused=false,seed=91337;
+let pointer=null;
+function random(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
+const streams=Array.from({length:18},(_,i)=>({phase:random()*Math.PI*2,y:.15+random()*.7,speed:.055+random()*.04,color:palette[i%5]}));
+function spawn(x,y,amount,force=1){
+  if(paused||reduced.matches)return;
+  for(let i=0;i<amount;i++){
+    const angle=random()*Math.PI*2,speed=(25+random()*75)*force;
+    particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed,
+      life:1,decay:.22+random()*.28,radius:1.1+random()*1.7,color:palette[Math.floor(random()*5)],trail:[]});
+  }
+  if(particles.length>220)particles.splice(0,particles.length-220);
+}
+function glow(x,y,radius,color,alpha){
+  const gradient=ctx.createRadialGradient(x,y,0,x,y,radius);
+  gradient.addColorStop(0,`rgba(${color},${alpha})`);gradient.addColorStop(.18,`rgba(${color},${alpha*.42})`);gradient.addColorStop(1,`rgba(${color},0)`);
+  ctx.fillStyle=gradient;ctx.fillRect(x-radius,y-radius,radius*2,radius*2);
+}
+function draw(seconds=time){
+  const background=ctx.createLinearGradient(0,0,width,height);
+  background.addColorStop(0,'#030818');background.addColorStop(.5,'#101731');background.addColorStop(1,'#180e2c');
+  ctx.fillStyle=background;ctx.fillRect(0,0,width,height);
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  glow(width*(.32+.08*Math.sin(seconds*.07)),height*.44,width*.4,'37,81,151',.15);
+  glow(width*.76,height*.58,width*.35,'128,55,159',.13);
+  for(const stream of streams){
+    ctx.beginPath();
+    for(let segment=0;segment<=32;segment++){
+      const age=segment/32;
+      const phase=seconds*stream.speed+stream.phase-age*.45;
+      const x=(.5+.48*Math.sin(phase))*width;
+      const y=(stream.y+.12*Math.sin(phase*2+stream.phase))*height;
+      if(!segment)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`rgba(${stream.color},.22)`;ctx.lineWidth=Math.max(1,height/650);
+    ctx.shadowBlur=12;ctx.shadowColor=`rgba(${stream.color},.5)`;ctx.stroke();
+    const phase=seconds*stream.speed+stream.phase;
+    glow((.5+.48*Math.sin(phase))*width,(stream.y+.12*Math.sin(phase*2+stream.phase))*height,Math.max(10,height*.019),stream.color,.5);
+  }
+  ctx.shadowBlur=0;
+  for(const particle of particles){
+    if(particle.trail.length>1){
+      ctx.beginPath();ctx.moveTo(particle.trail[0].x,particle.trail[0].y);
+      for(const point of particle.trail)ctx.lineTo(point.x,point.y);
+      ctx.strokeStyle=`rgba(${particle.color},${particle.life*.42})`;ctx.lineWidth=particle.radius;ctx.stroke();
+    }
+    glow(particle.x,particle.y,particle.radius*12,particle.color,particle.life*.9);
+  }
+  ctx.restore();
+}
+function advance(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const particle=particles[i];particle.trail.push({x:particle.x,y:particle.y});
+    if(particle.trail.length>12)particle.trail.shift();
+    particle.x+=particle.vx*dt;particle.y+=particle.vy*dt;
+    const angle=Math.atan2(particle.vy,particle.vx)+dt*.45;
+    const speed=Math.hypot(particle.vx,particle.vy)*Math.exp(-dt*.35);
+    particle.vx=Math.cos(angle)*speed;particle.vy=Math.sin(angle)*speed;
+    particle.life-=particle.decay*dt;if(particle.life<=0)particles.splice(i,1);
+  }
+}
+function tick(now){
+  frame=0;if(paused||document.hidden||reduced.matches)return;
+  const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
+  time+=dt;advance(dt);draw();frame=requestAnimationFrame(tick);
+}
+function sync(){if(frame)cancelAnimationFrame(frame);frame=0;last=0;
+  if(!paused&&!document.hidden&&!reduced.matches)frame=requestAnimationFrame(tick);else draw();}
+function resize(){const dpr=Math.min(devicePixelRatio||1,1.5);width=innerWidth;height=innerHeight;
+  canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);draw();}
+window.playbackChanged=value=>{paused=Boolean(value);sync();};
+window.pause=()=>window.playbackChanged(true);window.play=()=>window.playbackChanged(false);
+addEventListener('pointermove',event=>{
+  const next={x:event.clientX,y:event.clientY};
+  if(pointer){const distance=Math.hypot(next.x-pointer.x,next.y-pointer.y);
+    if(distance>2){const count=Math.min(10,Math.ceil(distance/8));for(let i=1;i<=count;i++)spawn(pointer.x+(next.x-pointer.x)*i/count,pointer.y+(next.y-pointer.y)*i/count,1,.6);}}
+  pointer=next;
+});
+addEventListener('pointerdown',event=>spawn(event.clientX,event.clientY,36,1.4));
+addEventListener('pointerleave',()=>pointer=null);
+addEventListener('resize',resize);document.addEventListener('visibilitychange',sync);reduced.addEventListener('change',sync);
+resize();sync();window.ready=Promise.resolve();
+</script></html>

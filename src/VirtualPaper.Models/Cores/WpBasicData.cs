@@ -21,7 +21,11 @@ namespace VirtualPaper.Models.Cores {
             set { if (_title == value) return; _title = value; OnPropertyChanged(); }
         }
 
-        public string Desc { get; set; } = string.Empty;
+        private string _desc = string.Empty;
+        public string Desc {
+            get => _desc;
+            set { if (_desc == value) return; _desc = value; OnPropertyChanged(); }
+        }
         public string Authors { get; set; } = string.Empty;
         public string PublishDate { get; set; } = string.Empty;
         public double Rating { get; set; } = -1;
@@ -118,8 +122,27 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public void Read(string filePath) {
-            var data = JsonSaver.Load<WpBasicData>(filePath, WpBasicDataContext.Default);
-            InitData(data);
+            InitData(Load(filePath));
+        }
+
+        public static WpBasicData Load(string filePath) {
+            var data = JsonSaver.Load<WpBasicData>(filePath, WpBasicDataContext.Default)
+                ?? throw new InvalidDataException($"Wallpaper metadata is empty: {filePath}");
+            data.ResolvePaths(filePath);
+            return data;
+        }
+
+        public static async Task<WpBasicData?> LoadAsync(string filePath) {
+            var data = await JsonSaver.LoadAsync<WpBasicData>(filePath, WpBasicDataContext.Default);
+            data?.ResolvePaths(filePath);
+            return data;
+        }
+
+        public void ResolvePaths(string metadataPath) {
+            string directory = WallpaperMetadataPaths.DirectoryOf(metadataPath);
+            FolderPath = WallpaperMetadataPaths.Resolve(directory, FolderPath);
+            FilePath = WallpaperMetadataPaths.Resolve(directory, FilePath);
+            ThumbnailPath = WallpaperMetadataPaths.Resolve(directory, ThumbnailPath);
         }
 
         public void Save() {
@@ -127,12 +150,27 @@ namespace VirtualPaper.Models.Cores {
         }
 
         public async Task SaveAsync() {
-            await JsonSaver.SaveAsync<IWpBasicData>(
-                Path.Combine(this.FolderPath, Constants.Field.WpBasicDataFileName),
-                this,
-                WpBasicDataContext.Default);
-
+            await SaveMetadataAsync();
             await SaveProjectJsonAsync();
+        }
+
+        /// <summary>Save library metadata without changing the packaged Web project's manifest.</summary>
+        public Task SaveMetadataAsync() => SaveMetadataAsync(Constants.CoreField.FileVersion);
+
+        /// <summary>Save a migration's target version, rather than prematurely recording the latest version.</summary>
+        public async Task SaveMetadataAsync(string fileVersion) {
+            string metadataPath = Path.Combine(FolderPath, Constants.Field.WpBasicDataFileName);
+            string directory = WallpaperMetadataPaths.DirectoryOf(metadataPath);
+            var stored = (WpBasicData)Clone();
+            stored.AppInfo = new() { AppName = AppInfo.AppName, AppVersion = AppInfo.AppVersion, FileVersion = fileVersion };
+            stored.FolderPath = WallpaperMetadataPaths.Relative(directory, FolderPath);
+            stored.FilePath = WallpaperMetadataPaths.Relative(directory, FilePath);
+            stored.ThumbnailPath = WallpaperMetadataPaths.Relative(directory, ThumbnailPath);
+            await JsonSaver.SaveAsync<IWpBasicData>(
+                metadataPath,
+                stored,
+                WpBasicDataContext.Default);
+            AppInfo.FileVersion = fileVersion;
         }
 
         private async Task SaveProjectJsonAsync() {

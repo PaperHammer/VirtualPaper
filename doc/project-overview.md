@@ -26,13 +26,15 @@ VirtualPaper 是面向 Windows 10 及以上系统的开源动态壁纸管理软�
 | 播放器 | `VirtualPaper.PlayerWeb`, `VirtualPaper.PlayerWeb.Core`, `VirtualPaper.Shader` | Web 壁纸进程、Web 播放界面和着色器处理 |
 | 功能面板 | `VirtualPaper.*Panel` | 应用设置、壁纸设置、草稿空间和智能图像功能 |
 | 辅助程序 | `VirtualPaper.ScreenSaver`, `VirtualPaper.ML` | 独立屏保与 ML 推理实现 |
-| 验证 | `VirtualPaper.*.Test`, `VirtualPaper.SmokeTest` | Core、UI、ML、Shader、发布产物和安装后的冒烟验证 |
+| 验证 | `src/*Test`, `test/VirtualPaper.UIOperationTest`, `test/VirtualPaper.InstallerTest` | 项目测试、真实多进程 UI 交互及安装、启动、卸载验收 |
 
 ## 源码目录
 
 ```text
 VirtualPaper/
-├─ src/                 解决方案与全部 C# 项目
+├─ src/                 解决方案、产品项目及 MSTest 项目
+├─ test/                完整本地入口、项目测试脚本、真实 UI 和安装验收宿主
+├─ .agents/skills/      仓库级 AI 测试指引
 ├─ resources/           README 图片、Logo 等仓库级资源
 ├─ InnoSetup/           安装包定义
 ├─ scripts/             本地辅助脚本（不纳入版本控制；CI 脚本位于 .github/scripts）

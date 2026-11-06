@@ -1,120 +1,148 @@
-# CI/CD 工作流
+# CI/CD workflows
 
-只保留两个工作流，均仅使用 `workflow_dispatch`。提交代码、创建或更新 PR、增删标签、合并 PR 都不会自动创建运行。
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-| 文件 | 手动输入 | 职责 |
+The repository has two workflows, both triggered only by `workflow_dispatch`. Commits, PR creation or updates, label changes, and merges do not start runs automatically.
+
+| File | Manual inputs | Purpose |
 | --- | --- | --- |
-| `pre-merge-check.yml` | 未合并的 PR 编号；是否包含模型集成测试 | 检查来源与版本标签 → 构建 → 安装生命周期验收 → 并行测试 → 真实 UI 验收 → 回写 PR 状态 |
-| `pre-release.yml` | 已合并的 `dev → main` PR 编号 | 验证检查结果 → 计算版本 → 构建打包 → 同步版本字段 → 生成 Draft Release |
+| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → required installer smoke + independent UI acceptance → report PR status |
+| `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/smoke + independent UI → summary gate → sync versions → draft |
 
-## 日常操作
+Both workflows have independent installer-smoke and real-UI jobs. Installer smoke is mandatory: install → open/normal exit → same-package reinstall → preserved/fresh-profile startup/normal exit → uninstall. Every smoke stage must pass without skips. Only `test-ui-operation` uses job-level `continue-on-error`; its runner outcome and raw reports remain visible. Summaries use `-AllowUIFailure -UIJobResult` so UI failures/timeouts or missing reports do not block required checks, version synchronization or drafts. Local runners remain strict by default.
 
-1. 功能／修复分支向 `dev` 创建 PR。
-2. Actions → **Pre-merge Check** → **Run workflow**，填写 PR 编号。
-3. 检查成功后合入 `dev`。
-4. 创建 `dev → main` PR，选择一个版本标签，再手动运行 **Pre-merge Check**。
-5. 检查成功后合入 `main`。
-6. Actions → **Pre-release** → **Run workflow**，填写刚合并的 PR 编号。
-7. 下载 Draft Release 附件验证，再手动正式发布。
+## Everyday workflow
 
-`Run workflow` 表单中的分支用于选择工作流定义；测试和发布内容由填写的 PR 编号决定，不会把表单分支的 HEAD 误当作被测提交。建议从默认分支运行。
-不再使用 `ci-check-approval`、`publish-approval` Environment，也无需再批准 Deployment。
+The required installer smoke also checks actual built-in deployment, preservation of edited/deleted user files, a relocated saved library directory, missing-item addition and data retention after uninstall. Artifact/Core checks validate the authored collection and decoded media. Independent UI adds one multi-format picker import and playback checks for every prepared item; its non-blocking CI policy is unchanged. See the [test coverage](../../test/README.md#wallpaper-library).
 
-工作流文件必须先进入默认分支，GitHub 才会显示手动入口。首次迁移时需由管理员安排旧必需检查与新检查的切换，避免等待已删除的检查。
-参见 [GitHub 手动运行工作流](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)。
+1. Open a feature or fix PR targeting `dev`.
+2. Select **Actions → Pre-merge Check → Run workflow** and enter the PR number.
+3. Merge into `dev` after the check succeeds.
+4. Open a `dev → main` PR, select one version label, and manually run **Pre-merge Check**.
+5. Merge into `main` after the check succeeds.
+6. Select **Actions → Pre-release → Run workflow** and enter that merged PR number.
+7. Download and verify the draft release assets, then publish manually.
+
+The branch selected in the Run workflow form chooses the workflow definition. The supplied PR determines the code being tested or released; the selected branch's HEAD is not substituted for it. Running from the default branch is recommended. The former `ci-check-approval` and `publish-approval` environments and deployment approvals are no longer used.
+
+Workflow files must reach the default branch before GitHub shows the manual entry point. During initial migration, an administrator must coordinate replacing required checks so PRs do not wait for removed checks. See [GitHub's manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
 
 ## Pre-merge Check
 
-仅支持同仓库 PR：
+Only same-repository PRs are supported:
 
-- 合入 `main`：只接受 `dev`，四个版本标签必须恰好选择一个。
-- 合入 `dev`：接受 `main`、`dev` 以外的功能／修复分支，不要求版本标签。
-- 其他目标分支和 fork PR 拒绝执行。
+- Into `main`: the source must be `dev`, with exactly one of the four version labels.
+- Into `dev`: feature/fix branches other than `main` or `dev` are accepted; no version label is required.
+- Other base branches and fork PRs are rejected.
 
-每次手动运行都重新读取来源、标签、PR head 和目标分支，验证 GitHub 的合并快照对应双方当前提交。所有构建和测试固定使用这份合并快照。
+Each manual run reads the current source, labels, PR head, and base branch, then verifies that GitHub's merge snapshot matches both current commits. All builds and tests use that fixed snapshot.
 
-测试阶段严格串行：
+After the shared build, eight project jobs run in parallel. When they pass, two independent jobs run:
 
-1. **安装生命周期验收**：使用实际安装包安装 → 从安装目录启动 Core，由首次运行自动打开 UI → 正常关闭 UI 和退出 Core → 运行实际卸载程序。恢复时强杀、文件或进程残留均判失败。 有桌面时操作真实安装／卸载向导；无桌面时静默验收文件、版本、快捷方式、注册信息和卸载结果，窗口打开明确跳过。
-2. **并行测试**：Core、UI、StaticImg、WebBackdrop、UIComponent、ML、Shader 七个独立 job；构建产物检查另行并行，Web 播放器脚本检查随 UI job 执行。
-3. **真实 UI 交互**：前两阶段全部通过后，运行 `test/VirtualPaper.UIOperationTest`。会启动真实前后台进程；无可用交互桌面时明确标为 `Skipped`，不冒充 UI 验收通过。锁屏、注册表修改测试保持跳过。
+1. **Installer Smoke** compiles ISS, installs in English, opens the installed Core/UI, retains test settings and a wallpaper, and verifies normal exit. The same package reinstalls in Chinese; the original profile must preserve its language/settings/wallpaper, while a separate fresh profile initializes in Chinese. Both sessions must exit normally, then the real uninstaller runs. Package/file hashes, shortcuts, registration and residue are checked.
+2. **Real UI Acceptance** runs the extended suite against the Release build in its own runner, starts real Core/UI/player processes with isolated profiles, and cleans up its own sessions. It does not use the smoke installation or installer. Failures are non-blocking warnings; unavailable desktops produce explicit UI skips.
 
-任一阶段失败，后续测试阶段不启动。报告仍会收集；缺失、零执行、失败、中止或异常的报告会使最终检查失败。普通单元测试继续保留七份 Cobertura 覆盖率。
+Desktop smoke runs operate the install/reinstall/uninstall wizards. Without a desktop, silent install/reinstall/uninstall diagnostics are retained, but skipped startup/profile checks **fail smoke in both workflows**. Forced recovery never counts as normal exit.
 
-八个项目 job 共用 `test/actions/run-project` 和 `test/Run-ProjectTests.ps1`，项目与报告映射由 `test/TestReportSupport.ps1` 维护，继续独立并行。汇总由 `test/Summarize-TestResults.ps1` 完成，各项目与最终汇总复用同一份 TRX 校验逻辑。
+Required-stage failures block later phases. Reports are still collected; missing, empty, failed, aborted, or exceptional project/installer results fail the final check. Extended UI failures are non-blocking warnings and retain their raw errors. The seven regular test projects retain separate Cobertura coverage reports.
 
-`build-output` 保留仓库根目录下的 `src/`、共享测试入口及 WinUI 宿主的 Release 产物，所有消费端下载到仓库根目录。真实 UI 阶段使用 `-NoBuild -HostExe` 运行这批宿主与应用二进制，不再重新构建解决方案。
+The eight project jobs share `test/actions/run-project` and `test/Run-ProjectTests.ps1`. `test/TestReportSupport.ps1` maps projects to reports, and `test/Summarize-TestResults.ps1` creates the summary. Project jobs and the summary use the same TRX validation logic.
 
-原始报告保持 `test-results-*` 前缀，汇总包改为 `test-summary-*`；下载原始报告时不会再次下载汇总包。上传明确设置 `overwrite: true`，支持在同一次运行中重跑已上传过报告的 job；汇总只读取各项目的指定报告路径，不递归吞入其他包。
+`build-output` preserves the repository-root `src/` layout and both test hosts. Smoke packages this build; independent UI runs its Release executables directly without rebuilding. The two reports are validated independently. The actual UI runner outcome takes precedence over a nominally passing report if the host or cleanup failed.
 
-默认排除 ML 的 `Integration` 分类。勾选 **Also run real model inference tests** 可合并执行；需要对应模型文件，模型缺失时由现有测试明确跳过，不自动下载。
-也可本地单独运行：
+Artifact transfers use `actions/upload-artifact@v7.0.2` and `actions/download-artifact@v8.0.2`, both with a bundled Node.js 24 runtime (minimum Actions Runner `2.327.1`). This runtime is separate from the Node version selected for Web player script tests. Uploads retain ZIP archives and `overwrite: true`; downloads retain extraction and reject digest mismatches by default. See the upstream [upload release](https://github.com/actions/upload-artifact/releases/tag/v7.0.2) and [download release](https://github.com/actions/download-artifact/releases/tag/v8.0.2). Changes to workflow action versions require a new **Run workflow**; rerunning an old run retains its original workflow version.
+
+SDK setup and NuGet caching use `actions/setup-dotnet@v6.1.0` and `actions/cache@v6.1.0` with updated Node.js 24 dependencies; the requested .NET SDK remains `8.0.x`, and cache keys/paths are unchanged. `download-artifact@v8.0.2` can still emit `DEP0005` (`Buffer()`) during ZIP extraction, including in Smoke and UI jobs. This is an [upstream issue](https://github.com/actions/download-artifact/issues/484); its [fix](https://github.com/actions/download-artifact/pull/490) is not yet merged. Keep digest validation and normal extraction enabled; do not suppress Node warnings or pin an unmerged action build.
+
+Raw reports use `test-results-*`; combined summaries use `test-summary-*`, so raw-report downloads do not include earlier summaries. Uploads set `overwrite: true` to support rerunning jobs within the same run. The summary reads designated project report paths rather than recursively including other packages.
+
+ML tests categorized as `Integration` are excluded by default. Select **Also run real model inference tests** to include them. These regular ML tests require model files and explicitly skip when files are missing; they do not download models. This differs from the opt-in UI ModelInference case, which fails if its model is missing. To run the regular integration category locally:
 
 ```powershell
 dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --filter "TestCategory=Integration" --settings src/test.runsettings
 ```
 
-输入已关闭／已合并 PR 或 fork PR 时直接拒绝，不修改此前检查状态。合法开放 PR 开始检查时，在 PR head SHA 上写入 `pre-merge-check: pending`；最终重新核对 PR 提交、目标分支和版本标签，再写入成功／失败。
-该结果属于 PR 提交，不属于手动表单所选分支。[GitHub commit status API](https://docs.github.com/en/rest/commits/statuses) 支持以 SHA 和 context 记录该检查。
+Closed, merged, or fork PR inputs are rejected without altering prior check status. For a valid open PR, the workflow sets `pre-merge-check: pending` on its head SHA. Before setting success/failure, it rechecks the PR commit, base, and version label. The status belongs to the PR commit, not the branch selected in the dispatch form. See the [GitHub commit status API](https://docs.github.com/en/rest/commits/statuses).
 
-更新 PR 提交后必须手动重跑，原提交的通过结果不能满足新提交的必需检查。增删标签不自动创建运行，也不会自动撤销同一提交已有的通过结果，因此修改标签后也必须手动重跑；发布入口会再次校验当前标签。
-测试进行期间若 PR 内容、目标提交或版本选择发生变化，本轮不能通过。手动取消后的 pending 结果同样不能用于合并，需要重新运行。
+After a new PR commit, rerun manually: success on an earlier SHA does not satisfy the new commit's required check. Label changes neither start runs nor invalidate existing success on the same SHA, so rerun manually after changing labels too. The release entry point checks labels again.
 
-## 版本标签
+Changes to the PR, target commit, or version choice during a run prevent success. A manually cancelled run may leave a pending status; rerun it before merging.
 
-| 标签 | 增长位置，右侧归零 | 从 `0.5.2.0` 得到 |
+## Version labels
+
+| Label | Increment, resetting fields to its right | Result from `0.5.2.0` |
 | --- | --- | --- |
-| `version:major` | 第一位 | `1.0.0.0` |
-| `version:minor` | 第二位 | `0.6.0.0` |
-| `version:build` | 第三位 | `0.5.3.0` |
-| `version:revision` | 第四位 | `0.5.2.1` |
+| `version:major` | First field | `1.0.0.0` |
+| `version:minor` | Second field | `0.6.0.0` |
+| `version:build` | Third field | `0.5.3.0` |
+| `version:revision` | Fourth field | `0.5.2.1` |
 
-这些标签用于产品四段版本。无标签或多个标签均拒绝发布，不再按来源分支计算增长位。
-独立插件更新继续使用 `update-plugins` 或 `update-plugin-ui/playerweb/scrsaver/ml/shaders`，沿用现有插件 build number 与客户端兼容的 tag 格式。
-带插件更新标签时产品版本保持不变、不提交产品版本同步；`dev → main` PR 仍需通过四选一版本标签校验。
+These labels control the four-part product version. Missing or multiple version labels block release; the source branch no longer determines the increment.
+
+Independent plugin updates use `update-plugins` or `update-plugin-ui/playerweb/scrsaver/ml/shaders`, retaining the existing plugin build-number and client-compatible tag formats. With a plugin-update label, the product version is unchanged and no product-version synchronization commit is made. A `dev → main` PR still requires exactly one of the four version labels.
 
 ## Pre-release
 
-只接受已合并的同仓库 `dev → main` PR，要求其 head 已有对应本 PR 和当前版本标签的成功 `pre-merge-check` 状态，且 `main` 仍指向该 PR 的合并提交。仅关闭未合并、旧 PR、测试未通过或版本标签不合法均阻断。
+Only a merged, same-repository `dev → main` PR is accepted. Its head must have a successful `pre-merge-check` status corresponding to this PR and its current version label, and `main` must still point to the PR's merge commit. Unmerged, older, unchecked, or incorrectly labeled PRs are rejected.
 
-1. 从固定合并提交的 `AssemblyVersion` 和所选标签计算目标版本；插件更新保持产品版本不变。读取已发布 Release 的组件清单，结合历史 Release 标题／插件 Tag 中的构建号计算新的 `YYMMRxx`；Draft 中已使用的编号也保留。构建前检查目标 Tag 和 Release 是否冲突。
-2. 编译前临时修改 `VirtualPaper.csproj` 的版本，制作安装包前临时修改 `InnoSetup/setup.iss` 的版本。产物使用目标版本。
-3. 校验构建产物，制作安装包；需要插件包时生成现有插件补丁包和 manifest。发布流程不执行安装／打开／卸载，安装生命周期验收保留在 Pre-merge Check。
-4. 版本同步前再次检查目标 Tag 和 Release。常规发布只更新 `main`、`dev` 的以下字段，使用 `git push --atomic` 同时提交两个分支；任一分支推送被拒绝则两者都不更新：
-   - `src/VirtualPaper/VirtualPaper.csproj`：`AssemblyVersion`
-   - `InnoSetup/setup.iss`：`MyAppVersion`、`MyAppVersionText`
-   - `README.md`：版本徽章
-5. 全部成功后创建 Draft Release，正文沿用 PR 描述，所有发布均附带安装包和完整 `app_comp_manifest.json`；插件发布额外附带插件补丁。Tag 指向实际同步后的 `main` 提交；插件更新指向原合并提交。正式发布仍需人工完成。
+1. Calculate the target product version from `AssemblyVersion` at the fixed merge commit and the selected label. Plugin updates keep the product version. Read published component manifests and historical release titles/plugin tags to allocate the next `YYMMRxx` build number; numbers used by drafts are reserved too. Check target tag/release conflicts before building.
+2. Temporarily update `VirtualPaper.csproj` before compilation and `InnoSetup/setup.iss` before packaging so the binaries and installer use the target version.
+3. Retest the new build through the same eight project jobs/actions as Pre-merge Check: artifact checks plus seven regular test projects. Release includes ML integration tests and Web player script checks. No test job rebuilds the application.
+4. Compile ISS and run mandatory installer smoke, then create requested plugin packages. Independently, `test-ui-operation` runs extended real UI acceptance against the release build. `summarize-tests` downloads both sets of reports and uses `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure -UIJobResult <outcome>`: failed/missing/skipped smoke or project checks block progress; independent UI failures and skips remain explicit non-blocking results.
+5. Recheck tag/release conflicts before version synchronization. For a regular release, update only these fields on `main` and `dev`, then push both atomically with `git push --atomic`. If either update is rejected, neither branch advances:
+   - `src/VirtualPaper/VirtualPaper.csproj`: `AssemblyVersion`
+   - `InnoSetup/setup.iss`: `MyAppVersion`, `MyAppVersionText`
+   - `README.md`: release badge
+6. Create a draft release using the PR description. Every release includes the installer and complete `app_comp_manifest.json`; plugin releases also include patch packages. The tag targets the synchronized `main` commit, or the original merge commit for plugin updates. Publishing remains manual.
 
-工作流保留五个 job：`prepare-metadata → build-release → package-release → sync-versions → draft-release`。插件发布跳过版本同步，打包成功后直接进入 Draft；安装包和可选插件包共用同一个打包 job。构建仍独立，打包失败可单独重跑，无需重新编译。汇总写入 Draft job 的 Actions Summary，不再单独启动 job。
+The stages are `prepare-metadata → build-release → parallel project tests → package-release + test-ui-operation → summarize-tests → sync-versions → draft-release`. Packaging/smoke and optional UI run independently. Version synchronization and draft creation require successful packaging and the validated summary. Plugin releases use the same gates but skip product-version synchronization. Required smoke and selected release project tests cannot be skipped; only independent UI may fail or skip.
 
-构建 artifact 仅包含主程序 Release 输出目录（含所有插件），打包 job 下载到相同目录；不再上传整个 `src/`。组件清单生成一次，发布附件与插件补丁均复用同一份文件。
+One root-layout build artifact contains application/plugin output, all project tests, and both test hosts. Parallel tests and packaging download that same build; only the application output is packaged. The component manifest is generated once and reused for release assets and plugin patches. Locking, registry-modification UI cases and real idle screen-saver tests remain excluded under the existing test policy.
 
-组件清单通过 `GITHUB_TOKEN` 认证读取，网络、权限、下载或解析失败均停止发布。普通发布为所有随安装包交付的插件更新构建号；插件发布只更新选中插件，其余沿用上个正式发布的清单。历史 Release 缺少清单时（包括没有记录构建号的 `v0.5.2.0`），允许通过一次完整发布建立新基线；所有随包插件使用新构建号，不猜测旧插件版本。历史标题／插件 Tag 中已有的构建号仍参与编号分配；没有任何历史构建号时从当月 `R01` 开始。缺少有效组件清单时不能直接发插件补丁，已有清单损坏时也不会降级为“无基线”。
+Component manifests are fetched with `GITHUB_TOKEN` authentication. Network, permission, download, or parsing errors stop the release. A regular release assigns a new build number to every bundled plugin. Plugin releases update only selected plugins and retain other entries from the previous published manifest.
 
-构建号保持两位月内序号，达到 `R99` 后本月停止继续分配，避免旧客户端按字符串比较时把 `R100` 误判为更旧；跨月重新从 `R01` 开始。构建机时间落后于历史编号也会报错。
+If historical releases lack a manifest, including `v0.5.2.0` without recorded build numbers, one full release may establish a baseline. Every bundled plugin receives the new build number; old plugin versions are not guessed. Historical title/tag build numbers still reserve numbers. With no historical numbers, allocation starts at the current month's `R01`. Plugin patches require a valid baseline manifest. A corrupt existing manifest does not fall back to the no-baseline path.
 
-版本同步保留 `dev` 在打包期间新增的业务代码和文档；不再全量合并 `main`，也不强制重置、覆盖分支。若远端出现并发提交、版本字段异常或推送权限不足，停止同步和 Draft 创建。
-`.sln` 中没有产品版本，不需要修改。`app_comp_manifest.json` 属于生成产物。
+The monthly sequence has two digits and stops at `R99`, avoiding older clients treating `R100` as older through string comparison. A new month starts at `R01`. A build-machine clock behind historical numbering also causes an error.
 
-若同步成功但后续 Draft 创建失败，使用原运行的 **Re-run failed jobs** 继续；整个流程重新运行会被“main 已推进”的检查阻断，避免二次递增。上传 artifact 支持覆盖同次运行的旧产物；组件清单和发布包保留 30 天，完整编译产物保留 1 天。已有 Tag 或不匹配的 Release 会阻断；上传中断留下的 Draft 仅在 Tag、标题和目标提交均匹配时允许续传。检查与远端写入之间仍不是原子事务，期间请勿手动创建相同 Tag 或发布该 Draft。
-不再提供自动强制回滚或独立手动回滚 workflow。
+Version synchronization preserves business code and documentation added to `dev` during packaging. It does not merge all of `main`, force-reset, or overwrite branches. Concurrent remote updates, unexpected version fields, or insufficient push permissions stop synchronization and draft creation. The `.sln` contains no product version and needs no change. `app_comp_manifest.json` is generated output.
 
-## 仓库配置
+If synchronization succeeds but draft creation fails, use **Re-run failed jobs** on the original run. Restarting the whole workflow is blocked because `main` has advanced, preventing a second increment. Artifacts can overwrite earlier uploads in the same run. Manifests, release packages and the release test summary are retained for 30 days; build output and raw test reports are retained for seven days.
 
-以下是需要在 GitHub 设置中完成的配置，本地 YAML 修改不会自动替你修改远端规则：
+Existing tags or incompatible releases block progress. An interrupted draft upload may resume only when tag, title, and target commit match. Remote checks and writes are not one atomic transaction; do not manually create the same tag or publish that draft during preparation. There is no automatic forced rollback or separate manual rollback workflow.
 
-- `main`、`dev` 启用 **Require a pull request before merging**，必需状态统一选择 `pre-merge-check`。
-- 移除旧必需检查 `Check Source Branch`、`ci-check/pre-publish-tests`，否则新流程不会提供它们，PR 会一直等待。
-- 建议要求分支与目标分支保持最新，目标分支变化后重新运行检查。
-- `RELEASE_PAT` 用于机器人提交版本字段，需要能按仓库规则更新 `main`、`dev`。没有权限时同步会失败，不会强推绕过保护。
-- 四个固定 `version:*` 标签需在仓库创建一次。
-- `release`、`bugfix` 等旧远端分支不会被此次本地修改删除，可确认无未合并内容后另行清理。
+## Repository configuration
 
-## 本地验证
+Prepared built-in wallpapers come from [`resources/BuiltInWallpapers`](../../resources/BuiltInWallpapers/README.md). The solution build carries them in `BuiltInWallpapers/` within Core output, so the shared build artifact and full ISS installer include the same payload. Setup installs missing folders into the saved `BuiltInWallpapersDir`, falling back to a sibling of `WallpaperDir` for older profiles; existing folders are left intact. The single library directory picker moves both directories together and saves both paths. Plugin-only packages do not deploy these resources. Installer tests use an isolated data root for this step as well.
+
+These settings must be configured on GitHub; editing local YAML does not change remote branch rules:
+
+- For `main`, require a PR and the `pre-merge-check` status. If `dev` should also require PRs, configure the same protection there. If direct pushes to `dev` are allowed, they do not trigger these manual workflows; Pre-merge Check still requires an open PR.
+- Remove obsolete required checks such as `Check Source Branch` and `ci-check/pre-publish-tests`; the new workflows do not provide them.
+- Consider requiring the PR branch to be up to date with its base, and rerun checks after base changes.
+- `RELEASE_PAT` must allow the version-sync bot to update both `main` and `dev` under the repository's rules. Insufficient permissions fail synchronization; the workflow does not force-push around protection.
+- Create the four fixed `version:*` labels once.
+- Local workflow changes do not delete old remote branches such as `release` or `bugfix`. Clean them up separately after checking for unmerged work.
+
+## Local validation
+
+The complete local counterpart to the test/package stages is:
+
+```powershell
+# Elevated PowerShell 7.2+, clean Windows test installation:
+pwsh -NoProfile -File test/Run-Tests.ps1
+# Include the regular ML integration category too:
+pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
+```
+
+The local chain uses the working tree and does not validate PRs, post status, synchronize versions or create drafts. It builds, runs project tests, packages and completes smoke including uninstall, then runs independent extended UI against Release output. It downloads no models. Smoke skips/failures and local UI failures remain blocking; CI explicitly opts into non-blocking UI at the job/summary level.
+
+See the [testing guide](../../test/README.md) for prerequisites, focused runners and report paths, and the [repository test skill](../../.agents/skills/virtualpaper-testing/SKILL.md) for AI instructions. Changes to testing behavior should update these guides and their Chinese versions together.
+
+For workflow/script contracts alone, without an installation or UI run:
 
 ```powershell
 pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1
 ```
 
-包含工作流依赖、共享测试入口、TRX／覆盖率校验、重跑报告隔离、UI 环境跳过、安装生命周期验收报告、发布元数据和版本同步契约检查；使用隔离 Git 仓库及模拟 GitHub 响应，不安装应用、不锁屏、不修改注册表、不推送远端仓库。
+This validates workflow dependencies, shared test entry points, TRX/coverage checks, retry report isolation, UI environment skips, installer reports, release metadata, and version-sync contracts. It uses isolated Git repositories and mocked GitHub responses. It does not install the application, lock the session, modify the registry, or push to a remote repository.

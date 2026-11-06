@@ -6,6 +6,7 @@ using System.Windows;
 using Microsoft.Win32;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
@@ -215,18 +216,15 @@ namespace VirtualPaper.Cores.WpControl {
                     if (wallpaperLayouts.Count > 0) {
                         var layout = wallpaperLayouts.FirstOrDefault(x => x.MonitorDeviceId == _monitorManager.PrimaryMonitor.DeviceId);
                         var data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, _monitorManager.PrimaryMonitor.Content, layout.RType);
-                        _ = SetWallpaperAsync(data.GetPlayerData(), _monitorManager.PrimaryMonitor);
+                        response.IsFinished = (await SetWallpaperAsync(data.GetPlayerData(), _monitorManager.PrimaryMonitor)).IsFinished;
                     }
+                    else response.IsFinished = true;
                 }
                 else {
-                    Restore(wallpaperLayouts);
+                    response.IsFinished = await RestoreAsync(wallpaperLayouts);
                 }
-
-                response.IsFinished = true;
             }
             catch (Exception e) {
-                _userSettings.WallpaperLayouts.Clear();
-                _userSettings.Save<List<IWallpaperLayout>>();
                 ArcLog.GetLogger<WallpaperControl>().Error($"Failed to restore wallpaper: {e}");
             }
 
@@ -621,7 +619,13 @@ namespace VirtualPaper.Cores.WpControl {
                 //File.Copy(data.WpEffectFilePathTemporary, data.WpEffectFilePathUsing, true);
                 data.DepthFilePath = playerData.DepthFilePath;
 
-                await data.FromTempMoveToInstallPathAsync(_userSettings.Settings.WallpaperDir);
+                // Installed wallpapers can live in either the user library or the
+                // built-in library. Keep their preview settings beside that wallpaper.
+                string temporaryRoot = Path.TrimEndingDirectorySeparator(Constants.CommonPaths.TempDir) + Path.DirectorySeparatorChar;
+                string storageRoot = playerData.FolderPath.StartsWith(temporaryRoot, StringComparison.OrdinalIgnoreCase)
+                    ? _userSettings.Settings.WallpaperDir
+                    : Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(playerData.FolderPath)))!;
+                await data.FromTempMoveToInstallPathAsync(storageRoot);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
@@ -700,22 +704,28 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public async Task<IWpBasicData> UpdateBasicDataAsync(
+        public Task<IWpBasicData> UpdateBasicDataAsync(
             string folderPath,
             string folderName,
             string filePath,
             FileType ftype,
             CancellationToken token = default) {
+            return WallpaperMetadataMigrator.MigrateAsync(folderPath,
+                oldData => RebuildLegacyBasicData(oldData, folderName, filePath, ftype, token), token);
+        }
+
+        private IWpBasicData RebuildLegacyBasicData(
+            WpBasicData oldData, string folderName, string filePath, FileType ftype, CancellationToken token) {
             IWpBasicData newData = CreateBasicData(filePath, ftype, token: token, folderName: folderName, isAutoSave: false)
                 ?? throw new Exception("Create basic-data error");
 
             try {
-                IWpBasicData oldData = await JsonSaver.LoadAsync<WpBasicData>(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default);
                 newData.Merge(oldData);
                 newData.Save();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
+                throw;
             }
 
             return newData;
@@ -729,7 +739,7 @@ namespace VirtualPaper.Cores.WpControl {
                 var wpLayouts = _userSettings.WallpaperLayouts;
                 for (int i = 0; i < wpLayouts.Count; ++i) {
                     var wpLayout = wpLayouts[i];
-                    wpLayout.FolderPath = wpLayout.FolderPath.Replace(previousDir, newDir);
+                    wpLayout.FolderPath = FileUtil.RelocatePath(wpLayout.FolderPath, previousDir, newDir);
                     _userSettings.WallpaperLayouts[i] = wpLayout;
                 }
 
@@ -845,8 +855,9 @@ namespace VirtualPaper.Cores.WpControl {
             DesktopUtil.RefreshDesktop();
         }
 
-        private void Restore(ReadOnlyCollection<IWallpaperLayout> wallpaperLayouts) {
+        private async Task<bool> RestoreAsync(ReadOnlyCollection<IWallpaperLayout> wallpaperLayouts) {
             //CloseAllWallpapers();
+            bool success = true;
             for (int i = 0; i < wallpaperLayouts.Count; i++) {
                 var layout = wallpaperLayouts[i];
                 try {
@@ -857,18 +868,21 @@ namespace VirtualPaper.Cores.WpControl {
                     else {
                         IWpMetadata data = WallpaperUtil.GetWallpaperByFolder(layout.FolderPath, layout.MonitorContent, layout.RType);
                         if (data == null || !data.IsAvailable()) {
+                            success = false;
                             ArcLog.GetLogger<WallpaperControl>().Error($"Skipping restoration of {layout.FolderPath}");
                             CloseWallpaper(monitor);
                             continue;
                         }
                         ArcLog.GetLogger<WallpaperControl>().Info($"Restoring data: {data.BasicData.FolderPath}");
-                        SetWallpaperAsync(data.GetPlayerData(), monitor);
+                        if (!(await SetWallpaperAsync(data.GetPlayerData(), monitor)).IsFinished) success = false;
                     }
                 }
                 catch (Exception e) {
+                    success = false;
                     ArcLog.GetLogger<WallpaperControl>().Error($"An error occurred on restoration of {layout.FolderPath} | {e.Message}");
                 }
             }
+            return success;
         }
 
         private void ClosingEvent(object? s, EventArgs e) {

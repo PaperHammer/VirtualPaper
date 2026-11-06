@@ -207,8 +207,10 @@ namespace VirtualPaper.DataAssistor {
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
                 NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
+                RemindUnpreservedIntelligentResults = settings.RemindUnpreservedIntelligentResults,
 
                 WallpaperDir = settings.WallpaperDir,
+                BuiltInWallpapersDir = settings.BuiltInWallpapersDir,
 
                 SelectedMonitor = new Grpc_MonitorData() {
                     DeviceId = settings.SelectedMonitor.DeviceId,
@@ -275,8 +277,11 @@ namespace VirtualPaper.DataAssistor {
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
                 NavigationAnimationsEnabled = !settings.HasNavigationAnimationsEnabled || settings.NavigationAnimationsEnabled,
+                RemindUnpreservedIntelligentResults = !settings.HasRemindUnpreservedIntelligentResults || settings.RemindUnpreservedIntelligentResults,
 
                 WallpaperDir = settings.WallpaperDir,
+                BuiltInWallpapersDir = settings.HasBuiltInWallpapersDir && !string.IsNullOrWhiteSpace(settings.BuiltInWallpapersDir)
+                    ? settings.BuiltInWallpapersDir : Constants.CommonPaths.GetBuiltInWallpapersDir(settings.WallpaperDir),
 
                 SelectedMonitor = new Monitor() {
                     DeviceId = settings.SelectedMonitor.DeviceId,

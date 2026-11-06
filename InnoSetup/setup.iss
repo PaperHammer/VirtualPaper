@@ -14,8 +14,8 @@
 #define MyAppDataFolderName "VirtualPaper"
 
 [CustomMessages]
-english.DeleteEverythigMsgBox=Do you want to delete data folder?
-chinese.DeleteEverythigMsgBox=您要删除数据文件夹吗？
+english.DeleteEverythigMsgBox=Do you want to delete user settings?
+chinese.DeleteEverythigMsgBox=是否删除用户配置信息？
 english.ClosingMsgBox=Application is running, do you want to close it?
 chinese.ClosingMsgBox=应用程序正在运行，是否关闭？
 
@@ -61,8 +61,10 @@ Name: "chinese"; MessagesFile: "Languages\ChineseSimplified.isl";
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 ; Name: "windowsstartup"; Description: "{cm:AutoStartProgram,{#MyAppName}}"
 
+#include "BuiltInWallpapers.iss"
+
 [Files]
-Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.WebView2,*.WebView2\*,BuiltInWallpapers\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -75,7 +77,18 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall; Check: AutoLaunch
 
+[UninstallDelete]
+Type: files; Name: "{app}\installer-language.txt"
+
 [Code]
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    // Read only when the application creates a new user settings file.
+    if not SaveStringToFile(ExpandConstant('{app}\installer-language.txt'), ActiveLanguage, False) then
+      RaiseException('Could not save the initial application language.');
+end;
 
 // InnoDependencyInstaller 初始化向导 UI
 procedure InitializeWizard;
@@ -111,7 +124,7 @@ begin
   begin
     if SuppressibleMsgBox(
          ExpandConstant('{cm:DeleteEverythigMsgBox}') + ' ' +
-         ExpandConstant('{localappdata}\{#MyAppDataFolderName}') + ' ?',
+         ExpandConstant('{localappdata}\{#MyAppDataFolderName}'),
          mbConfirmation, MB_YESNO, IDNO) = IDYES then
     begin
       DelTree(ExpandConstant('{localappdata}\{#MyAppDataFolderName}'), True, True, True);

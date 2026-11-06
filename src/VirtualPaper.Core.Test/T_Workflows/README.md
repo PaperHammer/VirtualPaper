@@ -1,5 +1,7 @@
 # Business workflow tests
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 Run with:
 
 ```powershell
@@ -31,6 +33,12 @@ failure and display removal. The deterministic upscaler substitutes only model
 inference; the existing ML Integration suite remains responsible for real models.
 Image and depth-image effect configs are refreshed repeatedly, applied, stopped,
 and reopened after deleting preview caches. Missing/locked configs must fail.
+
+`BuiltInWallpaperWorkflowTests` relocates the actual collection into an isolated
+library alongside a user image. It decodes images, GIF/video frames and depth maps,
+validates Web entry metadata, checks the production index, and verifies that source
+assets and the user item are unchanged. Actual ISS deployment and desktop playback
+are covered separately by installer smoke and WallpaperLibrary UI cases.
 
 These workflows do not launch real XAML pages or verify rendered pixels. Desktop
 UI interaction is covered separately by [UIOperationTest](../../../test/README.md).

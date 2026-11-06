@@ -1,10 +1,18 @@
-白描 outline_drawing
-彩铅 colored_pencil
-动漫 anime
-浮世绘 ukiyo-e
-工笔 gongbi
-卡通 cartoon
-铅笔 pencil
-水彩 watercolor
-水墨 ink_wash
-油画 oil_painting
+# Preset styles
+
+[English](README.md) | [简体中文](README.zh-CN.md)
+
+Display names and their corresponding asset keys:
+
+| Style | Asset key |
+| --- | --- |
+| Outline drawing | `outline_drawing` |
+| Colored pencil | `colored_pencil` |
+| Anime | `anime` |
+| Ukiyo-e | `ukiyo-e` |
+| Gongbi (meticulous Chinese painting) | `gongbi` |
+| Cartoon | `cartoon` |
+| Pencil | `pencil` |
+| Watercolor | `watercolor` |
+| Ink wash | `ink_wash` |
+| Oil painting | `oil_painting` |

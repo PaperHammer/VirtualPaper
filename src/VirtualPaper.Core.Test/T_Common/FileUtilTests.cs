@@ -201,6 +201,38 @@ namespace VirtualPaper.Core.Test.T_Common {
         }
 
         [TestMethod]
+        [DataRow(@"C:\Library\images\cover.png", @"C:\Library", @"D:\Moved", @"D:\Moved\images\cover.png")]
+        [DataRow(@"c:\library\cover.png", @"C:\Library", @"D:\Moved", @"D:\Moved\cover.png")]
+        [DataRow(@"C:\Library", @"C:\Library", @"D:\Moved", @"D:\Moved")]
+        [DataRow(@"C:\Library\", @"C:\Library", @"D:\Moved", @"D:\Moved")]
+        [DataRow(@"C:\Library-backup\cover.png", @"C:\Library", @"D:\Moved", @"C:\Library-backup\cover.png")]
+        [DataRow(@"C:\Library\..\external.png", @"C:\Library", @"D:\Moved", @"C:\Library\..\external.png")]
+        [DataRow(@"E:\external.png", @"C:\Library", @"D:\Moved", @"E:\external.png")]
+        [DataRow("", @"C:\Library", @"D:\Moved", "")]
+        [DataRow(@"C:\cover.png", @"C:\", @"D:\Moved", @"D:\Moved\cover.png")]
+        public void RelocatePath_PreservesBoundariesAndExternalReferences(string path, string source, string target, string expected) {
+            Assert.AreEqual(expected, FileUtil.RelocatePath(path, source, target));
+        }
+
+        [TestMethod]
+        public void CopyDirectory_WithOverwriteDisabled_PreservesExistingNestedFile() {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.CopyDirectory", Guid.NewGuid().ToString("N"));
+            string source = Path.Combine(root, "source");
+            string target = Path.Combine(root, "target");
+            try {
+                Directory.CreateDirectory(Path.Combine(source, "nested"));
+                Directory.CreateDirectory(Path.Combine(target, "nested"));
+                File.WriteAllText(Path.Combine(source, "nested", "media.txt"), "source content");
+                string existing = Path.Combine(target, "nested", "media.txt");
+                File.WriteAllText(existing, "user content");
+                Assert.Throws<IOException>(() => FileUtil.CopyDirectory(source, target, true, overwrite: false));
+                Assert.AreEqual("user content", File.ReadAllText(existing));
+                Assert.AreEqual("source content", File.ReadAllText(Path.Combine(source, "nested", "media.txt")));
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+        }
+
+        [TestMethod]
         public void GetChecksumSHA256_SameContent_SameHash() {
             var tempFile = Path.GetTempFileName();
             File.WriteAllText(tempFile, "hello world");

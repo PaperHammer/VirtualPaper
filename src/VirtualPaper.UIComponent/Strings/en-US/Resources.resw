@@ -346,7 +346,7 @@ The file cannot be imported: </value>
     <value>Language settings</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
-    <value>Changing the language requires a restart of the UI</value>
+    <value>Language changes take effect immediately.</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
     <value>UI texture</value>
@@ -647,6 +647,9 @@ Author: PaperHammer</value>
   <data name="WpLib_TypeFilter_All" xml:space="preserve">
     <value>Type</value>
   </data>
+  <data name="WpLib_CardType_Image" xml:space="preserve"><value>Image</value></data>
+  <data name="WpLib_CardType_Gif" xml:space="preserve"><value>GIF</value></data>
+  <data name="WpLib_CardType_Web" xml:space="preserve"><value>Web</value></data>
   <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
     <value>Static Image</value>
   </data>
@@ -1925,4 +1928,21 @@ The following words cannot be used as usernames:
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Add apps to prevent the screen saver from starting while they are in the foreground.</value></data>
   <data name="ScreenSaver_WhiteListNoResults" xml:space="preserve"><value>No matching apps</value></data>
   <data name="ScreenSaver_WhiteListNoResultsDescription" xml:space="preserve"><value>Try another app name or clear the search.</value></data>
+  <!-- Live XAML property resources. Plain keys above remain available to code. -->
+  <data name="Intelligent_Result_Temporary" xml:space="preserve"><value>Temporary only</value></data>
+  <data name="Intelligent_Result_Exported" xml:space="preserve"><value>Exported</value></data>
+  <data name="Intelligent_Result_Imported" xml:space="preserve"><value>Added to library</value></data>
+  <data name="Intelligent_Result_ExportedAndImported" xml:space="preserve"><value>Exported · In library</value></data>
+  <data name="Intelligent_Close_Title" xml:space="preserve"><value>Close intelligent tasks?</value></data>
+  <data name="Intelligent_Close_Active" xml:space="preserve"><value>{0} task(s) are queued, processing, or saving. Closing will stop unfinished work.</value></data>
+  <data name="Intelligent_Close_Temporary" xml:space="preserve"><value>{0} completed result(s) have not been exported or added to the library. They cannot be restored from the task list after closing, and temporary files are cleared on the next application startup.</value></data>
+  <data name="Intelligent_Close_DontRemind" xml:space="preserve"><value>Do not remind me about unsaved completed results</value></data>
+  <data name="Intelligent_Close_Return" xml:space="preserve"><value>Return to tasks</value></data>
+  <data name="Intelligent_Close_Confirm" xml:space="preserve"><value>Close anyway</value></data>
+  <data name="Intelligent_Remove_Title" xml:space="preserve"><value>Delete temporary result?</value></data>
+  <data name="Intelligent_Remove_Temporary" xml:space="preserve"><value>This result has not been exported or added to the library. Deleting the task also deletes its temporary result.</value></data>
+  <data name="Intelligent_Result_PreservationTooltip" xml:space="preserve"><value>Export or add results to the library to keep them after closing.</value></data>
+  <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Unsaved intelligent results</value></data>
+  <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Remind me before closing results that have not been exported or added to the library. Unfinished tasks always require confirmation.</value></data>
+  <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Remind about unsaved intelligent results</value></data>
 </root>

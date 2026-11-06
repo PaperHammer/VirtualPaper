@@ -51,7 +51,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         }
         
         private async void AfterFeReady() {
-            _wpBasicData ??= await JsonSaver.LoadAsync<WpBasicData>(_startArgs.WpBasicDataFilePath, WpBasicDataContext.Default);
+            _wpBasicData ??= await WpBasicData.LoadAsync(_startArgs.WpBasicDataFilePath);
             string windowTitle = !string.IsNullOrEmpty(_wpBasicData.Title) ? $"{_wpBasicData.Title} (Preview)" :
                 (!string.IsNullOrEmpty(_startArgs.FilePath) ? $"{Path.GetFileName(_startArgs.FilePath)} (Preview)" : "Virtual Paper PlayerWeb (Preview)");
             this.Title = this.MainHost.Title = windowTitle;

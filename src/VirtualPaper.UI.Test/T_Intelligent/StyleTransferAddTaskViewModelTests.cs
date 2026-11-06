@@ -159,5 +159,41 @@ namespace VirtualPaper.UI.Test.T_Intelligent {
                 _vm.StyleOptions.All(s => s.Name != null),
                 "All style options should have a non-null Name");
         }
+
+        [TestMethod]
+        public void RefreshLanguage_PreservesSelectionAndInputFiles() {
+            var options = _vm.StyleOptions;
+            var custom = options[^1];
+            custom.ImagePath = @"C:\test\custom.png";
+            custom.FileSize = "2 MB";
+            custom.FileExt = ".png";
+            _vm.SourceFilePath = @"C:\test\source.png";
+            custom.Name = "Previous language";
+
+            _vm.RefreshLanguage();
+
+            Assert.AreSame(options, _vm.StyleOptions);
+            Assert.AreSame(custom, _vm.SelectedStyle);
+            Assert.AreEqual(@"C:\test\custom.png", custom.ImagePath);
+            Assert.AreEqual("2 MB", custom.FileSize);
+            Assert.AreEqual(".png", custom.FileExt);
+            Assert.AreEqual(@"C:\test\source.png", _vm.SourceFilePath);
+            Assert.IsTrue(_vm.IsNextEnable);
+            Assert.AreEqual(VirtualPaper.UIComponent.Utils.LanguageUtil.GetI18n(custom.NameKey!), custom.Name);
+        }
+
+        [TestMethod]
+        public void RefreshLanguage_NotifiesExistingPresetBindings() {
+            int refreshed = 0;
+            foreach (var style in _vm.StyleOptions) {
+                style.PropertyChanged += (_, args) => {
+                    if (args.PropertyName == nameof(style.Name)) refreshed++;
+                };
+            }
+
+            _vm.RefreshLanguage();
+
+            Assert.AreEqual(_vm.StyleOptions.Length, refreshed);
+        }
     }
 }

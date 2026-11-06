@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Grpc.Core;
+using VirtualPaper.AppSettingsPanel.Utils;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Files;
@@ -163,6 +164,20 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
+        public string IntelligentResultReminderStatus => LanguageUtil.GetI18n(
+            RemindUnpreservedIntelligentResults ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
+
+        public bool RemindUnpreservedIntelligentResults {
+            get => _userSettingsClient.Settings.RemindUnpreservedIntelligentResults;
+            set {
+                if (_userSettingsClient.Settings.RemindUnpreservedIntelligentResults == value) return;
+                _userSettingsClient.Settings.RemindUnpreservedIntelligentResults = value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IntelligentResultReminderStatus));
+            }
+        }
+
         public string NavigationAnimationsStatus => LanguageUtil.GetI18n(
             NavigationAnimationsEnabled ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
 
@@ -181,6 +196,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public int SeletedSystemBackdropIndx {
             get => _seletedSystemBackdropIndx;
             set {
+                if (_isRefreshingLanguage || value < 0) return;
                 _seletedSystemBackdropIndx = value;
                 if (_userSettingsClient.Settings.SystemBackdrop == (AppSystemBackdrop)value) return;
 
@@ -194,16 +210,46 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         public LanguagesModel SelectedLanguage {
             get => _selectedLanguage;
             set {
-                _selectedLanguage = value;
-                if (_userSettingsClient.Settings.Language == value.Language) return;
-
-                if (value.Codes.FirstOrDefault(x => x == _userSettingsClient.Settings.Language) == null) {
-                    _userSettingsClient.Settings.Language = value.Codes[0];
-                    UpdateSettingsConfigFile();
-                    LanguageUtil.LanguageChanged(value.Codes[0]);
-                    OnPropertyChanged();
-                }
+                if (value == null || !IsLanguageChangeEnabled || value.Codes.Length == 0) return;
+                if (value.Codes.Contains(_userSettingsClient.Settings.Language, StringComparer.OrdinalIgnoreCase)) return;
+                _ = ChangeLanguageAsync(value);
             }
+        }
+
+        private bool _isLanguageChangeEnabled = true;
+        public bool IsLanguageChangeEnabled {
+            get => _isLanguageChangeEnabled;
+            private set { _isLanguageChangeEnabled = value; OnPropertyChanged(); }
+        }
+
+        internal async Task ChangeLanguageAsync(LanguagesModel language) {
+            var previousSelection = _selectedLanguage;
+            string previousLanguage = _userSettingsClient.Settings.Language;
+            // Guard reentry now, but let the selection provider finish before
+            // notifying the binding that its control has become disabled.
+            _isLanguageChangeEnabled = false;
+            _selectedLanguage = language;
+            _userSettingsClient.Settings.Language = language.Codes[0];
+            OnPropertyChanged(nameof(SelectedLanguage));
+            try {
+                // Finish the two-way binding before restoring it after a save failure.
+                await Task.Yield();
+                OnPropertyChanged(nameof(IsLanguageChangeEnabled));
+                await LanguageUtil.SetLanguageAsync(language.Codes[0]);
+                await _userSettingsClient.SaveAsync<ISettings>();
+            }
+            catch (Exception exception) {
+                _selectedLanguage = previousSelection;
+                _userSettingsClient.Settings.Language = previousLanguage;
+                try { await LanguageUtil.SetLanguageAsync(previousLanguage); }
+                catch (Exception rollbackException) {
+                    ArcLog.GetLogger<GeneralSettingViewModel>().Error("Language rollback failed", rollbackException);
+                }
+                OnPropertyChanged(nameof(SelectedLanguage));
+                ArcLog.GetLogger<GeneralSettingViewModel>().Error("Language settings could not be saved", exception);
+                GlobalMessageUtil.ShowException(exception);
+            }
+            finally { IsLanguageChangeEnabled = true; }
         }
 
         private string _wallpaperDir = string.Empty;
@@ -254,6 +300,27 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             InitCollections();
             InitContent();
             InitCommand();
+            LanguageUtil.LanguageUpdated += OnLanguageUpdated;
+        }
+
+        private bool _isRefreshingLanguage;
+        private AppUpdateStatus _lastUpdateStatus = AppUpdateStatus.Notchecked;
+        private ReleaseInfo? _lastUpdateRelease;
+
+        private void OnLanguageUpdated(object? sender, EventArgs args) {
+            _isRefreshingLanguage = true;
+            try {
+                InitText();
+                SystemBackdrops = [_sysbdDefault, _sysbdMica, _sysbdAcrylic];
+                OnPropertyChanged(nameof(SystemBackdrops));
+                OnPropertyChanged(nameof(SeletedSystemBackdropIndx));
+                ChangeAutoShartStatu(_isAutoStart);
+                OnPropertyChanged(nameof(NavigationAnimationsStatus));
+                OnPropertyChanged(nameof(IntelligentResultReminderStatus));
+                OnPropertyChanged(nameof(AppVersionText));
+                MenuUpdate(_lastUpdateStatus, _lastUpdateRelease);
+            }
+            finally { _isRefreshingLanguage = false; }
         }
 
         private void InitCommand() {
@@ -330,6 +397,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         private void MenuUpdate(AppUpdateStatus status, ReleaseInfo? release) {
+            _lastUpdateStatus = status;
+            _lastUpdateRelease = release;
             //CurrentVersionState = VersionState.FindNew;
 
             switch (status) {
@@ -383,9 +452,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 return;
             }
 
-            if (!string.Equals(storagePath, _userSettingsClient.Settings.WallpaperDir, StringComparison.OrdinalIgnoreCase)) {
-                await WallpaperDirectoryChangeAsync(storagePath);
-            }
+            await WallpaperDirectoryChangeAsync(storagePath);
         }
 
         private async void OpenFolder() {
@@ -394,51 +461,79 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         internal async Task WallpaperDirectoryChangeAsync(string destRootFolderPath) {
-            string destFolderPath = string.Empty;
+            if (WallpaperDirectoryChangeOngoing) return;
+            var settings = _userSettingsClient.Settings;
+            (WallpaperDirectoryDefinition Directory, string Source, string Target)[] moves = [];
+            var changedLayouts = new List<(string Source, string Target)>();
+            var sourceSnapshots = new Dictionary<string, WallpaperDirectorySnapshot>(StringComparer.OrdinalIgnoreCase);
+            bool settingsChanged = false;
             WallpaperDirectoryChangeOngoing = true;
 
             try {
-                #region 构建目标路径
-                destFolderPath = Path.Combine(destRootFolderPath, Constants.FolderName.WpStoreFolderName);
-                #endregion
+                string destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(destRootFolderPath));
+                moves = WallpaperLibraryDirectories.All
+                    .Select(directory => (Directory: directory, Source: directory.GetPath(settings),
+                        Target: Path.Combine(destination, directory.FolderName)))
+                    .Where(move => !Path.TrimEndingDirectorySeparator(Path.GetFullPath(move.Source))
+                        .Equals(move.Target, StringComparison.OrdinalIgnoreCase)).ToArray();
+                if (moves.Length == 0) return;
+                if (!Directory.Exists(settings.WallpaperDir)) throw new DirectoryNotFoundException(settings.WallpaperDir);
+                ValidateMigrationDestination(destination, WallpaperLibraryDirectories.All.Select(directory => directory.GetPath(settings)));
 
-                #region 更新代替换文件中的路径，并移动文件
-                bool isDirChanged = await WallpaperDirectoryUpdateAsync(
-                    [_userSettingsClient.Settings.WallpaperDir], destFolderPath);
-                if (!isDirChanged) {
-                    GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_Err, isNeedLocalizer: true);
-                    return;
+                // Check every resulting path before copying any file contents.
+                foreach (var move in moves) {
+                    if (!Directory.Exists(move.Source)) continue;
+                    var snapshot = await Task.Run(() => WallpaperDirectorySnapshot.Capture(move.Source));
+                    snapshot.ValidateDestinationPathLength(move.Target);
+                    sourceSnapshots.Add(move.Source, snapshot);
                 }
-                #endregion
 
-                #region 更新存储的运行信息，重启壁纸
-                var previousDirFolderPath = _userSettingsClient.Settings.WallpaperDir;
-                _userSettingsClient.Settings.WallpaperDir = destFolderPath;
-                UpdateSettingsConfigFile();
-                WallpaperInstallDirChanged?.Invoke(this, EventArgs.Empty);
-                WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
-                await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(previousDirFolderPath, destFolderPath);
+                // Copy and verify every library before switching paths. Source data
+                // is removed only after settings are saved and playback is restored.
+                foreach (var move in moves) {
+                    if (sourceSnapshots.TryGetValue(move.Source, out var snapshot))
+                        await WallpaperDirectoryUpdateAsync(move.Source, move.Target, snapshot);
+                }
+                foreach (var move in moves) {
+                    await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Source, move.Target);
+                    changedLayouts.Add((move.Source, move.Target));
+                    settingsChanged = true;
+                    move.Directory.SetPath(settings, move.Target);
+                }
+                await _userSettingsClient.SaveAsync<ISettings>();
                 var response = await _wpControlClient.RestartAllWallpapersAsync();
-                if (!response.IsFinished) {
-                    throw new Exception("Restart all wallpapers failed");
-                }
-                #endregion
+                if (!response.IsFinished) throw new IOException("Restart all wallpapers failed.");
 
-                #region 删除原目录下的文件
-                _ = await FileUtil.TryDeleteDirectoryAsync(previousDirFolderPath, 1000, 3000);
-                #endregion
-            }
-            catch (Exception ex) when
-                        (ex is OperationCanceledException ||
-                        (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                GlobalMessageUtil.ShowCanceled();
+                // The new location is committed. Cleanup failures must not restore paths
+                // to source folders that may already have been removed.
+                try { WallpaperInstallDirChanged?.Invoke(this, EventArgs.Empty); }
+                catch (Exception notification) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(notification); }
+                foreach (var move in moves) {
+                    if (!sourceSnapshots.TryGetValue(move.Source, out var snapshot)) continue;
+                    try {
+                        if (!await Task.Run(() => DeleteUnchangedWallpaperDirectory(move.Source, snapshot)))
+                            ArcLog.GetLogger<GeneralSettingViewModel>().Warn($"Wallpaper migration completed; the source changed and was retained: {move.Source}");
+                    }
+                    catch (Exception cleanup) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(cleanup); }
+                }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowException(ex);
-                ArcLog.GetLogger<GeneralSettingViewModel>().Error(ex.Message);
-                if (destFolderPath != string.Empty) {
-                    FileUtil.RemoveDirectory(destFolderPath);
+                // Keep both the originals and any copied files if migration fails.
+                try {
+                    if (settingsChanged) {
+                        foreach (var move in moves) move.Directory.SetPath(settings, move.Source);
+                        await _userSettingsClient.SaveAsync<ISettings>();
+                    }
+                    foreach (var move in changedLayouts.AsEnumerable().Reverse()) {
+                        await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Target, move.Source);
+                    }
+                    if (changedLayouts.Count > 0) await _wpControlClient.RestartAllWallpapersAsync();
                 }
+                catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
+                if (ex is OperationCanceledException || ex is RpcException { StatusCode: StatusCode.Cancelled })
+                    GlobalMessageUtil.ShowCanceled();
+                else GlobalMessageUtil.ShowException(ex);
+                ArcLog.GetLogger<GeneralSettingViewModel>().Error(ex.Message);
             }
             finally {
                 WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
@@ -450,21 +545,55 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             await _userSettingsClient.SaveAsync<ISettings>();
         }
 
-        private async Task<bool> WallpaperDirectoryUpdateAsync(List<string> wallpaperInstallFolders, string destFolderPath) {
-            bool allOperationsSuccessful = true;
+        internal static void ValidateMigrationDestination(string destination, IEnumerable<string> sources) {
+            destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(destination));
+            if (File.Exists(destination)) throw new IOException("The wallpaper destination must be a directory.");
+            if (destination.Equals(Path.TrimEndingDirectorySeparator(Constants.CommonPaths.AppDataDir), StringComparison.OrdinalIgnoreCase))
+                throw new IOException("The application data directory cannot be used as the wallpaper library root.");
+            WallpaperDirectorySnapshot.ValidatePathLength(destination,
+                WallpaperLibraryDirectories.All.Max(directory => directory.FolderName.Length));
+            foreach (string source in sources) {
+                string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(source));
+                if (destination.Equals(root, StringComparison.OrdinalIgnoreCase) || FileUtil.IsPathWithinDirectory(root, destination))
+                    throw new IOException("The wallpaper destination cannot be inside a source library.");
+            }
+        }
 
-            try {
-                await foreach (var libData in GetWpBasicDataByInstallFoldersAsync(wallpaperInstallFolders)) {
-                    var data = libData.BasicData;
-                    await data.MoveToAsync(Path.Combine(destFolderPath, data.FolderName));
+        private async Task WallpaperDirectoryUpdateAsync(string sourceFolderPath, string destFolderPath, WallpaperDirectorySnapshot snapshot) {
+            await Task.Run(() => {
+                if (File.Exists(destFolderPath) || Directory.Exists(destFolderPath) && Directory.EnumerateFileSystemEntries(destFolderPath).Any())
+                    throw new IOException($"The destination wallpaper directory is not empty: {destFolderPath}");
+                FileUtil.CopyDirectory(sourceFolderPath, destFolderPath, true, overwrite: false);
+                snapshot.VerifyCopy(destFolderPath);
+                if (!snapshot.IsUnchanged(sourceFolderPath))
+                    throw new IOException($"The source wallpaper directory changed during copying: {sourceFolderPath}");
+            });
+            await foreach (var libData in GetWpBasicDataByInstallFoldersAsync([sourceFolderPath])) {
+                var data = (WpBasicData)libData.BasicData;
+                string source = data.FolderPath;
+                string target = Path.Combine(destFolderPath, Path.GetFileName(Path.TrimEndingDirectorySeparator(source)));
+                data.FolderPath = target;
+                data.FilePath = FileUtil.RelocatePath(data.FilePath, source, target);
+                data.ThumbnailPath = FileUtil.RelocatePath(data.ThumbnailPath, source, target);
+                await data.SaveMetadataAsync();
+                foreach (string path in Directory.EnumerateFiles(source, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories)) {
+                    var runtime = await WpRuntimeData.LoadAsync(path);
+                    runtime.FolderPath = target;
+                    runtime.DepthFilePath = FileUtil.RelocatePath(runtime.DepthFilePath, source, target);
+                    runtime.WpEffectFilePathTemplate = FileUtil.RelocatePath(runtime.WpEffectFilePathTemplate, source, target);
+                    runtime.WpEffectFilePathUsing = FileUtil.RelocatePath(runtime.WpEffectFilePathUsing, source, target);
+                    runtime.WpEffectFilePathTemporary = FileUtil.RelocatePath(runtime.WpEffectFilePathTemporary, source, target);
+                    runtime.Save();
                 }
             }
-            catch (Exception ex) {
-                allOperationsSuccessful = false;
-                GlobalMessageUtil.ShowException(ex);
-            }
+        }
 
-            return allOperationsSuccessful;
+        private static bool DeleteUnchangedWallpaperDirectory(string source, WallpaperDirectorySnapshot snapshot) {
+            if (!Directory.Exists(source)) return true;
+            // No fixed delay or blind retry between checking for late writes and cleanup.
+            if (!snapshot.IsUnchanged(source)) return false;
+            Directory.Delete(source, recursive: true);
+            return true;
         }
 
         internal static async IAsyncEnumerable<WpLibData> GetWpBasicDataByInstallFoldersAsync(List<string> folderPaths) {
@@ -478,7 +607,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     WpLibData libData = new();
                     foreach (string file in files) {
                         if (Path.GetFileName(file) == Constants.Field.WpBasicDataFileName) {
-                            var basicData = await JsonSaver.LoadAsync<WpBasicData>(file, WpBasicDataContext.Default);
+                            var basicData = await WpBasicData.LoadAsync(file);
                             if (basicData == null) continue;
 
                             libData.BasicData = basicData;
@@ -504,6 +633,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             if (_disposed) return;
 
             if (disposing) {
+                LanguageUtil.LanguageUpdated -= OnLanguageUpdated;
                 _appUpdater.UpdateChecked -= AppUpdater_UpdateChecked;
                 WallpaperInstallDirChanged = null;
             }

@@ -1,186 +1,169 @@
-# WpSettingsPanel — 索引与过滤机制说明
+# WpSettingsPanel indexing and filtering
 
-## 1. 总体架构
+[English](README.md) | [简体中文](README.zh-CN.md)
 
-```
-磁盘壁纸目录
-    │  (启动时并行扫描)
-    ▼
-WallpaperIndexFile.Items          ← 全量有序列表 (List<WallpaperIndexEntry>)
-    │                                排序规则：CreateTime 降序
-    │  UID → 全局位置
-    ▼
-WallpaperIndexService             ← 运行时索引服务
-  · _index.Items                  ← 同 WallpaperIndexFile.Items
-  · _uidToIndex: Dict<UID,int>    ← UID → 在 Items 中的全局位置
+## Data flow
 
-    │  按 offset/limit 分页加载
+```text
+Wallpaper directories on disk
+    │  Parallel startup scan; sort by CreateTime descending
     ▼
-_libraryWallpapers (List<T>)      ← 内存已加载项，位置与 _index.Items[0..offset-1] 对齐
+WallpaperIndexFile.Items               Full metadata list
     │
-    │  过滤（只移除/插入，不修改 _libraryWallpapers）
     ▼
-LibraryWallpapers (ObservableCollection<T>)  ← UI 可见项（filtered 子集）
+WallpaperIndexService                  Runtime index
+  _index.Items                         Metadata entries
+  _uidToIndex: Dictionary<UID, int>     UID → position in Items
+    │  Query(offset, limit)
+    ▼
+_libraryWallpapers                     Loaded, unfiltered objects
+    │  Filtering changes only the visible collection
+    ▼
+LibraryWallpapers                      ObservableCollection shown in the UI
 ```
 
----
+The initial scan orders entries newest first. Pagination loads full wallpaper objects only when needed. Filtering operates on the loaded objects, not every metadata entry on disk.
 
-## 2. 核心数据结构
+## Core structures
 
-### `WallpaperIndexEntry`
-轻量级磁盘元数据快照，仅含用于排序/搜索的字段，不持有完整 `WpBasicData`。
+### WallpaperIndexEntry
 
-| 字段 | 用途 |
-|------|------|
-| `Uid` | 全局唯一标识，作为所有映射的 Key |
-| `FolderPath` | 壁纸目录，用于 Remove 定位 |
-| `JsonPath` | `WpBasicData.json` 路径，供分页加载时懒读取 |
-| `CreateTime` | **全局排序依据**，降序（最新在前） |
-| `Title` / `Author` / `Tags` | 预置搜索字段（当前仅 Title 参与过滤） |
+A lightweight metadata snapshot for ordering and searching. It does not hold a complete `WpBasicData` object.
 
-### `WallpaperIndexService`
-- `_index.Items`：`WallpaperIndexEntry` 的有序列表，顺序即为最终展示顺序。
-- `_uidToIndex`：UID → 全局位置的字典，所有按位置操作的 O(1) 入口。
-- 删除/更新后调用 `RebuildUidIndexMapUnsafe()` 重建映射，保证位置始终与列表一致。
+| Field | Purpose |
+| --- | --- |
+| `Uid` | Unique wallpaper identifier used as the mapping key |
+| `FolderPath` | Wallpaper directory metadata |
+| `JsonPath` | Path to `WpBasicData.json`, read when loading a page |
+| `CreateTime` | Initial descending sort order |
+| `Title` / `Author` / `Tags` | Search metadata; only Title currently participates in filtering |
 
----
+### WallpaperIndexService
 
-## 3. 生命周期
+- `_index.Items` stores metadata entries in index order.
+- `_uidToIndex` maps a UID to its global index for O(1) dictionary lookup.
+- Removing entries or appending new entries rebuilds the position map with `RebuildUidIndexMapUnsafe()`.
 
-### 3.1 初始化
-```
+## Lifecycle
+
+### Initialization
+
+```text
 WallpaperIndexService.Initialize(dirs)
   └─ WallpaperIndexFile.RebuildIndexAsync(dirs)
-       并行扫描各壁纸子目录 → 读 WpBasicData.json → 构建 WallpaperIndexEntry
-       最终 Items 按 CreateTime 降序排列
-       设置 Initialized.TrySetResult(true)
+       Scan wallpaper directories in parallel
+       Read WpBasicData.json and create WallpaperIndexEntry snapshots
+       Sort Items by CreateTime descending
+  └─ RebuildUidIndexMapUnsafe()
+  └─ Initialized.TrySetResult(true)
 ```
 
-### 3.2 分页加载（增量）
-```
+### Incremental loading
+
+```text
 LibraryContentsViewModel.InitContentAsync() / LoadMoreAsync()
-  └─ _wallpaperIndexService.Query(_offset, _limit)   // Items.Skip(offset).Take(limit)
-       对每条 entry 懒加载完整 WpBasicData
-       LibraryWallpapers.Add(data)       ← 同一个对象引用
-       _libraryWallpapers.Add(data)      ← 同一个对象引用
+  └─ _wallpaperIndexService.Query(_offset, _limit)
+       Items.Skip(offset).Take(limit)
+       Read the full WpBasicData for each entry
+       LibraryWallpapers.Add(data)
+       _libraryWallpapers.Add(data)   // The same object reference
        _offset++
 ```
 
-> **位置不变式**：`_libraryWallpapers[i]` 的数据与 `_index.Items[i]` 完全对应，
-> 索引 `i` 在两者中含义相同。
+The positional assumption is that `_libraryWallpapers[i]` corresponds to `_index.Items[i]`. Initial pagination establishes this alignment. Updates must preserve it; see the limitations below.
 
-### 3.3 新增 / 更新 (`UpdateLib`)
-```csharp
-if (_wallpaperIndexService.TryGetValue(uid, out int idx))
-    // 更新已有位置
-    LibraryWallpapers[idx] = data
-    _libraryWallpapers[idx] = data
-else
-    // 新条目插入列表头（最新在前）
-    LibraryWallpapers.Insert(0, data)
-    _libraryWallpapers.Insert(0, data)
-_wallpaperIndexService.Update(data)
-```
+### Adding and updating: UpdateLib
 
-### 3.4 删除 (`HandleDelete`)
-```csharp
-LibraryWallpapers.Remove(data)        // 从 UI 集合中移除
-_libraryWallpapers.Remove(data)       // 从内存列表中移除
-_wallpaperIndexService.Remove(data)   // 从 _index.Items 移除，重建 _uidToIndex
-```
-三者同步移除后，`_wallpaperIndexService.RebuildUidIndexMapUnsafe()` 让后续位置均下移一位，保持对齐。
-
----
-
-## 4. 过滤机制 (`IFilterable / FilterContext`)
-
-### 4.1 接口设计
-
-```
-IFilterable
-  FilterKey FilterKeyword          ← 标识该消费者关注的过滤维度
-  ApplyFilter(string keyword)      ← 向后兼容快捷入口（仅标题）
-  ApplyFilter(FilterContext ctx)   ← 组合过滤入口
-```
-
-`FilterContext` 是不可变 record，承载所有激活的过滤条件：
+The current ViewModel implementation follows this shape:
 
 ```csharp
-record FilterContext {
-    string TitleKeyword    // 空字符串 = 不过滤
-    IReadOnlySet<FileType>? ActiveTypes  // null = 接受所有类型
+if (_wallpaperIndexService.TryGetValue(data.WallpaperUid, out int idx)) {
+    LibraryWallpapers[idx] = data;
+    _libraryWallpapers[idx] = data;
 }
+else {
+    // Put newly imported items at the front of both loaded collections.
+    LibraryWallpapers.Insert(0, data);
+    _libraryWallpapers.Insert(0, data);
+}
+_wallpaperIndexService.Update(data);
 ```
-> **扩展性**：新增过滤维度只需在 `FilterContext` 添加字段，
-> 不改动接口签名，消费者按需读取新字段即可。
 
-### 4.2 广播路径
+The service replaces an existing metadata entry in place, but appends a new one to `_index.Items`. Consequently, insertion at the front of the loaded collections does not itself preserve alignment with the index. `UpdateLib` also publishes the wallpaper-imported panel event for consumers such as previews and counters.
 
+### Deleting: HandleDelete
+
+```text
+LibraryWallpapers.Remove(data)       Remove from the visible collection
+_libraryWallpapers.Remove(data)      Remove from loaded objects
+_wallpaperIndexService.Remove(data)  Remove metadata and rebuild the UID map
 ```
-用户操作（搜索框 / 类型勾选）
-    │
+
+Rebuilding the map updates global positions after removal. Filtering then derives its results from the remaining loaded objects.
+
+## Filtering: IFilterable and FilterContext
+
+### Interface
+
+```text
+IFilterable
+  FilterKey FilterKeyword          Identifies the consumer's filter dimension
+  ApplyFilter(string keyword)      Compatibility entry point: title only
+  ApplyFilter(FilterContext ctx)   Combined filter conditions
+```
+
+`FilterContext` is an immutable record carrying the active conditions. Its relevant fields are:
+
+```text
+TitleKeyword: string                  Empty means no title filter
+ActiveTypes: IReadOnlySet<FileType>?   null means all types
+```
+
+New conditions can be added to the context without changing the interface signatures. Consumers read the fields they support.
+
+### Broadcasting
+
+```text
+Search box / type selection
     ▼
 WpSettingsViewModel.BroadcastFilter()
-  构造 FilterContext { TitleKeyword, ActiveTypes }
-    │
-    ├─► IFilterable.ApplyFilter(ctx)   (LibraryContentsViewModel)
-    └─► IFilterable.ApplyFilter(ctx)   (其他注册消费者，弱引用)
+  Create FilterContext { TitleKeyword, ActiveTypes }
+    ├─► LibraryContentsViewModel.ApplyFilter(ctx)
+    └─► Other registered IFilterable consumers
 ```
 
-消费者以 `WeakReference<IFilterable>` 注册，不阻止 GC。
+Consumers are registered as `WeakReference<IFilterable>` so the subscription does not prevent garbage collection.
 
-### 4.3 `ApplyFilter` 的两阶段有序同步算法
+### Ordered synchronization
 
-```
-filtered = _libraryWallpapers.Where(TitleKeyword && ActiveTypes)
-         = 原始有序子集（LINQ Where 对 List 是顺序枚举，保序）
+`ApplyFilter` selects an ordered subset of `_libraryWallpapers` by title and active file types. LINQ `Where` preserves the loaded list's order.
 
-Phase 1 — 移除不匹配项（维护剩余项的相对顺序）
-  for i = Count-1 downto 0:
-    if LibraryWallpapers[i] ∉ filtered:
-      LibraryWallpapers.RemoveAt(i)    // 倒序保证低位索引稳定
+1. Remove nonmatching visible items from the end toward the beginning. Remaining entries keep their relative order and form an ordered subsequence of the filtered result.
+2. Walk the filtered result from the beginning. If the visible item at that position is already the same object, continue; otherwise insert the missing object at that position.
 
-  后置条件：LibraryWallpapers ⊆ filtered，且相对顺序与 filtered 一致
-            即 LibraryWallpapers 是 filtered 的有序子序列
+Phase 2 needs no Move operation because phase 1 preserves the order of retained objects. The number of insertions equals the filtered count minus the retained count. This bounds the number of insertions, not the total running time: membership checks and collection shifts have their own costs.
 
-Phase 2 — 插入缺失项（维护与 _libraryWallpapers 相同的最终顺序）
-  for i = 0 to filtered.Count-1:
-    if LibraryWallpapers[i] == filtered[i]:  continue  // 已就位
-    LibraryWallpapers.Insert(i, filtered[i])           // 在正确位置插入
+After deletion, the filtered result comes from the latest `_libraryWallpapers`, so it reflects removed objects. The final visible order follows that loaded list; agreement with the metadata index depends on the positional assumption above.
 
-  总 Insert 次数 = |filtered| - |Phase1后剩余|，不超线性
-```
+## Type groups
 
-**为什么 Phase 2 无需 Move**：Phase 1 只删不移，保证了"有序子序列"不变式；
-插入操作不会破坏后续位置已就位元素的相对顺序。
+`WpTypeFilterItem` exposes four groups:
 
-### 4.4 删除 + 过滤的顺序正确性
-- 删除后 `_libraryWallpapers` 与 `_wallpaperIndexService` 同步重建
-- `filtered` 始终来自最新的 `_libraryWallpapers`，自动反映删除结果
-- Phase 2 按 `_libraryWallpapers` 顺序插入，最终顺序与 index service 一致
+| UI category | FileType values |
+| --- | --- |
+| Static images | `FImage` |
+| Animated images | `FGif`, `FImageAI` |
+| Video | `FVideo` |
+| Interactive Web | `FWebZip` |
 
----
+`FDesign`, `FWebDesign`, and `FUnknown` have no group and appear when no type filter is active.
 
-## 5. 类型过滤（`WpTypeFilterItem`）
+## Current constraints
 
-用户可见的 4 个类别与 `FileType` 的映射：
-
-| UI 标签 | 对应 `FileType` |
-|---------|----------------|
-| 静态图像 | `FImage` |
-| 动态图像 | `FGif`, `FimageAI` |
-| 视频 | `FVideo` |
-| Web 交互式 | `FWebZip` |
-
-`FDesign` / `FUnknown` 不参与类型过滤分组，在无过滤状态下正常展示。
-
----
-
-## 6. 约束与注意事项
-
-| 约束 | 说明 |
-|------|------|
-| `_libraryWallpapers` 过滤时只读 | 所有过滤操作只修改 `LibraryWallpapers`，不触碰 `_libraryWallpapers` |
-| `UpdateLib` 使用全局 idx | 仅在无过滤或 idx 处于已加载范围时行为正确；过滤激活时调用 `UpdateLib` 会写错位置 |
-| 增量加载与过滤并发 | `LoadMoreAsync` 直接 Add 到两个集合，不经过当前过滤逻辑；加载后的新项会绕过已激活的过滤器 |
-| 引用相等假设 | Phase 2 用 `ReferenceEquals` 比较，依赖"两个集合共享同一批对象引用"的不变式 |
+| Constraint | Implication |
+| --- | --- |
+| Filtering treats `_libraryWallpapers` as read-only | Only `LibraryWallpapers` is changed by filtering. |
+| `UpdateLib` uses a global index for both loaded collections | The index must be loaded and the visible collection must have matching positions. An active filter can make the visible index incorrect. |
+| New-item ordering differs between the ViewModel and index service | Loaded collections insert at the front; service metadata appends. Global positions can diverge after an import. |
+| Incremental loading adds directly to both collections | Newly loaded items bypass an already active filter until filtering is reapplied. |
+| Reinsertion uses ReferenceEquals | Both collections must share the same wallpaper object instances. |

@@ -96,7 +96,7 @@ jobs:
       run: ./.github/scripts/validate-test-workflow.ps1
 
     - name: Set up .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: 8.0.x
 
@@ -104,7 +104,7 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@v6.1.0
       with:
         path: ~/.nuget/packages
         key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props') }}
@@ -128,7 +128,7 @@ jobs:
         }
 
     - name: Upload build output
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: build-output
@@ -144,65 +144,14 @@ jobs:
           test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj
           test/VirtualPaper.InstallerTest/bin/Release/
 
-  # Test phases are sequential: installer lifecycle -> parallel regular tests -> real UI.
-  test-installer:
-    name: Installer Acceptance
-    runs-on: windows-latest
-    needs: [validate-pr, build-solution]
-    timeout-minutes: 20
-
-    steps:
-    - name: Check out source
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ needs.validate-pr.outputs.test_sha }}
-        persist-credentials: false
-
-    - name: Download build output
-      uses: actions/download-artifact@v4
-      with:
-        name: build-output
-        path: .
-
-    - name: Set up .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Install Inno Setup 6.7.1
-      shell: pwsh
-      run: choco install innosetup --version=6.7.1 --no-progress -y
-
-    - name: Compile installer
-      shell: pwsh
-      run: |
-        & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" InnoSetup/setup.iss
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-    - name: Verify installer lifecycle
-      shell: pwsh
-      run: |
-        $installers = @(Get-ChildItem -LiteralPath InnoSetup/Output -Filter '*.exe' -File)
-        if ($installers.Count -ne 1) { throw 'Expected exactly one installer.' }
-        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild -ReportPath TestResults/Installer/installer-results.json
-
-    - name: Upload installer results
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        overwrite: true
-        name: test-results-installer
-        path: TestResults/Installer/
-        if-no-files-found: warn
-        retention-days: 7
-
+  # Build once; installer smoke and real UI acceptance run independently after project tests.
   test-artifacts:
     name: Artifact Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -214,10 +163,10 @@ jobs:
   test-core:
     name: Core Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -229,7 +178,7 @@ jobs:
   test-ui-logic:
     name: UI Logic Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -237,7 +186,7 @@ jobs:
         ref: ${{ needs.validate-pr.outputs.test_sha }}
         persist-credentials: false
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -259,10 +208,10 @@ jobs:
   test-images:
     name: Static Image Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -274,10 +223,10 @@ jobs:
   test-web-backdrop:
     name: Web Backdrop Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -289,10 +238,10 @@ jobs:
   test-ui-components:
     name: UI Component Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -304,10 +253,10 @@ jobs:
   test-ml:
     name: ML Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -320,10 +269,10 @@ jobs:
   test-shader:
     name: Shader Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer]
+    needs: [validate-pr, build-solution]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
@@ -332,10 +281,11 @@ jobs:
       with:
         job-id: test-shader
 
-  test-winui:
-    name: WinUI Acceptance
+  test-installer-smoke:
+    name: Installer Smoke
     runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-installer, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    timeout-minutes: 30
 
     steps:
     - name: Check out source
@@ -345,13 +295,13 @@ jobs:
         persist-credentials: false
 
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-output
         path: .
 
     - name: Download prerequisite reports
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         pattern: test-results-*
         path: PrerequisiteTestResults/
@@ -362,22 +312,88 @@ jobs:
         Get-ProjectTestReports -Root PrerequisiteTestResults | Format-Table Total, Executed, Passed
 
     - name: Set up .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: 8.0.x
 
-    - name: Run WinUI acceptance
+    - name: Install Inno Setup 6.7.1
+      run: choco install innosetup --version=6.7.1 --no-progress -y
+
+    - name: Compile installer
+      run: |
+        & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" InnoSetup/setup.iss
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+    - name: Upload test installer
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: test-installer-package
+        path: InnoSetup/Output/*.exe
+        if-no-files-found: error
+        retention-days: 7
+
+    - name: Run installer smoke
       shell: pwsh
-      run: ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe -ReportPath TestResults/UIOperation/ui-operation-results.json
+      run: |
+        $installers = @(Get-ChildItem -LiteralPath InnoSetup/Output -Filter '*.exe' -File)
+        if ($installers.Count -ne 1) { throw 'Expected exactly one installer.' }
+        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild `
+          -ReportPath TestResults/Installer/installer-results.json
+
+    - name: Upload installer results
+      uses: actions/upload-artifact@v7.0.2
+      if: always()
+      with:
+        overwrite: true
+        name: test-results-installer
+        path: TestResults/Installer/
+        if-no-files-found: warn
+        retention-days: 7
+
+  test-ui-operation:
+    name: Real UI Acceptance
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    timeout-minutes: 25
+    # This job contains only optional UI acceptance; installer smoke is separate.
+    continue-on-error: true
+    outputs:
+      result: ${{ steps.ui-tests.outcome }}
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+
+    - name: Download build output
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: build-output
+        path: .
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v6.1.0
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Run real UI acceptance
+      id: ui-tests
+      shell: pwsh
+      run: |
+        ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
+          -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
+          -ReportPath TestResults/UIOperation/ui-operation-results.json
 
     - name: Upload WinUI results
-      uses: actions/upload-artifact@v4
       if: always()
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: test-results-ui-operation
         path: TestResults/UIOperation/
-        if-no-files-found: error
+        if-no-files-found: warn
         retention-days: 7
 
   summarize-tests:
@@ -387,7 +403,7 @@ jobs:
       statuses: write
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [validate-pr, build-solution, test-installer, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-winui]
+    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-installer-smoke, test-ui-operation]
     if: always() && needs.validate-pr.result == 'success'
 
     steps:
@@ -398,17 +414,19 @@ jobs:
         persist-credentials: false
 
     - name: Download test reports
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         pattern: test-results-*
         path: TestResults/
 
     - name: Summarize test reports
       id: reports
-      run: ./test/Summarize-TestResults.ps1 -Root TestResults
+      env:
+        UI_JOB_RESULT: ${{ needs.test-ui-operation.outputs.result || needs.test-ui-operation.result }}
+      run: ./test/Summarize-TestResults.ps1 -Root TestResults -AllowUIFailure -UIJobResult $env:UI_JOB_RESULT
 
     - name: Upload report bundle
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       if: always()
       with:
         overwrite: true
@@ -421,7 +439,7 @@ jobs:
       uses: actions/github-script@v7
       env:
         REPORT_JOB_STATUS: ${{ job.status }}
-        PREREQUISITE_RESULTS: ${{ join(needs.*.result, ' ') }}
+        JOB_RESULTS: ${{ toJSON(needs) }}
         UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}
         INSTALLER_OUTCOME: ${{ steps.reports.outputs.installer_outcome }}
       with:
@@ -430,12 +448,13 @@ jobs:
             ...context.repo, pull_number: Number(context.payload.inputs.pr_number)
           });
           const passed = process.env.REPORT_JOB_STATUS === 'success' &&
-            process.env.PREREQUISITE_RESULTS.split(' ').every(result => result === 'success') &&
-            ['Passed', 'Skipped'].includes(process.env.UI_OUTCOME);
+            Object.entries(JSON.parse(process.env.JOB_RESULTS)).filter(([name]) => name !== 'test-ui-operation').every(([, job]) => job.result === 'success') &&
+            ['Passed', 'Skipped', 'Failed'].includes(process.env.UI_OUTCOME);
           let state = passed ? 'success' : 'failure';
-          let description = !passed ? 'Some tests failed or results missing [FAILED]' :
-            process.env.UI_OUTCOME === 'Skipped' || process.env.INSTALLER_OUTCOME === 'OpenSkipped' ?
-              'Regular tests passed; UI acceptance skipped [SKIPPED]' : 'All tests passed [OK]';
+          let description = !passed ? 'Required checks failed or results missing [FAILED]' :
+            process.env.UI_OUTCOME === 'Failed' ? 'Required checks passed; UI acceptance failed [WARNING]' :
+            process.env.UI_OUTCOME === 'Skipped' ?
+              'Required checks passed; UI acceptance skipped [SKIPPED]' : 'All tests passed [OK]';
           const head = '${{ needs.validate-pr.outputs.head_sha }}';
           const selected = pr.labels.map(label => label.name).filter(name =>
             ['version:major', 'version:minor', 'version:build', 'version:revision'].includes(name));

@@ -260,7 +260,6 @@ namespace VirtualPaper {
                 .AddSingleton<IWindowService, WindowService>()
                 .AddSingleton<INativeService, NativeService>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
-                .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddTransient<IDispatcherTimer, DispatcherTimerAdapter>()
                 .AddTransient<IProcessLauncher, ProcessLauncher>()
                 .AddTransient<IPowerService, PowerService>()
@@ -330,6 +329,8 @@ namespace VirtualPaper {
 
                 Application.Current.Dispatcher.Invoke(() => {
                     ApplicationThemeManager.Apply(applicationTheme, updateAccent: false);
+                    foreach (var window in Application.Current.Windows.OfType<MainWindow>())
+                        window.ApplyTrayTheme();
                 });
             }
             catch (Exception e) {
@@ -403,6 +404,7 @@ namespace VirtualPaper {
                 var uiRunner = Services.GetRequiredService<IUIRunnerService>();
                 var canClose = await uiRunner.RequestUICloseAsync();
                 if (!canClose) {
+                    ArcLog.GetLogger<App>().Info("Shutdown cancelled by UI.");
                     return; // UI 拒绝关闭，终止 shutdown
                 }
             }

@@ -15,8 +15,6 @@ using VirtualPaper.IntelligentPanel.Utils.Interfaces;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.IntelligentPanel.Views;
 using VirtualPaper.IntelligentPanel.Views.Comp;
-using VirtualPaper.ML.StyleTransfer.Interfaces;
-using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -39,12 +37,6 @@ namespace VirtualPaper.IntelligentPanel {
             _viewModel = AppServiceLocator.Services.GetRequiredService<IntelligentViewModel>();
             this.DataContext = _viewModel;
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
-        }
-
-        override protected void OnNavigatedTo(NavigationEventArgs e) {
-            base.OnNavigatedTo(e);
-            AppServiceLocator.Services.GetRequiredService<IStyleTransfer>()?.Dispose();
-            AppServiceLocator.Services.GetRequiredService<ISuperResolution>()?.Dispose();
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e) {

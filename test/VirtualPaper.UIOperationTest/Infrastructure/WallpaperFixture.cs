@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Windows.Automation;
 using Google.Protobuf.WellKnownTypes;
@@ -9,6 +10,7 @@ namespace VirtualPaper.UIOperationTest.Infrastructure;
 
 internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBasicData Data) {
     public static async Task<WallpaperFixture> ImportAsync(AppProcessSession session, string source) {
+        byte[] sourceHash = SHA256.HashData(await File.ReadAllBytesAsync(source));
         var ui = await session.OpenUiAsync();
         var root = await Task.Run(() => {
             var window = AutomationElement.FromHandle(ui.MainWindowHandle);
@@ -25,7 +27,9 @@ internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBa
             if (files.Length != 1) return false;
             try {
                 data = JsonSerializer.Deserialize(await AppProcessSession.ReadTextSharedAsync(files[0]), WpBasicDataContext.Default.WpBasicData);
-                return data != null && File.Exists(data.ThumbnailPath);
+                data?.ResolvePaths(files[0]);
+                return data != null && File.Exists(data.ThumbnailPath) && File.Exists(data.FilePath)
+                    && sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath)));
             }
             catch (IOException) { return false; }
             catch (JsonException) { return false; }
@@ -33,16 +37,17 @@ internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBa
         return new(ui, root, data!);
     }
 
-    public async Task ApplyAsync(bool depth = false) {
+    public async Task ApplyAsync(bool depth = false, bool usePointer = false) {
         await Task.Run(() => {
-            Cases.WallpaperLibraryTests.OpenItemMenu(Ui.MainWindowHandle, Root, Data.WallpaperUid, "Library.Item.Apply");
+            Cases.WallpaperLibraryTests.OpenItemMenu(Ui.MainWindowHandle, Root, Data.WallpaperUid, "Library.Item.Apply", usePointer);
             if (depth) {
                 var choices = ApplicationUi.Find(Root, "Wallpaper.CreateType").FindAll(TreeScope.Children,
                     new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem));
                 UiTestContext.Check(choices.Count == 2, "Expected ordinary image and 3D image choices");
                 ApplicationUi.Select(choices[1]);
             }
-            ApplicationUi.Invoke(ApplicationUi.Find(Root, "PrimaryButton", visible: true));
+            if (Data.FType is FileType.FImage or FileType.FGif)
+                ApplicationUi.Invoke(ApplicationUi.Find(Root, "PrimaryButton", visible: true));
         });
         await AppProcessSession.WaitForJsonAsync(Constants.CommonPaths.WallpaperLayoutPath,
             json => json.AsArray().Count == 1 && json[0]?["FolderPath"]?.GetValue<string>() == Data.FolderPath,

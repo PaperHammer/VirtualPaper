@@ -3,10 +3,10 @@
     x:Class="VirtualPaper.AppSettingsPanel.Views.SystemSetting"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.AppSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"    
     NavigationCacheMode="Enabled">
 
@@ -15,7 +15,7 @@
             <StackPanel x:Name="Developer" Spacing="8" Orientation="Vertical">
                 <TextBlock x:Name="DeveloperHeader"
                     Margin="0"
-                    Text="{markup:I18n Key=Settings_System_Text_Developer}"   
+                    l:Uids.Uid="Ui_Settings_System_Text_Developer_Text"
                     FontWeight="Bold"/>
 
                 <Grid x:Name="Debug"
@@ -38,17 +38,17 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_System_Developer_Debug}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_System_Developer_Debug_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_System_Developer_DebugExplain}"/>
+                            l:Uids.Uid="Ui_Settings_System_Developer_DebugExplain_Text"/>
                     </Grid>
 
                     <Button
                         Grid.Column="2"
                         Width="200"
-                        Content="{markup:I18n Key=Settings_System_Text_Debug}"
+                        l:Uids.Uid="Ui_Settings_System_Text_Debug_Content"
                         Command="{x:Bind _viewModel.DebugCommand}"/>
                 </Grid>
 
@@ -72,18 +72,18 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_System_Developer_Log}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_System_Developer_Log_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_System_Developer_LogExplain}"/>
+                            l:Uids.Uid="Ui_Settings_System_Developer_LogExplain_Text"/>
                     </Grid>
 
                     <Button
                         Grid.Column="2"
                         Width="200"
                         AutomationProperties.AutomationId="Settings.System.ExportLogs"
-                        Content="{markup:I18n Key=Text_Save}"
+                        l:Uids.Uid="Ui_Text_Save_Content"
                         Command="{x:Bind _viewModel.LogCommand}"/>
                 </Grid>
             </StackPanel>

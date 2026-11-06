@@ -8,6 +8,25 @@ namespace VirtualPaper.UIOperationTest.Infrastructure;
 internal static class ApplicationUi {
     public static IDisposable Foreground(nint window) => new ForegroundLease(window);
 
+    public static async Task ActivateOwnedWindowAsync(nint window) {
+        using var foreground = Foreground(window);
+        if (SetForegroundWindow(window) || GetForegroundWindow() == window) return;
+        // Windows may deny programmatic activation after a background build.
+        // Click only this verified window's title bar to give it real input focus.
+        var bounds = AutomationElement.FromHandle(window).Current.BoundingRectangle;
+        var point = new NativePoint { X = (int)(bounds.Left + 80), Y = (int)(bounds.Top + 12) };
+        Check(GetAncestor(WindowFromPoint(point), 2) == window, "The test host title bar is covered by another window");
+        Check(GetCursorPos(out var previous) && SetCursorPos(point.X, point.Y), "Could not position the pointer over the test host");
+        try {
+            mouse_event(0x0002, 0, 0, 0, 0);
+            mouse_event(0x0004, 0, 0, 0, 0);
+            var timer = Stopwatch.StartNew();
+            while (GetForegroundWindow() != window && timer.Elapsed < TimeSpan.FromSeconds(5)) await Task.Delay(50);
+            Check(GetForegroundWindow() == window, "The test host did not receive foreground input focus");
+        }
+        finally { SetCursorPos(previous.X, previous.Y); }
+    }
+
     private sealed class ForegroundLease : IDisposable {
         private readonly nint _window;
         private readonly bool _wasTopmost;
@@ -49,12 +68,15 @@ internal static class ApplicationUi {
         BringIntoView(element);
         Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the test UI");
         element.SetFocus();
-        keybd_event(0x10, 0, 0, 0);
-        try {
-            keybd_event(0x79, 0, 0, 0);
-            keybd_event(0x79, 0, 2, 0);
-        }
-        finally { keybd_event(0x10, 0, 2, 0); }
+        var keys = new NativeInput[] {
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x10 } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x79 } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x79, Flags = 2 } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x10, Flags = 2 } } }
+        };
+        Check(GetForegroundWindow() == ownerWindow, "The wallpaper window lost focus before opening its menu.");
+        Check(SendInput((uint)keys.Length, keys, Marshal.SizeOf<NativeInput>()) == keys.Length,
+            "Could not send the complete context-menu key sequence.");
     }
 
     public static void OpenPointerContextMenu(nint ownerWindow, AutomationElement element) => ClickPointer(ownerWindow, element, 0x0008, 0x0010);
@@ -205,6 +227,21 @@ internal static class ApplicationUi {
         throw new TimeoutException($"Window in process {processId} with control {descendantId} not found");
     }
 
+    public static AutomationElement DialogButton(AutomationElement root, string id) {
+        // TabView also exposes a CloseButton. Wait for the real dialog and
+        // restrict lookup to it instead of accidentally closing an editor tab.
+        var parent = Find(root, "PrimaryButton", visible: true);
+        while ((parent = TreeWalker.RawViewWalker.GetParent(parent)) != null) {
+            var buttons = parent.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button))
+                .Cast<AutomationElement>().Where(e => !e.Current.IsOffscreen && e.Current.IsEnabled).ToArray();
+            if (!buttons.Any(e => e.Current.AutomationId == "SecondaryButton")) continue;
+            var matches = buttons.Where(e => e.Current.AutomationId == id).ToArray();
+            if (matches.Length == 1) return matches[0];
+        }
+        throw new InvalidOperationException("Unsaved dialog ancestor not found");
+    }
+
     private static IEnumerable<AutomationElement> Matches(AutomationElement root, string id, bool includePopups) {
         var condition = new PropertyCondition(AutomationElement.AutomationIdProperty, id);
         foreach (AutomationElement element in root.FindAll(TreeScope.Descendants, condition)) yield return element;
@@ -273,9 +310,9 @@ internal static class ApplicationUi {
             return label;
         }
         finally {
-            // Settings such as language can synchronously close their UI as a
-            // result of Select. Their caller must observe the actual restart.
-            if (!closesWindow) expand.Collapse();
+            // Backdrop changes close the UI; language changes temporarily disable
+            // this control while saving. Neither permits a trailing Collapse call.
+            if (!closesWindow && combo.Current.IsEnabled) expand.Collapse();
         }
     }
 

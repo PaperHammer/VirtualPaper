@@ -3,10 +3,10 @@
     x:Class="VirtualPaper.IntelligentPanel.Intelligent"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.IntelligentPanel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d">
@@ -23,25 +23,30 @@
                     SelectionChanged="SelectorBar_SelectionChanged"
                     Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
                     HorizontalAlignment="Stretch">
-                    <SelectorBarItem AutomationProperties.AutomationId="Intelligent.Tab.StyleTransfer" Text="{markup:I18n Key=Intelligent_SelBarItem1_StyleTranfer}" Tag="StyleTranferView" IsSelected="True"/>
-                    <SelectorBarItem AutomationProperties.AutomationId="Intelligent.Tab.SuperResolution" Text="{markup:I18n Key=Intelligent_SelBarItem2_SuperResolution}" Tag="SuperResolutionView"/>
+                    <SelectorBarItem AutomationProperties.AutomationId="Intelligent.Tab.StyleTransfer" l:Uids.Uid="Ui_Intelligent_SelBarItem1_StyleTranfer_Text" Tag="StyleTranferView" IsSelected="True"/>
+                    <SelectorBarItem AutomationProperties.AutomationId="Intelligent.Tab.SuperResolution" l:Uids.Uid="Ui_Intelligent_SelBarItem2_SuperResolution_Text" Tag="SuperResolutionView"/>
                 </SelectorBar>
 
                 <Frame x:Name="ContentFrame" Grid.Row="1"/>
             </Grid>
 
-            <input:ArcButton x:Name="addTaskButton"
+            <Button x:Name="addTaskButton"
                 AutomationProperties.AutomationId="Intelligent.AddTask"
-                Width="56"
-                Height="56"
+                l:Uids.Uid="Ui_Intelligent_AddTask_AutomationProperties_Name__Intelligent_AddTask_ToolTipService_ToolTip"
+
+                Style="{StaticResource AccentButtonStyle}"
+                Width="48"
+                Height="48"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Bottom"
                 Margin="0,0,24,24"
-                CornerRadius="28"
-                Background="LightBlue"
+                CornerRadius="14"
+                Padding="0"
+                HorizontalContentAlignment="Center"
+                VerticalContentAlignment="Center"
                 Click="AddTaskButton_Click">
-                <FontIcon Glyph="&#xF8AA;" />
-            </input:ArcButton>
+                <FontIcon Glyph="&#xE710;" FontSize="20" />
+            </Button>
 
             <Grid x:Name="maskGrid" 
                 Background="#80000000" 

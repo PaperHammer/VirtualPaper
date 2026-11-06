@@ -1,0 +1,27 @@
+{
+  "WallpaperUid": "LCLvp-luminous-flow",
+  "AppInfo": {
+    "AppName": "Virtual Paper",
+    "AppVersion": "0.5.2.0",
+    "FileVersion": "19"
+  },
+  "Title": "Luminous Flow",
+  "Desc": "Cyan and violet light streams follow the pointer and bloom on click, with curved trails over a dark background. An offline Web wallpaper inspired by VirtualPaper\u0027s Interactive Glow template, with pause and reduced-motion support.",
+  "Authors": "VirtualPaper",
+  "PublishDate": "2026-11-06",
+  "Rating": -1,
+  "Partition": "Built-in",
+  "Tags": "Built-in;\u5185\u7F6E;Abstract;Light;Interactive;Web",
+  "FolderName": "vp-luminous-flow",
+  "FolderPath": ".",
+  "FilePath": "index.html",
+  "ThumbnailPath": "vp-luminous-flow_thum.gif",
+  "Resolution": "-",
+  "AspectRatio": "-",
+  "FileSize": "9.33 KB",
+  "FileExtension": ".zip",
+  "CreatedTime": "2026-11-06T00:00:00Z",
+  "FType": "FWebZip",
+  "IsSingleRType": true,
+  "IsSubscribed": true
+}

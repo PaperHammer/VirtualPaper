@@ -283,6 +283,19 @@ namespace VirtualPaper.Common.Utils.Files {
         }
 
         /// <summary>
+        /// Rebases a path inside <paramref name="source"/> onto <paramref name="target"/>.
+        /// Empty and external paths are returned unchanged. Does not access the filesystem.
+        /// </summary>
+        public static string RelocatePath(string path, string source, string target) {
+            if (string.IsNullOrEmpty(path)) return path;
+            string fullSource = Path.TrimEndingDirectorySeparator(Path.GetFullPath(source));
+            string fullPath = Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
+            if (fullPath.Equals(fullSource, StringComparison.OrdinalIgnoreCase)) return target;
+            return IsPathWithinDirectory(fullSource, fullPath)
+                ? Path.Combine(target, Path.GetRelativePath(fullSource, fullPath)) : path;
+        }
+
+        /// <summary>
         /// 清空目录内容（删除所有文件和子目录），但保留目录本身。
         /// 使用 Enumerate 延迟求值，适合大目录。
         /// 跳过符号链接和联接点，避免意外删除外部文件。
@@ -455,7 +468,11 @@ namespace VirtualPaper.Common.Utils.Files {
         /// <param name="sourceFolderPath"></param>
         /// <param name="destFolderPath"></param>
         /// <param name="copySubDirs"></param>
-        public static void CopyDirectory(string sourceFolderPath, string destFolderPath, bool copySubDirs) {
+        public static void CopyDirectory(string sourceFolderPath, string destFolderPath, bool copySubDirs) =>
+            CopyDirectory(sourceFolderPath, destFolderPath, copySubDirs, overwrite: true);
+
+        /// <summary>Copies a directory with an explicit file overwrite policy.</summary>
+        public static void CopyDirectory(string sourceFolderPath, string destFolderPath, bool copySubDirs, bool overwrite) {
             DirectoryInfo dir = new(sourceFolderPath);
 
             if (!dir.Exists) {
@@ -471,14 +488,14 @@ namespace VirtualPaper.Common.Utils.Files {
             FileInfo[] files = dir.GetFiles();
             foreach (FileInfo file in files) {
                 string tempPath = Path.Combine(destFolderPath, file.Name);
-                file.CopyTo(tempPath, true);
+                file.CopyTo(tempPath, overwrite);
             }
 
             if (copySubDirs) {
                 DirectoryInfo[] dirs = dir.GetDirectories();
                 foreach (DirectoryInfo subdir in dirs) {
                     string temppath = Path.Combine(destFolderPath, subdir.Name);
-                    CopyDirectory(subdir.FullName, temppath, copySubDirs);
+                    CopyDirectory(subdir.FullName, temppath, copySubDirs, overwrite);
                 }
             }
         }

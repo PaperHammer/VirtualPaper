@@ -115,6 +115,7 @@ namespace VirtualPaper.GrpcServers {
                 AppVersion = _userSetting.Settings.AppVersion,
                 IsFirstRun = _userSetting.Settings.IsFirstRun,
                 NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
+                RemindUnpreservedIntelligentResults = settings.RemindUnpreservedIntelligentResults,
                 AppFocusPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFocus,
                 AppFullscreenPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFullscreen,
                 BatteryPause = (Grpc_AppRulesEnum)_userSetting.Settings.BatteryPoweredn,
@@ -150,10 +151,9 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(resp);
         }
 
-        public override Task<Empty> SetSettings(Grpc_SettingsData request, ServerCallContext context) {
+        public override async Task<Empty> SetSettings(Grpc_SettingsData request, ServerCallContext context) {
             bool restartRequired =
-                request.Language != _userSetting.Settings.Language
-                || (Common.AppSystemBackdrop)request.SystemBackdrop != _userSetting.Settings.SystemBackdrop;
+                (Common.AppSystemBackdrop)request.SystemBackdrop != _userSetting.Settings.SystemBackdrop;
 
             if (request.IsAutoStart != _userSetting.Settings.IsAutoStart) {
                 _userSetting.Settings.IsAutoStart = request.IsAutoStart;
@@ -179,6 +179,9 @@ namespace VirtualPaper.GrpcServers {
             _userSetting.Settings.AppName = request.AppName;
             _userSetting.Settings.AppVersion = request.AppVersion;
             _userSetting.Settings.IsFirstRun = request.IsFirstRun;
+            if (request.HasRemindUnpreservedIntelligentResults) {
+                _userSetting.Settings.RemindUnpreservedIntelligentResults = request.RemindUnpreservedIntelligentResults;
+            }
             if (request.HasNavigationAnimationsEnabled) {
                 _userSetting.Settings.NavigationAnimationsEnabled = request.NavigationAnimationsEnabled;
             }
@@ -215,15 +218,13 @@ namespace VirtualPaper.GrpcServers {
             }
 
             try {
-                return Task.FromResult(new Empty());
+                return new Empty();
             }
             finally {
                 lock (settingsWriteLock) {
                     _userSetting.Save<ISettings>();
-                    if (restartRequired) {
-                        _uiRunner.RestartUI();
-                    }
                 }
+                if (restartRequired) await _uiRunner.RestartUIAsync();
             }
         }
 

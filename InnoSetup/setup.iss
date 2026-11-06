@@ -62,7 +62,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 ; Name: "windowsstartup"; Description: "{cm:AutoStartProgram,{#MyAppName}}"
 
 [Files]
-Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.WebView2,*.WebView2\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -75,7 +75,18 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall; Check: AutoLaunch
 
+[UninstallDelete]
+Type: files; Name: "{app}\installer-language.txt"
+
 [Code]
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    // Read only when the application creates a new user settings file.
+    if not SaveStringToFile(ExpandConstant('{app}\installer-language.txt'), ActiveLanguage, False) then
+      RaiseException('Could not save the initial application language.');
+end;
 
 // InnoDependencyInstaller 初始化向导 UI
 procedure InitializeWizard;

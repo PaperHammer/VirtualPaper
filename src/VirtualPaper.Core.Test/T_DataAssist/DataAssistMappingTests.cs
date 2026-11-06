@@ -299,6 +299,22 @@ public class DataAssistMappingTests {
     }
 
     [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public void IntelligentReminder_JsonAndGrpc_PreservePreferenceAndLegacyDefault(bool enabled) {
+        var settings = MakeSettings();
+        settings.RemindUnpreservedIntelligentResults = enabled;
+        var json = System.Text.Json.JsonSerializer.Serialize(settings, SettingsContext.Default.Settings);
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(json, SettingsContext.Default.Settings)!;
+        var grpc = DataAssist.SettingsToGrpc(loaded);
+        Assert.IsTrue(grpc.HasRemindUnpreservedIntelligentResults);
+        Assert.AreEqual(enabled, DataAssist.GrpcToSettings(grpc).RemindUnpreservedIntelligentResults);
+        grpc.ClearRemindUnpreservedIntelligentResults();
+        Assert.IsTrue(DataAssist.GrpcToSettings(grpc).RemindUnpreservedIntelligentResults);
+        Assert.IsTrue(System.Text.Json.JsonSerializer.Deserialize("{}", SettingsContext.Default.Settings)!.RemindUnpreservedIntelligentResults);
+    }
+
+    [TestMethod]
     public void Settings_Roundtrip_PreservesEnumFields() {
         var src = MakeSettings();
 

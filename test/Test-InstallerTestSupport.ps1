@@ -1,62 +1,79 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/InstallerTestSupport.ps1"
 
-# Contract tests use callbacks only: no installer, GUI, registry or system configuration is touched.
-foreach ($failure in @('', 'Install', 'Open', 'Uninstall')) {
+# Callbacks only: no installer, GUI, registry or system configuration is touched.
+$stages = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh', 'Uninstall')
+foreach ($failure in (@('') + $stages)) {
     $calls = [Collections.Generic.List[string]]::new()
-    $report = Invoke-InstallerLifecycle -Install {
-        $calls.Add('Install')
-        if ($failure -eq 'Install') { throw 'Expected install failure' }
-    } -Open {
-        $calls.Add('Open')
-        if ($failure -eq 'Open') { throw 'Expected open failure' }
-    } -Uninstall {
-        $calls.Add('Uninstall')
-        if ($failure -eq 'Uninstall') { throw 'Expected uninstall failure' }
+    $handlers = @{}
+    foreach ($name in $stages) {
+        $handlers[$name] = {
+            $calls.Add($name)
+            if ($failure -eq $name) { throw "Expected $name failure" }
+        }.GetNewClosure()
     }
-    $expected = if ($failure -eq 'Install') { 'Install,Uninstall' } else { 'Install,Open,Uninstall' }
-    if (($calls -join ',') -cne $expected) { throw "Incorrect failure/cleanup order: $failure" }
-    if (($report.Checks.Name -join ',') -cne 'Install,Open,Uninstall') { throw 'Incomplete lifecycle report.' }
+    $report = Invoke-InstallerLifecycle @handlers
+    $expected = [Collections.Generic.List[string]]::new()
+    foreach ($name in $stages) {
+        if ($name -eq 'Uninstall' -or $failure -eq '' -or $expected -notcontains $failure) { $expected.Add($name) }
+    }
+    if (($calls -join ',') -cne ($expected -join ',') -or ($report.Checks.Name -join ',') -cne ($stages -join ',')) {
+        throw "Incorrect failure/cleanup order: $failure"
+    }
     $accepted = $true
     try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
-    if ($accepted -ne ($failure -eq '')) { throw "Incorrect installer gate for failure: $failure" }
+    if ($accepted -ne ($failure -eq '')) { throw "Every installer smoke stage must pass: $failure" }
 }
 
-$good = Invoke-InstallerLifecycle -Install {} -Open {} -Uninstall {}
-foreach ($mutation in @('MissingStage', 'DuplicateStage', 'FalsePass', 'WrongSuite', 'WrongCount', 'SkippedStage')) {
+$good = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Uninstall {}
+foreach ($mutation in @('MissingReinstall', 'DuplicateStage', 'FalsePass', 'WrongSchema', 'WrongSuite', 'WrongCount', 'SkippedStage')) {
     $report = $good | ConvertTo-Json -Depth 10 | ConvertFrom-Json
     switch ($mutation) {
-        MissingStage { $report.Checks = @($report.Checks | Select-Object -First 2) }
+        MissingReinstall { $report.Checks = @($report.Checks | Where-Object Name -NE 'Reinstall') }
         DuplicateStage { $report.Checks[2].Name = 'Open' }
         FalsePass { $report.Checks[1].Passed = $false }
-        WrongSuite { $report.Suite = 'Open' }
-        WrongCount { $report.Total = 2 }
+        WrongSchema { $report.SchemaVersion = 2 }
+        WrongSuite { $report.Suite = 'InstallerLifecycle' }
+        WrongCount { $report.Total = 4 }
         SkippedStage { $report.Checks[1].Status = 'Skipped' }
     }
-    $rejected = $false
-    try { Assert-InstallerReportPassed $report } catch { $rejected = $true }
-    if (-not $rejected) { throw "Malformed installer report was accepted: $mutation" }
+    $accepted = $true
+    try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
+    if ($accepted) { throw "Malformed installer smoke report accepted: $mutation" }
 }
-Write-Host '[OK] Installer lifecycle success/failure ordering, unconditional cleanup and report acceptance contracts.'
 
 $headless = Resolve-UIOperationEnvironment ([pscustomobject]@{ Windows = $true; UserInteractive = $false })
 $calls = [Collections.Generic.List[string]]::new()
-$report = Invoke-InstallerLifecycle -Install { $calls.Add('Install') } -Open { throw 'Headless Open must not execute.' } -Uninstall { $calls.Add('Uninstall') } -Environment $headless
-if (($calls -join ',') -cne 'Install,Uninstall' -or (Get-InstallerReportOutcome $report) -cne 'OpenSkipped') {
-    throw 'Headless acceptance must install and uninstall, explicitly skipping window acceptance.'
+$report = Invoke-InstallerLifecycle -Install { $calls.Add('Install') } -Reinstall { $calls.Add('Reinstall') } `
+    -Uninstall { $calls.Add('Uninstall') } -Open { throw 'Headless Open must not execute.' } `
+    -VerifyPreserved { throw 'Headless profile verification must not execute.' } `
+    -OpenFresh { throw 'Headless fresh startup must not execute.' } -Environment $headless
+if (($calls -join ',') -cne 'Install,Reinstall,Uninstall' -or $report.Skipped -ne 3) {
+    throw 'Headless diagnostics must retain skipped startup/profile evidence and still uninstall.'
 }
-foreach ($mutation in @('MissingEnvironment', 'FalseEnvironment', 'InstallSkipped', 'UninstallSkipped', 'BadCount', 'Failure')) {
-    $bad = $report | ConvertTo-Json -Depth 10 | ConvertFrom-Json
-    switch ($mutation) {
-        MissingEnvironment { $bad.Environment = $null }
-        FalseEnvironment { $bad.Environment.Checks.Windows = $false }
-        InstallSkipped { $bad.Checks[0].Status = 'Skipped' }
-        UninstallSkipped { $bad.Checks[2].Status = 'Skipped' }
-        BadCount { $bad.Skipped = 0 }
-        Failure { $bad.Failed = 1 }
+$accepted = $true
+try { Assert-InstallerReportPassed $report } catch { $accepted = $false }
+if ($accepted) { throw 'Skipped startup is never a passing installer smoke result.' }
+
+# Exercise the production runner's final report/exit-code gate without installing.
+$runnerText = Get-Content -LiteralPath "$PSScriptRoot/Run-InstallerTests.ps1" -Raw
+$finishAt = $runnerText.IndexOf('Assert-InstallerReportPassed $report')
+if ($finishAt -lt 0) { throw 'Installer smoke result gate missing.' }
+$finish = [scriptblock]::Create($runnerText.Substring($finishAt))
+$previousExitCode = Get-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue
+try {
+    foreach ($passed in @($false, $true)) {
+        $report = if ($passed) { $good } else { $report }
+        $global:LASTEXITCODE = 17
+        $ReportPath = 'fixture-report.json'
+        $accepted = $true
+        try { & $finish } catch { $accepted = $false }
+        if ($accepted -ne $passed -or ($passed -and $global:LASTEXITCODE -ne 0)) {
+            throw 'Installer smoke may reset native exit status only after every stage passed.'
+        }
     }
-    $accepted = $true
-    try { Assert-InstallerReportPassed $bad } catch { $accepted = $false }
-    if ($accepted) { throw "Invalid headless report accepted: $mutation" }
+} finally {
+    if ($null -ne $previousExitCode) { $global:LASTEXITCODE = $previousExitCode.Value }
+    else { Remove-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue }
 }
-Write-Host '[OK] Headless install/uninstall, explicit Open skip and forged-skip rejection.'
+Write-Host '[OK] Independent installer smoke ordering, mandatory stages, failure cleanup and headless rejection.'

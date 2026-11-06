@@ -10,10 +10,9 @@ namespace VirtualPaper.IntelligentPanel.Models {
     /// <summary>
     /// 风格迁移任务的 UI 表示层，包装 StyleTransferData 并提供绑定属性
     /// </summary>
-    public partial class StyleTransferTaskItem : ObservableObject {
+    public partial class StyleTransferTaskItem : IntelligentTaskItem {
         public StyleTransferData Data { get; }
         public Guid Id => Data.Id;
-        public CancellationTokenSource Cts { get; } = new();
 
         #region data
         public string SourceFilePath => Data.SourceFilePath;
@@ -22,7 +21,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public string SourceResolution => $"{Data.Width} * {Data.Height}";
 
         public string StyleFilePath => Data.StyleFilePath;
-        public string? StyleName => Data.StyleName;
+        public string? StyleName => Data.StyleNameKey != null ? LanguageUtil.GetI18n(Data.StyleNameKey) : Data.StyleName;
         public string StyleFileSize => Data.StyleFileSize;
         public string StyleFileExt => Data.StyleFileExt;
 
@@ -46,13 +45,14 @@ namespace VirtualPaper.IntelligentPanel.Models {
                 OnPropertyChanged(nameof(IsCompleted));
                 OnPropertyChanged(nameof(IsFailed));
 
+                RefreshPreservation();
                 UpdateProgressBarState();
                 NotifyCommandsCanExecuteChanged();
             }
         }
 
         public string StatusText => Status switch {
-            TaskStatus.Created => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
+            TaskStatus.Created => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Queue),
             TaskStatus.WaitingToRun => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Queue),
             TaskStatus.Running => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Processing),
             TaskStatus.RanToCompletion => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed),
@@ -60,9 +60,9 @@ namespace VirtualPaper.IntelligentPanel.Models {
             _ => LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Unknown)
         };
 
-        public bool IsPending => Status is TaskStatus.Created or TaskStatus.WaitingToRun;
-        public bool IsProcessing => Status == TaskStatus.Running;
-        public bool IsCompleted => Status == TaskStatus.RanToCompletion;
+        public override bool IsPending => Status is TaskStatus.Created or TaskStatus.WaitingToRun;
+        public override bool IsProcessing => Status == TaskStatus.Running;
+        public override bool IsCompleted => Status == TaskStatus.RanToCompletion;
         public bool IsFailed => Status == TaskStatus.Faulted;
         #endregion
 
@@ -112,7 +112,14 @@ namespace VirtualPaper.IntelligentPanel.Models {
             Data = data ?? throw new ArgumentNullException(nameof(data));
         }
 
-        private void NotifyCommandsCanExecuteChanged() {
+        internal void RefreshLanguage() {
+            OnPropertyChanged(nameof(StyleName));
+            OnPropertyChanged(nameof(StatusText));
+            RefreshPreservation();
+        }
+
+        protected override void NotifyCommandsCanExecuteChanged() {
+            (RemoveCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (PreviewCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (ImportCommand as RelayCommand)?.RaiseCanExecuteChanged();
             (SaveCommand as RelayCommand)?.RaiseCanExecuteChanged();

@@ -700,22 +700,28 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public async Task<IWpBasicData> UpdateBasicDataAsync(
+        public Task<IWpBasicData> UpdateBasicDataAsync(
             string folderPath,
             string folderName,
             string filePath,
             FileType ftype,
             CancellationToken token = default) {
+            return WallpaperMetadataMigrator.MigrateAsync(folderPath,
+                oldData => RebuildLegacyBasicData(oldData, folderName, filePath, ftype, token), token);
+        }
+
+        private IWpBasicData RebuildLegacyBasicData(
+            WpBasicData oldData, string folderName, string filePath, FileType ftype, CancellationToken token) {
             IWpBasicData newData = CreateBasicData(filePath, ftype, token: token, folderName: folderName, isAutoSave: false)
                 ?? throw new Exception("Create basic-data error");
 
             try {
-                IWpBasicData oldData = await JsonSaver.LoadAsync<WpBasicData>(Path.Combine(folderPath, Constants.Field.WpBasicDataFileName), WpBasicDataContext.Default);
                 newData.Merge(oldData);
                 newData.Save();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WallpaperControl>().Error(ex);
+                throw;
             }
 
             return newData;

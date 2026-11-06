@@ -23,6 +23,7 @@ public class SettingsWorkflowTests {
         environment.StartSettingsServer();
         using (var client = new UserSettingsClient(environment.CreateChannel())) {
             client.Settings.NavigationAnimationsEnabled = animations;
+            client.Settings.RemindUnpreservedIntelligentResults = animations;
             client.Settings.WallpaperWaitTime = 137;
             client.Settings.WaitingTime = 9;
             client.Settings.WhiteListScr = [new ProcInfo { ProcName = "workflow.exe", IconPath = "workflow.ico" }];
@@ -30,9 +31,11 @@ public class SettingsWorkflowTests {
 
             var json = JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!;
             Assert.AreEqual(animations, json["NavigationAnimationsEnabled"]!.GetValue<bool>());
+            Assert.AreEqual(animations, json["RemindUnpreservedIntelligentResults"]!.GetValue<bool>());
             Assert.AreEqual(137, json["WallpaperWaitTime"]!.GetValue<int>());
             var previous = client.Settings;
             client.Settings.NavigationAnimationsEnabled = !animations;
+            client.Settings.RemindUnpreservedIntelligentResults = !animations;
             await client.LoadAsync<ISettings>();
             Assert.AreNotSame(previous, client.Settings);
             AssertPreferences(client.Settings, animations);
@@ -41,7 +44,7 @@ public class SettingsWorkflowTests {
         environment.StartSettingsServer(); // Recreate the real service from disk, not a cached Settings object.
         using var restarted = new UserSettingsClient(environment.CreateChannel());
         AssertPreferences(restarted.Settings, animations);
-        environment.UiRunner.Verify(r => r.RestartUI(), Times.Never);
+        environment.UiRunner.Verify(r => r.RestartUIAsync(), Times.Never);
     }
 
     [TestMethod]
@@ -52,22 +55,27 @@ public class SettingsWorkflowTests {
         environment.StartSettingsServer();
         using var client = new UserSettingsClient(environment.CreateChannel());
         Assert.IsTrue(client.Settings.NavigationAnimationsEnabled);
+        Assert.IsTrue(client.Settings.RemindUnpreservedIntelligentResults);
         Assert.AreEqual(73, client.Settings.WallpaperWaitTime);
         client.Settings.NavigationAnimationsEnabled = false;
+        client.Settings.RemindUnpreservedIntelligentResults = false;
         await client.SaveAsync<ISettings>();
 
         var legacyClient = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
         var request = await legacyClient.GetSettingsAsync(new Empty());
         request.ClearNavigationAnimationsEnabled();
+        request.ClearRemindUnpreservedIntelligentResults();
         request.WallpaperWaitTime = 74;
         await legacyClient.SetSettingsAsync(request);
         client.Load<ISettings>();
         Assert.IsFalse(client.Settings.NavigationAnimationsEnabled);
+        Assert.IsFalse(client.Settings.RemindUnpreservedIntelligentResults);
         Assert.AreEqual(74, client.Settings.WallpaperWaitTime);
 
         environment.StartSettingsServer();
         using var restarted = new UserSettingsClient(environment.CreateChannel());
         Assert.IsFalse(restarted.Settings.NavigationAnimationsEnabled);
+        Assert.IsFalse(restarted.Settings.RemindUnpreservedIntelligentResults);
         Assert.AreEqual(74, restarted.Settings.WallpaperWaitTime);
     }
 
@@ -79,6 +87,7 @@ public class SettingsWorkflowTests {
         environment.StartSettingsServer();
         using var client = new UserSettingsClient(environment.CreateChannel());
         Assert.IsTrue(client.Settings.NavigationAnimationsEnabled);
+        Assert.IsTrue(client.Settings.RemindUnpreservedIntelligentResults);
         Assert.IsNotNull(JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath)));
         client.Settings.WaitingTime = 12;
         await client.SaveAsync<ISettings>();
@@ -89,6 +98,7 @@ public class SettingsWorkflowTests {
 
     private static void AssertPreferences(ISettings settings, bool animations) {
         Assert.AreEqual(animations, settings.NavigationAnimationsEnabled);
+        Assert.AreEqual(animations, settings.RemindUnpreservedIntelligentResults);
         Assert.AreEqual(137, settings.WallpaperWaitTime);
         Assert.AreEqual(9, settings.WaitingTime);
         Assert.HasCount(1, settings.WhiteListScr);

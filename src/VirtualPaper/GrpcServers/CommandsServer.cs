@@ -28,9 +28,9 @@ namespace VirtualPaper.GrpcServers {
             return Task.FromResult(new Empty());
         }
 
-        public override Task<Empty> RestartUI(Empty _, ServerCallContext context) {
-            _runner.RestartUI();
-            return Task.FromResult(new Empty());
+        public override async Task<Empty> RestartUI(Empty _, ServerCallContext context) {
+            await _runner.RestartUIAsync();
+            return new Empty();
         }
 
         public override Task<Empty> ShowDebugView(Empty _, ServerCallContext context) {

@@ -21,8 +21,30 @@ namespace VirtualPaper.Models.Cores {
         public RuntimeType RType { get; set; } = RuntimeType.RUnknown;
 
         public void Read(string filePath) {
-            var data = JsonSaver.Load<WpRuntimeData>(filePath, WpRuntimeDataContext.Default);
-            InitData(data);
+            InitData(Load(filePath));
+        }
+
+        public static WpRuntimeData Load(string filePath) {
+            var data = JsonSaver.Load<WpRuntimeData>(filePath, WpRuntimeDataContext.Default)
+                ?? throw new InvalidDataException($"Wallpaper runtime metadata is empty: {filePath}");
+            data.ResolvePaths(filePath);
+            return data;
+        }
+
+        public static async Task<WpRuntimeData> LoadAsync(string filePath) {
+            var data = await JsonSaver.LoadAsync<WpRuntimeData>(filePath, WpRuntimeDataContext.Default)
+                ?? throw new InvalidDataException($"Wallpaper runtime metadata is empty: {filePath}");
+            data.ResolvePaths(filePath);
+            return data;
+        }
+
+        public void ResolvePaths(string metadataPath) {
+            string directory = WallpaperMetadataPaths.DirectoryOf(metadataPath);
+            FolderPath = WallpaperMetadataPaths.Resolve(directory, FolderPath);
+            DepthFilePath = WallpaperMetadataPaths.Resolve(directory, DepthFilePath);
+            WpEffectFilePathTemplate = WallpaperMetadataPaths.Resolve(directory, WpEffectFilePathTemplate);
+            WpEffectFilePathUsing = WallpaperMetadataPaths.Resolve(directory, WpEffectFilePathUsing);
+            WpEffectFilePathTemporary = WallpaperMetadataPaths.Resolve(directory, WpEffectFilePathTemporary);
         }
 
         public async Task MoveToAsync(string targetFolderPath) {
@@ -56,19 +78,33 @@ namespace VirtualPaper.Models.Cores {
             Save();
         }
 
-        public void Save() {
+        public void Save() => Save(Constants.CoreField.FileVersion);
+
+        /// <summary>Save the target version of a single migration step.</summary>
+        public void Save(string fileVersion) {
             if (MonitorContent == string.Empty) {
                 throw new Exception("Save failed");
             }
+            string metadataPath = Path.Combine(FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName);
+            string directory = WallpaperMetadataPaths.DirectoryOf(metadataPath);
+            var stored = (WpRuntimeData)Clone();
+            stored.AppInfo = new() { AppName = AppInfo.AppName, AppVersion = AppInfo.AppVersion, FileVersion = fileVersion };
+            stored.FolderPath = WallpaperMetadataPaths.Relative(directory, FolderPath);
+            stored.DepthFilePath = WallpaperMetadataPaths.Relative(directory, DepthFilePath);
+            stored.WpEffectFilePathTemplate = WallpaperMetadataPaths.Relative(directory, WpEffectFilePathTemplate);
+            stored.WpEffectFilePathUsing = WallpaperMetadataPaths.Relative(directory, WpEffectFilePathUsing);
+            stored.WpEffectFilePathTemporary = WallpaperMetadataPaths.Relative(directory, WpEffectFilePathTemporary);
             JsonSaver.Save<IWpRuntimeData>(
-                Path.Combine(this.FolderPath, MonitorContent, RType.ToString(), Constants.Field.WpRuntimeDataFileName), 
-                this,
+                metadataPath,
+                stored,
                 WpRuntimeDataContext.Default);
+            AppInfo.FileVersion = fileVersion;
         }
 
         public IWpRuntimeData Clone() {
             IWpRuntimeData data = new WpRuntimeData() {
                 AppInfo = this.AppInfo,
+                MonitorContent = this.MonitorContent,
                 FolderPath = this.FolderPath,
                 DepthFilePath = this.DepthFilePath,
                 WpEffectFilePathTemplate = this.WpEffectFilePathTemplate,
@@ -84,6 +120,7 @@ namespace VirtualPaper.Models.Cores {
             if (source == null) return;
 
             this.AppInfo = source.AppInfo;
+            this.MonitorContent = source.MonitorContent;
             this.FolderPath = source.FolderPath;
             this.DepthFilePath = source.DepthFilePath;
             this.WpEffectFilePathTemplate = source.WpEffectFilePathTemplate;

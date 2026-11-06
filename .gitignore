@@ -384,9 +384,12 @@ Shaders/*.bin
 InnoSetup/Output/
 
 # Monaco editor bundled assets
-src/WebBackdrop/Assets/monaco-editor-0.55.1/package/dev/
-src/WebBackdrop/Assets/monaco-editor-0.55.1/package/README.md
-src/WebBackdrop/Assets/monaco-editor-0.55.1/package/CHANGELOG.md
+src/WebBackdrop/Assets/monaco-editor-*/package/dev/
+src/WebBackdrop/Assets/monaco-editor-*/package/esm/
+src/WebBackdrop/Assets/monaco-editor-*/package/monaco.d.ts
+src/WebBackdrop/Assets/monaco-editor-*/package/README.md
+src/WebBackdrop/Assets/monaco-editor-*/package/CHANGELOG.md
+resources/tools/monaco-editor-*.tgz
 
 # Local working documents (not version controlled)
 /.local-docs/

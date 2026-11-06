@@ -22,5 +22,6 @@
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
     <ProjectReference Include="..\..\src\VirtualPaper.PlayerWeb.Core\VirtualPaper.PlayerWeb.Core.csproj" />
     <ProjectReference Include="..\..\src\StaticImg\StaticImg.csproj" />
+    <ProjectReference Include="..\..\src\VirtualPaper.IntelligentPanel\VirtualPaper.IntelligentPanel.csproj" />
   </ItemGroup>
 </Project>

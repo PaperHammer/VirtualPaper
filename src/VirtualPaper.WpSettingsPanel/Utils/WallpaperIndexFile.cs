@@ -35,7 +35,7 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
 
                 WpBasicData data;
                 try {
-                    data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                    data = await WpBasicData.LoadAsync(jsonPath);
                 }
                 catch (Exception) {
                     return;

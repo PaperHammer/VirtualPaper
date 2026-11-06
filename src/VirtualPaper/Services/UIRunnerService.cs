@@ -20,9 +20,10 @@ namespace VirtualPaper.Services {
 
         public UIRunnerService(IJobService jobService) : this(jobService, TimeSpan.FromSeconds(5)) { }
 
-        internal UIRunnerService(IJobService jobService, TimeSpan uiExitTimeout) {
+        internal UIRunnerService(IJobService jobService, TimeSpan uiExitTimeout, Func<Task<bool>>? requestUiClose = null) {
             _jobService = jobService;
             _uiExitTimeout = uiExitTimeout;
+            _requestUiClose = requestUiClose ?? RequestUICloseAsync;
 
             if (UAC.IsElevated) {
                 ArcLog.GetLogger<UIRunnerService>().Warn("Process is running elevated, UI may not work properly.");
@@ -156,25 +157,38 @@ namespace VirtualPaper.Services {
             return false;
         }
 
-        public void RestartUI() {
-            lock (_processLock) {
-                if (_isDisposed || App.IsShuttingDown) return;
-                if (_processUI != null) {
-                    try {
-                        if (!_processUI.HasExited && (!_processUI.Responding || !_processUI.CloseMainWindow() || !_processUI.WaitForExit(500))) {
-                            if (!TryKillUiProcess(_processUI)) return;
+        public async Task RestartUIAsync() {
+            await _restartGate.WaitAsync().ConfigureAwait(false);
+            try {
+                Process? process;
+                Task<bool>? exitTask;
+                lock (_processLock) {
+                    if (_isDisposed || App.IsShuttingDown) return;
+                    if (_processUI is { HasExited: true } exited) HandleUiExited(exited);
+                    process = _processUI;
+                    exitTask = _uiExitTask;
+                }
+
+                // Closing UI first notifies Core, which also takes _processLock.
+                // Neither the close confirmation nor process exit may be awaited under that lock.
+                if (process != null && exitTask == null) {
+                    if (!await _requestUiClose().ConfigureAwait(false)) return;
+                    lock (_processLock) {
+                        if (_isDisposed || App.IsShuttingDown) return;
+                        if (ReferenceEquals(process, _processUI) && !process.HasExited) {
+                            // Confirmation may arrive even if UI's notification failed.
+                            // Only an approved close is allowed to arm the timeout.
+                            NotifyUIClosing(process.Id);
+                            exitTask = _uiExitTask;
                         }
-                        int pid = _processUI.Id;
-                        ReleaseProcess();
-                        _jobService.StopPlugin(pid);
-                    }
-                    catch (Exception e) {
-                        ArcLog.GetLogger<UIRunnerService>().Error(e);
-                        return;
                     }
                 }
+
+                if (exitTask != null && !await exitTask.ConfigureAwait(false))
+                    throw new InvalidOperationException("The previous UI process could not be stopped; restart was cancelled.");
+                await ShowUIAsync().ConfigureAwait(false);
             }
-            _ = ShowUIAsync();
+            finally { _restartGate.Release(); }
         }
 
         public void CloseUI() {
@@ -314,6 +328,8 @@ namespace VirtualPaper.Services {
         }
 
         private readonly object _processLock = new();
+        private readonly SemaphoreSlim _restartGate = new(1, 1);
+        private readonly Func<Task<bool>> _requestUiClose;
         private Process? _processUI;
         private readonly string _fileName, _workingDir;
         private readonly IJobService _jobService;

@@ -167,7 +167,7 @@ public class UserSettingServerTests {
         Assert.AreEqual("player.exe", AssertSingle(fixture.Settings.WhiteListScr).ProcName);
         Assert.AreEqual(@"C:\apps\player.exe", AssertSingle(fixture.Settings.WhiteListScr).ProcPath);
         fixture.UserSettings.Verify(service => service.Save<ISettings>(), Times.Once);
-        fixture.UiRunner.Verify(service => service.RestartUI(), Times.Once);
+        fixture.UiRunner.Verify(service => service.RestartUIAsync(), Times.Once);
     }
 
     [TestMethod]
@@ -184,7 +184,7 @@ public class UserSettingServerTests {
         Assert.IsTrue(response.HasNavigationAnimationsEnabled);
         Assert.AreEqual(enabled, response.NavigationAnimationsEnabled);
         fixture.UserSettings.Verify(service => service.Save<ISettings>(), Times.Once);
-        fixture.UiRunner.Verify(service => service.RestartUI(), Times.Never);
+        fixture.UiRunner.Verify(service => service.RestartUIAsync(), Times.Never);
     }
 
     [TestMethod]

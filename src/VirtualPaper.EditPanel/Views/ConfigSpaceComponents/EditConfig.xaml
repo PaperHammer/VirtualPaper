@@ -3,12 +3,12 @@
     x:Class="VirtualPaper.EditPanel.Views.ConfigSpaceComponents.EditConfig"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.EditPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:edit="using:VirtualPaper.Models.EditPanel"
     xmlns:styles="using:VirtualPaper.UIComponent.Styles"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
@@ -43,7 +43,7 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{markup:I18n Key=Project_TemplateConfig}" FontSize="20"/>
+        <TextBlock l:Uids.Uid="Ui_Project_TemplateConfig_Text" FontSize="20"/>
 
         <Grid x:Name="gridAvailableTemplates" Grid.Row="1">
             <Grid.ColumnDefinitions>
@@ -62,7 +62,7 @@
                     Margin="0 20 0 0"
                     Height="30"
                     Width="340"
-                    PlaceholderText="{markup:I18n Key=Project_SearchTemplate}"
+                    l:Uids.Uid="Ui_Project_SearchTemplate_PlaceholderText"
                     FontSize="12"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
@@ -111,13 +111,13 @@
                         Orientation="Vertical"
                         HorizontalAlignment="Stretch"
                         Spacing="6">
-                        <TextBlock Text="{markup:I18n Key=Project_NewProjectName}" FontSize="12"/>
+                        <TextBlock l:Uids.Uid="Ui_Project_NewProjectName_Text" FontSize="12"/>
 
                         <TextBox x:Name="tbProjName"
                             AutomationProperties.AutomationId="Projects.Name"
                             IsSpellCheckEnabled="False"
                             Text="{x:Bind _viewModel.ProjectName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                            PlaceholderText="{markup:I18n Key=Project_NewProjectName_Placeholder}"
+                            l:Uids.Uid="Ui_Project_NewProjectName_Placeholder_PlaceholderText"
                             FontSize="12"/>
 
                         <Grid MinHeight="18">
@@ -132,7 +132,7 @@
                                     Glyph="&#xE783;" />
 
                                 <TextBlock
-                                    Text="{markup:I18n Key=Project_NewName_InvalidTip}"
+                                    l:Uids.Uid="Ui_Project_NewName_InvalidTip_Text"
                                     FontSize="12"
                                     Foreground="Red"/>
                             </StackPanel>
@@ -144,7 +144,7 @@
                         HorizontalAlignment="Stretch"
                         Spacing="6"
                         Visibility="{x:Bind _viewModel.IsWebTemplateSelected, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
-                        <TextBlock Text="{markup:I18n Key=Project_NewDraftPosition}" FontSize="12"/>
+                        <TextBlock l:Uids.Uid="Ui_Project_NewDraftPosition_Text" FontSize="12"/>
 
                         <Grid ColumnSpacing="6">
                             <Grid.ColumnDefinitions>
@@ -160,7 +160,7 @@
                             <Button
                                 Grid.Column="1"
                                 Command="{x:Bind _viewModel.BrowseProjectLocationCommand}"
-                                ToolTipService.ToolTip="{markup:I18n Key=Project_NewDraftPosition_BrowserFolder_Tooltip}">
+                                l:Uids.Uid="Ui_Project_NewDraftPosition_BrowserFolder_Tooltip_ToolTipService_ToolTip">
                                 <FontIcon FontSize="14" Glyph="&#xE8B7;"/>
                             </Button>
                         </Grid>
@@ -177,7 +177,7 @@
                                     Glyph="&#xE783;"/>
 
                                 <TextBlock
-                                    Text="{markup:I18n Key=Project_NewPosition_InvalidTip}"
+                                    l:Uids.Uid="Ui_Project_NewPosition_InvalidTip_Text"
                                     FontSize="12"
                                     Foreground="Red"/>
                             </StackPanel>
@@ -187,7 +187,7 @@
                                 TextWrapping="WrapWholeWords"
                                 Opacity="0.7"
                                 Visibility="{x:Bind _viewModel.IsProjectCreatePathVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
-                                <Run Text="{markup:I18n Key=Project_DeployNewDraft_Desc}"/>
+                                <Run l:Uids.Uid="Ui_Project_DeployNewDraft_Desc_Text"/>
                                 <Run Text=" "/>
                                 <Run Text="{x:Bind _viewModel.ProjectCreatePathText, Mode=OneWay}"/>
                             </TextBlock>

@@ -6,7 +6,14 @@ internal sealed class ApplicationResult {
     public bool OpenedNormally { get; set; }
     public bool ExitedNormally { get; set; }
     public bool ForcedCleanup { get; set; }
+    public string? ExpectedLanguage { get; set; }
+    public string? ActualLanguage { get; set; }
+    public string? PersistedLanguage { get; set; }
+    public bool LanguageVerified { get; set; }
+    public string ProfileMode { get; set; } = "first-run";
+    public bool PersistenceVerified { get; set; }
     public long DurationMilliseconds { get; set; }
     public string? Error { get; set; }
-    public bool Passed => OpenedNormally && ExitedNormally && !ForcedCleanup && Error is null;
+    public bool Passed => OpenedNormally && ExitedNormally && LanguageVerified &&
+        (ProfileMode == "first-run" || PersistenceVerified) && !ForcedCleanup && Error is null;
 }

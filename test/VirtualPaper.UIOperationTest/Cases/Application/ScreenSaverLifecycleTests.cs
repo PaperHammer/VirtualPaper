@@ -20,16 +20,15 @@ internal static class ScreenSaverLifecycleTests {
                     ApplicationUi.Select(ApplicationUi.Find(root, "Library.Tab.ScreenSaver"));
                     ApplicationUi.Find(root, "ScreenSaver.Whitelist.Search");
                 });
-                string log = Directory.GetFiles(Constants.CommonPaths.LogDirUI, "*.txt")
-                    .OrderByDescending(File.GetLastWriteTimeUtc).First();
-                int before = CountNotifications(await AppProcessSession.ReadTextSharedAsync(log));
+                var before = await ReadNotificationCountsAsync();
                 using (var client = new NamedPipeClientStream(".", Constants.PipeControlField.TrayCmdPipeName, PipeDirection.Out, PipeOptions.Asynchronous)) {
                     await client.ConnectAsync(3000);
                     using var writer = new StreamWriter(client);
                     await writer.WriteLineAsync(Constants.PipeControlField.CmdUpdateScrSettings);
                     await writer.FlushAsync();
                 }
-                await AppProcessSession.WaitAsync(async () => CountNotifications(await AppProcessSession.ReadTextSharedAsync(log)) > before,
+                await AppProcessSession.WaitAsync(async () => (await ReadNotificationCountsAsync())
+                    .Any(pair => pair.Value > before.GetValueOrDefault(pair.Key)),
                     $"Screen saver notification acknowledged after visit {iteration}:{visit}");
                 await Task.Run(() => ApplicationUi.Select(ApplicationUi.Find(root, "Nav_LibraryContents")));
             }
@@ -42,5 +41,17 @@ internal static class ScreenSaverLifecycleTests {
         context.Evidence["PageNotificationAndRepeatedCloseVerified"] = true;
     }
 
-    private static int CountNotifications(string log) => log.Split('\n').Count(line => line.Contains("[PipeServer] Received command:", StringComparison.Ordinal));
+    private static async Task<Dictionary<string, int>> ReadNotificationCountsAsync() {
+        // Files roll each second and older files are pruned. Compare individual files,
+        // since deleting an old file can decrease the total while a new command arrives.
+        var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (string path in Directory.GetFiles(Constants.CommonPaths.LogDirUI, "*.txt")) {
+            try {
+                string log = await AppProcessSession.ReadTextSharedAsync(path);
+                counts[path] = log.Split('\n').Count(line => line.Contains("[PipeServer] Received command:", StringComparison.Ordinal));
+            }
+            catch (FileNotFoundException) { } // NLog can prune a file after enumeration.
+        }
+        return counts;
+    }
 }

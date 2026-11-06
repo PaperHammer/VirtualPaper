@@ -40,7 +40,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             string imgFilePath = SelectedStyle.IsCustom ? SelectedStyle.ImagePath! : (await FileUtil.GetAppxFileAsync(SelectedStyle.ImagePath!))?.Path ?? throw new FileNotFoundException("Appx file not found.");
             var input = new StyleTransferData(
                 SourceFilePath, SourceFileSize!, SourceFileExt!, _sourceFileWidth, _sourceFileHeight,
-                imgFilePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty);
+                imgFilePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty,
+                SelectedStyle.NameKey);
             IntelligentCTS?.TrySetResult(input);
         }
 
@@ -85,82 +86,90 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
         public StyleTransferAddTaskViewModel() {
             InitCollectoins();
+            RefreshLanguage();
+        }
+
+        internal void RefreshLanguage() {
+            foreach (var style in StyleOptions) {
+                if (style.NameKey != null) style.Name = LanguageUtil.GetI18n(style.NameKey);
+            }
+            if (BtnVisible) UpdateCardComponentUI();
         }
 
         private void InitCollectoins() {
             StyleOptions = [
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Anime),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_Anime,
                     ThumbnailResourceKey = "PresetStyles_Anime",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/anime.jpg",
                     FileSize = "751 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Cartoon),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_Cartoon,
                     ThumbnailResourceKey = "PresetStyles_Cartoon",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/cartoon.jpg",
                     FileSize = "557 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Gongbi),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_Gongbi,
                     ThumbnailResourceKey = "PresetStyles_Gongbi",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/gongbi.jpg",
                     FileSize = "671 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Pencil),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_Pencil,
                     ThumbnailResourceKey = "PresetStyles_Pencil",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/pencil.jpg",
                     FileSize = "931 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Watercolor),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_Watercolor,
                     ThumbnailResourceKey = "PresetStyles_Watercolor",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/watercolor.jpg",
                     FileSize = "888 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_InkWash),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_InkWash,
                     ThumbnailResourceKey = "PresetStyles_InkWash",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/ink_wash.jpg",
                     FileSize = "602 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_OilPainting),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_OilPainting,
                     ThumbnailResourceKey = "PresetStyles_OilPainting",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/oil_painting.jpg",
                     FileSize = "853 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_ColoredPencil),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_ColoredPencil,
                     ThumbnailResourceKey = "PresetStyles_ColoredPencil",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/colored_pencil.jpg",
                     FileSize = "999 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_OutlineDrawing),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_OutlineDrawing,
                     ThumbnailResourceKey = "PresetStyles_OutlineDrawing",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/outline_drawing.jpg",
                     FileSize = "952 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Ukiyoe),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_Ukiyoe,
                     ThumbnailResourceKey = "PresetStyles_Ukiyoe",
                     ImagePath = "ms-appx:///Assets/intelligent/preset_styles/ukiyo-e.jpg",
                     FileSize = "955 KB",
                     FileExt = ".jpg",
                 },
                 new StyleOptionItem {
-                    Name = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Custom),
+                    NameKey = Constants.I18n.Intelligent_Style_Type_Custom,
                     IsCustom = true,
                 },
             ];

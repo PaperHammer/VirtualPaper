@@ -175,13 +175,26 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         }
 
         [TestMethod]
-        public void SelectedLanguage_WhenLanguageCodeDiffers_UpdatesAndSaves() {
+        public async Task SelectedLanguage_WhenLanguageCodeDiffers_UpdatesAndSaves() {
             _settings.Object.Language = "en-US";
             var lang = new LanguagesModel("Chinese", new[] { "zh-CN" });
-            _vm.SelectedLanguage = lang;
+            await _vm.ChangeLanguageAsync(lang);
 
             Assert.AreEqual("zh-CN", _settings.Object.Language);
             _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
+            Assert.IsTrue(_vm.IsLanguageChangeEnabled);
+        }
+
+        [TestMethod]
+        public async Task ChangeLanguage_WhenSaveFails_RestoresSelectionAndPreference() {
+            var previous = _vm.SelectedLanguage;
+            _userSettingsClient.Setup(u => u.SaveAsync<ISettings>()).ThrowsAsync(new IOException("Settings save failed"));
+
+            await _vm.ChangeLanguageAsync(new LanguagesModel("Chinese", ["zh-CN"]));
+
+            Assert.AreEqual("en-US", _settings.Object.Language);
+            Assert.AreSame(previous, _vm.SelectedLanguage);
+            Assert.IsTrue(_vm.IsLanguageChangeEnabled);
         }
 
         // ── WallpaperDirectoryChangeAsync ────────────────────────────

@@ -72,12 +72,10 @@ internal static class NativeFileDialog {
         nint button = open.Current.NativeWindowHandle;
         nint pickerWindow = button == 0 ? 0 : GetAncestor(button, 2);
         if (button != 0 && open.Current.ClassName == "Button" && GetDlgCtrlID(button) == actionId) {
-            // SaveFilePicker needs outgoing COM calls while validating the path.
-            // UIA Invoke can run in an input-synchronous SendMessage context
-            // and cause RPC_E_CANTCALLOUT_ININPUTSYNCCALL. Queue this button's
-            // native click instead, then require the picker to finish below.
-            SetForegroundWindow(GetAncestor(button, 2));
-            Check(PostMessage(button, 0x00F5, 0, 0), "Native file dialog rejected BM_CLICK on its action button");
+            // A real click transfers focus out of the filename edit and lets
+            // Shell commit its value. It also avoids synchronous UIA/COM calls
+            // inside the native Save handler on Windows Server.
+            ApplicationUi.ClickPointerElement(pickerWindow, open);
         }
         else {
             ((InvokePattern)open.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
@@ -118,6 +116,4 @@ internal static class NativeFileDialog {
     [DllImport("user32.dll")] private static extern nint GetAncestor(nint hwnd, uint flags);
     [DllImport("user32.dll")] private static extern int GetDlgCtrlID(nint hwnd);
     [DllImport("user32.dll")] private static extern bool IsWindow(nint hwnd);
-    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint hwnd);
-    [DllImport("user32.dll", SetLastError = true)] private static extern bool PostMessage(nint hwnd, uint message, nint wParam, nint lParam);
 }

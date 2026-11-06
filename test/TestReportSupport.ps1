@@ -12,7 +12,7 @@ function Get-ProjectTestSpecs {
 }
 
 function Assert-TrxReportPassed {
-    param([Parameter(Mandatory)][string]$Path)
+    param([Parameter(Mandatory)][string]$Path, [switch]$RequireCompleteExecution)
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "Test report is missing: $Path" }
     [xml]$document = Get-Content -LiteralPath $Path -Raw
     $summary = $document.TestRun.ResultSummary
@@ -38,14 +38,17 @@ function Assert-TrxReportPassed {
         $output -match '(?im)^\s*Unhandled exception\.') {
         throw "Test report is incomplete, failed or contains an unhandled exception: $Path"
     }
+    if ($RequireCompleteExecution -and $counts.total -ne $counts.executed) {
+        throw "Release project tests must execute without skips: $Path"
+    }
     [pscustomobject]@{ Path = $Path; Total = $counts.total; Executed = $counts.executed; Passed = $counts.passed }
 }
 
 function Get-ProjectTestReports {
-    param([Parameter(Mandatory)][string]$Root)
+    param([Parameter(Mandatory)][string]$Root, [switch]$RequireCompleteExecution)
     # Read exact raw-report paths. Combined bundles and unrelated artifacts are never inputs.
     foreach ($spec in Get-ProjectTestSpecs) {
-        Assert-TrxReportPassed (Join-Path $Root "$($spec.Artifact)/$($spec.Report)")
+        Assert-TrxReportPassed (Join-Path $Root "$($spec.Artifact)/$($spec.Report)") -RequireCompleteExecution:$RequireCompleteExecution
     }
 }
 

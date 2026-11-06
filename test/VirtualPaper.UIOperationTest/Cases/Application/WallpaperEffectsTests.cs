@@ -36,6 +36,7 @@ internal static class WallpaperEffectsTests {
             if (metadata.Length != 1) return false;
             try {
                 data = JsonSerializer.Deserialize(await File.ReadAllTextAsync(metadata[0]), WpBasicDataContext.Default.WpBasicData);
+                data?.ResolvePaths(metadata[0]);
                 return data != null && File.Exists(data.ThumbnailPath);
             }
             catch (IOException) { return false; }
@@ -59,8 +60,8 @@ internal static class WallpaperEffectsTests {
         using var ownedPlayer = player!;
         string runtimePath = Directory.GetFiles(data!.FolderPath, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories).Single();
         var runtime = JsonNode.Parse(await File.ReadAllTextAsync(runtimePath))!;
-        string effectPath = runtime["WpEffectFilePathUsing"]!.GetValue<string>();
-        string templatePath = runtime["WpEffectFilePathTemplate"]!.GetValue<string>();
+        string effectPath = Path.GetFullPath(runtime["WpEffectFilePathUsing"]!.GetValue<string>(), Path.GetDirectoryName(runtimePath)!);
+        string templatePath = Path.GetFullPath(runtime["WpEffectFilePathTemplate"]!.GetValue<string>(), Path.GetDirectoryName(runtimePath)!);
         string templateBefore = await File.ReadAllTextAsync(templatePath);
         var initial = JsonNode.Parse(await File.ReadAllTextAsync(effectPath))!;
         double initialIntensity = initial["AtmosphereIntensity"]!["Value"]!.GetValue<double>();

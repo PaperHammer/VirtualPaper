@@ -4,7 +4,7 @@ using Workloads.Creation.StaticImg.Core.Utils;
 
 namespace Workloads.Creation.StaticImg.Models {
     public class PaintBrushItem : IEquatable<PaintBrushItem> {
-        public string Name { get; set; } = string.Empty;
+        public string NameUid { get; set; } = string.Empty;
         public BrushType Type { get; set; }
         public Path? Example { get; set; }
         public string ConfigKey { get; set; } = string.Empty;

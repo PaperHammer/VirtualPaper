@@ -19,6 +19,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         bool IsAutoStart { get; set; }
         bool IsFirstRun { get; set; }
         bool NavigationAnimationsEnabled { get; set; }
+        bool RemindUnpreservedIntelligentResults { get; set; }
         #endregion
 
         #region dirs

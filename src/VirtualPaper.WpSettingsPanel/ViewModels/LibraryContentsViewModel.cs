@@ -94,7 +94,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                         var entries = _wallpaperIndexService.Query(_offset, _limit);
                         foreach (var entry in entries) {
                             var jsonPath = entry.JsonPath;
-                            WpBasicData? data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                            WpBasicData? data = await WpBasicData.LoadAsync(jsonPath);
                             if (data == null || !data.IsAvailable())
                                 continue;
 
@@ -719,7 +719,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 var entries = _wallpaperIndexService.Query(_offset, _limit);
                 foreach (var entry in entries) {
                     var jsonPath = entry.JsonPath;
-                    WpBasicData? data = await JsonSaver.LoadAsync<WpBasicData>(jsonPath, WpBasicDataContext.Default);
+                    WpBasicData? data = await WpBasicData.LoadAsync(jsonPath);
                     if (data == null || !data.IsAvailable())
                         continue;
 

@@ -13,6 +13,7 @@ using VirtualPaper.lang;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Services.Interfaces;
 using Wpf.Ui.Controls;
+using Wpf.Ui.Appearance;
 using MenuItem = System.Windows.Controls.MenuItem;
 
 namespace VirtualPaper {
@@ -26,6 +27,10 @@ namespace VirtualPaper {
             IWallpaperControl wpControl,
             IPlayback playbackMonitor) {
             InitializeComponent();
+            // Keep acceptance clicks scoped to their own tray icon when another
+            // VirtualPaper instance is already running on the user's desktop.
+            if (TestProcessEnvironment.IsEnabled)
+                notifyIcon.TooltipText = $"Virtual Paper ({Environment.ProcessId}:{TestProcessEnvironment.SessionId})";
 
             _uiRunnerService = uiRunner;
             _wpControl = wpControl;
@@ -39,6 +44,10 @@ namespace VirtualPaper {
             WindowInteropHelper wndHelper = new(this);
             Constants.Runtime.MainWindowHwnd = wndHelper.Handle;
         }
+
+        internal void ApplyTrayTheme() => ApplicationThemeManager.Apply(trayMenu);
+
+        private void TrayMenu_Opened(object sender, RoutedEventArgs e) => ApplyTrayTheme();
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e) {
             notifyIcon.Dispose();

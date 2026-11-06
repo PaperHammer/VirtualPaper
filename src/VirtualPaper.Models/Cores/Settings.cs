@@ -26,6 +26,7 @@ namespace VirtualPaper.Models.Cores {
         public bool IsAutoStart { get; set; }
         public bool IsFirstRun { get; set; }
         public bool NavigationAnimationsEnabled { get; set; } = true;
+        public bool RemindUnpreservedIntelligentResults { get; set; } = true;
         #endregion
 
         #region dirs
@@ -85,7 +86,7 @@ namespace VirtualPaper.Models.Cores {
             RemoteDesktop = AppWpRunRulesEnum.Pause;
             PowerSaving = AppWpRunRulesEnum.KeepRun;
             IsUpdated = false;
-            SystemBackdrop = AppSystemBackdrop.Default;
+            SystemBackdrop = AppSystemBackdrop.Mica;
 
             IsScreenSaverOn = false;
             IsRunningLock = false;

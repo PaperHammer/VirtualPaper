@@ -17,10 +17,10 @@ if (options.WizardExecutable is not null) {
     File.WriteAllText(options.ResultsFile!, JsonSerializer.Serialize(wizard, new JsonSerializerOptions { WriteIndented = true }));
     return wizard.Passed ? 0 : 1;
 }
-string dataRoot = Path.Combine(options.ResultsFile != null
+string dataRoot = options.DataRoot ?? Path.Combine(options.ResultsFile != null
     ? Path.GetDirectoryName(options.ResultsFile)!
     : Path.Combine(Path.GetTempPath(), $"VirtualPaper-installer-{Guid.NewGuid():N}"), "app-data");
-var report = ApplicationLifecycle.Run(options.InstallDir, options.Timeout, dataRoot);
+var report = ApplicationLifecycle.Run(options.InstallDir, options.Timeout, dataRoot, options.ProfileMode);
 if (options.ResultsFile != null) {
     Directory.CreateDirectory(Path.GetDirectoryName(options.ResultsFile)!);
     File.WriteAllText(options.ResultsFile, JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));

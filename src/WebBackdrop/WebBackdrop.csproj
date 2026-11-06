@@ -92,8 +92,8 @@
 		</Page>
 	</ItemGroup>
 	<ItemGroup>
-		<Content Remove="Assets\monaco-editor-0.55.1\package\**\*" />
-		<PRIResource Remove="Assets\monaco-editor-0.55.1\package\**\*" />
+		<Content Remove="Assets\monaco-editor-*\package\**\*" />
+		<PRIResource Remove="Assets\monaco-editor-*\package\**\*" />
 	</ItemGroup>
 	<ItemGroup>
 		<Content Include="Assets\monaco.html">
@@ -108,7 +108,8 @@
 		<Content Include="Assets\templates\**\*">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
-		<Content Include="Assets\monaco-editor-*\package\**\*" Exclude="Assets\monaco-editor-*\package\dev\**\*;Assets\monaco-editor-*\package\README.md;Assets\monaco-editor-*\package\CHANGELOG.md">
+		<!-- Ship the runtime distribution and its license metadata only. -->
+		<Content Include="Assets\monaco-editor-*\package\min\**\*;Assets\monaco-editor-*\package\LICENSE;Assets\monaco-editor-*\package\DOMPurify.LICENSE;Assets\monaco-editor-*\package\ThirdPartyNotices.txt;Assets\monaco-editor-*\package\package.json">
 			<TargetPath>$([System.Text.RegularExpressions.Regex]::Replace('%(FullPath)', '^.*\\Assets\\monaco-editor-[^\\]+\\package\\', 'Assets\\monaco-editor\\'))</TargetPath>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 			<ExcludeFromResourceIndex>true</ExcludeFromResourceIndex>

@@ -3,10 +3,10 @@
     x:Class="VirtualPaper.AppSettingsPanel.Views.PerformanceSetting"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.AppSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled">
 
@@ -15,7 +15,7 @@
             <StackPanel x:Name="Play" Spacing="8" Orientation="Vertical">
                 <TextBlock x:Name="PlayHeader"
                     Margin="0"
-                    Text="{markup:I18n Key=Settings_Perforemance_Text_Play}"
+                    l:Uids.Uid="Ui_Settings_Perforemance_Text_Play_Text"
                     FontWeight="Bold"/>
 
                 <Grid
@@ -39,11 +39,11 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_Perforemance_Play_OthersFullScreen}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Perforemance_Play_OthersFullScreen_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_Perforemance_Play_OthersFullScreenExplain}"/>
+                            l:Uids.Uid="Ui_Settings_Perforemance_Play_OthersFullScreenExplain_Text"/>
                     </Grid>
 
                     <ComboBox x:Name="OthersFullScreenPlayStatusCombo"
@@ -75,11 +75,11 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_Perforemance_Play_OthersFocus}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Perforemance_Play_OthersFocus_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_Perforemance_Play_OthersFocusExplain}"/>
+                            l:Uids.Uid="Ui_Settings_Perforemance_Play_OthersFocusExplain_Text"/>
                     </Grid>
 
                     <ComboBox x:Name="OthersFocusPlayStatusCombo"
@@ -106,7 +106,7 @@
                     <FontIcon Margin="0 0 20 0" Glyph="&#xED1F;"/>
 
                     <Grid Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="{markup:I18n Key=Settings_Perforemance_Play_Audio}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Perforemance_Play_Audio_Text"/>
                     </Grid>
 
                     <ToggleButton
@@ -124,7 +124,7 @@
 
                 <TextBlock x:Name="LaptopHeader"
                     Margin="0"
-                    Text="{markup:I18n Key=Settings_Perforemance_Text_Laptop}"
+                    l:Uids.Uid="Ui_Settings_Perforemance_Text_Laptop_Text"
                     FontWeight="Bold"/>
 
                 <Grid x:Name="BatteryPoweredn"
@@ -147,11 +147,11 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_Perforemance_Laptop_BatteryPoweredn}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Perforemance_Laptop_BatteryPoweredn_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_Perforemance_Laptop_BatteryPowerednExplain}"/>
+                            l:Uids.Uid="Ui_Settings_Perforemance_Laptop_BatteryPowerednExplain_Text"/>
                     </Grid>
 
                     <ComboBox x:Name="BatteryPowerednPlayStatusCombo"
@@ -183,11 +183,11 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_Perforemance_Laptop_PowerSaving}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Perforemance_Laptop_PowerSaving_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_Perforemance_Laptop_PowerSavingExplain}"/>
+                            l:Uids.Uid="Ui_Settings_Perforemance_Laptop_PowerSavingExplain_Text"/>
                     </Grid>
 
                     <ComboBox x:Name="PowerSavingPlayStatusCombo"
@@ -206,7 +206,7 @@
 
                 <TextBlock x:Name="SystemHeader"
                     Margin="0"
-                    Text="{markup:I18n Key=Settings_Perforemance_Text_System}"
+                    l:Uids.Uid="Ui_Settings_Perforemance_Text_System_Text"
                     FontWeight="Bold"/>
 
                 <Grid x:Name="RemoteDesktop"
@@ -229,11 +229,11 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_Perforemance_System_RemoteDesktop}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Perforemance_System_RemoteDesktop_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_Perforemance_System_RemoteDesktopExplain}"/>
+                            l:Uids.Uid="Ui_Settings_Perforemance_System_RemoteDesktopExplain_Text"/>
                     </Grid>
 
                     <ComboBox x:Name="RemoteDesktopPlayStatusCombo"
@@ -266,15 +266,15 @@
                             <RowDefinition Height="auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="{markup:I18n Key=Settings_Perforemance_System_StatuMechanism}"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Perforemance_System_StatuMechanism_Text"/>
                         <TextBlock 
                             Grid.Row="1" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_Perforemance_System_StatuMechanismExplain_ForPer}"/>
+                            l:Uids.Uid="Ui_Settings_Perforemance_System_StatuMechanismExplain_ForPer_Text"/>
                         <TextBlock 
                             Grid.Row="2" 
                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                            Text="{markup:I18n Key=Settings_Perforemance_System_StatuMechanismExplain_ForAll}"/>
+                            l:Uids.Uid="Ui_Settings_Perforemance_System_StatuMechanismExplain_ForAll_Text"/>
                     </Grid>
 
                     <ComboBox x:Name="StatuMechanismPlayStatusCombo"

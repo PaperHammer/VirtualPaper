@@ -3,10 +3,10 @@
     x:Class="VirtualPaper.PlayerWeb.Core.WebView.Components.General.GeneralInfoEdit"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.PlayerWeb.Core.WebView.Components.General"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:input="using:VirtualPaper.UIComponent.Input"
     mc:Ignorable="d">
 
@@ -23,7 +23,7 @@
                 <StackPanel Orientation="Vertical" Spacing="5">
                     <TextBlock x:Name="titleText" 
                         Style="{StaticResource BodyTextBlockStyle}"
-                        Text="{markup:I18n Key=Text_Edit_Title}"/>
+                        l:Uids.Uid="Ui_Text_Edit_Title_Text"/>
                     <TextBox x:Name="titleValue" 
                         Text="{x:Bind _viewModel.Title, Mode=TwoWay}"
                         TextWrapping="Wrap"/>
@@ -32,7 +32,7 @@
                 <StackPanel Orientation="Vertical" Spacing="5">
                     <TextBlock x:Name="descText" 
                         Style="{StaticResource BodyTextBlockStyle}"
-                        Text="{markup:I18n Key=Text_Edit_Desc}"/>
+                        l:Uids.Uid="Ui_Text_Edit_Desc_Text"/>
                     <TextBox x:Name="descValue" 
                         Text="{x:Bind _viewModel.Desc, Mode=TwoWay}"
                         TextWrapping="Wrap"/>
@@ -41,7 +41,7 @@
                 <StackPanel Orientation="Vertical" Spacing="5">
                     <TextBlock x:Name="tagsText" 
                         Style="{StaticResource BodyTextBlockStyle}"
-                        Text="{markup:I18n Key=Text_Edit_Tags}"/>
+                        l:Uids.Uid="Ui_Text_Edit_Tags_Text"/>
                     <TextBox x:Name="tagInput" 
                         KeyDown="TagInput_KeyDown"
                         TextWrapping="Wrap"/>
@@ -99,7 +99,7 @@
                 Height="33"
                 Margin="10 0 0 0"
                 HorizontalAlignment="Right"
-                Content="{markup:I18n Key=Text_Save}"
+                l:Uids.Uid="Ui_Text_Save_Content"
                 Command="{x:Bind _viewModel.SaveCommand}"/>
         </StackPanel>
     </Grid>

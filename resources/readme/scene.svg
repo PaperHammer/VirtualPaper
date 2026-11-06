@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#12132f"/><stop offset=".66" stop-color="#454575"/><stop offset="1" stop-color="#a18d9c"/></linearGradient>
+    <linearGradient id="lake" x2="0" y2="1"><stop stop-color="#4e5275"/><stop offset="1" stop-color="#151d37"/></linearGradient>
+    <linearGradient id="mount" x2="0" y2="1"><stop stop-color="#8b91b5"/><stop offset="1" stop-color="#41466f"/></linearGradient>
+    <radialGradient id="moonlight"><stop stop-color="#dad8ff" stop-opacity=".16"/><stop offset="1" stop-color="#dad8ff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <path fill="url(#sky)" d="M0 0h960v540H0z"/>
+  <ellipse cx="683" cy="116" rx="167" ry="160" fill="url(#moonlight)"/>
+  <g fill="#eeeaff" opacity=".65"><circle cx="68" cy="65" r="1.2"/><circle cx="134" cy="124" r="1"/><circle cx="202" cy="47" r="1.5"/><circle cx="309" cy="99" r="1"/><circle cx="388" cy="44" r="1.4"/><circle cx="480" cy="118" r="1.1"/><circle cx="552" cy="62" r="1"/><circle cx="770" cy="53" r="1.5"/><circle cx="878" cy="110" r="1.1"/><circle cx="820" cy="179" r="1"/><circle cx="259" cy="160" r="1.2"/><circle cx="928" cy="39" r="1.4"/></g>
+  <circle cx="683" cy="116" r="32" fill="#eeecff"/>
+  <path d="M0 337 126 241 207 288 351 164 490 309 595 223 729 299 856 202 960 286v254H0z" fill="url(#mount)"/>
+  <g fill="#d4d6e6"><path d="m351 164-56 99 49-18 25 11 18-22z"/><path d="m856 202-41 83 34-25 30 14 13-18z"/><path d="m595 223-33 63 37-22 31 27z"/></g>
+  <path d="M0 330 163 281 290 349 466 299 602 338 797 293 960 334v206H0z" fill="#303958"/>
+  <path d="M0 356q180-27 320 8t304-3 336-2v181H0z" fill="url(#lake)"/>
+  <g fill="none" stroke="#a5accc" stroke-linecap="round" opacity=".2"><path d="M623 385h113m-153 16h167m-127 18h100m-160 29h209m-124 26h72"/><path d="M133 396h99m-126 31h160m524-19h91m-465 70h131"/></g>
+  <path d="M0 417q107-8 188 52t236 71H0z" fill="#111d30"/>
+  <path d="M960 419q-105 16-167 60t-212 61h379z" fill="#132337"/>
+  <g fill="#14233a"><path d="m78 192-37 86h19l-37 72h31l-46 76h143l-47-76h30l-36-72h18z"/><path d="m141 267-30 69h16l-31 64h23l-35 62h114l-35-62h23l-30-64h15z"/><path d="m912 229-30 72h17l-33 66h25l-39 70h120l-39-70h25l-32-66h16z"/></g>
+  <path d="M0 483q99-31 222 27l83 30H0z" fill="#0d182a"/>
+  <path d="M960 487q-99-26-212 53h212z" fill="#0d182a"/>
+</svg>

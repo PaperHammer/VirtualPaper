@@ -185,7 +185,8 @@ namespace VirtualPaper.PlayerWeb {
             string playingFile = GetPlayingFile();
             string fullPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, playingFile);
             _webView2.NavigateToLocalPath(new Uri(fullPath).LocalPath,
-                _startArgs.RuntimeType == "RImage3D" ? Path.GetDirectoryName(_startArgs.FilePath!) : null);
+                _startArgs.RuntimeType == "RImage3D" ? Path.GetDirectoryName(_startArgs.FilePath!) : null,
+                GetWallpaperDirectory());
 
             this.Controls.Add(_webView2);
             _webView2.Dock = DockStyle.Fill;
@@ -225,6 +226,12 @@ namespace VirtualPaper.PlayerWeb {
             Program.WriteToParent(new VirtualPaperMessageHwnd() {
                 Hwnd = _webView2.Handle.ToInt64(),
             });
+        }
+
+        private string GetWallpaperDirectory() {
+            // Metadata is stored in the wallpaper's folder, directly under its actual library.
+            return Path.GetDirectoryName(Path.GetDirectoryName(_startArgs.WpBasicDataFilePath))
+                ?? throw new InvalidOperationException("Wallpaper metadata directory is missing.");
         }
 
         string GetWallpaperVirtualPath(string? filePath) {
@@ -439,7 +446,7 @@ namespace VirtualPaper.PlayerWeb {
                     _startArgs = args;
                     if (_startArgs.RuntimeType == "RImage3D") {
                         _webView2.NavigateToLocalPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, GetPlayingFile()),
-                            Path.GetDirectoryName(_startArgs.FilePath!));
+                            Path.GetDirectoryName(_startArgs.FilePath!), GetWallpaperDirectory());
                     }
                     else Run();
                 }

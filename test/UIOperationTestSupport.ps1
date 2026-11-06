@@ -88,7 +88,15 @@ namespace VirtualPaper {
     Resolve-UIOperationEnvironment ([VirtualPaper.TestDesktopProbe]::Read())
 }
 
-function Get-UIOperationReportOutcome($Report) {
+function New-UIOperationSkipReport($Environment) {
+    if ($Environment.Available -cne $false) { throw 'A UI skip requires an unavailable desktop.' }
+    [pscustomobject]@{
+        Status = 'Skipped'; Passed = $false; Skipped = $true; SkipReason = $Environment.ReasonCode
+        ExpectedCount = 0; Results = @(); Environment = $Environment
+    }
+}
+
+function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
     if ($Report.Skipped -eq $true -or $Report.Status -eq 'Skipped') {
         $environment = $Report.Environment
         if ($Report.Status -ne 'Skipped' -or $Report.Skipped -cne $true -or $Report.Passed -cne $false -or
@@ -96,6 +104,7 @@ function Get-UIOperationReportOutcome($Report) {
             $environment.Available -cne $false -or
             $Report.SkipReason -notin @('WindowsRequired','NoInteractiveDesktop','NoDisplay','NoDesktopShell') -or
             $Report.SkipReason -ne $environment.ReasonCode -or [string]::IsNullOrWhiteSpace($environment.Reason)) {
+            if ($AllowFailure) { return 'Failed' }
             throw 'Invalid environment-skip report; failed or executed tests cannot be accepted as skipped.'
         }
         return 'Skipped'
@@ -109,6 +118,7 @@ function Get-UIOperationReportOutcome($Report) {
         @($names | Sort-Object -Unique).Count -ne $names.Count -or $applications.Count -lt 1 -or
         @($applications | Where-Object { $_.Evidence.CoreProcessId -lt 1 -or
             @($_.Evidence.UiProcessIds).Count -lt 1 -or $_.Evidence.ProcessesExitedNormally -ne $true }).Count -gt 0) {
+        if ($AllowFailure) { return 'Failed' }
         throw 'WinUI operation results are missing, incomplete or failed.'
     }
     return 'Passed'

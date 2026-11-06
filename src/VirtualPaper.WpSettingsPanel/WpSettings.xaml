@@ -3,11 +3,11 @@
     x:Class="VirtualPaper.WpSettingsPanel.WpSettings"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.WpSettingsPanel"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     xmlns:models="using:VirtualPaper.Models.Cores"
     xmlns:localViewModel="using:VirtualPaper.WpSettingsPanel.ViewModels"
     xmlns:localUtils="using:VirtualPaper.WpSettingsPanel.Utils"
@@ -43,11 +43,11 @@
             SelectionChanged="NvLocal_SelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Name="Nav_LibraryContents"
-                    Content="{markup:I18n Key=WpSettings_NavTitle_LibraryContents}"
+                    l:Uids.Uid="Ui_WpSettings_NavTitle_LibraryContents_Content"
                     IsSelected="True"/>
                 <NavigationViewItem x:Name="Nav_ScreenSaver"
                     AutomationProperties.AutomationId="Library.Tab.ScreenSaver"
-                    Content="{markup:I18n Key=WpSettings_NavTitle_ScrSettings}"/>
+                    l:Uids.Uid="Ui_WpSettings_NavTitle_ScrSettings_Content"/>
             </NavigationView.MenuItems>
 
             <Grid Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}">
@@ -70,7 +70,7 @@
                                 Width="260"
                                 Height="36"
                                 QueryIcon="Find"
-                                PlaceholderText="{markup:I18n Key=WpLib_Search_Placeholder}"
+                                l:Uids.Uid="Ui_WpLib_Search_Placeholder_PlaceholderText"
                                 VerticalAlignment="Center"
                                 TextChanged="OnFilterChanged"/>
 
@@ -106,7 +106,7 @@
                                                     IsChecked="{x:Bind IsSelected, Mode=TwoWay}">
                                                         <TextBlock
                                                         VerticalAlignment="Center"
-                                                        Text="{x:Bind Label}"/>
+                                                        Text="{x:Bind Label, Mode=OneWay}"/>
                                                     </CheckBox>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -129,12 +129,12 @@
                                 Height="36"
                                 Padding="10 0"
                                 Click="SelectAllLibraryItems_Click"
-                                Content="{markup:I18n Key=WpLib_SelectAll}"/>
+                                l:Uids.Uid="Ui_WpLib_SelectAll_Content"/>
                             <Button
                                 Height="36"
                                 Padding="10 0"
                                 Click="InvertLibrarySelection_Click"
-                                Content="{markup:I18n Key=WpLib_InvertSelection}"/>
+                                l:Uids.Uid="Ui_WpLib_InvertSelection_Content"/>
                             <Button x:Name="DeleteSelectedLibraryItems"
                                 Height="36"
                                 Padding="10 0"
@@ -142,7 +142,7 @@
                                 Click="DeleteSelectedLibraryItems_Click">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon Glyph="&#xE74D;" FontSize="14"/>
-                                    <TextBlock Text="{markup:I18n Key=Text_Delete}"/>
+                                    <TextBlock l:Uids.Uid="Ui_Text_Delete_Text"/>
                                 </StackPanel>
                             </Button>
                             <Button
@@ -152,7 +152,7 @@
                                 Background="Transparent"
                                 BorderThickness="0"
                                 Click="CancelLibrarySelection_Click"
-                                ToolTipService.ToolTip="{markup:I18n Key=Text_Cancel}">
+                                l:Uids.Uid="Ui_Text_Cancel_ToolTipService_ToolTip">
                                 <FontIcon Glyph="&#xE711;" FontSize="14"/>
                             </Button>
                         </StackPanel>
@@ -163,8 +163,8 @@
                         <StackPanel x:Name="LibraryActionButtons" Orientation="Horizontal" Spacing="4">
                             <Button x:Name="AddToLib" Style="{StaticResource ToolbarButtonStyle}"
                                 AutomationProperties.AutomationId="Library.Import"
-                                ToolTipService.ToolTip="{markup:I18n Key=WpLib_AddWallpaper}"
-                                AutomationProperties.Name="{markup:I18n Key=WpLib_AddWallpaper}"
+                                l:Uids.Uid="Ui_WpLib_AddWallpaper_ToolTipService_ToolTip__WpLib_AddWallpaper_AutomationProperties_Name"
+
                                 Command="{x:Bind _viewModel.AddToLibCommand}">
                                 <Viewbox Width="24" Height="24">
                                     <Canvas Width="24" Height="24">
@@ -176,8 +176,8 @@
                             </Button>
                             <Button x:Name="ScreenFitButton" Style="{StaticResource ToolbarButtonStyle}"
                                 AutomationProperties.AutomationId="Library.ScreenFit"
-                                ToolTipService.ToolTip="{markup:I18n Key=ScreenFit_Title}"
-                                AutomationProperties.Name="{markup:I18n Key=ScreenFit_Title}"
+                                l:Uids.Uid="Ui_ScreenFit_Title_ToolTipService_ToolTip__ScreenFit_Title_AutomationProperties_Name"
+
                                 Click="ScreenFit_Click">
                                 <Viewbox Width="24" Height="24">
                                     <Canvas Width="24" Height="24">
@@ -191,8 +191,8 @@
                                 Width="36" Height="36" Padding="0" CornerRadius="8"
                                 Background="Transparent" BorderThickness="0"
                                 VerticalAlignment="Center"
-                                ToolTipService.ToolTip="{markup:I18n Key=WpLib_SelectItems}"
-                                AutomationProperties.Name="{markup:I18n Key=WpLib_SelectItems}"
+                                l:Uids.Uid="Ui_WpLib_SelectItems_ToolTipService_ToolTip__WpLib_SelectItems_AutomationProperties_Name"
+
                                 Click="SelectLibraryItems_Click">
                                 <Viewbox Width="24" Height="24">
                                     <Canvas Width="24" Height="24">
@@ -205,8 +205,8 @@
                         </StackPanel>
                         <Button x:Name="ControlCenter" Style="{StaticResource ToolbarButtonStyle}"
                             AutomationProperties.AutomationId="Library.DisplayControls"
-                            ToolTipService.ToolTip="{markup:I18n Key=WpLib_DisplayControls}"
-                            AutomationProperties.Name="{markup:I18n Key=WpLib_DisplayControls}">
+                            l:Uids.Uid="Ui_WpLib_DisplayControls_ToolTipService_ToolTip__WpLib_DisplayControls_AutomationProperties_Name"
+                            >
                             <Viewbox Width="24" Height="24">
                                 <Canvas Width="24" Height="24">
                                     <Path Style="{StaticResource ToolbarIconStyle}"
@@ -230,24 +230,24 @@
                                                 AutomationProperties.AutomationId="Library.CloseWallpaper"
                                                 Height="33"
                                                 MinWidth="66"
-                                                Content="{markup:I18n Key=Text_Close}"
+                                                l:Uids.Uid="Ui_Text_Close_Content"
                                                 Background="PaleVioletRed"
                                                 Command="{x:Bind _viewModel.WpCloseCommand}"/>
                                             <Button x:Name="BtnDetect"
                                                 Height="33"
                                                 MinWidth="66"
-                                                Content="{markup:I18n Key=Text_Detect}"
+                                                l:Uids.Uid="Ui_Text_Detect_Content"
                                                 Command="{x:Bind _viewModel.WpDetectCommand}"/>
                                             <Button x:Name="BtnIdentify"
                                                 Height="33"
                                                 MinWidth="66"
-                                                Content="{markup:I18n Key=Text_Identify}"
+                                                l:Uids.Uid="Ui_Text_Identify_Content"
                                                 Command="{x:Bind _viewModel.WpIdentifyCommand}"/>
                                             <Button x:Name="BtnAdjust"
                                                 AutomationProperties.AutomationId="Library.AdjustWallpaper"
                                                 Height="33"
                                                 MinWidth="66"
-                                                Content="{markup:I18n Key=Text_Adjust}"
+                                                l:Uids.Uid="Ui_Text_Adjust_Content"
                                                 Command="{x:Bind _viewModel.WpAdjustCommand}"/>
                                         </StackPanel>
 
@@ -290,7 +290,7 @@
                                             Spacing="4">
 
                                             <TextBlock x:Name="WpArrangHeader"
-                                                Text="{markup:I18n Key=Text_WpArrange}"
+                                                l:Uids.Uid="Ui_Text_WpArrange_Text"
                                                 FontWeight="Bold"/>
 
                                             <Grid BorderThickness="1" CornerRadius="5">

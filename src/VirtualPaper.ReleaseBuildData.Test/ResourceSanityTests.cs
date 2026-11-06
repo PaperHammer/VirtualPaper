@@ -47,6 +47,31 @@ namespace VirtualPaper.ReleaseBuildData.Test {
 
         [TestMethod]
         [TestCategory("ReleaseBuild")]
+        [DataRow("zh-CN")]
+        [DataRow("en-US")]
+        public void Plugin_UI_LiveTranslations_MatchTheirSourceStrings(string locale) {
+            string path = Path.Combine(PluginsDir, "UI", "VirtualPaper.UIComponent", "Strings", locale, "Resources.resw");
+            var entries = System.Xml.Linq.XDocument.Load(path).Root!.Elements("data")
+                .ToDictionary(element => (string)element.Attribute("name")!, element => element);
+            // Embed the build's expected mappings in the test assembly; runtime
+            // packages need only the generated resw files, not build metadata.
+            using var mappingStream = typeof(ResourceSanityTests).Assembly.GetManifestResourceStream("VirtualPaper.XamlResources.xml");
+            Assert.IsNotNull(mappingStream, "The test assembly is missing XAML resource mappings.");
+            var mappings = System.Xml.Linq.XDocument.Load(mappingStream).Root!.Elements("Resource")
+                .ToDictionary(element => (string)element.Attribute("Name")!, element => (string)element.Attribute("Source")!);
+            var translatedProperties = entries.Where(pair => pair.Key.StartsWith("Ui_", StringComparison.Ordinal)).ToArray();
+            Assert.IsGreaterThan(0, translatedProperties.Length, "Live XAML translations are missing from the package.");
+            Assert.HasCount(mappings.Count, translatedProperties, "Generated XAML translations do not match the mapping count.");
+            foreach (var (name, source) in mappings) {
+                Assert.IsTrue(entries.TryGetValue(name, out var entry), $"Generated XAML translation is missing: {name}");
+                Assert.IsTrue(entries.TryGetValue(source, out var original), $"Missing source string for {name}: {source}");
+                Assert.AreEqual((string?)original!.Element("value"), (string?)entry!.Element("value"),
+                    $"Live and programmatic translations differ: {name}");
+            }
+        }
+
+        [TestMethod]
+        [TestCategory("ReleaseBuild")]
         public void Plugin_UI_EditPanelConfigs_Exists() {
             ReleaseBuildSanityTests.AssertDirExists(
                 Path.Combine(PluginsDir, "UI", "EditPanelConfigs"),

@@ -33,13 +33,28 @@
 		<PRIResource Remove="Strings\zh-CN\Resources.resw" />
 	</ItemGroup>
 	<ItemGroup>
-		<Content Include="Strings\en-US\Resources.resw">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
-		<Content Include="Strings\zh-CN\Resources.resw">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</Content>
+		<UpToDateCheckInput Include="Strings\**\Resources.resw;Localization\XamlResources.xml;Localization\Generate-Resources.ps1" />
 	</ItemGroup>
+
+	<!-- Source resw files contain translations only. Keep generated property
+	     aliases under obj and copy them using the existing runtime layout. -->
+	<Target Name="GenerateLocalizedResources" BeforeTargets="AssignTargetPaths" Condition="'$(DesignTimeBuild)' != 'true'">
+		<PropertyGroup>
+			<_GeneratedLocalizationRoot>$(IntermediateOutputPath)Localization\Strings</_GeneratedLocalizationRoot>
+		</PropertyGroup>
+		<Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+			Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\Localization\Generate-Resources.ps1&quot; -OutputRoot &quot;$(_GeneratedLocalizationRoot)&quot;" />
+		<ItemGroup>
+			<_GeneratedLocalizationResource Include="$(_GeneratedLocalizationRoot)\**\Resources.resw" />
+			<Content Include="@(_GeneratedLocalizationResource)">
+				<Link>Strings\%(RecursiveDir)%(Filename)%(Extension)</Link>
+				<TargetPath>Strings\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+				<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+				<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+			</Content>
+			<FileWrites Include="@(_GeneratedLocalizationResource)" />
+		</ItemGroup>
+	</Target>
 
 	<ItemGroup>
 		<PackageReference Include="H.Hooks" Version="1.6.0" />

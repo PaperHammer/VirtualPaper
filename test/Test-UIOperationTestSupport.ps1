@@ -21,10 +21,7 @@ function New-SkipReport {
     $state = New-DesktopState
     $state.InputDesktopAccessible = $false
     $environment = Resolve-UIOperationEnvironment ([pscustomobject]$state)
-    [pscustomobject]@{
-        Status = 'Skipped'; Skipped = $true; Passed = $false; SkipReason = $environment.ReasonCode
-        ExpectedCount = 0; Results = @(); Environment = $environment
-    }
+    New-UIOperationSkipReport $environment
 }
 function New-PassReport {
     [pscustomobject]@{

@@ -3,12 +3,12 @@
     x:Class="VirtualPaper.WpSettingsPanel.Views.LibraryContents"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.WpSettingsPanel.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:models="using:VirtualPaper.Models.Cores.Interfaces"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
     mc:Ignorable="d"
     Loaded="Page_Loaded"
     NavigationCacheMode="Enabled">
@@ -107,7 +107,7 @@
                         Opacity="0.65">
                         <FontIcon Glyph="&#xEB9F;" FontSize="36"/>
                         <TextBlock
-                            Text="{markup:I18n Key=Text_NoPreview}"
+                            l:Uids.Uid="Ui_Text_NoPreview_Text"
                             FontSize="12"
                             TextAlignment="Center"/>
                     </StackPanel>
@@ -153,7 +153,7 @@
             Opening="WallpaperContextFlyout_Opening">
             <MenuFlyoutItem
                 Tag="Details"
-                Text="{markup:I18n Key=Text_Details}"
+                l:Uids.Uid="Ui_Text_Details_Text"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE946;" />
@@ -161,7 +161,8 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="UpdateConfig"
-                Text="{markup:I18n Key=Text_UpdateConfig}"
+                AutomationProperties.AutomationId="Library.Item.Update"
+                l:Uids.Uid="Ui_Text_UpdateConfig_Text"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE753;" />
@@ -169,7 +170,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="Edit"
-                Text="{markup:I18n Key=Text_Edit}"
+                l:Uids.Uid="Ui_Text_Edit_Text"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE70F;" />
@@ -177,7 +178,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem 
                 Tag="Preview"                         
-                Text="{markup:I18n Key=Text_Preview}"
+                l:Uids.Uid="Ui_Text_Preview_Text"
                 Click="ContextMenu_Click" >
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE890;" />
@@ -186,7 +187,7 @@
             <MenuFlyoutItem 
                 Tag="Apply" 
                 AutomationProperties.AutomationId="Library.Item.Apply"
-                Text="{markup:I18n Key=Text_Apply}"
+                l:Uids.Uid="Ui_Text_Apply_Text"
                 Click="ContextMenu_Click" >
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE8FB;" />
@@ -194,7 +195,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem 
                 Tag="LockBackground" 
-                Text="{markup:I18n Key=Text_ApplyToLockBG}"
+                l:Uids.Uid="Ui_Text_ApplyToLockBG_Text"
                 Click="ContextMenu_Click" >
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xEE3F;" />
@@ -202,7 +203,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="ShowOnDisk"
-                Text="{markup:I18n Key=Text_ShowOnDisk}"
+                l:Uids.Uid="Ui_Text_ShowOnDisk_Text"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xED25;" />
@@ -211,7 +212,7 @@
             <MenuFlyoutItem
                 Tag="RemoveFromLib"
                 AutomationProperties.AutomationId="Library.Item.Delete"
-                Text="{markup:I18n Key=Text_RemoveFromLib}"
+                l:Uids.Uid="Ui_Text_RemoveFromLib_Text"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE74D;" Foreground="Goldenrod"/>
@@ -254,7 +255,7 @@
             <Grid HorizontalAlignment="Center">
                 <ProgressRing Height="20" Width="20"
                     Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Changing}"/>
-                <TextBlock Text="{markup:I18n Key=Lib_NotAnyMore}" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                <TextBlock l:Uids.Uid="Ui_Lib_NotAnyMore_Text" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                     Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Ready}"/>
             </Grid>
         </StackPanel>

@@ -3,7 +3,7 @@
     x:Class="VirtualPaper.WpSettingsPanel.Views.AddToLib"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:markup="using:VirtualPaper.UIComponent.ArcMarkupExtension"
+    xmlns:l="using:WinUI3Localizer"
     AllowDrop="True"
     DragLeave="Page_DragLeave"
     DragOver="Page_DragOver"
@@ -31,31 +31,31 @@
                 HorizontalAlignment="Center" VerticalAlignment="Center">
                 <FontIcon FontSize="36" Glyph="&#xE8C8;"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                <TextBlock Text="{markup:I18n Key=Add_To_Lib_DragDropFile}"
+                <TextBlock l:Uids.Uid="Ui_Add_To_Lib_DragDropFile_Text"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
             </StackPanel>
             <StackPanel x:Name="AddPanelDrop" Spacing="12"
                 HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
                 <FontIcon FontSize="36" Glyph="&#xE8C8;"
                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                <TextBlock Text="{markup:I18n Key=Add_To_Lib_AddWallpaperDrop}"
+                <TextBlock l:Uids.Uid="Ui_Add_To_Lib_AddWallpaperDrop_Text"
                     Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
             </StackPanel>
             <InfoBar x:Name="RunningAsAdminWarning" Margin="5" IsClosable="False"
                 IsOpen="{x:Bind _viewModel.IsElevated}"
-                Message="{markup:I18n Key=RunningAsAdminWarning}" Severity="Warning"/>
+                l:Uids.Uid="Ui_RunningAsAdminWarning_Message" Severity="Warning"/>
         </Grid>
         <StackPanel Grid.Row="1" Spacing="8">
             <Button x:Name="AddFilesButton" Style="{StaticResource ImportChoiceStyle}"
                 AutomationProperties.AutomationId="Library.Import.Files"
                 Command="{x:Bind _viewModel.HandleAddFilesCommand}"
-                ToolTipService.ToolTip="{markup:I18n Key=Add_To_Lib_SelectFiles_Explain}">
+                l:Uids.Uid="Ui_Add_To_Lib_SelectFiles_Explain_ToolTipService_ToolTip">
                 <Grid ColumnSpacing="10">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                     <FontIcon Glyph="&#xE7C3;" FontSize="20" VerticalAlignment="Top" Margin="0 2 0 0"/>
                     <StackPanel Grid.Column="1" Spacing="4">
-                        <TextBlock Text="{markup:I18n Key=Add_To_Lib_SelectFiles}" FontSize="14" FontWeight="SemiBold"/>
-                        <TextBlock Text="{markup:I18n Key=Add_To_Lib_SelectFiles_Explain}"
+                        <TextBlock l:Uids.Uid="Ui_Add_To_Lib_SelectFiles_Text" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock l:Uids.Uid="Ui_Add_To_Lib_SelectFiles_Explain_Text"
                             FontSize="12" LineHeight="16" TextWrapping="Wrap"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>
@@ -63,13 +63,13 @@
             </Button>
             <Button x:Name="AddFolderButton" Style="{StaticResource ImportChoiceStyle}"
                 Command="{x:Bind _viewModel.HandleAddFoldersCommand}"
-                ToolTipService.ToolTip="{markup:I18n Key=Add_To_Lib_SelectFolderExplain}">
+                l:Uids.Uid="Ui_Add_To_Lib_SelectFolderExplain_ToolTipService_ToolTip">
                 <Grid ColumnSpacing="10">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                     <FontIcon Glyph="&#xED43;" FontSize="20" VerticalAlignment="Top" Margin="0 2 0 0"/>
                     <StackPanel Grid.Column="1" Spacing="4">
-                        <TextBlock Text="{markup:I18n Key=Add_To_Lib_SelectFolder}" FontSize="14" FontWeight="SemiBold"/>
-                        <TextBlock Text="{markup:I18n Key=Add_To_Lib_SelectFolderExplain}"
+                        <TextBlock l:Uids.Uid="Ui_Add_To_Lib_SelectFolder_Text" FontSize="14" FontWeight="SemiBold"/>
+                        <TextBlock l:Uids.Uid="Ui_Add_To_Lib_SelectFolderExplain_Text"
                             FontSize="12" LineHeight="16" TextWrapping="Wrap"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                     </StackPanel>

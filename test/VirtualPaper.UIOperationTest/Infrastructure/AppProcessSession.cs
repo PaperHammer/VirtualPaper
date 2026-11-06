@@ -44,7 +44,10 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
         var settings = new Settings {
             IsFirstRun = false, IsUpdated = false, IsAutoStart = false, IsScreenSaverOn = false,
-            NavigationAnimationsEnabled = true, Language = "en-US"
+            NavigationAnimationsEnabled = true, Language = "en-US",
+            // A host runs several application cases; each Core must get an empty library.
+            WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Guid.NewGuid().ToString("N"),
+                Constants.FolderName.WpStoreFolderName)
         };
         configure?.Invoke(settings);
         UiTestContext.Check(!settings.IsRunningLock, "Desktop locking is excluded from process tests.");
@@ -92,6 +95,9 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             return _ui.MainWindowHandle != IntPtr.Zero;
         }, "Real UI process window");
         _uiIds.Add(_ui!.Id);
+        // Module-only runs do not execute the component cases that activate the
+        // host first. Acquire real focus before operating this process's pickers.
+        await Task.Run(() => ApplicationUi.ActivateOwnedWindowAsync(_ui.MainWindowHandle));
         return _ui;
     }
 
@@ -147,7 +153,31 @@ internal sealed class AppProcessSession : IAsyncDisposable {
 
     public async Task StopAsync() {
         await CloseUiAsync();
+        await RequestShutdownAsync();
+        await WaitForShutdownAsync();
+    }
+
+    // Unlike StopAsync, leave editors open so Core must ask UI for permission.
+    public async Task RequestShutdownAsync() =>
         await _commands.ShutDownAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5));
+
+    public Task WaitForShutdownCancellationAsync(int count) => WaitAsync(async () => {
+        int cancellations = 0;
+        foreach (string path in Directory.EnumerateFiles(Constants.CommonPaths.LogDirCore, "*.txt")) {
+            string text = await ReadTextSharedAsync(path);
+            cancellations += text.Split('\n').Skip(_previousLogLines.GetValueOrDefault(path))
+                .Count(line => line.Contains("Shutdown cancelled by UI.", StringComparison.Ordinal));
+        }
+        return cancellations >= count;
+    }, "Core acknowledged shutdown cancellation");
+
+    public async Task WaitForShutdownAsync() {
+        if (_ui != null) {
+            await _ui.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            UiTestContext.Check(_ui.ExitCode == 0, $"UI exited abnormally: {_ui.ExitCode}");
+            _ui.Dispose();
+            _ui = null;
+        }
         await _core!.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
         UiTestContext.Check(_core.ExitCode == 0, $"Core exited abnormally: {_core.ExitCode}");
     }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation.Peers;
 using Microsoft.UI.Xaml.Automation.Provider;
 using Microsoft.UI.Xaml.Controls;
@@ -89,7 +90,8 @@ internal static class GeneralEffectTests {
 
     private static async Task<Slider> OpenIntensityAsync(UiTestContext context, DropDownButton group) {
         await context.WaitAsync(() => group.IsLoaded && group.ActualWidth > 0, "Load effect option button");
-        group.StartBringIntoView();
+        group.StartBringIntoView(new BringIntoViewOptions { AnimationDesired = false });
+        await context.WaitForLayoutAsync();
         Pattern<IExpandCollapseProvider>(group, PatternInterface.ExpandCollapse).Expand();
         var slider = ((StackPanel)((Flyout)group.Flyout).Content).Children.OfType<Slider>()
             .Single(control => control.Name == "AtmosphereIntensity");
@@ -97,6 +99,12 @@ internal static class GeneralEffectTests {
             await context.WaitAsync(() => slider.IsLoaded && slider.ActualWidth > 0, "Open atmosphere options");
         }
         catch (TimeoutException ex) {
+            context.Evidence["FlyoutState"] = new {
+                GroupLoaded = group.IsLoaded, SliderLoaded = slider.IsLoaded,
+                SliderWidth = slider.ActualWidth,
+                ExpandState = Pattern<IExpandCollapseProvider>(group, PatternInterface.ExpandCollapse).ExpandCollapseState.ToString()
+            };
+            context.SaveFailureSnapshot("atmosphere-open-timeout");
             throw new InvalidOperationException($"Flyout state: groupLoaded={group.IsLoaded}, sliderLoaded={slider.IsLoaded}, " +
                 $"sliderWidth={slider.ActualWidth}, expandState={Pattern<IExpandCollapseProvider>(group, PatternInterface.ExpandCollapse).ExpandCollapseState}", ex);
         }

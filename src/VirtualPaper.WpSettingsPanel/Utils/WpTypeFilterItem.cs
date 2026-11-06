@@ -12,7 +12,12 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
         public IReadOnlyList<FileType> FTypes { get; }
 
         /// <summary>显示文本（i18n 已在 ViewModel 层完成）。</summary>
-        public string Label { get; }
+        public string Label { get; private set; }
+
+        internal void UpdateLabel(string label) {
+            Label = label;
+            OnPropertyChanged(nameof(Label));
+        }
 
         // 使用 bool? 与 CheckBox.IsChecked（也是 Nullable<bool>）类型完全匹配，
         // 确保 x:Bind TwoWay 在选中/取消两个方向均能正常写回。

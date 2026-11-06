@@ -1,5 +1,7 @@
 # Depth Anything V2 Relative Depth
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 `DepthAnythingV2` implements `IDepthEstimate` for the Library 3D depth-wallpaper feature. It uses the general-purpose Depth Anything V2 ViT-S dynamic FP32 ONNX model. The retired MiDaS implementation and its tests have been removed.
 
 - Model: `ai_models/depth_anything_v2_vits_dynamic.onnx`

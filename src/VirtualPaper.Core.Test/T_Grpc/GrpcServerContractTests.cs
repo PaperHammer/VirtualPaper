@@ -83,7 +83,7 @@ public class GrpcServerContractTests {
 
         runner.Verify(x => x.ShowUIAsync(), Times.Once);
         runner.Verify(x => x.CloseUI(), Times.Once);
-        runner.Verify(x => x.RestartUI(), Times.Once);
+        runner.Verify(x => x.RestartUIAsync(), Times.Once);
     }
 
     [TestMethod]

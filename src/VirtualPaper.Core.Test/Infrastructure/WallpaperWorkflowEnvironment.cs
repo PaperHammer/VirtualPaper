@@ -42,6 +42,7 @@ internal sealed class WallpaperWorkflowEnvironment : IDisposable {
         CrossThreadInvoker.Initialize(new InlineContext());
         Environment.StartSettingsServer(server => {
             Environment.Settings.Settings.WallpaperDir = Path.Combine(Environment.Root, "library");
+            Environment.Settings.Settings.BuiltInWallpapersDir = Path.Combine(Environment.Root, "curated wallpapers");
             Environment.Settings.Settings.WallpaperArrangement = WallpaperArrangement.Per;
             Directory.CreateDirectory(Environment.Settings.Settings.WallpaperDir);
             Environment.Settings.Save<ISettings>();

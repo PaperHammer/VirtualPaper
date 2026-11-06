@@ -8,6 +8,8 @@ namespace VirtualPaper.WpSettingsPanel.Utils.Interfaces {
 
         void Initialize(IEnumerable<string> wallpaperInstallDir);
 
+        Task RebuildAsync(IEnumerable<string> wallpaperInstallDir);
+
         IReadOnlyList<WallpaperIndexEntry> Query(int offset, int limit);
 
         bool TryGetValue(string wallpaperUid, out int idx);

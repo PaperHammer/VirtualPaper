@@ -384,6 +384,8 @@ Only the CI `test-ui-operation` job uses `continue-on-error`. It records `steps.
 
 ## Adding coverage
 
+Built-in wallpaper folders are maintained under [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.md). The build includes them in Core output; setup reads `BuiltInWallpapersDir`, falling back to a sibling of `WallpaperDir` for older profiles, and adds missing folders while preserving existing folders and edits. Installer acceptance supplies its isolated data root to setup, so this deployment never writes into the daily library. Core and UI logic tests cover legacy defaults, persisted independent paths through RPC/restart, combined scanning/deletion, preview settings, moving both libraries through one directory picker, index refresh, and preserving source data on failure. An empty payload is supported; real asset playback needs coverage when content is added.
+
 Implement new cases under `Cases` and register them in `App.xaml.cs`; the runner and CI do not maintain hardcoded case names or counts.
 
 - Commit shared test infrastructure and the smallest real scenario separately.

@@ -86,6 +86,12 @@
 		<Content Include="Nlog.config">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Include="..\..\resources\BuiltInWallpapers\**\*"
+		         Exclude="..\..\resources\BuiltInWallpapers\README.md;..\..\resources\BuiltInWallpapers\README.zh-CN.md">
+			<Link>BuiltInWallpapers\%(RecursiveDir)%(Filename)%(Extension)</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
 	</ItemGroup>
 
 	<ItemGroup>

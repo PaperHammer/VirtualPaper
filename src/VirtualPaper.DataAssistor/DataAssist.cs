@@ -210,6 +210,7 @@ namespace VirtualPaper.DataAssistor {
                 RemindUnpreservedIntelligentResults = settings.RemindUnpreservedIntelligentResults,
 
                 WallpaperDir = settings.WallpaperDir,
+                BuiltInWallpapersDir = settings.BuiltInWallpapersDir,
 
                 SelectedMonitor = new Grpc_MonitorData() {
                     DeviceId = settings.SelectedMonitor.DeviceId,
@@ -279,6 +280,8 @@ namespace VirtualPaper.DataAssistor {
                 RemindUnpreservedIntelligentResults = !settings.HasRemindUnpreservedIntelligentResults || settings.RemindUnpreservedIntelligentResults,
 
                 WallpaperDir = settings.WallpaperDir,
+                BuiltInWallpapersDir = settings.HasBuiltInWallpapersDir && !string.IsNullOrWhiteSpace(settings.BuiltInWallpapersDir)
+                    ? settings.BuiltInWallpapersDir : Constants.CommonPaths.GetBuiltInWallpapersDir(settings.WallpaperDir),
 
                 SelectedMonitor = new Monitor() {
                     DeviceId = settings.SelectedMonitor.DeviceId,

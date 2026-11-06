@@ -111,6 +111,8 @@ Existing tags or incompatible releases block progress. An interrupted draft uplo
 
 ## Repository configuration
 
+Prepared built-in wallpapers come from [`resources/BuiltInWallpapers`](../../resources/BuiltInWallpapers/README.md). The solution build carries them in `BuiltInWallpapers/` within Core output, so the shared build artifact and full ISS installer include the same payload. Setup installs missing folders into the saved `BuiltInWallpapersDir`, falling back to a sibling of `WallpaperDir` for older profiles; existing folders are left intact. The single library directory picker moves both directories together and saves both paths. Plugin-only packages do not deploy these resources. Installer tests use an isolated data root for this step as well.
+
 These settings must be configured on GitHub; editing local YAML does not change remote branch rules:
 
 - For `main`, require a PR and the `pre-merge-check` status. If `dev` should also require PRs, configure the same protection there. If direct pushes to `dev` are allowed, they do not trigger these manual workflows; Pre-merge Check still requires an open PR.

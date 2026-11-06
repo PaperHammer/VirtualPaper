@@ -63,6 +63,7 @@ namespace VirtualPaper.Services {
 
         public void Load<T>() {
             if (typeof(T) == typeof(ISettings)) {
+                bool saveRequired = false;
                 try {
                     Settings = _jsonSaver.Load<Settings>(_settingsPath, SettingsContext.Default);
                 }
@@ -70,8 +71,10 @@ namespace VirtualPaper.Services {
                     ArcLog.GetLogger<UserSettingsService>().Error(e);
                     Settings = new Settings();
                     ApplyInstallerLanguage();
-                    Save<ISettings>();
+                    saveRequired = true;
                 }
+                saveRequired |= SettingsDefaults.Apply(Settings);
+                if (saveRequired) Save<ISettings>();
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
                 try {

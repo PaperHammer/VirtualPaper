@@ -125,6 +125,7 @@ namespace VirtualPaper.GrpcServers {
                 InputForward = (Grpc_InputForwardMode)_userSetting.Settings.InputForward,
                 MouseInputMovAlways = _userSetting.Settings.MouseInputMovAlways,
                 WallpaperDir = _userSetting.Settings.WallpaperDir,
+                BuiltInWallpapersDir = _userSetting.Settings.BuiltInWallpapersDir,
                 IsAudioOnlyOnDesktop = _userSetting.Settings.IsAudioOnlyOnDesktop,
                 IsAutoStart = _userSetting.Settings.IsAutoStart,
                 ApplicationTheme = (Grpc_AppTheme)_userSetting.Settings.ApplicationTheme,
@@ -194,6 +195,9 @@ namespace VirtualPaper.GrpcServers {
             _userSetting.Settings.InputForward = (Common.InputForwardMode)request.InputForward;
             _userSetting.Settings.MouseInputMovAlways = request.MouseInputMovAlways;
             _userSetting.Settings.WallpaperDir = request.WallpaperDir;
+            if (request.HasBuiltInWallpapersDir && !string.IsNullOrWhiteSpace(request.BuiltInWallpapersDir)) {
+                _userSetting.Settings.BuiltInWallpapersDir = request.BuiltInWallpapersDir;
+            }
             _userSetting.Settings.IsAudioOnlyOnDesktop = request.IsAudioOnlyOnDesktop;
             _userSetting.Settings.ApplicationTheme = (Common.AppTheme)request.ApplicationTheme;
             _userSetting.Settings.RemoteDesktop = (Common.AppWpRunRulesEnum)request.RemoteDesktopPause;

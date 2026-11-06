@@ -133,8 +133,12 @@ function Invoke-InstallPackage([string] $Language, [string] $Stage) {
     if ((Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA256).Hash -cne $packageHash) {
         throw 'The installer changed between lifecycle stages.'
     }
-    if ($environment.Available) { Invoke-InstallerWizard $InstallerPath -Language $Language -Stage $Stage }
-    else { Invoke-BoundedProcess $InstallerPath "/LANG=$Language /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/$Stage.log`"" }
+    $previousDataRoot = $env:VIRTUALPAPER_TEST_DATA_ROOT
+    try {
+        $env:VIRTUALPAPER_TEST_DATA_ROOT = $preservedRoot
+        if ($environment.Available) { Invoke-InstallerWizard $InstallerPath -Language $Language -Stage $Stage }
+        else { Invoke-BoundedProcess $InstallerPath "/LANG=$Language /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /NOAUTOLAUNCH /DIR=`"$installDir`" /LOG=`"$artifacts/$Stage.log`"" }
+    } finally { $env:VIRTUALPAPER_TEST_DATA_ROOT = $previousDataRoot }
     Assert-InstalledApplication $Language
 }
 

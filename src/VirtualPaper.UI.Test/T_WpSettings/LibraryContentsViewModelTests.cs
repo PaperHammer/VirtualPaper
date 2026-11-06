@@ -31,6 +31,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _settings = new Mock<ISettings>();
 
             _settings.SetupProperty(s => s.WallpaperDir, @"C:\Wallpapers");
+            _settings.SetupProperty(s => s.BuiltInWallpapersDir, @"C:\BuiltInWallpapers");
             _userSettingsClient.Setup(u => u.Settings).Returns(_settings.Object);
             
             SetupWpSettings();

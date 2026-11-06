@@ -12,11 +12,15 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
         public TaskCompletionSource<bool> Initialized { get; } = new();
 
         public async void Initialize(IEnumerable<string> wallpaperInstallDir) {
+            await RebuildAsync(wallpaperInstallDir);
+            Initialized.TrySetResult(true);
+        }
+
+        public async Task RebuildAsync(IEnumerable<string> wallpaperInstallDir) {
             await _index.RebuildIndexAsync(wallpaperInstallDir);
             lock (_lock) {
                 RebuildUidIndexMapUnsafe();
             }
-            Initialized.TrySetResult(true);
         }
 
         public IReadOnlyList<WallpaperIndexEntry> Query(int offset, int limit) {

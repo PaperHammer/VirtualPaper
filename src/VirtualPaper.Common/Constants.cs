@@ -57,6 +57,14 @@ namespace VirtualPaper.Common {
             /// </summary>
             public static string LibraryDir => Path.Combine(AppDataDir, "Library");
 
+            public static string GetBuiltInWallpapersDir(string wallpaperDir) {
+                string libraryRoot = string.IsNullOrWhiteSpace(wallpaperDir)
+                    ? LibraryDir
+                    : Path.GetDirectoryName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(wallpaperDir)))
+                        ?? Path.GetPathRoot(wallpaperDir)!;
+                return Path.Combine(libraryRoot, FolderName.BuiltInWallpapersFolderName);
+            }
+
             public static string AppRulesPath => Path.Combine(AppDataDir, "app_rules.json");
             public static string WallpaperLayoutPath => Path.Combine(AppDataDir, "wallpaper_layout.json");
             public static string UserSettingsPath => Path.Combine(AppDataDir, "user_settings.json");
@@ -105,6 +113,7 @@ namespace VirtualPaper.Common {
             /// 壁纸文件存储目录（本地导入 + 云端下载） + 壁纸自定义配置文件存储目录
             /// </summary>
             public static string WpStoreFolderName => "wallpapers";
+            public const string BuiltInWallpapersFolderName = "BuiltInWallpapers";
         }
 
         public static class WorkingDir {

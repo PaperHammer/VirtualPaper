@@ -243,6 +243,7 @@ public class DataAssistMappingTests {
         Assert.AreEqual(src.AppVersion, restored.AppVersion);
         Assert.AreEqual(src.Language, restored.Language);
         Assert.AreEqual(src.WallpaperDir, restored.WallpaperDir);
+        Assert.AreEqual(src.BuiltInWallpapersDir, restored.BuiltInWallpapersDir);
     }
 
     [TestMethod]
@@ -523,6 +524,7 @@ public class DataAssistMappingTests {
         AppVersion = "1.0.0",
         Language = "zh-CN",
         WallpaperDir = @"C:\Wallpapers",
+        BuiltInWallpapersDir = @"D:\PreparedWallpapers",
         IsUpdated = true,
         IsAutoStart = false,
         IsFirstRun = false,

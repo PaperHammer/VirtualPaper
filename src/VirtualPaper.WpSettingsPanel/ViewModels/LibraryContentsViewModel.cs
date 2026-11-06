@@ -71,14 +71,29 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void InitColletions() {
-            _wallpaperInstallFolders = [
-                _userSettingsClient.Settings.WallpaperDir,
-            ];
+            _wallpaperInstallFolders = GetWallpaperInstallFolders();
             LibraryWallpapers = [];
             _libraryWallpapers = [];
         }
 
+        private string[] GetWallpaperInstallFolders() => WallpaperLibraryDirectories.All
+            .Select(directory => directory.GetPath(_userSettingsClient.Settings)).ToArray();
+
+        private async Task RefreshLibraryLocationAsync() {
+            var folders = GetWallpaperInstallFolders();
+            if (_wallpaperInstallFolders.SequenceEqual(folders, StringComparer.OrdinalIgnoreCase)) return;
+
+            await _wallpaperIndexService.Initialized.Task;
+            await _wallpaperIndexService.RebuildAsync(folders);
+            _wallpaperInstallFolders = folders;
+            LibraryWallpapers.Clear();
+            _libraryWallpapers.Clear();
+            _offset = 0;
+            _isInited = false;
+        }
+
         internal async Task InitContentAsync() {
+            await RefreshLibraryLocationAsync();
             if (_isInited) return;
 
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
@@ -750,7 +765,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly WpSettingsViewModel _wpSettingsViewModel;
         private readonly IWallpaperIndexService _wallpaperIndexService;
         private readonly IGlobalDialogService _dialogService;
-        private List<string> _wallpaperInstallFolders = [];
+        private string[] _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
         private readonly Dictionary<string, ArcWindow> _edits = [];
         private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];

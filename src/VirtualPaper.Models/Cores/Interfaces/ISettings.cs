@@ -27,6 +27,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         /// 壁纸所在位置
         /// </summary>
         string WallpaperDir { get; set; }
+        string BuiltInWallpapersDir { get; set; }
         #endregion
 
         #region play utils

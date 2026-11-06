@@ -15,6 +15,34 @@ namespace VirtualPaper.Core.Test.T_Workflows;
 [TestCategory("Workflow")]
 public class SettingsWorkflowTests {
     [TestMethod]
+    public async Task BuiltInLibrary_LegacyProfileGetsSavedDefault_AndExplicitPathSurvivesRestartAndLegacyClient() {
+        using var environment = new WorkflowEnvironment();
+        string userDirectory = Path.Combine(environment.Root, "moved library", "wallpapers");
+        var legacy = new JsonObject { ["WallpaperDir"] = userDirectory };
+        File.WriteAllText(Constants.CommonPaths.UserSettingsPath, legacy.ToJsonString());
+        environment.StartSettingsServer();
+        using var client = new UserSettingsClient(environment.CreateChannel());
+        string defaultBuiltIn = Constants.CommonPaths.GetBuiltInWallpapersDir(userDirectory);
+        Assert.AreEqual(defaultBuiltIn, client.Settings.BuiltInWallpapersDir);
+        Assert.AreEqual(defaultBuiltIn, JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!["BuiltInWallpapersDir"]!.GetValue<string>());
+
+        string explicitDirectory = Path.Combine(environment.Root, "independent built-ins");
+        client.Settings.BuiltInWallpapersDir = explicitDirectory;
+        await client.SaveAsync<ISettings>();
+        var legacyClient = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
+        var request = await legacyClient.GetSettingsAsync(new Empty());
+        request.ClearBuiltInWallpapersDir();
+        request.WallpaperWaitTime = 74;
+        await legacyClient.SetSettingsAsync(request);
+
+        environment.StartSettingsServer();
+        using var restarted = new UserSettingsClient(environment.CreateChannel());
+        Assert.AreEqual(userDirectory, restarted.Settings.WallpaperDir);
+        Assert.AreEqual(explicitDirectory, restarted.Settings.BuiltInWallpapersDir);
+        Assert.AreEqual(74, restarted.Settings.WallpaperWaitTime);
+    }
+
+    [TestMethod]
     [DataRow(true)]
     [DataRow(false)]
     [Timeout(30000)]

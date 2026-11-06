@@ -31,6 +31,7 @@ namespace VirtualPaper.Models.Cores {
 
         #region dirs
         public string WallpaperDir { get; set; } = string.Empty;
+        public string BuiltInWallpapersDir { get; set; } = string.Empty;
         #endregion
 
         #region play

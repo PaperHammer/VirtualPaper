@@ -111,6 +111,8 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 ## 仓库配置
 
+预处理后的内置壁纸放在 [`resources/BuiltInWallpapers`](../../resources/BuiltInWallpapers/README.zh-CN.md)。解决方案构建将其复制到 Core 输出的 `BuiltInWallpapers/`，共享构建产物及完整 ISS 安装包使用同一份资源。安装程序向已保存的 `BuiltInWallpapersDir` 添加缺失壁纸目录；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，已有目录保持不变。设置页的单一目录入口迁移两个目录并保存两个路径。仅插件更新不部署这些资源；安装验收也通过隔离数据目录验证此步骤。
+
 这些设置必须在 GitHub 上配置，修改本地 YAML 不会改变远端分支规则：
 
 - 为 `main` 要求 PR 和 `pre-merge-check` 状态。若 `dev` 也应仅允许 PR，请配置相同保护。若允许直接推送到 `dev`，推送不会触发这些手动工作流；Pre-merge Check 仍要求一个未合并的 PR。

@@ -16,6 +16,102 @@ namespace VirtualPaper.Core.Test.T_Workflows;
 [TestCategory("Workflow")]
 public class WallpaperWorkflowTests {
     [TestMethod]
+    public async Task MovedLibrary_ReindexesExistingViewModel_AndUsesSavedDirectory() {
+        using var environment = new WallpaperWorkflowEnvironment();
+        await environment.ImportAsync();
+        await MoveImportedWallpaperToBuiltInLibraryAsync(environment);
+        var (library, index) = await environment.OpenLibraryAsync();
+        string previousUser = environment.SettingsClient.Settings.WallpaperDir;
+        string previousBuiltIn = environment.SettingsClient.Settings.BuiltInWallpapersDir;
+        string targetUser = Path.Combine(environment.Environment.Root, "moved library", "wallpapers");
+        string targetBuiltIn = Constants.CommonPaths.GetBuiltInWallpapersDir(targetUser);
+        VirtualPaper.Common.Utils.Files.FileUtil.CopyDirectory(previousUser, targetUser, true);
+        VirtualPaper.Common.Utils.Files.FileUtil.CopyDirectory(previousBuiltIn, targetBuiltIn, true);
+        environment.SettingsClient.Settings.WallpaperDir = targetUser;
+        environment.SettingsClient.Settings.BuiltInWallpapersDir = targetBuiltIn;
+        await environment.SettingsClient.SaveAsync<ISettings>();
+
+        await library.InitContentAsync();
+
+        var entries = index.Query(0, 10);
+        Assert.HasCount(2, entries);
+        Assert.IsTrue(entries.All(entry => entry.FolderPath.StartsWith(Path.GetDirectoryName(targetUser)!, StringComparison.OrdinalIgnoreCase)));
+        await environment.SettingsClient.LoadAsync<ISettings>();
+        Assert.AreEqual(targetUser, environment.SettingsClient.Settings.WallpaperDir);
+        Assert.AreEqual(targetBuiltIn, environment.SettingsClient.Settings.BuiltInWallpapersDir);
+    }
+
+    [TestMethod]
+    public async Task LayoutDirectoryChange_DoesNotRewriteSiblingPathsWithTheSamePrefix() {
+        using var environment = new WallpaperWorkflowEnvironment();
+        string source = environment.SettingsClient.Settings.WallpaperDir;
+        string target = Path.Combine(environment.Environment.Root, "moved", "wallpapers");
+        var own = new WallpaperLayout(Path.Combine(source, "own"), "", "", "RImage");
+        var sibling = new WallpaperLayout(Path.Combine(source + "-backup", "other"), "", "", "RImage");
+        environment.Environment.Settings.WallpaperLayouts.Add(own);
+        environment.Environment.Settings.WallpaperLayouts.Add(sibling);
+        await environment.Client.ChangeWallpaperLayoutFolderPathAsync(source, target);
+        Assert.AreEqual(Path.Combine(target, "own"), own.FolderPath);
+        Assert.AreEqual(Path.Combine(source + "-backup", "other"), sibling.FolderPath);
+    }
+
+    [TestMethod]
+    public async Task BuiltInLibrary_IsScannedAlongsideUserLibrary_AndDeletesIndependently() {
+        using var environment = new WallpaperWorkflowEnvironment();
+        var userWallpaper = await environment.ImportAsync();
+        var builtInWallpaper = await MoveImportedWallpaperToBuiltInLibraryAsync(environment);
+
+        var (library, index) = await environment.OpenLibraryAsync();
+        CollectionAssert.AreEquivalent(new[] { userWallpaper.WallpaperUid, builtInWallpaper.WallpaperUid },
+            index.Query(0, 10).Select(entry => entry.Uid).ToArray());
+        await library.DeleteAsync(builtInWallpaper);
+
+        Assert.IsFalse(Directory.Exists(builtInWallpaper.FolderPath));
+        Assert.IsTrue(File.Exists(userWallpaper.FilePath));
+        var reopened = await environment.OpenLibraryAsync();
+        Assert.AreEqual(userWallpaper.WallpaperUid, reopened.Index.Query(0, 10).Single().Uid);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task PreviewApply_PersistsEffectsBesideTheActualWallpaper(bool builtIn) {
+        using var environment = new WallpaperWorkflowEnvironment();
+        var data = builtIn ? await MoveImportedWallpaperToBuiltInLibraryAsync(environment) : await environment.ImportAsync();
+        var preview = environment.Control.CreateRuntimeData(data.FilePath, data.FolderPath,
+            RuntimeType.RImage, null, true, environment.Monitor.Content)!;
+        const string effect = "{\"KeepMyEffect\":73}";
+        File.WriteAllText(preview.WpEffectFilePathUsing, effect);
+
+        var applied = await environment.Client.SetWallpaperAsync(environment.Monitor, data, RuntimeType.RImage, true,
+            null, preview.WpEffectFilePathUsing, preview.WpEffectFilePathTemplate,
+            preview.WpEffectFilePathTemporary, CancellationToken.None);
+        Assert.IsTrue(applied.IsFinished);
+        string runtimePath = Path.Combine(data.FolderPath, environment.Monitor.Content,
+            RuntimeType.RImage.ToString(), Constants.Field.WpRuntimeDataFileName);
+        var runtime = WpRuntimeData.Load(runtimePath);
+        Assert.AreEqual(data.FolderPath, runtime.FolderPath);
+        Assert.AreEqual(effect, File.ReadAllText(runtime.WpEffectFilePathUsing));
+        foreach (string path in new[] { runtime.WpEffectFilePathUsing, runtime.WpEffectFilePathTemporary, runtime.WpEffectFilePathTemplate }) {
+            Assert.IsTrue(path.StartsWith(data.FolderPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase), path);
+        }
+        if (builtIn) {
+            Assert.IsFalse(Directory.Exists(Path.Combine(environment.SettingsClient.Settings.WallpaperDir,
+                Path.GetFileName(data.FolderPath))), "Built-in preview settings leaked into the user library.");
+        }
+        await environment.SettingsClient.LoadAsync<List<IWallpaperLayout>>();
+        Assert.AreEqual(data.FolderPath, environment.SettingsClient.WallpaperLayouts.Single().FolderPath);
+    }
+
+    private static async Task<IWpBasicData> MoveImportedWallpaperToBuiltInLibraryAsync(WallpaperWorkflowEnvironment environment) {
+        var imported = await environment.ImportAsync();
+        string folder = Path.Combine(environment.SettingsClient.Settings.BuiltInWallpapersDir, Path.GetFileName(imported.FolderPath));
+        VirtualPaper.Common.Utils.Files.FileUtil.CopyDirectory(imported.FolderPath, folder, true);
+        Directory.Delete(imported.FolderPath, recursive: true);
+        return WpBasicData.Load(Path.Combine(folder, Constants.Field.WpBasicDataFileName));
+    }
+
+    [TestMethod]
     [DataRow(FileType.FImage)]
     [DataRow(FileType.FWebZip)]
     public async Task Upgrade18ThroughRpc_PreservesContentAndConvertsEveryRuntime(FileType type) {

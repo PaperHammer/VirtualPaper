@@ -50,6 +50,8 @@ Run workflow 表单中选择的分支决定使用哪一份工作流定义。输�
 
 产物传输使用 `actions/upload-artifact@v7.0.2`、`actions/download-artifact@v8.0.2`，均内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`。这与 Web 播放器脚本测试选择的 Node 版本互相独立。上传继续使用 ZIP 及 `overwrite: true`，下载继续解压，并默认拒绝摘要不匹配的产物。参阅上游[上传版本说明](https://github.com/actions/upload-artifact/releases/tag/v7.0.2)、[下载版本说明](https://github.com/actions/download-artifact/releases/tag/v8.0.2)。修改工作流 action 版本后需新建 **Run workflow**，旧流程的重跑保留原工作流版本。
 
+SDK 配置和 NuGet 缓存使用 `actions/setup-dotnet@v6.1.0`、`actions/cache@v6.1.0` 及更新后的 Node.js 24 依赖；请求的 .NET SDK 仍为 `8.0.x`，缓存键和目录不变。`download-artifact@v8.0.2` 解压 ZIP 时仍可能输出 `DEP0005`（`Buffer()`），包括 Smoke 和 UI job。这是[上游已知问题](https://github.com/actions/download-artifact/issues/484)，[修复 PR](https://github.com/actions/download-artifact/pull/490) 尚未合并。继续保留摘要校验及正常解压，不屏蔽 Node 警告，也不引用未合并的 action 构建。
+
 原始报告使用 `test-results-*`，汇总报告使用 `test-summary-*`，因此下载原始报告时不会包含之前的汇总。上传设置 `overwrite: true`，支持在同一次运行中重跑任务。汇总读取各项目指定的报告路径，不递归收集其他包中的报告。
 
 默认排除分类为 `Integration` 的 ML 测试。勾选 **Also run real model inference tests** 可纳入这些测试。常规 ML 测试需要模型文件，文件缺失时明确跳过，不下载模型；这与可选的 UI ModelInference 用例不同，后者缺少模型会失败。本地运行常规模型集成测试：

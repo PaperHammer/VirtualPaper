@@ -96,7 +96,7 @@ jobs:
       run: ./.github/scripts/validate-test-workflow.ps1
 
     - name: Set up .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: 8.0.x
 
@@ -104,7 +104,7 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Cache NuGet packages
-      uses: actions/cache@v4
+      uses: actions/cache@v6.1.0
       with:
         path: ~/.nuget/packages
         key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props') }}
@@ -312,7 +312,7 @@ jobs:
         Get-ProjectTestReports -Root PrerequisiteTestResults | Format-Table Total, Executed, Passed
 
     - name: Set up .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: 8.0.x
 
@@ -374,7 +374,7 @@ jobs:
         path: .
 
     - name: Set up .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6.1.0
       with:
         dotnet-version: 8.0.x
 

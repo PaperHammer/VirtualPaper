@@ -352,7 +352,7 @@ The default suite does not validate WebView rendering quality, multi-monitor lay
 
 ## Installer smoke and independent UI acceptance
 
-CI artifact upload/download actions use a bundled Node.js 24 runtime and require Actions Runner `2.327.1` or later; this is independent of local/Web script Node.js settings. Transfer version and digest-check details are documented in the [workflow guide](../.github/workflows/README.md).
+CI SDK setup, NuGet cache and artifact upload/download actions use a bundled Node.js 24 runtime and require Actions Runner `2.327.1` or later; this is independent of local/Web script Node.js settings. Transfer version and digest-check details are documented in the [workflow guide](../.github/workflows/README.md).
 
 After build and parallel project tests, CI runs **Installer Smoke** and **Real UI Acceptance** in independent jobs. They do not share an installation directory or installer; UI runs the Release output. The local complete runner executes smoke including uninstall first, then standalone UI to avoid foreground contention.
 

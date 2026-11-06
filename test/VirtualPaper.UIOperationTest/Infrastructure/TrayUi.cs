@@ -16,8 +16,8 @@ internal static class TrayUi {
         (AutomationElement Element, nint Window)? icon = null;
         var discovery = Stopwatch.StartNew();
         TimeSpan lastExpand = TimeSpan.FromSeconds(-1);
-        // Explorer registers notifications asynchronously. Server uses the classic
-        // toolbar, while desktop Windows can expose a XAML notification island.
+        // Explorer registers notifications asynchronously. Shell versions expose
+        // different notification providers and capitalization in button names.
         while (icon == null && discovery.Elapsed < TimeSpan.FromSeconds(10)) {
             try {
                 var windows = TrayWindows();
@@ -32,9 +32,9 @@ internal static class TrayUi {
                             new AndCondition(
                                 new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
                                 new OrCondition(
-                                    new PropertyCondition(AutomationElement.NameProperty, "显示隐藏的图标"),
-                                    new PropertyCondition(AutomationElement.NameProperty, "Show hidden icons"),
-                                    new PropertyCondition(AutomationElement.NameProperty, "Notification Chevron")))));
+                                    new PropertyCondition(AutomationElement.NameProperty, "显示隐藏的图标", PropertyConditionFlags.IgnoreCase),
+                                    new PropertyCondition(AutomationElement.NameProperty, "Show hidden icons", PropertyConditionFlags.IgnoreCase),
+                                    new PropertyCondition(AutomationElement.NameProperty, "Notification Chevron", PropertyConditionFlags.IgnoreCase)))));
                         if (overflow == null || overflow.Current.IsOffscreen) continue;
                         if (overflow.TryGetCurrentPattern(InvokePattern.Pattern, out var invoke)) ((InvokePattern)invoke).Invoke();
                         else ApplicationUi.ClickPointerElement(handle, overflow);

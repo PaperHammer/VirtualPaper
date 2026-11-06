@@ -350,4 +350,8 @@
   <Resource Name="Ui_Settings_General_IntelligentResultReminder_Text.Text" Source="Settings_General_IntelligentResultReminder" />
   <Resource Name="Ui_Settings_General_IntelligentResultReminder_Description.Text" Source="Settings_General_IntelligentResultReminder_Description" />
   <Resource Name="Ui_Settings_General_IntelligentResultReminder_AutomationName.AutomationProperties.Name" Source="Settings_General_IntelligentResultReminder_AutomationName" />
+  <Resource Name="Ui_WpLib_CardType_Image_Text.Text" Source="WpLib_CardType_Image" />
+  <Resource Name="Ui_WpLib_CardType_Gif_Text.Text" Source="WpLib_CardType_Gif" />
+  <Resource Name="Ui_WpLib_CardType_Video_Text.Text" Source="WpLib_TypeFilter_Video" />
+  <Resource Name="Ui_WpLib_CardType_Web_Text.Text" Source="WpLib_CardType_Web" />
 </Resources>

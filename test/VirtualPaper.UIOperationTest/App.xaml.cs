@@ -33,6 +33,8 @@ public partial class App : Application {
             new UiTestCase("Application.NavigationSettings.SaveAndReopen", NavigationSettingsTests.SaveAndReopenAsync),
             new UiTestCase("Application.PerformanceSettings.SaveAndReopen", PerformanceSettingsTests.SaveAndReopenAsync),
             new UiTestCase("Application.WallpaperLibrary.ImportApplyCloseDelete", WallpaperLibraryTests.ImportApplyCloseDeleteAsync),
+            new UiTestCase("Application.WallpaperLibrary.ImportMultipleFormatsAndReopen", BuiltInWallpaperTests.ImportMultipleAsync),
+            new UiTestCase("Application.WallpaperLibrary.BuiltInsApplyRenderAndClose", BuiltInWallpaperTests.ApplyBuiltInsAsync),
             new UiTestCase("Application.ScreenSaver.SettingsAndWhitelist", ScreenSaverTests.SettingsAndWhitelistAsync),
             new UiTestCase("Application.ScreenFit.PreviewCancelApplyAndReopen", ScreenFitTests.PreviewCancelApplyAndReopenAsync),
             new UiTestCase("Application.WallpaperEffects.EditRestoreSaveAndReopen", WallpaperEffectsTests.EditRestoreSaveAndReopenAsync),
@@ -51,7 +53,8 @@ public partial class App : Application {
                 RequiresIdleEnvironment: true)
         };
         if (commandLine.Length == 5 && commandLine[3] == "--module")
-            cases = cases.Where(test => test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
+            cases = cases.Where(test => test.Name == "Application." + commandLine[4] ||
+                test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
         else if (commandLine.Length == 5)
             cases = cases.Where(test => !test.RequiresIdleEnvironment).ToArray();
         else

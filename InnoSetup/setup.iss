@@ -14,8 +14,8 @@
 #define MyAppDataFolderName "VirtualPaper"
 
 [CustomMessages]
-english.DeleteEverythigMsgBox=Do you want to delete data folder?
-chinese.DeleteEverythigMsgBox=您要删除数据文件夹吗？
+english.DeleteEverythigMsgBox=Do you want to delete user settings?
+chinese.DeleteEverythigMsgBox=是否删除用户配置信息？
 english.ClosingMsgBox=Application is running, do you want to close it?
 chinese.ClosingMsgBox=应用程序正在运行，是否关闭？
 
@@ -124,7 +124,7 @@ begin
   begin
     if SuppressibleMsgBox(
          ExpandConstant('{cm:DeleteEverythigMsgBox}') + ' ' +
-         ExpandConstant('{localappdata}\{#MyAppDataFolderName}') + ' ?',
+         ExpandConstant('{localappdata}\{#MyAppDataFolderName}'),
          mbConfirmation, MB_YESNO, IDNO) = IDYES then
     begin
       DelTree(ExpandConstant('{localappdata}\{#MyAppDataFolderName}'), True, True, True);

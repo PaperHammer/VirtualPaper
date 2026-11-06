@@ -260,7 +260,6 @@ namespace VirtualPaper {
                 .AddSingleton<IWindowService, WindowService>()
                 .AddSingleton<INativeService, NativeService>()
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
-                .AddSingleton<IStoragePicker, StoragePickerWrapper>()
                 .AddTransient<IDispatcherTimer, DispatcherTimerAdapter>()
                 .AddTransient<IProcessLauncher, ProcessLauncher>()
                 .AddTransient<IPowerService, PowerService>()

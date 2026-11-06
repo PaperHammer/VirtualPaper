@@ -156,9 +156,11 @@ internal static class WallpaperLibraryTests {
         throw new TimeoutException($"Wallpaper card not found: {uid}\n{string.Join("\n", children)}");
     }
 
-    internal static void OpenItemMenu(nint ownerWindow, AutomationElement root, string uid, string action) {
+    internal static void OpenItemMenu(nint ownerWindow, AutomationElement root, string uid, string action, bool usePointer = false) {
         using var foreground = ApplicationUi.Foreground(ownerWindow);
-        ApplicationUi.OpenContextMenu(ownerWindow, FindItem(root, uid));
+        var item = FindItem(root, uid);
+        if (usePointer) ApplicationUi.OpenPointerContextMenu(ownerWindow, item);
+        else ApplicationUi.OpenContextMenu(ownerWindow, item);
         try { ApplicationUi.Invoke(ApplicationUi.Find(root, action, visible: true)); }
         catch {
             WindowSnapshot.Save(ownerWindow, Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "wallpaper-menu.png"));
@@ -166,7 +168,7 @@ internal static class WallpaperLibraryTests {
         }
     }
 
-    private static Task WaitForItemsAsync(AutomationElement root, int count) => AppProcessSession.WaitAsync(() => Task.Run(() =>
+    internal static Task WaitForItemsAsync(AutomationElement root, int count) => AppProcessSession.WaitAsync(() => Task.Run(() =>
         ApplicationUi.Find(root, "Library.Items").FindAll(TreeScope.Descendants,
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem)).Count == count), $"Library displays {count} items");
 

@@ -195,7 +195,7 @@ namespace VirtualPaper.PlayerWeb {
         private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
             Program.WriteToParent(new VirtualPaperMessageConsole() {
                 MsgType = ConsoleMessageType.Error,
-                Message = $"CoreWebView2 process failed: {e.Reason}"
+                Message = $"CoreWebView2 process failed: {e.ProcessFailedKind}, reason={e.Reason}, exitCode=0x{e.ExitCode:X8}, description={e.ProcessDescription}"
             });
         }
 

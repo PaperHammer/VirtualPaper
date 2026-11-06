@@ -5,13 +5,14 @@ param(
     [string] $ReportPath = 'TestResults/Installer/installer-results.json',
     [ValidateSet('english', 'chinese')][string] $InstallerLanguage = 'english',
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
-    [ValidateRange(10, 600)][int] $TimeoutSeconds = 120,
+    [ValidateRange(10, 600)][int] $TimeoutSeconds = 240,
     [switch] $NoBuild
 )
 $ErrorActionPreference = 'Stop'
 $InstallerLanguage = $InstallerLanguage.ToLowerInvariant()
 $reinstallLanguage = if ($InstallerLanguage -eq 'english') { 'chinese' } else { 'english' }
 . "$PSScriptRoot/InstallerTestSupport.ps1"
+. "$PSScriptRoot/BuiltInWallpaperTestSupport.ps1"
 if (-not $IsWindows) { throw 'Installer lifecycle tests require Windows.' }
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $InstallerPath = (Resolve-Path -LiteralPath $InstallerPath).Path
@@ -38,8 +39,15 @@ $shortcutPaths = @(Get-InstallerShortcutPaths)
 $packageVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($InstallerPath).FileVersion
 $packageHash = (Get-FileHash -LiteralPath $InstallerPath -Algorithm SHA256).Hash
 $installedHashes = @{}
-$preservedRoot = Join-Path $artifacts 'preserved-profile'
-$freshRoot = Join-Path $artifacts 'fresh-profile'
+# Keep runtime profiles outside potentially deep report paths: Inno Setup 6
+# cannot rename payload files beyond MAX_PATH. Preserve profiles with reports below.
+$profilesRoot = Join-Path ([IO.Path]::GetTempPath()) ('VPInstaller-' + [guid]::NewGuid().ToString('N'))
+$preservedRoot = Join-Path $profilesRoot 'p'
+$freshRoot = Join-Path $profilesRoot 'f'
+$payloadRoot = if ($env:RELEASE_BIN_DIR) { $env:RELEASE_BIN_DIR } else {
+    Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net8.0-windows10.0.19041.0"
+}
+$builtIns = New-BuiltInWallpaperAcceptance (Join-Path $payloadRoot 'BuiltInWallpapers') $preservedRoot
 $installedVersion = $null
 $environment = Get-UIOperationEnvironment
 $mode = if ($environment.Available) { 'InteractiveWizard' } else { 'Silent' }
@@ -158,70 +166,89 @@ function Invoke-ApplicationProbe([string] $Stage, [string] $DataRoot, [string] $
 
 $firstAppLanguage = if ($InstallerLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
 $secondAppLanguage = if ($reinstallLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
-$report = Invoke-InstallerLifecycle -Install {
-    Invoke-InstallPackage $InstallerLanguage 'install'
-} -Open {
-    Invoke-ApplicationProbe 'first' $preservedRoot 'prepare' $firstAppLanguage
-} -Reinstall {
-    # Only overwrite this run's registered installation, never relax the initial clean-install guard.
-    $registrations = @(Get-InstallRegistrations $appId)
-    if (-not $registrations.Count -or @($registrations | Where-Object {
-        -not $_.Location -or [IO.Path]::GetFullPath($_.Location).TrimEnd('\') -ine $installDir.TrimEnd('\')
-    }).Count) { throw 'Reinstall must target the installation created by this acceptance run.' }
-    if (@(Get-InstallerTestProcesses).Count) { throw 'Application processes must exit normally before reinstall.' }
-    Invoke-InstallPackage $reinstallLanguage 'reinstall'
-} -VerifyPreserved {
-    Invoke-ApplicationProbe 'preserved' $preservedRoot 'preserve' $firstAppLanguage
-} -OpenFresh {
-    Invoke-ApplicationProbe 'fresh' $freshRoot 'first-run' $secondAppLanguage
-} -Uninstall {
-    $cleanupErrors = [Collections.Generic.List[string]]::new()
-    foreach ($process in @(Get-InstallerTestProcesses)) {
-        try {
-            if (-not $process.HasExited) {
-                $cleanupErrors.Add("Application process $($process.Id) required forced recovery; normal exit was not accepted.")
-                $process.Kill($true)
-                if (-not $process.WaitForExit(10000)) { throw "Process did not stop: $($process.Id)" }
-            }
-        } catch { $cleanupErrors.Add($_.Exception.Message) }
-        finally { $process.Dispose() }
+try {
+    $report = Invoke-InstallerLifecycle -Install {
+        Invoke-InstallPackage $InstallerLanguage 'install'
+        Assert-InitialBuiltInWallpapers $builtIns
+    } -Open {
+        Invoke-ApplicationProbe 'first' $preservedRoot 'prepare' $firstAppLanguage
+    } -Reinstall {
+        # Only overwrite this run's registered installation, never relax the initial clean-install guard.
+        $registrations = @(Get-InstallRegistrations $appId)
+        if (-not $registrations.Count -or @($registrations | Where-Object {
+            -not $_.Location -or [IO.Path]::GetFullPath($_.Location).TrimEnd('\') -ine $installDir.TrimEnd('\')
+        }).Count) { throw 'Reinstall must target the installation created by this acceptance run.' }
+        if (@(Get-InstallerTestProcesses).Count) { throw 'Application processes must exit normally before reinstall.' }
+        Initialize-BuiltInWallpaperReinstallFixture $builtIns
+        Invoke-InstallPackage $reinstallLanguage 'reinstall'
+        Assert-ReinstalledBuiltInWallpapers $builtIns
+    } -VerifyPreserved {
+        Invoke-ApplicationProbe 'preserved' $preservedRoot 'preserve' $firstAppLanguage
+    } -OpenFresh {
+        Invoke-ApplicationProbe 'fresh' $freshRoot 'first-run' $secondAppLanguage
+    } -Uninstall {
+        $cleanupErrors = [Collections.Generic.List[string]]::new()
+        foreach ($process in @(Get-InstallerTestProcesses)) {
+            try {
+                if (-not $process.HasExited) {
+                    $cleanupErrors.Add("Application process $($process.Id) required forced recovery; normal exit was not accepted.")
+                    $process.Kill($true)
+                    if (-not $process.WaitForExit(10000)) { throw "Process did not stop: $($process.Id)" }
+                }
+            } catch { $cleanupErrors.Add($_.Exception.Message) }
+            finally { $process.Dispose() }
+        }
+        # Always try the actual uninstaller after recovery, including when terminating a process failed.
+        if (Test-Path -LiteralPath $installDir) {
+            $uninstallers = @(Get-ChildItem -LiteralPath $installDir -Filter 'unins*.exe' -File)
+            if ($uninstallers.Count -ne 1) { throw "Expected one uninstaller, found $($uninstallers.Count)." }
+            if ($environment.Available) { Invoke-InstallerWizard $uninstallers[0].FullName -Uninstall }
+            else { Invoke-BoundedProcess $uninstallers[0].FullName "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG=`"$artifacts/uninstall.log`"" }
+            # Inno's temporary uninstaller helper may finish deleting files just after the parent exits.
+            $cleanup = [Diagnostics.Stopwatch]::StartNew()
+            do {
+                $files = if (Test-Path -LiteralPath $installDir) {
+                    @(Get-ChildItem -LiteralPath $installDir -Recurse -File -Force)
+                } else { @() }
+                $files = @($files)
+                if ($files.Count -eq 0) { break }
+                Start-Sleep -Milliseconds 200
+            } while ($cleanup.Elapsed.TotalSeconds -lt 10)
+            if ($files.Count -gt 0) { throw "Files remain after uninstall: $($files.FullName -join '; ')" }
+        }
+        if (@(Get-InstallerTestProcesses).Count -ne 0) { $cleanupErrors.Add('Application processes remain after uninstall.') }
+        if (@(Get-InstallRegistrations $appId).Count) { $cleanupErrors.Add('Application uninstall registration remains after uninstall.') }
+        if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) { $cleanupErrors.Add('Start menu shortcut remains after uninstall.') }
+        Assert-UninstalledBuiltInWallpapers $builtIns
+        if ($cleanupErrors.Count) { throw ($cleanupErrors -join [Environment]::NewLine) }
+    } -Environment $environment
+    $report | Add-Member NoteProperty InstallDir $installDir
+    $report | Add-Member NoteProperty Mode $mode
+    $report | Add-Member NoteProperty PackageVersion $packageVersion
+    $report | Add-Member NoteProperty InstalledVersion $installedVersion
+    $report | Add-Member NoteProperty InstallerLanguage $InstallerLanguage
+    $report | Add-Member NoteProperty ReinstallLanguage $reinstallLanguage
+    $report | Add-Member NoteProperty InstallerSha256 $packageHash
+    $report | Add-Member NoteProperty BuiltInWallpapers $builtIns.Evidence
+    $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8
+    if ($env:GITHUB_STEP_SUMMARY) {
+        $sequence = $report.Checks.Name -join ' → '
+        "### Installer smoke: $sequence`n`n| Stage | Result | Duration |`n| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
+        foreach ($check in $report.Checks) {
+            "| $($check.Name) | $($check.Status) | $($check.DurationMilliseconds) ms |" >> $env:GITHUB_STEP_SUMMARY
+        }
     }
-    # Always try the actual uninstaller after recovery, including when terminating a process failed.
-    if (Test-Path -LiteralPath $installDir) {
-        $uninstallers = @(Get-ChildItem -LiteralPath $installDir -Filter 'unins*.exe' -File)
-        if ($uninstallers.Count -ne 1) { throw "Expected one uninstaller, found $($uninstallers.Count)." }
-        if ($environment.Available) { Invoke-InstallerWizard $uninstallers[0].FullName -Uninstall }
-        else { Invoke-BoundedProcess $uninstallers[0].FullName "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /LOG=`"$artifacts/uninstall.log`"" }
-        # Inno's temporary uninstaller helper may finish deleting files just after the parent exits.
-        $cleanup = [Diagnostics.Stopwatch]::StartNew()
-        do {
-            $files = if (Test-Path -LiteralPath $installDir) {
-                @(Get-ChildItem -LiteralPath $installDir -Recurse -File -Force)
-            } else { @() }
-            $files = @($files)
-            if ($files.Count -eq 0) { break }
-            Start-Sleep -Milliseconds 200
-        } while ($cleanup.Elapsed.TotalSeconds -lt 10)
-        if ($files.Count -gt 0) { throw "Files remain after uninstall: $($files.FullName -join '; ')" }
+} finally {
+    # Copy only this run's isolated profiles, then remove their temporary originals.
+    $resolvedProfiles = [IO.Path]::GetFullPath($profilesRoot)
+    $temporaryRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+    if (-not $resolvedProfiles.StartsWith($temporaryRoot, [StringComparison]::OrdinalIgnoreCase) -or
+        [IO.Path]::GetFileName($resolvedProfiles) -notmatch '^VPInstaller-[0-9a-f]{32}$') {
+        throw 'Unexpected installer profile cleanup path.'
     }
-    if (@(Get-InstallerTestProcesses).Count -ne 0) { $cleanupErrors.Add('Application processes remain after uninstall.') }
-    if (@(Get-InstallRegistrations $appId).Count) { $cleanupErrors.Add('Application uninstall registration remains after uninstall.') }
-    if (@($shortcutPaths | Where-Object { Test-Path -LiteralPath $_ }).Count) { $cleanupErrors.Add('Start menu shortcut remains after uninstall.') }
-    if ($cleanupErrors.Count) { throw ($cleanupErrors -join [Environment]::NewLine) }
-} -Environment $environment
-$report | Add-Member NoteProperty InstallDir $installDir
-$report | Add-Member NoteProperty Mode $mode
-$report | Add-Member NoteProperty PackageVersion $packageVersion
-$report | Add-Member NoteProperty InstalledVersion $installedVersion
-$report | Add-Member NoteProperty InstallerLanguage $InstallerLanguage
-$report | Add-Member NoteProperty ReinstallLanguage $reinstallLanguage
-$report | Add-Member NoteProperty InstallerSha256 $packageHash
-$report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $ReportPath -Encoding utf8
-if ($env:GITHUB_STEP_SUMMARY) {
-    $sequence = $report.Checks.Name -join ' → '
-    "### Installer smoke: $sequence`n`n| Stage | Result | Duration |`n| --- | --- | ---: |" >> $env:GITHUB_STEP_SUMMARY
-    foreach ($check in $report.Checks) {
-        "| $($check.Name) | $($check.Status) | $($check.DurationMilliseconds) ms |" >> $env:GITHUB_STEP_SUMMARY
+    if (Test-Path -LiteralPath $resolvedProfiles) {
+        Copy-Item -LiteralPath $resolvedProfiles -Destination (Join-Path $artifacts 'profiles') -Recurse
+        Remove-Item -LiteralPath $resolvedProfiles -Recurse -Force
     }
 }
 Assert-InstallerReportPassed $report

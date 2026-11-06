@@ -13,6 +13,8 @@ Both workflows have independent installer-smoke and real-UI jobs. Installer smok
 
 ## Everyday workflow
 
+The required installer smoke also checks actual built-in deployment, preservation of edited/deleted user files, a relocated saved library directory, missing-item addition and data retention after uninstall. Artifact/Core checks validate the authored collection and decoded media. Independent UI adds one multi-format picker import and playback checks for every prepared item; its non-blocking CI policy is unchanged. See the [test coverage](../../test/README.md#wallpaper-library).
+
 1. Open a feature or fix PR targeting `dev`.
 2. Select **Actions → Pre-merge Check → Run workflow** and enter the PR number.
 3. Merge into `dev` after the check succeeds.

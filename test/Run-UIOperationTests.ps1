@@ -4,7 +4,7 @@ param(
     [string]$ReportPath = (Join-Path ([IO.Path]::GetTempPath()) ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
     [string]$CoreExe,
     [string]$HostExe,
-    [ValidatePattern('^[A-Za-z]+$')][string]$Module,
+    [ValidatePattern('^[A-Za-z][A-Za-z0-9]*(\.[A-Za-z][A-Za-z0-9]*)*$')][string]$Module,
     [ValidateSet('Standard', 'Extended')][string]$Suite = 'Standard',
     [ValidateRange(30, 900)][int]$TimeoutSeconds = 180,
     [switch]$NoBuild

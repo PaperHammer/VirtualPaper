@@ -110,7 +110,7 @@ internal static class InstallerWizard {
         AutomationElement? target = null;
         string? action = null;
         if (uninstall) {
-            if (text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase) || text.Contains("删除数据文件夹", StringComparison.Ordinal)) {
+            if (IsUserDataPrompt(text)) {
                 target = FindDialogButton(buttons, "no", "7"); action = "keep-user-data";
             } else if (text.Contains("completely remove", StringComparison.OrdinalIgnoreCase) || text.Contains("完全移除", StringComparison.Ordinal)) {
                 target = FindDialogButton(buttons, "yes", "6"); action = "confirm-uninstall";
@@ -171,7 +171,7 @@ internal static class InstallerWizard {
             return true;
         }, 0);
         string text = string.Join("\n", labels);
-        var (action, id) = text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase) || text.Contains("删除数据文件夹", StringComparison.Ordinal) ? ("keep-user-data", 7)
+        var (action, id) = IsUserDataPrompt(text) ? ("keep-user-data", 7)
             : text.Contains("completely remove", StringComparison.OrdinalIgnoreCase) || text.Contains("完全移除", StringComparison.Ordinal) ? ("confirm-uninstall", 6)
             : text.Contains("successfully removed", StringComparison.OrdinalIgnoreCase) || text.Contains("已顺利从您的电脑中移除", StringComparison.Ordinal) ? ("acknowledge-uninstall", 1)
             : ((string?)null, 0);
@@ -182,6 +182,10 @@ internal static class InstallerWizard {
         if (!PostMessage(button, 0x00F5, 0, 0)) throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
         return action;
     }
+
+    private static bool IsUserDataPrompt(string text) =>
+        text.Contains("delete user settings", StringComparison.OrdinalIgnoreCase) || text.Contains("删除用户配置信息", StringComparison.Ordinal) ||
+        text.Contains("delete data folder", StringComparison.OrdinalIgnoreCase) || text.Contains("删除数据文件夹", StringComparison.Ordinal);
 
     private static AutomationElement? Find(AutomationElement[] controls, string name) =>
         controls.FirstOrDefault(e => Normalize(e.Current.Name) == name);

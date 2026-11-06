@@ -7,10 +7,18 @@ namespace VirtualPaper.UIOperationTest.Infrastructure;
 
 internal static class NativeFileDialog {
     public static void OpenFile(Process ui, nint ownerWindow, string path) => ChooseFile(ui, ownerWindow, path);
+    public static void OpenFiles(Process ui, nint ownerWindow, IReadOnlyList<string> paths, Action<string>? trace = null) {
+        Check(paths.Count > 1, "Multi-file acceptance requires more than one input.");
+        string directory = Path.GetDirectoryName(Path.GetFullPath(paths[0]))!;
+        Check(paths.All(path => string.Equals(Path.GetDirectoryName(Path.GetFullPath(path)), directory, StringComparison.OrdinalIgnoreCase)),
+            "Native multi-file inputs must share a directory.");
+        ChooseFile(ui, ownerWindow, "", directory, trace, paths.Select(Path.GetFileName).ToArray()!);
+    }
     public static void SaveFile(Process ui, nint ownerWindow, string path) => ChooseFile(ui, ownerWindow, path);
     public static void Cancel(Process ui, nint ownerWindow) => ChooseFile(ui, ownerWindow, null);
 
-    private static void ChooseFile(Process ui, nint ownerWindow, string? path) {
+    private static void ChooseFile(Process ui, nint ownerWindow, string? path, string? directory = null,
+        Action<string>? trace = null, IReadOnlyList<string>? files = null) {
         var timer = Stopwatch.StartNew();
         AutomationElement? dialog = null;
         var candidates = new HashSet<string>();
@@ -46,12 +54,74 @@ internal static class NativeFileDialog {
         }
         var filename = FindFilename(dialog)
             ?? throw new InvalidOperationException("Native file dialog has no filename edit control");
-        if (path != null) {
+        trace?.Invoke($"Filename: class={filename.Current.ClassName}, id={filename.Current.AutomationId}, directoryNavigation={directory != null}");
+        if (directory != null) {
+            // Navigate once, then select real Shell rows. Repeating long absolute
+            // paths can exceed the native filename edit's text limit.
+            ApplicationUi.SetText(filename, directory);
+            trace?.Invoke("Opening the multi-file input directory.");
+            InvokeAction(dialog, 1);
+            var navigation = Stopwatch.StartNew();
+            while (navigation.Elapsed < TimeSpan.FromSeconds(5)) {
+                filename = FindFilename(dialog) ?? throw new InvalidOperationException("The picker closed while navigating the input folder.");
+                if (((ValuePattern)filename.GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Length == 0) break;
+                Thread.Sleep(50);
+            }
+            Check(((ValuePattern)filename.GetCurrentPattern(ValuePattern.Pattern)).Current.Value.Length == 0,
+                "The native picker did not navigate to the multi-file input folder.");
+            trace?.Invoke("Input directory navigation completed.");
+        }
+        if (files != null) {
+            AutomationElement[] selected = [];
+            var rowsReady = Stopwatch.StartNew();
+            while (rowsReady.Elapsed < TimeSpan.FromSeconds(5)) {
+                var rows = dialog.FindAll(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem)).Cast<AutomationElement>().ToArray();
+                selected = files.Select(file => rows.SingleOrDefault(row => row.Current.Name == file ||
+                    row.Current.Name == Path.GetFileNameWithoutExtension(file))).OfType<AutomationElement>().ToArray();
+                if (selected.Length == files.Count) break;
+                Thread.Sleep(50);
+            }
+            Check(selected.Length == files.Count, "The native picker did not show all multi-file input rows.");
+            for (int i = 0; i < selected.Length; i++) {
+                var selection = (SelectionItemPattern)selected[i].GetCurrentPattern(SelectionItemPattern.Pattern);
+                if (i == 0) selection.Select(); else selection.AddToSelection();
+            }
+            Check(selected.All(row => ((SelectionItemPattern)row.GetCurrentPattern(SelectionItemPattern.Pattern)).Current.IsSelected),
+                "Native picker did not retain every selected file row.");
+            trace?.Invoke($"Selected {selected.Length} actual Shell file rows.");
+        }
+        else if (path != null) {
             ApplicationUi.SetText(filename, path);
             Check(((ValuePattern)filename.GetCurrentPattern(ValuePattern.Pattern)).Current.Value == path,
                 "Native file dialog did not retain the test filename");
+            trace?.Invoke($"Filename selection retained ({path.Length} characters).");
         }
         int actionId = path == null ? 2 : 1;
+        nint pickerWindow = InvokeAction(dialog, actionId);
+        trace?.Invoke($"Action {actionId} submitted.");
+        var submitted = Stopwatch.StartNew();
+        while (submitted.Elapsed < TimeSpan.FromSeconds(5)) {
+            if (pickerWindow != 0 && !IsWindow(pickerWindow)) return;
+            try {
+                if (FindFilename(dialog) == null) return;
+            }
+            catch (ElementNotAvailableException) { return; }
+            catch (COMException ex) when (pickerWindow != 0 &&
+                (ex.HResult == unchecked((int)0x80010012) || ex.HResult == unchecked((int)0x80010108))) {
+                // The picker broker can exit while UIA traverses its retiring provider.
+            }
+            Thread.Sleep(100);
+        }
+        var remaining = dialog.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
+            .Where(item => item.Current.ControlType == ControlType.Edit || item.Current.ControlType == ControlType.Button
+                || item.Current.ControlType == ControlType.Text)
+            .Select(item => $"{item.Current.ControlType.ProgrammaticName} {item.Current.AutomationId} {item.Current.Name}" +
+                (item.TryGetCurrentPattern(ValuePattern.Pattern, out var value) ? $" = {((ValuePattern)value).Current.Value}" : ""));
+        throw new InvalidOperationException($"File dialog did not finish action {actionId}:\n{string.Join("\n", remaining)}");
+    }
+
+    private static nint InvokeAction(AutomationElement dialog, int actionId) {
         // Shell list items also use ID 1. Require a button type or the native
         // Button class; some Windows picker versions expose Open as a Pane
         // with no UIA patterns. Keep submission local to this owned control.
@@ -80,26 +150,7 @@ internal static class NativeFileDialog {
         else {
             ((InvokePattern)open.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
         }
-        var submitted = Stopwatch.StartNew();
-        while (submitted.Elapsed < TimeSpan.FromSeconds(5)) {
-            if (pickerWindow != 0 && !IsWindow(pickerWindow)) return;
-            try {
-                if (FindFilename(dialog) == null) return;
-            }
-            catch (ElementNotAvailableException) { return; }
-            catch (COMException ex) when (pickerWindow != 0 &&
-                (ex.HResult == unchecked((int)0x80010012) || ex.HResult == unchecked((int)0x80010108))) {
-                // The picker broker can exit while UIA traverses its retiring
-                // provider. Still require its actual native window to close.
-            }
-            Thread.Sleep(100);
-        }
-        var remaining = dialog.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
-            .Where(item => item.Current.ControlType == ControlType.Edit || item.Current.ControlType == ControlType.Button
-                || item.Current.ControlType == ControlType.Text)
-            .Select(item => $"{item.Current.ControlType.ProgrammaticName} {item.Current.AutomationId} {item.Current.Name}" +
-                (item.TryGetCurrentPattern(ValuePattern.Pattern, out var value) ? $" = {((ValuePattern)value).Current.Value}" : ""));
-        throw new InvalidOperationException($"File dialog did not finish action {actionId}:\n{string.Join("\n", remaining)}");
+        return pickerWindow;
     }
 
     private static AutomationElement? FindFilename(AutomationElement root) {

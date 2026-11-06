@@ -647,6 +647,9 @@ Author: PaperHammer</value>
   <data name="WpLib_TypeFilter_All" xml:space="preserve">
     <value>Type</value>
   </data>
+  <data name="WpLib_CardType_Image" xml:space="preserve"><value>Image</value></data>
+  <data name="WpLib_CardType_Gif" xml:space="preserve"><value>GIF</value></data>
+  <data name="WpLib_CardType_Web" xml:space="preserve"><value>Web</value></data>
   <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
     <value>Static Image</value>
   </data>

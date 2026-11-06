@@ -647,6 +647,9 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="WpLib_TypeFilter_All" xml:space="preserve">
     <value>类型</value>
   </data>
+  <data name="WpLib_CardType_Image" xml:space="preserve"><value>图片</value></data>
+  <data name="WpLib_CardType_Gif" xml:space="preserve"><value>动图</value></data>
+  <data name="WpLib_CardType_Web" xml:space="preserve"><value>网页</value></data>
   <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
     <value>静态图像</value>
   </data>

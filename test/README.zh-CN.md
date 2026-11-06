@@ -67,7 +67,9 @@ flowchart LR
     F --> G[汇总]
 ```
 
-本地失败阻止后续阶段，一旦尝试安装仍执行清理。本地使用工作区代码，CI 使用 PR 合并快照或设置新版本后的构建。两个 CI 工作流仅对独立 UI job 使用 `continue-on-error`，汇总显式添加 `-AllowUIFailure`；必需项目测试和冒烟仍阻塞。本地默认仍拒绝 UI 失败，不修改 GitHub 状态或版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+本地失败阻止后续阶段，一旦尝试安装仍执行清理。本地使用工作区代码，CI 使用 PR 合并快照或设置新版本后的构建。安装冒烟默认每阶段最多 240 秒（安装向导为 230 秒），完整安装包解压与应用启动分别限时。两个 CI 工作流仅对独立 UI job 使用 `continue-on-error`，汇总显式添加 `-AllowUIFailure`；必需项目测试和冒烟仍阻塞。本地默认仍拒绝 UI 失败，不修改 GitHub 状态或版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+
+安装验收使用较短的隔离临时配置路径，避免超出 Inno Setup 6 的路径限制。验收结束后复制到安装报告旁的 `.artifacts/profiles` 目录，再清理临时目录。
 
 可用 `-ResultsRoot <新目录>` 指定完整链路的报告根目录。其中保留 `build.log`、`workflow-contracts.log`、8 份 `test-*.log`、`installer-build.log`、`installer-smoke.log`、`ui-acceptance.log`、本轮 `installer-package` 和原始 `test-results-*` 报告。失败报告也会保留。按发布要求校验一轮已完成的结果：
 
@@ -113,6 +115,8 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Suite Extended
 # 运行单个应用模块。默认测试集不包含可选集成用例。
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module WallpaperLibrary
+# 只运行一个具体用例，不重复整个模块：
+./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Module WallpaperLibrary.ImportMultipleFormatsAndReopen
 # 安装目录中必须已有 Real-ESRGAN 模型，不会自动下载。
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```
@@ -123,7 +127,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 默认总超时为 180 秒，`-Suite Extended` 为 900 秒。可按需将 `-TimeoutSeconds` 设置为 30 至 900。报告旁的 `.artifacts` 目录会保留隔离设置和 Core/UI 日志，临时运行目录会被清理。
 
-标准测试集包含 17 个用例。扩展测试集在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。Real-ESRGAN 和 Depth Anything 模型必须预先安装；缺失模型会使扩展验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
+标准测试集包含 19 个用例。扩展测试集在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。内置 3D 壁纸用例需要构建中的 Depth Anything 模型来校验缓存键，但不需要重新推理。扩展集的 Real-ESRGAN 和 Depth Anything 模型也必须预先安装；缺失模型会使验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
 
 ### 没有可用桌面的机器
 
@@ -184,6 +188,12 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 卡片容器提供基于壁纸 UID 的 AutomationId。键盘和鼠标菜单使用同一正式处理逻辑。原生输入仅限测试拥有的窗口，临时置顶状态会恢复，不会关闭其他桌面应用。
 
 真实选择器必须成功提交，不替换存储服务。菜单查找失败时，会在产物中保留所属窗口截图。清理会等待 WebView2 释放延迟占用的缓存句柄。仅凭桌面挂载和退出断言，不能确认 3D 渲染质量或暂停正确性；这些由 Rendering 模块单独覆盖。
+
+`Application.WallpaperLibrary.ImportMultipleFormatsAndReopen` 在**同一个真实系统选择框中一次提交**这组素材的图片、GIF、视频和 Web 压缩包。检查每项文件及缩略图、唯一标识、媒体类型、源文件哈希保持不变，并重开 UI 检查所有卡片仍存在。
+
+`Application.WallpaperLibrary.BuiltInsApplyRenderAndClose` 在 Core 启动前将处理好的素材准备到隔离内置库中。通过真实壁纸库发现全部卡片，逐项应用，检查 WorkerW 挂载与非空渲染截图，GIF／视频／Web 还要求实际像素随时间变化。通过显示器关闭控件检查布局清空及所属播放器退出；播放器当前实现会主动终止其进程。另将一张内置图片按 3D 应用，检查预生成深度缓存得到保留。这里准备的文件不能证明 ISS 安装成功，实际部署由独立的强制安装冒烟验收验证。
+
+原有单图片导入／升级／删除，以及真实深度推理／暂停恢复用例继续保留；预处理素材不能替代这些不同链路。播放检查复用已有选择器、壁纸及截图助手。
 
 ### 屏保设置
 
@@ -384,7 +394,11 @@ CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，�
 
 ## 添加覆盖
 
-内置壁纸文件夹维护在 [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.zh-CN.md)。构建时带入 Core 输出，安装器读取 `BuiltInWallpapersDir`；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，添加缺失文件夹并保留已有目录及用户修改。安装验收向安装程序传递隔离数据目录，不写入日常壁纸库。Core 和 UI 逻辑测试覆盖旧配置默认值、独立路径经 RPC 保存及重启恢复、双目录扫描/删除、预览配置落盘、单一入口下的双目录迁移、索引刷新及失败时保留原数据。允许资源目录为空；实际素材加入后还需验收播放效果。
+内置壁纸文件夹维护在 [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.zh-CN.md)。构建时带入 Core 输出，安装器读取 `BuiltInWallpapersDir`；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，添加缺失文件夹并保留已有目录及用户修改。安装验收向安装程序传递隔离数据目录，不写入日常壁纸库。Core 和 UI 逻辑测试覆盖旧配置默认值、独立路径经 RPC 保存及重启恢复、双目录扫描/删除、预览配置落盘、单一入口下的双目录迁移、索引刷新及失败时保留原数据。
+
+产物测试嵌入源元数据清单，构建漏掉文件夹或残留旧条目都会失败。Core 流程测试搬到新目录后解码实际素材（含动态帧和预生成深度图），与用户条目共同扫描，并检查原始素材及用户数据没有变化。真实 UI 按上文验证多文件导入和预处理条目播放。
+
+安装冒烟先验证初次完整部署，再移动隔离内置库、修改已有条目标题、添加用户文件、删除已有说明文件，并移走另一整项。真实覆盖安装必须遵循保存的目录，完整保留已修改文件夹（包括用户删除的文件），并补入缺失条目；卸载必须保留该库。检查位于强制冒烟阶段，报告中的 `BuiltInWallpapers` 保存对应证据。`Test-BuiltInWallpaperTestSupport.ps1` 不安装程序，仅检查校验器的正反例，不模拟或替代真实 ISS 验收。
 
 在 `Cases` 下实现新用例，并在 `App.xaml.cs` 中注册；运行脚本和 CI 不维护硬编码用例名称或数量。
 

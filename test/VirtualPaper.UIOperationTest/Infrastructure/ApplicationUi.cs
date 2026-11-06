@@ -68,12 +68,15 @@ internal static class ApplicationUi {
         BringIntoView(element);
         Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the test UI");
         element.SetFocus();
-        keybd_event(0x10, 0, 0, 0);
-        try {
-            keybd_event(0x79, 0, 0, 0);
-            keybd_event(0x79, 0, 2, 0);
-        }
-        finally { keybd_event(0x10, 0, 2, 0); }
+        var keys = new NativeInput[] {
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x10 } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x79 } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x79, Flags = 2 } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x10, Flags = 2 } } }
+        };
+        Check(GetForegroundWindow() == ownerWindow, "The wallpaper window lost focus before opening its menu.");
+        Check(SendInput((uint)keys.Length, keys, Marshal.SizeOf<NativeInput>()) == keys.Length,
+            "Could not send the complete context-menu key sequence.");
     }
 
     public static void OpenPointerContextMenu(nint ownerWindow, AutomationElement element) => ClickPointer(ownerWindow, element, 0x0008, 0x0010);

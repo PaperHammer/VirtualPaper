@@ -67,7 +67,9 @@ flowchart LR
     F --> G[Summary]
 ```
 
-Failures block later local phases; installation cleanup still runs. Local execution uses the working tree; CI uses the PR snapshot or versioned release build. Both CI workflows tolerate only the independent UI job through `continue-on-error` and summary `-AllowUIFailure`; required project/installer stages remain blocking. Local defaults still reject UI failures. Local testing does not set PR status or synchronize versions. See the [workflow guide](../.github/workflows/README.md).
+Failures block later local phases; installation cleanup still runs. Local execution uses the working tree; CI uses the PR snapshot or versioned release build. Installer smoke allows 240 seconds per stage by default (the wizard uses 230 seconds); full-package extraction is bounded separately from the application startup checks. Both CI workflows tolerate only the independent UI job through `continue-on-error` and summary `-AllowUIFailure`; required project/installer stages remain blocking. Local defaults still reject UI failures. Local testing does not set PR status or synchronize versions. See the [workflow guide](../.github/workflows/README.md).
+
+Installer runtime profiles use short, isolated temporary paths to stay within Inno Setup 6 path limits. They are copied to the installer report's `.artifacts/profiles` directory after acceptance, then removed from the temporary location.
 
 Use `-ResultsRoot <new-directory>` to choose the complete run's report root. It contains `build.log`, `workflow-contracts.log`, eight `test-*.log` files, `installer-build.log`, `installer-smoke.log`, `ui-acceptance.log`, the fresh `installer-package`, and raw `test-results-*` reports. Failed reports are retained. To validate a completed run with the release no-skip gate:
 
@@ -113,6 +115,8 @@ Use PowerShell 7.2 or later on a Windows desktop with a graphical session:
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Suite Extended
 # Run one application module. The default suite excludes opt-in integration cases.
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module WallpaperLibrary
+# Select one exact application case without repeating its entire module:
+./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Module WallpaperLibrary.ImportMultipleFormatsAndReopen
 # Requires an existing Real-ESRGAN model in the installation; no automatic download.
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```
@@ -123,7 +127,7 @@ Use `-ReportPath` to specify a new JSON report path; the default is in the syste
 
 The default overall timeout is 180 seconds, or 900 seconds for `-Suite Extended`. Set `-TimeoutSeconds` to a value from 30 to 900 as needed. The report's adjacent `.artifacts` directory retains isolated settings and Core/UI logs; temporary runtime directories are cleaned up.
 
-The standard suite contains 17 cases. The extended suite contains those cases plus real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
+The standard suite contains 19 cases; prepared 3D playback needs the bundled Depth Anything model to validate its cache key, without running inference. The extended suite contains those cases plus real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
 
 ### Machines without a usable desktop
 
@@ -184,6 +188,12 @@ Each real control is changed, confirmed through Core RPC and persisted JSON, and
 Card containers expose an AutomationId based on wallpaper UID. Keyboard and mouse menus use the same production handler. Native input is restricted to owned test windows; any temporary topmost state is restored. Other desktop applications are not closed.
 
 The real picker must submit successfully; storage services are not replaced. Menu lookup failures retain an owned-window screenshot in the artifacts. Cleanup waits for WebView2 to release delayed cache handles. Desktop mounting and shutdown assertions alone do not establish 3D rendering quality or pause correctness; the Rendering module covers those separately.
+
+`Application.WallpaperLibrary.ImportMultipleFormatsAndReopen` selects the collection's image, GIF, video and Web-archive inputs in **one real native picker submission**, using actual Shell row multi-selection. It verifies every imported file/thumbnail, unique identities, all media types, unchanged input hashes, and every card after reopening UI.
+
+`Application.WallpaperLibrary.BuiltInsApplyRenderAndClose` arranges the prepared collection in an isolated built-in library before Core starts. It discovers every card through the real library, applies each item, checks WorkerW attachment and a nonblank player screenshot, and requires changing rendered pixels for GIF/video/Web. The display close action must clear the layout and stop its owned player process; the player implementation intentionally terminates that process. It also applies a prepared image as 3D and checks that its depth cache is preserved. These arranged files do not prove ISS deployment; the independent mandatory smoke checks that separately.
+
+The original single-image import/update/delete case and real depth-inference/pause/resume case remain: prepared content cannot substitute for those distinct paths. Playback checks reuse the existing picker, wallpaper and screenshot helpers.
 
 ### Screen saver settings
 
@@ -384,7 +394,7 @@ Only the CI `test-ui-operation` job uses `continue-on-error`. It records `steps.
 
 ## Adding coverage
 
-Built-in wallpaper folders are maintained under [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.md). The build includes them in Core output; setup reads `BuiltInWallpapersDir`, falling back to a sibling of `WallpaperDir` for older profiles, and adds missing folders while preserving existing folders and edits. Installer acceptance supplies its isolated data root to setup, so this deployment never writes into the daily library. Core and UI logic tests cover legacy defaults, persisted independent paths through RPC/restart, combined scanning/deletion, preview settings, moving both libraries through one directory picker, index refresh, and preserving source data on failure. An empty payload is supported; real asset playback needs coverage when content is added.
+Built-in wallpaper folders are maintained under [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.md). The build includes them in Core output; setup reads `BuiltInWallpapersDir`, falling back to a sibling of `WallpaperDir` for older profiles, and adds missing folders while preserving existing folders and edits. Installer acceptance supplies its isolated data root to setup, so this deployment never writes into the daily library. Core and UI logic tests cover legacy defaults, persisted independent paths through RPC/restart, combined scanning/deletion, preview settings, moving both libraries through one directory picker, index refresh, and preserving source data on failure. The authored metadata inventory is embedded into artifact tests, so a missing build folder or stale item fails. Core workflow tests relocate and decode the actual collection (including animated frames and prepared depth maps), scan it alongside a user item, and check that neither source assets nor user data changed. Real UI verifies multi-file import and prepared-item playback as described above. Installer smoke verifies complete initial deployment, then moves the isolated built-in library, edits an existing title, adds a user file, deletes an existing notice and removes another whole item. The real reinstall must honor the saved directory, preserve the edited folder exactly (including its deleted file), and deploy the missing item. Uninstall must preserve this library. These checks run inside required smoke stages; `BuiltInWallpapers` in the report records their evidence. `Test-BuiltInWallpaperTestSupport.ps1` checks positive and negative validator contracts without installing; it does not simulate or replace the actual ISS acceptance.
 
 Implement new cases under `Cases` and register them in `App.xaml.cs`; the runner and CI do not maintain hardcoded case names or counts.
 

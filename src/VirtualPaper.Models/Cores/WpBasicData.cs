@@ -21,7 +21,11 @@ namespace VirtualPaper.Models.Cores {
             set { if (_title == value) return; _title = value; OnPropertyChanged(); }
         }
 
-        public string Desc { get; set; } = string.Empty;
+        private string _desc = string.Empty;
+        public string Desc {
+            get => _desc;
+            set { if (_desc == value) return; _desc = value; OnPropertyChanged(); }
+        }
         public string Authors { get; set; } = string.Empty;
         public string PublishDate { get; set; } = string.Empty;
         public double Rating { get; set; } = -1;

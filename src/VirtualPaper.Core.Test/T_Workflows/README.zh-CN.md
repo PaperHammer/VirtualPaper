@@ -16,4 +16,6 @@ dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj -p:Platform
 
 `RecentFeaturesWorkflowTests` 使用真实客户端和后台运行 ScreenFitViewModel，使用真实的输入、输出 PNG、元数据、运行时配置和壁纸库索引。覆盖 contain/cover、可选增强、操作中途取消、模型失败和显示器移除。确定性超分替身仅替代模型推理；真实模型仍由现有 ML Integration 测试负责。图片和深度图的效果配置会经过反复刷新、应用、停止，并在删除预览缓存后重新打开。配置缺失或被锁定时必须失败。
 
+`BuiltInWallpaperWorkflowTests` 将实际内置素材搬到隔离目录，与用户图片共同扫描，解码图片、GIF／视频帧及深度图，检查 Web 入口元数据与正式索引，并验证原始素材及用户条目没有变化。真实 ISS 部署和桌面播放分别由安装冒烟及 WallpaperLibrary UI 用例覆盖。
+
 这些业务流程测试不会启动真实 XAML 页面，也不验证渲染像素。桌面 UI 交互由独立的 [UIOperationTest](../../../test/README.zh-CN.md) 覆盖。渲染效果与性能验收仍需单独验证。

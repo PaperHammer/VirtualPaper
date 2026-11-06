@@ -112,7 +112,7 @@ internal static class RenderingTests {
         context.Evidence["RealDepthInferenceRenderPauseResumeVerified"] = true;
     }
 
-    private static double Difference(string left, string right) {
+    internal static double Difference(string left, string right) {
         using var a = new Bitmap(left); using var b = new Bitmap(right);
         Check(a.Size == b.Size && a.Width >= 256 && a.Height >= 144, "Invalid rendered dimensions");
         long difference = 0; int count = 0;

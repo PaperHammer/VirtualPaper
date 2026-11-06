@@ -14,6 +14,11 @@
     NavigationCacheMode="Enabled">
 
     <arc:ArcPage.Resources>
+        <Style x:Key="WallpaperTypeLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
         <Style x:Key="LibGridViewItemStyle" TargetType="GridViewItem">
             <Setter Property="Margin" Value="0 0 12 12"/>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
@@ -118,25 +123,67 @@
                     Stretch="UniformToFill"
                     ImageFailed="Image_ImageFailed"/>
 
+                <Border
+                    Margin="10"
+                    Padding="7 3"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Background="#A6000000"
+                    CornerRadius="4"
+                    IsHitTestVisible="False"
+                    Visibility="{x:Bind FType, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FImage|FGif|FVideo|FWebZip}">
+                    <Grid>
+                        <TextBlock
+                            l:Uids.Uid="Ui_WpLib_CardType_Image_Text"
+                            Style="{StaticResource WallpaperTypeLabelStyle}"
+                            Visibility="{x:Bind FType, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FImage}"/>
+                        <TextBlock
+                            l:Uids.Uid="Ui_WpLib_CardType_Gif_Text"
+                            Style="{StaticResource WallpaperTypeLabelStyle}"
+                            Visibility="{x:Bind FType, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FGif}"/>
+                        <TextBlock
+                            l:Uids.Uid="Ui_WpLib_CardType_Video_Text"
+                            Style="{StaticResource WallpaperTypeLabelStyle}"
+                            Visibility="{x:Bind FType, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FVideo}"/>
+                        <TextBlock
+                            l:Uids.Uid="Ui_WpLib_CardType_Web_Text"
+                            Style="{StaticResource WallpaperTypeLabelStyle}"
+                            Visibility="{x:Bind FType, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=FWebZip}"/>
+                    </Grid>
+                </Border>
+
                 <Border 
                     VerticalAlignment="Bottom"
-                    Padding="10 18 10 10"
-                    Height="72">
+                    Padding="12 20 12 12"
+                    Height="96">
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                             <GradientStop Color="Transparent" Offset="0"/>
                             <GradientStop Color="#D9000000" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
-                    <TextBlock
-                        Text="{x:Bind Title, Mode=OneWay}"
-                        MaxLines="2"
-                        FontSize="16"
-                        LineHeight="20"
-                        VerticalAlignment="Bottom"
-                        Foreground="White"
-                        TextTrimming="CharacterEllipsis"
-                        ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}"/>
+                    <StackPanel VerticalAlignment="Bottom" Spacing="2">
+                        <TextBlock
+                            Text="{x:Bind Title, Mode=OneWay}"
+                            MaxLines="1"
+                            FontSize="16"
+                            FontWeight="SemiBold"
+                            Foreground="White"
+                            TextWrapping="NoWrap"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}"/>
+                        <TextBlock
+                            Text="{x:Bind Desc, Mode=OneWay}"
+                            Height="32"
+                            MaxLines="2"
+                            FontSize="12"
+                            LineHeight="16"
+                            LineStackingStrategy="BlockLineHeight"
+                            Foreground="#BFFFFFFF"
+                            TextWrapping="Wrap"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTipService.ToolTip="{x:Bind Desc, Mode=OneWay}"/>
+                    </StackPanel>
                 </Border>
             </Grid>
         </DataTemplate>

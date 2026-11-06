@@ -62,6 +62,7 @@
         <Image x:Name="PART_RootThemeTransitionImage"  
             Grid.RowSpan="2"  
             Stretch="Fill"  
+            IsHitTestVisible="False"
             Opacity="0"
             Visibility="Collapsed"/>
 

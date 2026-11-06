@@ -35,7 +35,7 @@ runs:
     run: ./test/Run-ProjectTests.ps1 -JobId $env:TEST_JOB_ID -IncludeMLIntegration:($env:INCLUDE_ML_INTEGRATION -eq 'true') -RequireCompleteExecution:($env:REQUIRE_COMPLETE_EXECUTION -eq 'true')
   - name: Upload test results
     if: always() && steps.tests.outputs.results_directory != ''
-    uses: actions/upload-artifact@v4
+    uses: actions/upload-artifact@v7.0.2
     with:
       name: ${{ steps.tests.outputs.artifact }}
       path: ${{ steps.tests.outputs.results_directory }}/

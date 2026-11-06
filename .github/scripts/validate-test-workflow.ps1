@@ -102,7 +102,10 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     }
 }
 foreach ($text in @($workflow, $releaseWorkflow, $action)) {
-    foreach ($upload in [regex]::Matches($text, '(?ms)uses: actions/upload-artifact@v4\r?\n.*?(?=^ {2,4}- |^  [\w-]+:|\z)')) {
+    # Match every action ref, so upgrading its version cannot bypass retry checks.
+    $uploads = [regex]::Matches($text, '(?ms)uses: actions/upload-artifact@[^\s]+\r?\n.*?(?=^ {2,4}- |^  [\w-]+:|\z)')
+    if ($uploads.Count -eq 0) { throw 'Workflow/action artifact uploads are missing from contract validation.' }
+    foreach ($upload in $uploads) {
         if ($upload.Value -notmatch '(?m)^\s+overwrite:\s*true\s*$') { throw 'Workflow artifact uploads must allow retries.' }
     }
 }

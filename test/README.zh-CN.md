@@ -352,6 +352,8 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 ## 安装冒烟与独立 UI 验收
 
+CI 产物上传/下载 action 内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`，与本地/Web 脚本的 Node.js 设置独立。版本及摘要校验说明见[工作流指南](../.github/workflows/README.zh-CN.md)。
+
 构建及并行项目测试通过后，CI 独立运行 **Installer Smoke** 和 **Real UI Acceptance**，两者不共享安装包或安装目录，UI 直接运行 Release 输出。本地完整入口先完成冒烟并卸载，再运行独立 UI，避免争抢前台。
 
 `Run-InstallerTests.ps1` 只对一个真实安装包、一个独有临时安装目录执行必需冒烟：

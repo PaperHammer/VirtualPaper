@@ -205,7 +205,7 @@ jobs:
         Copy-Item "$env:RELEASE_BIN_DIR/app_comp_manifest.json" app_comp_manifest.json
 
     - name: Upload build output
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: build-release-output
@@ -221,7 +221,7 @@ jobs:
         retention-days: 7
 
     - name: Upload component manifest
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: app-comp-manifest
@@ -234,7 +234,7 @@ jobs:
     needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -250,7 +250,7 @@ jobs:
     needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -271,7 +271,7 @@ jobs:
         ref: ${{ needs.prepare-metadata.outputs.main_sha }}
         persist-credentials: false
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -297,7 +297,7 @@ jobs:
     needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -313,7 +313,7 @@ jobs:
     needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -329,7 +329,7 @@ jobs:
     needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -345,7 +345,7 @@ jobs:
     needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -362,7 +362,7 @@ jobs:
     needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -385,13 +385,13 @@ jobs:
         persist-credentials: false
 
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
 
     - name: Download project reports
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         pattern: test-results-*
         path: TestResults/
@@ -460,7 +460,7 @@ jobs:
 
     - name: Upload installer results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: test-results-installer
@@ -469,7 +469,7 @@ jobs:
         retention-days: 7
 
     - name: Upload installer package
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: VirtualPaper-Installer-v${{ needs.prepare-metadata.outputs.new_version }}
@@ -512,7 +512,7 @@ jobs:
 
     - name: Upload plugin package
       if: needs.prepare-metadata.outputs.has_plugin_update == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: VirtualPaper-Plugins-v${{ needs.prepare-metadata.outputs.new_version }}
@@ -538,7 +538,7 @@ jobs:
         persist-credentials: false
 
     - name: Download build output
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: build-release-output
         path: .
@@ -558,7 +558,7 @@ jobs:
 
     - name: Upload WinUI results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: test-results-ui-operation
@@ -581,7 +581,7 @@ jobs:
         persist-credentials: false
 
     - name: Download test reports
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         pattern: test-results-*
         path: TestResults/
@@ -595,7 +595,7 @@ jobs:
 
     - name: Upload release test summary
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: release-test-summary
@@ -660,20 +660,20 @@ jobs:
         persist-credentials: false
 
     - name: Download installer package
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: VirtualPaper-Installer-v${{ needs.prepare-metadata.outputs.new_version }}
         path: dist/
 
     - name: Download plugin update package
       if: needs.prepare-metadata.outputs.has_plugin_update == 'true'
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: VirtualPaper-Plugins-v${{ needs.prepare-metadata.outputs.new_version }}
         path: dist/
 
     - name: Download component manifest
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8.0.2
       with:
         name: app-comp-manifest
         path: dist/manifest/

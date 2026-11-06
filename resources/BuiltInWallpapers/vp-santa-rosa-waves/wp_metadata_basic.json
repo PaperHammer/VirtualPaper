@@ -1,0 +1,27 @@
+{
+  "WallpaperUid": "LCLvp-santa-rosa-waves",
+  "AppInfo": {
+    "AppName": "Virtual Paper",
+    "AppVersion": "0.5.2.0",
+    "FileVersion": "19"
+  },
+  "Title": "Santa Rosa Waves",
+  "Desc": "Pacific waves meet the rugged coast of Santa Rosa Island, California. A silent, real-time 1080p recording adapted from footage by Blervis, released under CC0 1.0. Free to reuse, modify and redistribute, including commercially.",
+  "Authors": "Blervis",
+  "PublishDate": "2026-11-06",
+  "Rating": -1,
+  "Partition": "Built-in",
+  "Tags": "Built-in;\u5185\u7F6E;Landscape;Ocean;Coast;Loop;Video;CC0",
+  "FolderName": "vp-santa-rosa-waves",
+  "FolderPath": ".",
+  "FilePath": "vp-santa-rosa-waves.mp4",
+  "ThumbnailPath": "vp-santa-rosa-waves_thum.gif",
+  "Resolution": "1920 * 1080 (30.00 fps)",
+  "AspectRatio": "16:9",
+  "FileSize": "9.51 MB",
+  "FileExtension": ".mp4",
+  "CreatedTime": "2026-11-06T00:00:00Z",
+  "FType": "FVideo",
+  "IsSingleRType": true,
+  "IsSubscribed": true
+}

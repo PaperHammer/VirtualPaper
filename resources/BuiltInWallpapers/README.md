@@ -13,7 +13,23 @@ BuiltInWallpapers/
 
 Use format 19 with relative paths. Keep the original folder name and wallpaper UID stable. Include every referenced asset inside its wallpaper folder. For 3D images, keep the generated `depth-<hash>.png` filename; a changed source image or model can require regeneration. Runtime configuration for another machine's monitor does not replace configuration for the user's monitors.
 
-The application build copies these folders to `BuiltInWallpapers/` in the Core output. These two README files are excluded. An empty resource directory is supported; no wallpaper content is supplied yet.
+The application build copies these folders to `BuiltInWallpapers/` in the Core output. These two README files are excluded. An empty resource directory is also supported.
+
+## Included collection
+
+| Title | Type | Contents |
+| --- | --- | --- |
+| Alpine Stillness | Image / 3D image | Generated mountain lake, with a prepared depth cache |
+| Emerald Morning | Image / 3D image | Generated green hills, with a prepared depth cache |
+| Bigora Cascade | GIF | Real waterfall footage by Termininja, CC0 |
+| Santa Rosa Waves | Video | Real 1080p coastal footage by Blervis, CC0 |
+| Luminous Flow | Web | Pointer light trails and click bursts inspired by the default Web template |
+
+All items have `Built-in;内置` tags and complete titles, descriptions and dates. The two still images are AI-generated landscapes attributed to VirtualPaper, with original 1672×941 PNGs and prepared depth caches; no Unsplash screenshot artwork is included. Luminous Flow is original Canvas code without photo assets.
+
+The GIF and video use two distinct, real camera recordings. Bigora Cascade is a cropped 768×432, 20 fps GIF; Santa Rosa Waves is silent 1920×1080, 30 fps H.264. Playback stays at real-time speed, with only short loop crossfades. They retain their original authors and `CC0` tags, without `AI-generated` tags. Both creators explicitly dedicated their own footage under CC0: [Bigora waterfall](https://commons.wikimedia.org/wiki/File:Bigora_waterfall.webm) and [Santa Rosa Island Waves](https://commons.wikimedia.org/wiki/File:Santa_Rosa_Island_Waves.webm). CC0 permits commercial use, modification and redistribution, including standalone media, without attribution or share-alike conditions. VirtualPaper adds no restrictions to these media adaptations. CC0 does not clear unrelated third-party rights or provide warranties.
+
+Each folder includes `NOTICE.txt`; the external recordings also include the full CC0 legal text. [Authoring instructions](../tools/BuiltInWallpapers/README.md), source URLs, pinned source hashes and processing parameters are retained separately from the installer payload. Original downloads remain in ignored `TestResults`, rather than duplicating large footage in Git.
 
 The full installer deploys new folders to `BuiltInWallpapersDir` saved in `user_settings.json`. Its default is `<library root>/BuiltInWallpapers`, next to `<library root>/wallpapers`; the default root is `%LOCALAPPDATA%\VirtualPaper\Library`. For older profiles without this field, both the application and setup derive the default from `WallpaperDir`. It skips entire folders that already exist, preserving user changes and deleted files inside them. Deleting an entire wallpaper folder allows the next installation to restore it. Uninstall preserves these files unless the user chooses to remove all application data; a library moved outside the application data directory is left in place.
 

@@ -13,7 +13,23 @@ BuiltInWallpapers/
 
 使用格式 19 和相对路径，保持目录名及 WallpaperUid 稳定，引用的资源全部放在对应壁纸文件夹内。3D 图片保留生成的 `depth-<hash>.png` 文件名；原图或模型变化后可能重新生成深度图。其他机器的显示器运行配置不能代替用户实际显示器的配置。
 
-构建时复制到 Core 输出目录的 `BuiltInWallpapers/` 下，不复制这两份 README。允许目录暂时没有壁纸内容，目前尚未提供实际素材。
+构建时复制到 Core 输出目录的 `BuiltInWallpapers/` 下，不复制这两份 README，也兼容没有素材的空目录。
+
+## 当前素材
+
+| 标题 | 类型 | 内容 |
+| --- | --- | --- |
+| Alpine Stillness | 图片 / 3D 图片 | 生成的高山湖泊，附预生成深度缓存 |
+| Emerald Morning | 图片 / 3D 图片 | 生成的晨雾丘陵，附预生成深度缓存 |
+| Bigora Cascade | GIF | Termininja 拍摄的真实瀑布，CC0 |
+| Santa Rosa Waves | 视频 | Blervis 拍摄的真实 1080p 海岸，CC0 |
+| Luminous Flow | Web | 参考默认 Web 模板的鼠标光迹及点击扩散 |
+
+各项附加 `Built-in;内置` 标签，填写完整标题、描述和日期。两张静态图片为 AI 生成风景，作者填写 VirtualPaper，保留 1672×941 原始 PNG 和预生成深度缓存，没有包含 README 截图里的 Unsplash 素材。Luminous Flow 为原创 Canvas 代码，不含照片。
+
+GIF 与视频使用两份不同的真实摄影素材。Bigora Cascade 裁切为 768×432、20 fps GIF；Santa Rosa Waves 为无音轨的 1920×1080、30 fps H.264。按真实速度播放，仅在循环接缝做短暂渐变。保留真实作者与 `CC0` 标签，不标记为 `AI-generated`。原作者均明确将自己的素材按 CC0 公开：[Bigora waterfall](https://commons.wikimedia.org/wiki/File:Bigora_waterfall.webm)、[Santa Rosa Island Waves](https://commons.wikimedia.org/wiki/File:Santa_Rosa_Island_Waves.webm)。CC0 允许商用、修改和再分发，也允许独立分发媒体，不要求署名或以相同许可分享；VirtualPaper 不为这些媒体衍生文件附加限制。CC0 不保证第三方其他权利已获许可，也不提供担保。
+
+每个文件夹附 `NOTICE.txt`，外部摄影素材另附完整 CC0 文本。[制作说明](../tools/BuiltInWallpapers/README.zh-CN.md)、来源地址、固定源文件哈希和处理参数单独保留，不随安装包部署。原始下载位于已忽略的 `TestResults`，避免将大体积原片重复放入 Git。
 
 完整安装包在安装及覆盖更新时，将新文件夹部署到 `user_settings.json` 中保存的 `BuiltInWallpapersDir`。默认位置为 `<壁纸库根目录>/BuiltInWallpapers`，与 `<壁纸库根目录>/wallpapers` 并列；默认根目录为 `%LOCALAPPDATA%\VirtualPaper\Library`。旧配置缺少该字段时，应用与安装器均根据 `WallpaperDir` 推导默认位置。已经存在的壁纸文件夹整体跳过，保留用户修改和文件夹内删除的文件；如果删除整个壁纸文件夹，下次安装可以补回。卸载保留这些文件，除非用户选择删除全部应用数据；已移出应用数据目录的壁纸库仍保留。
 

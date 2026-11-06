@@ -1,0 +1,7 @@
+Creator / publisher: VirtualPaper.
+The landscape imagery was created with OpenAI image generation for this collection. It is synthetic imagery, not a photograph of a real location.
+No third-party stock photographs, fonts, music or textures were intentionally incorporated.
+VirtualPaper provides its animation code under GNU GPL version 3, matching the repository.
+To the extent VirtualPaper holds rights in the generated imagery, it permits its use, modification and redistribution with this notice. No exclusive copyright is claimed in AI-generated imagery.
+Source and generation instructions: https://github.com/PaperHammer/VirtualPaper/tree/main/resources/tools/BuiltInWallpapers
+The depth map was generated locally with VirtualPaper's Depth Anything V2 pipeline. The model is not part of this wallpaper folder.

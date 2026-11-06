@@ -1,0 +1,27 @@
+{
+  "WallpaperUid": "LCLvp-bigora-cascade",
+  "AppInfo": {
+    "AppName": "Virtual Paper",
+    "AppVersion": "0.5.2.0",
+    "FileVersion": "19"
+  },
+  "Title": "Bigora Cascade",
+  "Desc": "Water flows over moss-covered rock at Bigora waterfall. A repeating GIF adapted from real footage by Termininja, released under CC0 1.0. Free to reuse, modify and redistribute, including commercially.",
+  "Authors": "Termininja",
+  "PublishDate": "2026-11-06",
+  "Rating": -1,
+  "Partition": "Built-in",
+  "Tags": "Built-in;\u5185\u7F6E;Landscape;Waterfall;Loop;Animation;CC0",
+  "FolderName": "vp-bigora-cascade",
+  "FolderPath": ".",
+  "FilePath": "vp-bigora-cascade.gif",
+  "ThumbnailPath": "vp-bigora-cascade_thum.gif",
+  "Resolution": "768 * 432 (20.00 fps)",
+  "AspectRatio": "16:9",
+  "FileSize": "33.30 MB",
+  "FileExtension": ".gif",
+  "CreatedTime": "2026-11-06T00:00:00Z",
+  "FType": "FGif",
+  "IsSingleRType": false,
+  "IsSubscribed": true
+}

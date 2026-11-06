@@ -1,0 +1,27 @@
+{
+  "WallpaperUid": "LCLvp-alpine-stillness",
+  "AppInfo": {
+    "AppName": "Virtual Paper",
+    "AppVersion": "0.5.2.0",
+    "FileVersion": "19"
+  },
+  "Title": "Alpine Stillness",
+  "Desc": "Morning light touches distant mountain peaks above a clear turquoise lake. Includes a prepared depth map for the 3D image option. AI-generated landscape, not a photograph of a real location.",
+  "Authors": "VirtualPaper",
+  "PublishDate": "2026-11-06",
+  "Rating": -1,
+  "Partition": "Built-in",
+  "Tags": "Built-in;\u5185\u7F6E;AI-generated;Landscape;Lake;Mountains;3D-ready",
+  "FolderName": "vp-alpine-stillness",
+  "FolderPath": ".",
+  "FilePath": "vp-alpine-stillness.png",
+  "ThumbnailPath": "vp-alpine-stillness_thum.gif",
+  "Resolution": "1672 * 941",
+  "AspectRatio": "16:9",
+  "FileSize": "2.53 MB",
+  "FileExtension": ".png",
+  "CreatedTime": "2026-11-06T00:00:00Z",
+  "FType": "FImage",
+  "IsSingleRType": false,
+  "IsSubscribed": true
+}

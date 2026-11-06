@@ -1,0 +1,22 @@
+{
+  "creator": "VirtualPaper",
+  "generationTool": "Built-in image_gen",
+  "referenceImages": [],
+  "generatedAt": "2026-11-06",
+  "nativeSize": [
+    1672,
+    941
+  ],
+  "images": [
+    {
+      "name": "alpine-lake",
+      "retainedSource": "../../BuiltInWallpapers/vp-alpine-stillness/vp-alpine-stillness.png",
+      "prompt": "An original, highly photorealistic mountain lake landscape for a premium Windows desktop wallpaper. Wide 16:9 landscape, ideally 3840x2160. Quiet glacial lake with natural turquoise blue water, a small rocky shoreline and a few dark spruce trees in the near foreground at the right edge, forested foothills in the midground, rugged slate-grey mountains with sparse snow in the far distance. Soft early morning light with a subtle warm edge on mountain peaks. Realistic geological detail, delicate imperfect reflections, fine pine needles, atmospheric depth. A believable landscape photographed with a full-frame camera and 28 mm lens, natural exposure and restrained colors. Plenty of quiet space across the water and sky. Distinct foreground/middle/background for later depth estimation. Invent a new place; do not reproduce a known photograph, landmark, existing composition, artist's style, or specific stock image. No people, buildings, boats, signs, text, logos, watermark, collage, artificial plastic smoothness, oversaturated HDR, fantasy elements, illustration or vector appearance."
+    },
+    {
+      "name": "emerald-ridges",
+      "retainedSource": "../../BuiltInWallpapers/vp-emerald-morning/vp-emerald-morning.png",
+      "prompt": "Create an original photorealistic landscape desktop wallpaper, wide 16:9 landscape ideally 3840x2160. Soft morning sunlight over rolling emerald-green hills, alternating grass and scattered small broadleaf trees, meandering folds and subtle trails, distant blue-grey ridgelines fading into a light mist. A few sharply detailed blades of grass and low foliage near the lower corners, beautiful light and shadow on the middle hills, realistic irregular natural textures throughout. Full-frame landscape photography, 50mm lens, believable perspective, restrained luminous color, gentle contrast, no exaggerated saturation. Peaceful and grounded, not dramatic fantasy. Strong foreground/middle/far separation for depth parallax. A newly imagined landscape, not a copy of any uploaded image or stock photograph. No buildings, people, text, logo, watermark, collage, painting, vector, 3D-rendered plastic material, surreal shapes."
+    }
+  ]
+}

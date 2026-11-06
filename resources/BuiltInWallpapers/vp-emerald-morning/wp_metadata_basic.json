@@ -1,0 +1,27 @@
+{
+  "WallpaperUid": "LCLvp-emerald-morning",
+  "AppInfo": {
+    "AppName": "Virtual Paper",
+    "AppVersion": "0.5.2.0",
+    "FileVersion": "19"
+  },
+  "Title": "Emerald Morning",
+  "Desc": "Soft sunlight and low mist settle across rolling green hills. Includes a prepared depth map for the 3D image option. AI-generated landscape, not a photograph of a real location.",
+  "Authors": "VirtualPaper",
+  "PublishDate": "2026-11-06",
+  "Rating": -1,
+  "Partition": "Built-in",
+  "Tags": "Built-in;\u5185\u7F6E;AI-generated;Landscape;Hills;Morning;3D-ready",
+  "FolderName": "vp-emerald-morning",
+  "FolderPath": ".",
+  "FilePath": "vp-emerald-morning.png",
+  "ThumbnailPath": "vp-emerald-morning_thum.gif",
+  "Resolution": "1672 * 941",
+  "AspectRatio": "16:9",
+  "FileSize": "2.57 MB",
+  "FileExtension": ".png",
+  "CreatedTime": "2026-11-06T00:00:00Z",
+  "FType": "FImage",
+  "IsSingleRType": false,
+  "IsSubscribed": true
+}

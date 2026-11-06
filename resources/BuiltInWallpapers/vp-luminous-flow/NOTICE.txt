@@ -1,0 +1,5 @@
+Creator / publisher: VirtualPaper.
+Original Canvas animation by VirtualPaper, inspired by the project's Interactive Glow Web template. No photographs are included.
+No third-party stock photographs, fonts, music or textures were intentionally incorporated.
+VirtualPaper provides its animation code under GNU GPL version 3, matching the repository.
+Source and generation instructions: https://github.com/PaperHammer/VirtualPaper/tree/main/resources/tools/BuiltInWallpapers

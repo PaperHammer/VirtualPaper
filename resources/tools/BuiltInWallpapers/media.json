@@ -1,0 +1,46 @@
+{
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "verifiedAt": "2026-11-06",
+  "verification": "Both file description pages identify the uploader as the creator (Own work) and explicitly apply CC0 to the media itself. These are not licenses inferred from a website footer.",
+  "media": [
+    {
+      "folder": "vp-bigora-cascade",
+      "title": "Bigora Cascade",
+      "author": "Termininja",
+      "originalTitle": "Bigora waterfall.webm",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Bigora_waterfall.webm",
+      "sourceRevisionUrl": "https://commons.wikimedia.org/w/index.php?title=File:Bigora_waterfall.webm&oldid=1026030884",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/c/c1/Bigora_waterfall.webm",
+      "downloadName": "bigora-waterfall.webm",
+      "sha256": "032d3f186ed758c09a62998cff39fd875bdcc98f594f25cb67156f20e86fee83",
+      "originalSize": [1920, 1080],
+      "format": "GIF",
+      "output": "bigora-cascade.gif",
+      "startSeconds": 3,
+      "durationSeconds": 6,
+      "loopBlendSeconds": 0.4,
+      "crop": "1280:720:200:340",
+      "scale": "768:432",
+      "processing": "Real-time excerpt; fixed crop to the waterfall below the flag; downscale to 768x432; short loop crossfade; 20 fps shared-palette GIF with identical endpoint frames. No generated motion, optical-flow interpolation, reversal, audio or upscaling."
+    },
+    {
+      "folder": "vp-santa-rosa-waves",
+      "title": "Santa Rosa Waves",
+      "author": "Blervis",
+      "originalTitle": "Santa Rosa Island Waves.webm",
+      "sourceUrl": "https://commons.wikimedia.org/wiki/File:Santa_Rosa_Island_Waves.webm",
+      "sourceRevisionUrl": "https://commons.wikimedia.org/w/index.php?title=File:Santa_Rosa_Island_Waves.webm&oldid=978833989",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/1/19/Santa_Rosa_Island_Waves.webm",
+      "downloadName": "santa-rosa-waves.webm",
+      "sha256": "206cdb0c0786abb7e5fcf54bee9aeec42cbc9bea73a2899a8f703e36b0c23546",
+      "originalSize": [1920, 1080],
+      "format": "Video",
+      "output": "santa-rosa-waves.mp4",
+      "startSeconds": 20,
+      "durationSeconds": 20,
+      "loopBlendSeconds": 0.6,
+      "processing": "Real-time 1920x1080 excerpt encoded as silent H.264 at 30 fps from approximately 29.98 fps footage; short loop crossfade. No generated motion, optical-flow interpolation, reversal or upscaling."
+    }
+  ]
+}

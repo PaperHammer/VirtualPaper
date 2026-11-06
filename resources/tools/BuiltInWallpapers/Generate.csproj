@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+    <PlatformTarget>x64</PlatformTarget>
+    <CoreOutput>$(MSBuildThisFileDirectory)..\..\..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\</CoreOutput>
+  </PropertyGroup>
+  <!-- Consume an existing complete Release build; this tool does not launch Core/UI. -->
+  <ItemGroup>
+    <Reference Include="VirtualPaper"><HintPath>$(CoreOutput)VirtualPaper.dll</HintPath></Reference>
+    <Reference Include="VirtualPaper.Models"><HintPath>$(CoreOutput)VirtualPaper.Models.dll</HintPath></Reference>
+    <Reference Include="VirtualPaper.Common"><HintPath>$(CoreOutput)VirtualPaper.Common.dll</HintPath></Reference>
+    <Reference Include="VirtualPaper.ML"><HintPath>$(CoreOutput)Plugins\UI\VirtualPaper.ML.dll</HintPath></Reference>
+    <Reference Include="VirtualPaper.WpSettingsPanel"><HintPath>$(CoreOutput)Plugins\UI\VirtualPaper.WpSettingsPanel.dll</HintPath></Reference>
+    <Reference Include="OpenCvSharp"><HintPath>$(CoreOutput)OpenCvSharp.dll</HintPath></Reference>
+    <Reference Include="Microsoft.ML.OnnxRuntime"><HintPath>$(CoreOutput)Plugins\UI\Microsoft.ML.OnnxRuntime.dll</HintPath></Reference>
+    <Content Include="$(CoreOutput)OpenCvSharpExtern.dll;$(CoreOutput)opencv_videoio_ffmpeg4100_64.dll;$(CoreOutput)Plugins\UI\onnxruntime.dll"
+             Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

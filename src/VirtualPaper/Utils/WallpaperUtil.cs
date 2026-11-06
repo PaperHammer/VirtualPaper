@@ -109,7 +109,8 @@ namespace VirtualPaper.Utils {
                 using var gifStream = File.OpenRead(filePath);
                 var decoder = new GifBitmapDecoder(gifStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
                 var frames = decoder.Frames.Select(f => {
-                    var mat = BitmapConverter.ToMat(BitmapSourceToBitmap(f));
+                    using var bitmap = BitmapSourceToBitmap(f);
+                    using var mat = BitmapConverter.ToMat(bitmap);
                     return ResizeTo1080p(mat);
                 }).ToList();
                 SaveGifFrames(frames, thuFilePath);
@@ -166,9 +167,12 @@ namespace VirtualPaper.Utils {
             }
 
             Bitmap BitmapSourceToBitmap(BitmapSource s) {
-                using Bitmap bmp = new(s.PixelWidth, s.PixelHeight, PixelFormat.Format32bppPArgb);
+                // The caller owns this bitmap and disposes it after converting the frame.
+                Bitmap bmp = new(s.PixelWidth, s.PixelHeight, PixelFormat.Format32bppPArgb);
                 BitmapData data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size), ImageLockMode.WriteOnly, bmp.PixelFormat);
-                s.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
+                // GIF frames are commonly indexed; convert before copying into a 32-bit bitmap.
+                var converted = new FormatConvertedBitmap(s, System.Windows.Media.PixelFormats.Pbgra32, null, 0);
+                converted.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
                 bmp.UnlockBits(data);
 
                 return bmp;

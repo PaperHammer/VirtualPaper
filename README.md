@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/PaperHammer/VirtualPaper/releases"><img src="https://img.shields.io/badge/release-v0.5.2.0-blue?style=flat-square" alt="Release" /></a>
+  <a href="https://github.com/PaperHammer/VirtualPaper/releases"><img src="https://img.shields.io/badge/release-v0.6.0.0-blue?style=flat-square" alt="Release" /></a>
   <a href="#download"><img src="https://img.shields.io/badge/Windows-10%20%2F%2011-5865B8?style=flat-square" alt="Windows 10 and 11" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-7862C8?style=flat-square" alt="GPL-3.0 license" /></a>
   <a href="https://github.com/PaperHammer/VirtualPaper/stargazers"><img src="https://img.shields.io/github/stars/PaperHammer/VirtualPaper?style=flat-square&amp;color=7862C8" alt="GitHub stars" /></a>

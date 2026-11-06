@@ -38,19 +38,29 @@ try {
     [IO.File]::WriteAllText((Join-Path $repo 'feature.txt'), 'main feature')
     Invoke-ReleaseGit @('add', '.')
     Invoke-ReleaseGit @('commit', '-m', 'initial') | Out-Null
-    $mergeSha = Invoke-ReleaseGit @('rev-parse', 'HEAD')
     Invoke-ReleaseGit @('checkout', '-b', 'dev') | Out-Null
     # dev can advance while a release is packaging. Its new code and same-file edits must survive.
     [IO.File]::AppendAllText((Join-Path $repo 'README.md'), "new dev documentation`r`n")
     [IO.File]::WriteAllText((Join-Path $repo 'feature.txt'), 'new dev feature')
     Invoke-ReleaseGit @('add', '.')
     Invoke-ReleaseGit @('commit', '-m', 'new feature') | Out-Null
+    $previousDevSha = Invoke-ReleaseGit @('rev-parse', 'HEAD')
+    Invoke-ReleaseGit @('checkout', 'main') | Out-Null
+    [IO.File]::WriteAllText((Join-Path $repo 'release-only.txt'), 'main release history')
+    Invoke-ReleaseGit @('add', 'release-only.txt')
+    Invoke-ReleaseGit @('commit', '-m', 'prepare release') | Out-Null
+    $mergeSha = Invoke-ReleaseGit @('rev-parse', 'HEAD')
     Invoke-ReleaseGit @('push', 'origin', 'main', 'dev') | Out-Null
 
     $sha = Sync-ReleaseVersion -Root $repo -MergeSha $mergeSha -Version '0.5.3.0' -ExpectedVersion '0.5.2.0'
     Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/main')) $sha 'Published main SHA'
     Assert-Equal (Invoke-ReleaseGit @('show', 'origin/main:feature.txt')) 'main feature' 'main business code preserved'
     Assert-Equal (Invoke-ReleaseGit @('show', 'origin/dev:feature.txt')) 'new dev feature' 'New dev code preserved'
+    Assert-Equal (Invoke-ReleaseGit @('show', 'origin/dev:release-only.txt')) 'main release history' 'Main changes merged into dev'
+    Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/main^')) $mergeSha 'Version commit is based on the release'
+    Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/dev^1')) $previousDevSha 'Merge preserves dev history'
+    Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/dev^2')) $sha 'Merge uses the same main version commit'
+    Invoke-ReleaseGit @('merge-base', '--is-ancestor', $sha, 'origin/dev')
     $readme = (Invoke-ReleaseGit @('show', 'origin/dev:README.md')) -join "`n"
     if (-not $readme.Contains('new dev documentation') -or -not $readme.Contains('release-v0.5.3.0-blue')) {
         throw 'Version synchronization lost dev README changes.'
@@ -71,15 +81,41 @@ try {
     Invoke-ReleaseGit @('restore', 'README.md')
     Assert-Throws { Set-ReleaseVersion $repo '0.5.4.0' '0.5.1.0' } 'Unexpected version rejected'
 
+    # The next dev -> main release can fast-forward without resolving the old version change.
+    Invoke-ReleaseGit @('checkout', '-B', 'main', 'origin/main') | Out-Null
+    Invoke-ReleaseGit @('merge', '--ff-only', 'origin/dev') | Out-Null
+    Invoke-ReleaseGit @('push', 'origin', 'main') | Out-Null
+    $nextMergeSha = Invoke-ReleaseGit @('rev-parse', 'main')
+    $sha = Sync-ReleaseVersion -Root $repo -MergeSha $nextMergeSha -Version '0.5.4.0' -ExpectedVersion '0.5.3.0'
+    $devSha = Invoke-ReleaseGit @('rev-parse', 'origin/dev')
+    Assert-Equal $devSha $sha 'Dev fast-forwards to the main version commit when it has no new work'
+    Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/main^')) $nextMergeSha 'Next release retains the shared history'
+
     # Reject dev on the server: --atomic must also leave main untouched.
     $hookPath = Join-Path $remote 'hooks/update'
     [IO.File]::WriteAllText($hookPath, "#!/bin/sh`nif [ `"`$1`" = refs/heads/dev ]; then exit 1; fi`nexit 0`n", [Text.UTF8Encoding]::new($false))
     if (-not $IsWindows) { & chmod +x $hookPath }
-    Assert-Throws { Sync-ReleaseVersion -Root $repo -MergeSha $sha -Version '0.5.4.0' -ExpectedVersion '0.5.3.0' } 'Atomic push rejected'
+    Assert-Throws { Sync-ReleaseVersion -Root $repo -MergeSha $sha -Version '0.5.5.0' -ExpectedVersion '0.5.4.0' } 'Atomic push rejected'
     Invoke-ReleaseGit @('fetch', 'origin', 'main', 'dev') | Out-Null
     Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/main')) $sha 'Rejected push leaves main unchanged'
     Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/dev')) $devSha 'Rejected push leaves dev unchanged'
-    Write-Host '[OK] Four version increments, validation, version-only sync, dev preservation, idempotent retry and atomic push rejection.'
+    # A real version conflict must stop before pushing either branch and leave no pending merge.
+    Remove-Item -LiteralPath $hookPath
+    Invoke-ReleaseGit @('checkout', '-B', 'dev', 'origin/dev') | Out-Null
+    Set-ReleaseVersion -Root $repo -Version '0.5.9.0' -ExpectedVersion '0.5.4.0'
+    Invoke-ReleaseGit @('add', '.')
+    Invoke-ReleaseGit @('commit', '-m', 'conflicting dev version') | Out-Null
+    Invoke-ReleaseGit @('push', 'origin', 'dev') | Out-Null
+    $conflictingDevSha = Invoke-ReleaseGit @('rev-parse', 'origin/dev')
+    Assert-Throws { Sync-ReleaseVersion -Root $repo -MergeSha $sha -Version '0.5.5.0' -ExpectedVersion '0.5.4.0' } 'Merge conflict rejected'
+    Invoke-ReleaseGit @('fetch', 'origin', 'main', 'dev') | Out-Null
+    Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/main')) $sha 'Conflict leaves remote main unchanged'
+    Assert-Equal (Invoke-ReleaseGit @('rev-parse', 'origin/dev')) $conflictingDevSha 'Conflict leaves remote dev unchanged'
+    Assert-Equal ((Invoke-ReleaseGit @('status', '--porcelain')) -join '') '' 'Conflict abort restores a clean checkout'
+    if (Test-Path -LiteralPath (Invoke-ReleaseGit @('rev-parse', '--git-path', 'MERGE_HEAD'))) {
+        throw 'A rejected synchronization left an unfinished merge.'
+    }
+    Write-Host '[OK] Version increments, main-to-dev merge/fast-forward, dev preservation, next release, idempotent retry, merge conflict and atomic push rejection.'
 } finally {
     Pop-Location
     $resolvedFixture = [IO.Path]::GetFullPath($fixture)

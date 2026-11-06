@@ -115,7 +115,7 @@ if (-not $workflow.Contains("context: 'pre-merge-check'") -or -not $releaseWorkf
 $workflowFiles = @(Get-ChildItem -LiteralPath (Join-Path $repositoryRoot '.github/workflows') -File |
     Where-Object Extension -In @('.yml', '.yaml') | ForEach-Object Name | Sort-Object)
 if (($workflowFiles -join ',') -ne 'pre-merge-check.yml,pre-release.yml') { throw 'Only two workflow files should remain.' }
-if ($releaseWorkflow -match 'force-with-lease|reset --hard|git merge origin/main') { throw 'Publishing must synchronize only version fields.' }
+if ($releaseWorkflow -match 'force-with-lease|reset --hard') { throw 'Publishing must not rewrite remote branch history.' }
 if ($workflow -match '(?m)^\s*matrix\s*:') { throw 'Keep explicit parallel test jobs.' }
 $releasePrepare = Get-WorkflowJob 'prepare-metadata' $releaseWorkflow
 $releaseBuild = Get-WorkflowJob 'build-release' $releaseWorkflow

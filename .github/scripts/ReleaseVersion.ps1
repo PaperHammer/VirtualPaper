@@ -79,15 +79,25 @@ function Sync-ReleaseVersion {
                 throw 'The existing bump commit changed files outside the version sync scope.'
             }
         }
-        foreach ($branch in @('main', 'dev')) {
-            Invoke-ReleaseGit @('checkout', '-B', $branch, "origin/$branch") | Out-Host
-            Set-ReleaseVersion -Root $Root -Version $Version -ExpectedVersion $ExpectedVersion
-            if (Invoke-ReleaseGit @('status', '--porcelain')) {
-                Invoke-ReleaseGit @('add', 'src/VirtualPaper/VirtualPaper.csproj', 'InnoSetup/setup.iss', 'README.md') | Out-Host
-                Invoke-ReleaseGit @('commit', '-m', $message) | Out-Host
-            }
+        Invoke-ReleaseGit @('checkout', '-B', 'main', 'origin/main') | Out-Host
+        Set-ReleaseVersion -Root $Root -Version $Version -ExpectedVersion $ExpectedVersion
+        if (Invoke-ReleaseGit @('status', '--porcelain')) {
+            Invoke-ReleaseGit @('add', 'src/VirtualPaper/VirtualPaper.csproj', 'InnoSetup/setup.iss', 'README.md') | Out-Host
+            Invoke-ReleaseGit @('commit', '-m', $message) | Out-Host
         }
-        # Both refs advance together, or neither does. Never merge, reset or force-push business changes.
+
+        # Share main's release history instead of creating a second version commit on dev.
+        Invoke-ReleaseGit @('checkout', '-B', 'dev', 'origin/dev') | Out-Host
+        try {
+            Invoke-ReleaseGit @('merge', '--no-edit', 'main') | Out-Host
+        }
+        catch {
+            if (Test-Path -LiteralPath (Invoke-ReleaseGit @('rev-parse', '--git-path', 'MERGE_HEAD'))) {
+                Invoke-ReleaseGit @('merge', '--abort') | Out-Host
+            }
+            throw
+        }
+        # Prepare both refs locally; a conflict or rejected atomic push changes neither remote ref.
         Invoke-ReleaseGit @('push', '--atomic', 'origin', 'main', 'dev') | Out-Host
         return Invoke-ReleaseGit @('rev-parse', 'main')
     } finally { Pop-Location }

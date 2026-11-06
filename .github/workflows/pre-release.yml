@@ -603,7 +603,7 @@ jobs:
         if-no-files-found: warn
         retention-days: 30
 
-  # Push only version fields to main and dev together. A failure leaves both remote refs unchanged.
+  # Commit the version on main, merge main into dev, then push both refs atomically.
   sync-versions:
     name: Sync Versions
     runs-on: windows-latest
@@ -627,7 +627,7 @@ jobs:
         . ./.github/scripts/ReleaseMetadata.ps1
         Assert-ReleaseTagAvailable -Repository $env:GITHUB_REPOSITORY -Tag $env:RELEASE_TAG
 
-    - name: Sync main and dev versions
+    - name: Sync release branches
       id: sync-versions
       shell: pwsh
       env:

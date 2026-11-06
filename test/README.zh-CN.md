@@ -392,6 +392,8 @@ CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，�
 
 仅 CI 的 `test-ui-operation` 使用 job 级 `continue-on-error`，记录 `steps.ui-tests.outcome`，失败仍上传原始报告。汇总通过 `-AllowUIFailure -UIJobResult <结果>` 保留 UI 失败、超时、报告缺失/不可读及环境跳过，不阻塞 PR 状态、同步版本或生成草稿。冒烟/项目失败和冒烟报告缺失始终阻塞；Pre-release 还拒绝选中项目测试跳过。本地 UI 默认严格，未添加 UI 放宽开关的 `-RequireFullAcceptance` 也拒绝 UI 跳过。
 
+工作流契约包含隔离 Git 测试，覆盖仅在 `main` 生成版本提交、合回 `dev`、保留新增开发内容、冲突清理、重跑、下一次发布及原子推送被拒绝。测试仅使用本地 fixture 远端，不向 GitHub 推送。
+
 ## 添加覆盖
 
 内置壁纸文件夹维护在 [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.zh-CN.md)。构建时带入 Core 输出，安装器读取 `BuiltInWallpapersDir`；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，添加缺失文件夹并保留已有目录及用户修改。安装验收向安装程序传递隔离数据目录，不写入日常壁纸库。Core 和 UI 逻辑测试覆盖旧配置默认值、独立路径经 RPC 保存及重启恢复、双目录扫描/删除、预览配置落盘、单一入口下的双目录迁移、索引刷新及失败时保留原数据。

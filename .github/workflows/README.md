@@ -89,7 +89,7 @@ Only a merged, same-repository `dev → main` PR is accepted. Its head must have
 2. Temporarily update `VirtualPaper.csproj` before compilation and `InnoSetup/setup.iss` before packaging so the binaries and installer use the target version.
 3. Retest the new build through the same eight project jobs/actions as Pre-merge Check: artifact checks plus seven regular test projects. Release includes ML integration tests and Web player script checks. No test job rebuilds the application.
 4. Compile ISS and run mandatory installer smoke, then create requested plugin packages. Independently, `test-ui-operation` runs extended real UI acceptance against the release build. `summarize-tests` downloads both sets of reports and uses `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure -UIJobResult <outcome>`: failed/missing/skipped smoke or project checks block progress; independent UI failures and skips remain explicit non-blocking results.
-5. Recheck tag/release conflicts before version synchronization. For a regular release, update only these fields on `main` and `dev`, then push both atomically with `git push --atomic`. If either update is rejected, neither branch advances:
+5. Recheck tag/release conflicts before version synchronization. For a regular release, create one version commit on `main` updating only the following fields, then merge that `main` into the latest `dev`. Prepare both branches locally before pushing them together with `git push --atomic`. Merge conflicts stop the synchronization; if either push is rejected, neither remote branch advances:
    - `src/VirtualPaper/VirtualPaper.csproj`: `AssemblyVersion`
    - `InnoSetup/setup.iss`: `MyAppVersion`, `MyAppVersionText`
    - `README.md`: release badge
@@ -105,7 +105,7 @@ If historical releases lack a manifest, including `v0.5.2.0` without recorded bu
 
 The monthly sequence has two digits and stops at `R99`, avoiding older clients treating `R100` as older through string comparison. A new month starts at `R01`. A build-machine clock behind historical numbering also causes an error.
 
-Version synchronization preserves business code and documentation added to `dev` during packaging. It does not merge all of `main`, force-reset, or overwrite branches. Concurrent remote updates, unexpected version fields, or insufficient push permissions stop synchronization and draft creation. The `.sln` contains no product version and needs no change. `app_comp_manifest.json` is generated output.
+Version synchronization brings the complete `main` release history back into `dev`, preserving business code and documentation added to `dev` during packaging. If possible, `dev` fast-forwards to the version commit; otherwise Git creates a merge commit. No separate version commit is created on `dev`. Conflicts are aborted without pushing, and an unchanged retry does not create duplicate commits. Concurrent remote updates that prevent a fast-forward push, unexpected version fields, or insufficient push permissions stop synchronization and draft creation. No remote history is rewritten. The `.sln` contains no product version and needs no change. `app_comp_manifest.json` is generated output.
 
 If synchronization succeeds but draft creation fails, use **Re-run failed jobs** on the original run. Restarting the whole workflow is blocked because `main` has advanced, preventing a second increment. Artifacts can overwrite earlier uploads in the same run. Manifests, release packages and the release test summary are retained for 30 days; build output and raw test reports are retained for seven days.
 
@@ -120,7 +120,7 @@ These settings must be configured on GitHub; editing local YAML does not change 
 - For `main`, require a PR and the `pre-merge-check` status. If `dev` should also require PRs, configure the same protection there. If direct pushes to `dev` are allowed, they do not trigger these manual workflows; Pre-merge Check still requires an open PR.
 - Remove obsolete required checks such as `Check Source Branch` and `ci-check/pre-publish-tests`; the new workflows do not provide them.
 - Consider requiring the PR branch to be up to date with its base, and rerun checks after base changes.
-- `RELEASE_PAT` must allow the version-sync bot to update both `main` and `dev` under the repository's rules. Insufficient permissions fail synchronization; the workflow does not force-push around protection.
+- `RELEASE_PAT` must allow the version-sync bot to update both `main` and `dev` under the repository's rules. Rules for `dev` must allow a merge commit when development has advanced; a linear-history rule needs an appropriate bot exemption or adjustment. Insufficient permissions fail synchronization; the workflow does not force-push around protection.
 - Create the four fixed `version:*` labels once.
 - Local workflow changes do not delete old remote branches such as `release` or `bugfix`. Clean them up separately after checking for unmerged work.
 

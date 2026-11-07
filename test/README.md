@@ -276,7 +276,7 @@ This uses real Win2D and shader resources. Brushes, layer renaming, cross-DPI be
 5. Edit without saving, cancel project Save As, then choose an empty destination folder. Verify the copy contains the unsaved edit and empty asset directory, the source bytes remain unchanged, and the editor switches to the copy.
 6. Save another edit into the copy, export it, and reopen both projects independently. Check the copied manifest name and original file contents.
 
-Context menus and keyboard input operate only on owned windows with foreground and obstruction checks. No DOM injection, test-only save endpoint, or substituted service is used. Preview quality, every editor command, OCR, and pixel-level rendering are outside this case. `WebProjectCopyTests` separately verifies complete copies, text encodings, source preservation, manifest edits, rejected destinations, cancellation and failure cleanup.
+Context menus and keyboard input operate only on owned windows with foreground and obstruction checks. No DOM injection, test-only save endpoint, or substituted service is used. Preview quality, every editor command, OCR, and pixel-level rendering are outside this case. `WebProjectCopyTests` separately verifies complete copies, text encodings, source preservation, manifest edits, rejected destinations, cancellation before work and during unsaved-edit preparation, locked-source failure cleanup, and the contents of wallpaper/full-project ZIPs. View-model tests cover reopening evicted files and preserving the source file's dirty state during single-file Save As; they do not replace acceptance of the complete editor session switch. `FileUtilTests` also verifies the legacy copy overload's overwrite and recursion behavior.
 
 ### Exit with unsaved editors
 

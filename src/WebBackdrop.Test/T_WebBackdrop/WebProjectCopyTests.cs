@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Text;
 using System.Text.Json.Nodes;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -60,7 +61,25 @@ public class WebProjectCopyTests {
         using var copySession = new WebProjectSession(projectFile);
         Assert.AreEqual(Path.Combine(destination, "index.html"), copySession.DesignFileUtil.EntryFilePath);
         string archive = WebProjectExporter.Export(copySession.DesignFileUtil, Path.Combine(_root, "copy.zip"));
-        Assert.IsTrue(File.Exists(archive));
+        using (var zip = ZipFile.OpenRead(archive)) {
+            Assert.AreEqual("<html>unsaved</html>", ReadArchiveText(zip, "index.html"));
+            Assert.IsNotNull(zip.GetEntry("project.json"));
+            Assert.IsNull(zip.GetEntry("Renamed.vpw"));
+            Assert.IsNull(zip.GetEntry("Original.vpw"));
+        }
+        string fullArchive = WebProjectExporter.ExportFull(copySession.DesignFileUtil, Path.Combine(_root, "copy-full.zip"));
+        using (var zip = ZipFile.OpenRead(fullArchive)) {
+            Assert.AreEqual("<html>unsaved</html>", ReadArchiveText(zip, "index.html"));
+            Assert.AreEqual("未保存\r\n", ReadArchiveText(zip, "notes.txt"));
+            using var asset = new MemoryStream();
+            using (var stream = zip.GetEntry("assets/image.bin")!.Open()) stream.CopyTo(asset);
+            CollectionAssert.AreEqual(new byte[] { 0, 1, 255 }, asset.ToArray());
+            var archivedManifest = JsonNode.Parse(ReadArchiveText(zip, "Renamed.vpw"))!;
+            Assert.AreEqual("Renamed", archivedManifest["name"]!.GetValue<string>());
+            Assert.AreEqual("Renamed.vpw", archivedManifest["files"]!.AsArray()
+                .Single(file => file!["role"]!.GetValue<string>() == "solution")!["path"]!.GetValue<string>());
+            Assert.IsNull(zip.GetEntry("Original.vpw"));
+        }
         File.WriteAllText(copySession.DesignFileUtil.EntryFilePath, "copy only");
         AssertSnapshot(before, source);
     }
@@ -79,7 +98,7 @@ public class WebProjectCopyTests {
         AssertSnapshot(before, _project.ProjectFolder);
     }
 
-    [DataTestMethod]
+    [TestMethod]
     [DataRow("same")]
     [DataRow("child")]
     [DataRow("parent")]
@@ -112,6 +131,47 @@ public class WebProjectCopyTests {
         using var cancellation = new CancellationTokenSource();
         cancellation.Cancel();
         Assert.ThrowsExactly<OperationCanceledException>(() => WebProjectCopy.Copy(_project, destination, [], cancellation.Token));
+        Assert.IsEmpty(Directory.GetFileSystemEntries(destination));
+        AssertSnapshot(before, _project.ProjectFolder);
+        AssertNoStaging();
+    }
+
+    [TestMethod]
+    public void Copy_CancelledAfterFirstUnsavedEdit_RemovesStagingAndPreservesBothProjects() {
+        string destination = Directory.CreateDirectory(Path.Combine(_root, "Copy")).FullName;
+        string entry = Path.Combine(_project.ProjectFolder, "index.html");
+        var before = Snapshot(_project.ProjectFolder);
+        using var cancellation = new CancellationTokenSource();
+        var edits = new CancelAfterFirstEdit([
+            new(entry, "first unsaved edit", "UTF-8"),
+            new(Path.Combine(_project.ProjectFolder, "notes.txt"), "second unsaved edit", "UTF-8")
+        ], () => {
+            // Enumeration resumes only after the first edit has been written to the copy.
+            string staging = Directory.GetDirectories(_root, ".vp-copy-*").Single();
+            Assert.AreEqual("first unsaved edit", File.ReadAllText(Path.Combine(staging, "index.html")));
+            cancellation.Cancel();
+        });
+
+        Assert.Throws<OperationCanceledException>(() => WebProjectCopy.Copy(_project, destination, edits, cancellation.Token));
+
+        Assert.IsTrue(cancellation.IsCancellationRequested);
+        Assert.IsEmpty(Directory.GetFileSystemEntries(destination));
+        AssertSnapshot(before, _project.ProjectFolder);
+        AssertNoStaging();
+    }
+
+    [TestMethod]
+    public void Copy_LockedSourceFile_RemovesStagingAndPreservesBothProjects() {
+        string source = Path.Combine(_project.ProjectFolder, "assets", "locked.bin");
+        Directory.CreateDirectory(Path.GetDirectoryName(source)!);
+        File.WriteAllBytes(source, [1, 2, 3]);
+        string destination = Directory.CreateDirectory(Path.Combine(_root, "Copy")).FullName;
+        var before = Snapshot(_project.ProjectFolder);
+
+        using (var locked = new FileStream(source, FileMode.Open, FileAccess.ReadWrite, FileShare.None)) {
+            Assert.Throws<IOException>(() => WebProjectCopy.Copy(_project, destination, []));
+        }
+
         Assert.IsEmpty(Directory.GetFileSystemEntries(destination));
         AssertSnapshot(before, _project.ProjectFolder);
         AssertNoStaging();
@@ -163,6 +223,28 @@ public class WebProjectCopyTests {
         Assert.IsFalse((File.GetAttributes(copy) & FileAttributes.ReadOnly) != 0);
         Assert.IsTrue((File.GetAttributes(source) & FileAttributes.ReadOnly) != 0);
         Assert.AreEqual("<html>original</html>", File.ReadAllText(source));
+    }
+
+    private static string ReadArchiveText(ZipArchive archive, string path) {
+        var entry = archive.GetEntry(path);
+        Assert.IsNotNull(entry, $"Missing archive entry: {path}");
+        using var reader = new StreamReader(entry.Open());
+        return reader.ReadToEnd();
+    }
+
+    // Trigger cancellation during preparation through the existing snapshot input,
+    // without timers, background filesystem races or production-only test hooks.
+    private sealed class CancelAfterFirstEdit(IReadOnlyList<WebProjectTextSnapshot> edits, Action afterFirstEdit)
+        : IReadOnlyList<WebProjectTextSnapshot> {
+        public int Count => edits.Count;
+        public WebProjectTextSnapshot this[int index] => edits[index];
+        public IEnumerator<WebProjectTextSnapshot> GetEnumerator() {
+            for (int i = 0; i < edits.Count; i++) {
+                if (i == 1) afterFirstEdit();
+                yield return edits[i];
+            }
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 
     private void AssertNoStaging() => Assert.IsEmpty(Directory.GetDirectories(_root, ".vp-copy-*"));

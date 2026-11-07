@@ -76,13 +76,18 @@ public class WebEditorViewModelTests {
         await _viewModel.OpenFileAsync(path);
         WebEditorFile file = _viewModel.ActiveFile!;
         file.Content = "copy-content";
+        file.SetSavedState(false);
 
         bool saved = await _viewModel.SaveFileAsAsync(file, copyPath);
 
         Assert.IsTrue(saved);
         Assert.AreEqual("copy-content", File.ReadAllText(copyPath));
+        Assert.AreEqual("old", File.ReadAllText(path));
         Assert.AreEqual(path, file.FilePath);
         Assert.AreSame(file, _viewModel.ActiveFile);
+        Assert.AreEqual("copy-content", file.Content);
+        Assert.IsFalse(file.IsSaved);
+        Assert.IsFalse(_viewModel.IsAllSaved);
     }
 
     [TestMethod]
@@ -121,7 +126,7 @@ public class WebEditorViewModelTests {
     }
 
     [TestMethod]
-    public async Task OpeningBeyondCacheLimit_EvictsOldestSavedInactiveFiles() {
+    public async Task OpeningBeyondCacheLimit_EvictsOldestSavedInactiveFilesAndRestoresThemOnReopen() {
         var evicted = new List<string>();
         _viewModel.FileCacheEvicted += evicted.Add;
 
@@ -139,6 +144,20 @@ public class WebEditorViewModelTests {
             },
             evicted);
         Assert.AreEqual("file-33.txt", _viewModel.ActiveFile!.FileName);
+
+        string firstPath = Path.Combine(_testRoot, "file-00.txt");
+        Assert.IsNull(_viewModel.GetOpenFile(firstPath));
+        Assert.IsFalse(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(firstPath));
+        File.WriteAllText(firstPath, "updated on disk");
+
+        await _viewModel.OpenFileAsync(firstPath);
+
+        Assert.AreEqual(firstPath, _viewModel.ActiveFile!.FilePath);
+        Assert.AreEqual("updated on disk", _viewModel.ActiveFile.Content);
+        Assert.AreSame(_viewModel.GetOpenFile(firstPath), _viewModel.ActiveFile);
+        Assert.IsTrue(_viewModel.ActiveFile.IsSaved);
+        Assert.IsTrue(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(firstPath));
+        Assert.HasCount(32, _viewModel.CachedFiles);
     }
 
     [TestMethod]

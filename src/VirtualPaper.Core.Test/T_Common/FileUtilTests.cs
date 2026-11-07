@@ -233,6 +233,38 @@ namespace VirtualPaper.Core.Test.T_Common {
         }
 
         [TestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void CopyDirectory_LegacyOverload_OverwritesFilesAndHonorsRecursion(bool copySubDirs) {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.CopyDirectory", Guid.NewGuid().ToString("N"));
+            string source = Path.Combine(root, "source");
+            string target = Path.Combine(root, "target");
+            try {
+                Directory.CreateDirectory(Path.Combine(source, "nested"));
+                Directory.CreateDirectory(Path.Combine(source, "empty"));
+                Directory.CreateDirectory(target);
+                File.WriteAllText(Path.Combine(source, "media.txt"), "source content");
+                File.WriteAllBytes(Path.Combine(source, "nested", "media.bin"), [0, 1, 255]);
+                File.WriteAllText(Path.Combine(target, "media.txt"), "previous content");
+                File.WriteAllText(Path.Combine(target, "user.txt"), "keep");
+
+                FileUtil.CopyDirectory(source, target, copySubDirs);
+
+                Assert.AreEqual("source content", File.ReadAllText(Path.Combine(target, "media.txt")));
+                Assert.AreEqual("source content", File.ReadAllText(Path.Combine(source, "media.txt")));
+                Assert.AreEqual("keep", File.ReadAllText(Path.Combine(target, "user.txt")));
+                Assert.AreEqual(copySubDirs, Directory.Exists(Path.Combine(target, "empty")));
+                if (copySubDirs) {
+                    CollectionAssert.AreEqual(new byte[] { 0, 1, 255 }, File.ReadAllBytes(Path.Combine(target, "nested", "media.bin")));
+                }
+                else {
+                    Assert.IsFalse(Directory.Exists(Path.Combine(target, "nested")));
+                }
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+        }
+
+        [TestMethod]
         public void CopyDirectory_Cancelled_DoesNotCreateDestination() {
             string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.CopyDirectory", Guid.NewGuid().ToString("N"));
             try {

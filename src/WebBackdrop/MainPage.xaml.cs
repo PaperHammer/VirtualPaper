@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -130,16 +131,48 @@ namespace Workloads.Creation.WebBackdrop {
         }
 
         public async Task<string?> SaveAsAsync() {
+            if (_isSavingAs) return null;
+            _isSavingAs = true;
             try {
-                // TODO: Implement SaveAs for web project
-                throw new NotImplementedException();
+                var folder = await WindowsStoragePickers.PickFolderAsync(WindowConsts.WindowHandle);
+                if (folder == null) return null;
+                webEditor.IsEnabled = false;
+                var previous = Session;
+                WebProjectSession? copy = null;
+                using var cancellation = new CancellationTokenSource();
+                var loading = ArcContext.LoadingContext;
+                if (loading != null) {
+                    await loading.RunAsync(async token => { copy = await webEditor.SaveProjectAsAsync(folder.Path, token); }, cancellation);
+                }
+                else {
+                    copy = await webEditor.SaveProjectAsAsync(folder.Path);
+                }
+                if (copy == null) return null;
+                previous.IsSavedChanged -= Session_IsSavedChanged;
+                Session = copy;
+                Session.IsSavedChanged += Session_IsSavedChanged;
+                Payload![NaviPayloadKey.WebProjectSession] = copy;
+                try { previous.Dispose(); }
+                catch (Exception ex) { ArcLog.GetLogger<MainPage>().Error(ex); }
+                Session.RaiseIsSavedChanged(true);
+                try { await webEditor.ViewModel.UpdateRecentUsedAsync(ProjectFilePath); }
+                catch (Exception ex) { ArcLog.GetLogger<MainPage>().Error(ex); }
+                return ProjectFilePath;
+            }
+            catch (OperationCanceledException) {
+                GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_SaveAsFailed"), ex.Message));
+            }
+            finally {
+                webEditor.IsEnabled = true;
+                _isSavingAs = false;
             }
             return null;
         }
+        private bool _isSavingAs;
 
         public Task UndoAsync() {
             return webEditor.UndoAsync();

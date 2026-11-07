@@ -15,6 +15,7 @@ internal static class NativeFileDialog {
         ChooseFile(ui, ownerWindow, "", directory, trace, paths.Select(Path.GetFileName).ToArray()!);
     }
     public static void SaveFile(Process ui, nint ownerWindow, string path) => ChooseFile(ui, ownerWindow, path);
+    public static void ChooseFolder(Process ui, nint ownerWindow, string path) => ChooseFile(ui, ownerWindow, path);
     public static void Cancel(Process ui, nint ownerWindow) => ChooseFile(ui, ownerWindow, null);
 
     private static void ChooseFile(Process ui, nint ownerWindow, string? path, string? directory = null,
@@ -48,8 +49,11 @@ internal static class NativeFileDialog {
         }
         if (dialog == null) {
             var root = AutomationElement.FromHandle(ownerWindow);
-            var controls = root.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>().Take(100)
-                .Select(item => $"{item.Current.ControlType.ProgrammaticName}: {item.Current.AutomationId} {item.Current.Name}");
+            var controls = root.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>()
+                .Where(item => item.Current.ControlType == ControlType.Window || item.Current.ControlType == ControlType.Button
+                    || item.Current.ControlType == ControlType.ComboBox || (item.Current.ControlType == ControlType.Edit
+                        && !item.Current.AutomationId.StartsWith("System.", StringComparison.Ordinal)))
+                .Take(120).Select(item => $"{item.Current.ControlType.ProgrammaticName}: {item.Current.AutomationId} {item.Current.Name} class={item.Current.ClassName}");
             throw new InvalidOperationException($"No native file dialog owned by the test UI appeared. Owned windows: {string.Join("; ", candidates)}\n{string.Join("\n", controls)}");
         }
         var filename = FindFilename(dialog)
@@ -154,12 +158,15 @@ internal static class NativeFileDialog {
     }
 
     private static AutomationElement? FindFilename(AutomationElement root) {
-        var host = root.FindFirst(TreeScope.Descendants,
-            new PropertyCondition(AutomationElement.AutomationIdProperty, "FileNameControlHost"));
+        var host = root.FindFirst(TreeScope.Descendants, new OrCondition(
+            new PropertyCondition(AutomationElement.AutomationIdProperty, "FileNameControlHost"),
+            new PropertyCondition(AutomationElement.AutomationIdProperty, "FolderNameControlHost")));
         return host?.FindFirst(TreeScope.Descendants,
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit))
             ?? root.FindFirst(TreeScope.Descendants, new AndCondition(
-                new PropertyCondition(AutomationElement.AutomationIdProperty, "1148"),
+                new OrCondition(new PropertyCondition(AutomationElement.AutomationIdProperty, "1148"),
+                    // The native folder picker uses the standard edt1 control, not FileNameControlHost.
+                    new PropertyCondition(AutomationElement.AutomationIdProperty, "1152")),
                 new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit)));
     }
 

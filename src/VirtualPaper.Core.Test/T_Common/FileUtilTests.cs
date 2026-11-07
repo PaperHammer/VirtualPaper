@@ -233,6 +233,94 @@ namespace VirtualPaper.Core.Test.T_Common {
         }
 
         [TestMethod]
+        public void CopyDirectory_Cancelled_DoesNotCreateDestination() {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.CopyDirectory", Guid.NewGuid().ToString("N"));
+            try {
+                string source = Directory.CreateDirectory(Path.Combine(root, "source")).FullName;
+                string target = Path.Combine(root, "target");
+                using var cancellation = new CancellationTokenSource();
+                cancellation.Cancel();
+                Assert.Throws<OperationCanceledException>(() => FileUtil.CopyDirectory(source, target,
+                    copySubDirs: true, overwrite: false, cancellationToken: cancellation.Token));
+                Assert.IsFalse(Directory.Exists(target));
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+        }
+
+        [TestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public void CopyDirectory_ReadOnlyPolicy_DoesNotChangeSource(bool clearReadOnly) {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.CopyDirectory", Guid.NewGuid().ToString("N"));
+            string sourceFile = Path.Combine(root, "source", "nested", "media.txt");
+            string targetFile = Path.Combine(root, "target", "nested", "media.txt");
+            try {
+                Directory.CreateDirectory(Path.GetDirectoryName(sourceFile)!);
+                Directory.CreateDirectory(Path.Combine(root, "source", "empty"));
+                File.WriteAllText(sourceFile, "source content");
+                File.SetAttributes(sourceFile, File.GetAttributes(sourceFile) | FileAttributes.ReadOnly);
+                if (clearReadOnly) {
+                    FileUtil.CopyDirectory(Path.Combine(root, "source"), Path.Combine(root, "target"),
+                        copySubDirs: true, overwrite: false, cancellationToken: CancellationToken.None,
+                        rejectLinks: true, clearReadOnly: true);
+                }
+                else {
+                    FileUtil.CopyDirectory(Path.Combine(root, "source"), Path.Combine(root, "target"), true);
+                }
+                Assert.AreEqual("source content", File.ReadAllText(targetFile));
+                Assert.IsTrue(Directory.Exists(Path.Combine(root, "target", "empty")));
+                Assert.AreEqual(FileAttributes.ReadOnly, File.GetAttributes(sourceFile) & FileAttributes.ReadOnly);
+                Assert.AreEqual(!clearReadOnly, (File.GetAttributes(targetFile) & FileAttributes.ReadOnly) != 0);
+            }
+            finally {
+                foreach (string file in new[] { sourceFile, targetFile }) {
+                    if (File.Exists(file)) File.SetAttributes(file, File.GetAttributes(file) & ~FileAttributes.ReadOnly);
+                }
+                if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+            }
+        }
+
+        [TestMethod]
+        [DataRow(true)]
+        [DataRow(false)]
+        public void CopyDirectory_RejectLinks_DoesNotCopyThroughSourceOrDestinationJunction(bool sourceLink) {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.CopyDirectory", Guid.NewGuid().ToString("N"));
+            string source = Path.Combine(root, "source");
+            string target = Path.Combine(root, "target");
+            string external = Path.Combine(root, "external");
+            string link = Path.Combine(sourceLink ? source : target, "nested");
+            try {
+                Directory.CreateDirectory(source);
+                Directory.CreateDirectory(target);
+                Directory.CreateDirectory(external);
+                File.WriteAllText(Path.Combine(external, "media.txt"), "external content");
+                if (!sourceLink) {
+                    Directory.CreateDirectory(Path.Combine(source, "nested"));
+                    File.WriteAllText(Path.Combine(source, "nested", "media.txt"), "source content");
+                }
+                var start = new System.Diagnostics.ProcessStartInfo("cmd.exe") {
+                    UseShellExecute = false, CreateNoWindow = true,
+                    RedirectStandardOutput = true, RedirectStandardError = true
+                };
+                foreach (string argument in new[] { "/c", "mklink", "/J", link, external }) start.ArgumentList.Add(argument);
+                using var process = System.Diagnostics.Process.Start(start)!;
+                string output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+                process.WaitForExit();
+                Assert.AreEqual(0, process.ExitCode, output);
+
+                Assert.Throws<IOException>(() => FileUtil.CopyDirectory(source, target,
+                    copySubDirs: true, overwrite: true, cancellationToken: CancellationToken.None, rejectLinks: true));
+                Assert.Throws<IOException>(() => FileUtil.EnsureNoDirectoryLinks(Path.Combine(link, "child")));
+                Assert.AreEqual("external content", File.ReadAllText(Path.Combine(external, "media.txt")));
+                if (sourceLink) Assert.IsFalse(File.Exists(Path.Combine(target, "nested", "media.txt")));
+            }
+            finally {
+                if (Directory.Exists(link)) Directory.Delete(link, recursive: false);
+                if (Directory.Exists(root)) Directory.Delete(root, recursive: true);
+            }
+        }
+
+        [TestMethod]
         public void GetChecksumSHA256_SameContent_SameHash() {
             var tempFile = Path.GetTempFileName();
             File.WriteAllText(tempFile, "hello world");

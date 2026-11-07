@@ -152,7 +152,7 @@ namespace VirtualPaper.EditPanel.Views {
 
         /// <summary>
         /// 根据当前选中 Tab 的项目类型调整共享菜单：
-        /// Web 项目仅可导出 zip 包、且隐藏“另存为”（改用文件树右键菜单的按文件保存/另存为）；
+        /// Web 项目导出 zip 包，“另存为”复制完整项目；文件树菜单仍支持单文件另存为；
         /// StaticImg 项目仅可导出图片格式。
         /// </summary>
         private void UpdateMenuForActiveRuntime() {
@@ -187,7 +187,7 @@ namespace VirtualPaper.EditPanel.Views {
             ExportJpegXrMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
             ExportFullZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
             ExportZipMenuItem.Visibility = isWebProject ? Visibility.Visible : Visibility.Collapsed;
-            saveAsMenuItem.Visibility = isWebProject ? Visibility.Collapsed : Visibility.Visible;
+            saveAsMenuItem.Visibility = Visibility.Visible;
 
             var webEditVisibility = runtime is IRuntimeEditCommandProvider
                 ? Visibility.Visible

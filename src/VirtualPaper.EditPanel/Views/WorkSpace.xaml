@@ -36,7 +36,7 @@
                         <KeyboardAccelerator Modifiers="Control" Key="S"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
-                <MenuFlyoutItem x:Name="saveAsMenuItem" l:Uids.Uid="Ui_Text_Save_As_Text" Command="{x:Bind _viewModel.MFI_SaveAsCommand}"/>
+                <MenuFlyoutItem x:Name="saveAsMenuItem" AutomationProperties.AutomationId="Project.File.SaveAs" l:Uids.Uid="Ui_Text_Save_As_Text" Command="{x:Bind _viewModel.MFI_SaveAsCommand}"/>
                 <MenuFlyoutItem l:Uids.Uid="Ui_Project_StaticImg_MenuBar_Text_SaveAll_Text" Command="{x:Bind _viewModel.MFI_SaveAllCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control,Shift" Key="S"/>

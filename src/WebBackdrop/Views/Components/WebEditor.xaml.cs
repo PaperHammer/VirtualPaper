@@ -229,25 +229,13 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
             _isLoaded = true;
             await Task.Yield();
-            ViewModel = new WebEditorViewModel(_session, contextKey);
-            ViewModel.PropertyChanged += ViewModel_PropertyChanged;
-            ViewModel.DebugSessionEnded += OnDebugSessionEnded;
-            ViewModel.FileCacheEvicted += ViewModel_FileCacheEvicted;
-
-            _session.FileManager.Changed += FileManager_Changed;
-
-            leftFileTreeControl.Refresh(_session.DesignFileUtil);
-            QuickOpenBox.PlaceholderText = _session.DesignFileUtil.ProjectName;
-            QueueQuickOpenRefresh();
+            SetProjectViewModel(_session, new WebEditorViewModel(_session, contextKey));
+            RefreshProjectControls();
             // [已废弃，暂注释] 上游事件从未触发（重命名链路未接）
             // leftFileTreeControl.ProjectFileRenamed += OnProjectFileRenamed;
-            propertyPanelControl.LoadProject(_session.DesignFileUtil);
-            problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
 
             editorContentView.TextEditor.FileOpenRequested += OnMonacoFileOpenRequested;
             editorContentView.MarkdownEditor.MonacoEditor.FileOpenRequested += OnMonacoFileOpenRequested;
-
-            UpdateStatusBar();
 
             // 上次异常退出遗留的未保存编辑备份检测/恢复
             _ = CheckCrashRecoveryAsync();
@@ -264,7 +252,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             _quickOpenRefreshCancellation?.Dispose();
             _quickOpenRefreshCancellation = null;
             if (_session != null) {
-                _session.FileManager.Changed -= FileManager_Changed;
+                _session.FileManager.Changed -= _fileManagerChanged;
             }
 
             if (ViewModel != null) {
@@ -470,8 +458,9 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             }
         }
 
-        private void FileManager_Changed(ProjectChangedEvent e) {
+        private void FileManager_Changed(WebProjectSession session, ProjectChangedEvent e) {
             DispatcherQueue.TryEnqueue(() => {
+                if (!ReferenceEquals(session, _session)) return;
                 // 所有文件系统变更统一交给文件树处理（增量更新）
                 leftFileTreeControl.ApplyChange(e);
 
@@ -766,6 +755,117 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                     ViewModel?.ActiveFile?.CanOpenAsText == true,
                 _ => false,
             };
+        }
+
+        private void SetProjectViewModel(WebProjectSession session, WebEditorViewModel viewModel) {
+            if (_session != null) _session.FileManager.Changed -= _fileManagerChanged;
+            if (ViewModel != null) {
+                ViewModel.PropertyChanged -= ViewModel_PropertyChanged;
+                ViewModel.DebugSessionEnded -= OnDebugSessionEnded;
+                ViewModel.FileCacheEvicted -= ViewModel_FileCacheEvicted;
+            }
+            _session = session;
+            ViewModel = viewModel;
+            _fileManagerChanged = change => FileManager_Changed(session, change);
+            session.FileManager.Changed += _fileManagerChanged;
+            viewModel.PropertyChanged += ViewModel_PropertyChanged;
+            viewModel.DebugSessionEnded += OnDebugSessionEnded;
+            viewModel.FileCacheEvicted += ViewModel_FileCacheEvicted;
+        }
+
+        private void RefreshProjectControls() {
+            _propertyPanelRefreshCancellation?.Cancel();
+            _quickOpenRefreshCancellation?.Cancel();
+            leftFileTreeControl.ClearActiveFileSelection();
+            leftFileTreeControl.Refresh(_session!.DesignFileUtil);
+            QuickOpenBox.PlaceholderText = _session.DesignFileUtil.ProjectName;
+            QueueQuickOpenRefresh();
+            propertyPanelControl.LoadProject(_session.DesignFileUtil);
+            problemsPanel.SetProjectFolder(_session.DesignFileUtil.ProjectFolder);
+            UpdateStatusBar();
+        }
+
+        /// <summary>Prepare the copy first, then switch editor/session without saving the source.</summary>
+        public async Task<WebProjectSession> SaveProjectAsAsync(string destinationFolder, CancellationToken token = default) {
+            await _saveLock.WaitAsync(token);
+            WebProjectSession? copy = null;
+            bool switched = false;
+            try {
+                IsSaving = true;
+                _openFileCancellation?.Cancel();
+                await _openFileLock.WaitAsync(token);
+                try {
+                    var previousSession = _session ?? throw new InvalidOperationException("The editor is not initialized.");
+                    var previousViewModel = ViewModel;
+                    if (await SyncActiveEditorContentAsync() == null) {
+                        throw new IOException("The active editor changed. Please retry saving the project.");
+                    }
+                    if (previousViewModel.CachedFiles.Any(file => file.CanOpenAsText && file.IsLoadFailed)) {
+                        throw new IOException("A project file could not be loaded. Resolve the error before saving a copy.");
+                    }
+                    var edits = previousViewModel.CachedFiles
+                        .Where(file => file.CanOpenAsText && (!file.IsSaved || ReferenceEquals(file, previousViewModel.ActiveFile)))
+                        .Select(file => new WebProjectTextSnapshot(file.FilePath, file.Content, file.EncodingText)).ToArray();
+                    string path = await Task.Run(() => WebProjectCopy.Copy(previousSession.DesignFileUtil, destinationFolder, edits, token), token);
+                    token.ThrowIfCancellationRequested();
+                    if (!_isLoaded) throw new OperationCanceledException("The editor was closed.");
+
+                    copy = new WebProjectSession(path);
+                    Payload!.TryGet(NaviPayloadKey.ContextKey, out ArcPageContextKey contextKey);
+                    var nextViewModel = new WebEditorViewModel(copy, contextKey);
+                    foreach (var file in previousViewModel.CachedFiles) {
+                        string newPath = previousSession.DesignFileUtil.IsProjectFile(file.FilePath)
+                            ? path : Path.Combine(copy.DesignFileUtil.ProjectFolder,
+                                Path.GetRelativePath(previousSession.DesignFileUtil.ProjectFolder, file.FilePath));
+                        await nextViewModel.OpenFileAsync(newPath, token);
+                        token.ThrowIfCancellationRequested();
+                        if (nextViewModel.GetOpenFile(newPath) is not { IsLoadFailed: false }) {
+                            throw new IOException($"The copied project file could not be opened: {newPath}");
+                        }
+                    }
+                    if (previousViewModel.ActiveFile is { } active) {
+                        string newPath = previousSession.DesignFileUtil.IsProjectFile(active.FilePath) ? path
+                            : Path.Combine(copy.DesignFileUtil.ProjectFolder, Path.GetRelativePath(previousSession.DesignFileUtil.ProjectFolder, active.FilePath));
+                        // Loading the remaining files may have evicted the original active file.
+                        await nextViewModel.OpenFileAsync(newPath, token);
+                        token.ThrowIfCancellationRequested();
+                        if (nextViewModel.GetOpenFile(newPath) is not { IsLoadFailed: false }) {
+                            throw new IOException($"The copied active file could not be opened: {newPath}");
+                        }
+                    }
+                    token.ThrowIfCancellationRequested();
+                    try {
+                        SetProjectViewModel(copy, nextViewModel);
+                        RefreshProjectControls();
+                        await editorContentView.WaitForContentUpdateAsync();
+                    }
+                    catch {
+                        SetProjectViewModel(previousSession, previousViewModel);
+                        RefreshProjectControls();
+                        throw;
+                    }
+                    switched = true;
+                    StopNavigationRecordTimer();
+                    _navigationHistory.Clear();
+                    _navigationIndex = -1;
+                    try { previousViewModel.CleanupSessions(); }
+                    catch (Exception ex) { ArcLog.GetLogger<WebEditor>().Error(ex); }
+                    _isDebugRunning = false;
+                    statusBar.IsDebugRunning = false;
+                    foreach (var file in previousViewModel.CachedFiles) {
+                        WebBackdropRecoveryStore.DeleteBackup(previousSession.DesignFileUtil.ProjectFolder, file.FilePath);
+                        try { await editorContentView.DisposeModelAsync(file.FilePath); }
+                        catch (Exception ex) { ArcLog.GetLogger<WebEditor>().Error(ex); }
+                    }
+                    return copy;
+                }
+                finally { _openFileLock.Release(); }
+            }
+            finally {
+                if (!switched) copy?.Dispose();
+                IsSaving = false;
+                _saveLock.Release();
+            }
         }
 
         public async Task<bool> SaveAllAsync() {
@@ -1662,6 +1762,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         private WebProjectSession? _session;
+        private Action<ProjectChangedEvent>? _fileManagerChanged;
         private readonly WebQuickOpenControl _quickOpenControl;
         private IReadOnlyList<WebQuickOpenItem> _quickOpenFiles = [];
         private const int MaxQuickOpenIndexedFiles = 50000;

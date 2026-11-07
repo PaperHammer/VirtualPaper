@@ -1945,4 +1945,5 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>智能任务未保存结果提醒</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>关闭时提醒尚未导出或入库的结果。未完成的任务始终需要确认。</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>提醒未保存的智能任务结果</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>无法另存项目。请选择当前项目之外的空文件夹，原项目文件未被修改。&#x0A;{0}</value></data>
 </root>

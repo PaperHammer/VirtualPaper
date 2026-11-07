@@ -273,8 +273,10 @@ This uses real Win2D and shader resources. Brushes, layer renaming, cross-DPI be
 2. Open the entry file through the tree and wait for Monaco's current-file state. Verify native focus belongs to the browser before sending real keyboard input.
 3. Save through the production menu and independently read the edited marker from disk; a cleared dirty indicator is insufficient.
 4. Reopen UI and load the `.vpw` through the system picker. Check the tree and entry file, export the complete ZIP, and verify edited content, manifest, and deleted files.
+5. Edit without saving, cancel project Save As, then choose an empty destination folder. Verify the copy contains the unsaved edit and empty asset directory, the source bytes remain unchanged, and the editor switches to the copy.
+6. Save another edit into the copy, export it, and reopen both projects independently. Check the copied manifest name and original file contents.
 
-Context menus and keyboard input operate only on owned windows with foreground and obstruction checks. No DOM injection, test-only save endpoint, or substituted service is used. Preview quality, Save As, every editor command, OCR, and pixel-level rendering are outside this case.
+Context menus and keyboard input operate only on owned windows with foreground and obstruction checks. No DOM injection, test-only save endpoint, or substituted service is used. Preview quality, every editor command, OCR, and pixel-level rendering are outside this case. `WebProjectCopyTests` separately verifies complete copies, text encodings, source preservation, manifest edits, rejected destinations, cancellation and failure cleanup.
 
 ### Exit with unsaved editors
 

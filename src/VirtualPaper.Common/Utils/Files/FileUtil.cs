@@ -472,7 +472,17 @@ namespace VirtualPaper.Common.Utils.Files {
             CopyDirectory(sourceFolderPath, destFolderPath, copySubDirs, overwrite: true);
 
         /// <summary>Copies a directory with an explicit file overwrite policy.</summary>
-        public static void CopyDirectory(string sourceFolderPath, string destFolderPath, bool copySubDirs, bool overwrite) {
+        public static void CopyDirectory(string sourceFolderPath, string destFolderPath, bool copySubDirs, bool overwrite) =>
+            CopyDirectory(sourceFolderPath, destFolderPath, copySubDirs, overwrite, CancellationToken.None);
+
+        /// <summary>
+        /// Copies a directory with cancellation between entries and optional link rejection
+        /// and removal of the read-only attribute from copied files. Existing files are
+        /// handled according to <paramref name="overwrite"/>; failures may leave a partial copy.
+        /// </summary>
+        public static void CopyDirectory(string sourceFolderPath, string destFolderPath, bool copySubDirs,
+            bool overwrite, CancellationToken cancellationToken, bool rejectLinks = false, bool clearReadOnly = false) {
+            cancellationToken.ThrowIfCancellationRequested();
             DirectoryInfo dir = new(sourceFolderPath);
 
             if (!dir.Exists) {
@@ -481,21 +491,49 @@ namespace VirtualPaper.Common.Utils.Files {
                     + sourceFolderPath);
             }
 
-            if (!Directory.Exists(destFolderPath)) {
-                Directory.CreateDirectory(destFolderPath);
+            if (rejectLinks) {
+                EnsureNoDirectoryLinks(sourceFolderPath);
+                EnsureNoDirectoryLinks(destFolderPath);
+            }
+            CopyContents(dir, destFolderPath);
+
+            void CopyContents(DirectoryInfo source, string destination) {
+                cancellationToken.ThrowIfCancellationRequested();
+                Directory.CreateDirectory(destination);
+                foreach (FileInfo file in source.EnumerateFiles()) {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    CheckLink(file);
+                    string target = Path.Combine(destination, file.Name);
+                    if (rejectLinks) CheckLink(new FileInfo(target));
+                    var copy = file.CopyTo(target, overwrite);
+                    if (clearReadOnly && (copy.Attributes & System.IO.FileAttributes.ReadOnly) != 0) {
+                        copy.Attributes &= ~System.IO.FileAttributes.ReadOnly;
+                    }
+                }
+
+                if (copySubDirs) {
+                    foreach (DirectoryInfo subdir in source.EnumerateDirectories()) {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        CheckLink(subdir);
+                        string target = Path.Combine(destination, subdir.Name);
+                        if (rejectLinks) CheckLink(new DirectoryInfo(target));
+                        CopyContents(subdir, target);
+                    }
+                }
             }
 
-            FileInfo[] files = dir.GetFiles();
-            foreach (FileInfo file in files) {
-                string tempPath = Path.Combine(destFolderPath, file.Name);
-                file.CopyTo(tempPath, overwrite);
+            void CheckLink(FileSystemInfo entry) {
+                if (rejectLinks && entry.LinkTarget != null) {
+                    throw new IOException($"Directory copy does not support links: {entry.FullName}");
+                }
             }
+        }
 
-            if (copySubDirs) {
-                DirectoryInfo[] dirs = dir.GetDirectories();
-                foreach (DirectoryInfo subdir in dirs) {
-                    string temppath = Path.Combine(destFolderPath, subdir.Name);
-                    CopyDirectory(subdir.FullName, temppath, copySubDirs, overwrite);
+        /// <summary>Rejects symbolic links and junctions in a directory path, including its ancestors.</summary>
+        public static void EnsureNoDirectoryLinks(string path) {
+            for (var directory = new DirectoryInfo(path); directory != null; directory = directory.Parent) {
+                if (directory.LinkTarget != null) {
+                    throw new IOException($"Directory links are not supported: {directory.FullName}");
                 }
             }
         }

@@ -1945,4 +1945,5 @@ The following words cannot be used as usernames:
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Unsaved intelligent results</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Remind me before closing results that have not been exported or added to the library. Unfinished tasks always require confirmation.</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Remind about unsaved intelligent results</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Could not save a project copy. Choose an empty folder outside the current project. The original files have not been changed.&#x0A;{0}</value></data>
 </root>

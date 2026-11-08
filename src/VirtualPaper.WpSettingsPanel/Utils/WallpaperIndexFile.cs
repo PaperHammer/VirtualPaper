@@ -43,16 +43,7 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
 
                 if (!data.IsAvailable()) return;
 
-                var entry = new WallpaperIndexEntry {
-                    Uid = data.WallpaperUid,
-                    FolderPath = data.FolderPath,
-                    JsonPath = jsonPath,
-                    CreateTime = data.CreatedTime,
-                    Title = data.Title ?? "",
-                    Author = data.Authors,
-                    Tags = data.Tags.Split(';', StringSplitOptions.RemoveEmptyEntries),
-                };
-                items.Add(entry);
+                items.Add(WallpaperIndexEntry.FromData(data) with { JsonPath = jsonPath });
             });
 
             Items = items.OrderByDescending(i => i.CreateTime).ToList();

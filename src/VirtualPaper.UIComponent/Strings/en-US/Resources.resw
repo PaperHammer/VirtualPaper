@@ -645,7 +645,7 @@ Author: PaperHammer</value>
     <value>Ordinary wallpaper</value>
   </data>
   <data name="WpLib_TypeFilter_All" xml:space="preserve">
-    <value>Type</value>
+    <value>Filters</value>
   </data>
   <data name="WpLib_CardType_Image" xml:space="preserve"><value>Image</value></data>
   <data name="WpLib_CardType_Gif" xml:space="preserve"><value>GIF</value></data>
@@ -663,7 +663,7 @@ Author: PaperHammer</value>
     <value>Web Interactive</value>
   </data>
   <data name="WpLib_Search_Placeholder" xml:space="preserve">
-    <value>Search by title...</value>
+    <value>Search wallpapers...</value>
   </data>
   <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
     <value>Library contents</value>
@@ -1946,4 +1946,39 @@ The following words cannot be used as usernames:
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Remind me before closing results that have not been exported or added to the library. Unfinished tasks always require confirmation.</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Remind about unsaved intelligent results</value></data>
   <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Could not save a project copy. Choose an empty folder outside the current project. The original files have not been changed.&#x0A;{0}</value></data>
+  <data name="WpLib_Favorites" xml:space="preserve"><value>Favorites only</value></data>
+  <data name="WpLib_FavoritesLabel" xml:space="preserve"><value>Favorites</value></data>
+  <data name="WpLib_SearchExplain" xml:space="preserve"><value>Search titles, descriptions, authors and tags across your library</value></data>
+  <data name="WpLib_SelectLoaded" xml:space="preserve"><value>Select all loaded wallpapers</value></data>
+  <data name="WpLib_Sort" xml:space="preserve"><value>Sort wallpapers</value></data>
+  <data name="WpLib_SortLabel" xml:space="preserve"><value>Sort</value></data>
+  <data name="WpLib_SortNewest" xml:space="preserve"><value>Newest first</value></data>
+  <data name="WpLib_SortOldest" xml:space="preserve"><value>Oldest first</value></data>
+  <data name="WpLib_SortTitle" xml:space="preserve"><value>Title (A–Z)</value></data>
+  <data name="WpLib_SortAuthor" xml:space="preserve"><value>Author (A–Z)</value></data>
+  <data name="WpLib_TagFilter" xml:space="preserve"><value>Tag</value></data>
+  <data name="WpLib_TagSearchPlaceholder" xml:space="preserve"><value>Type to match tags</value></data>
+  <data name="WpLib_ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="WpLib_Organize" xml:space="preserve"><value>Organize selected wallpapers</value></data>
+  <data name="WpLib_AddFavorite" xml:space="preserve"><value>Add to favorites</value></data>
+  <data name="WpLib_RemoveFavorite" xml:space="preserve"><value>Remove from favorites</value></data>
+  <data name="WpLib_EditTags" xml:space="preserve"><value>Edit your tags</value></data>
+  <data name="WpLib_EditInfo" xml:space="preserve"><value>Edit info</value></data>
+  <data name="WpLib_IncludedTags" xml:space="preserve"><value>Included wallpaper tags (read-only): {0}</value></data>
+  <data name="WpLib_EditTitle" xml:space="preserve"><value>Title</value></data>
+  <data name="WpLib_EditDescription" xml:space="preserve"><value>Description</value></data>
+  <data name="WpLib_TitlePlaceholder" xml:space="preserve"><value>Enter a wallpaper title</value></data>
+  <data name="WpLib_DescriptionPlaceholder" xml:space="preserve"><value>Add a description for this wallpaper</value></data>
+  <data name="WpLib_EditAuthor" xml:space="preserve"><value>Author</value></data>
+  <data name="WpLib_YourTags" xml:space="preserve"><value>Your tags</value></data>
+  <data name="WpLib_AuthorTokenPlaceholder" xml:space="preserve"><value>Type an author and press Enter</value></data>
+  <data name="WpLib_TagTokenPlaceholder" xml:space="preserve"><value>Type a tag and press Enter</value></data>
+  <data name="WpLib_RemoveToken" xml:space="preserve"><value>Remove item</value></data>
+  <data name="WpLib_TagsPlaceholder" xml:space="preserve"><value>Separate tags with commas or semicolons</value></data>
+  <data name="WpLib_TagsExplain" xml:space="preserve"><value>Your tags are saved for you and can be searched or filtered. Original wallpaper tags stay unchanged.</value></data>
+  <data name="WpLib_TagMode" xml:space="preserve"><value>Apply to selected wallpapers</value></data>
+  <data name="WpLib_TagsAdd" xml:space="preserve"><value>Add tags</value></data>
+  <data name="WpLib_TagsRemove" xml:space="preserve"><value>Remove tags</value></data>
+  <data name="WpLib_TagsReplace" xml:space="preserve"><value>Replace your tags</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>No wallpapers found. Add wallpapers or change your filters.</value></data>
 </root>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="VirtualPaper.WpSettingsPanel.Views.WallpaperDetailsEditor"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
+    HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+    VerticalContentAlignment="Top">
+    <UserControl.Resources>
+      <ResourceDictionary>
+        <ResourceDictionary.ThemeDictionaries>
+            <ResourceDictionary x:Key="Default">
+                <SolidColorBrush x:Key="InfoTokenBackground" Color="#1B3551"/>
+                <SolidColorBrush x:Key="InfoTokenBorder" Color="#325A80"/>
+                <SolidColorBrush x:Key="InfoTokenForeground" Color="#D6E9FF"/>
+            </ResourceDictionary>
+            <ResourceDictionary x:Key="Light">
+                <SolidColorBrush x:Key="InfoTokenBackground" Color="#E7F2FF"/>
+                <SolidColorBrush x:Key="InfoTokenBorder" Color="#C6DEF7"/>
+                <SolidColorBrush x:Key="InfoTokenForeground" Color="#194C7D"/>
+            </ResourceDictionary>
+            <ResourceDictionary x:Key="HighContrast">
+                <SolidColorBrush x:Key="InfoTokenBackground" Color="{ThemeResource SystemColorWindowColor}"/>
+                <SolidColorBrush x:Key="InfoTokenBorder" Color="{ThemeResource SystemColorWindowTextColor}"/>
+                <SolidColorBrush x:Key="InfoTokenForeground" Color="{ThemeResource SystemColorWindowTextColor}"/>
+            </ResourceDictionary>
+        </ResourceDictionary.ThemeDictionaries>
+        <DataTemplate x:Key="InfoTokenTemplate" x:DataType="x:String">
+            <Border CornerRadius="6" Background="{ThemeResource InfoTokenBackground}"
+                BorderBrush="{ThemeResource InfoTokenBorder}" BorderThickness="1" Padding="10 1 2 1">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="{x:Bind}" FontSize="16" MaxWidth="200" TextTrimming="CharacterEllipsis"
+                        Foreground="{ThemeResource InfoTokenForeground}"
+                        VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind}"/>
+                    <Button Tag="{x:Bind}" Width="32" Height="32" MinWidth="32" MinHeight="32"
+                        Padding="0" CornerRadius="4" Background="Transparent" BorderThickness="0"
+                        Foreground="{ThemeResource InfoTokenForeground}"
+                        Click="RemoveToken_Click" l:Uids.Uid="Ui_WpLib_RemoveToken">
+                        <FontIcon Glyph="&#xE711;" FontSize="12"/>
+                    </Button>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+      </ResourceDictionary>
+    </UserControl.Resources>
+
+    <!-- ArcContentDialog already supplies scrolling and content padding. -->
+    <StackPanel Spacing="16" HorizontalAlignment="Stretch">
+        <TextBox x:Name="TitleInput" l:Uids.Uid="Ui_WpLib_EditTitle" TextWrapping="Wrap"
+            HorizontalAlignment="Stretch" AutomationProperties.AutomationId="Library.Edit.Title"/>
+        <TextBox x:Name="DescriptionInput" l:Uids.Uid="Ui_WpLib_EditDescription" TextWrapping="Wrap"
+            AcceptsReturn="True" MinHeight="80" MaxHeight="140" HorizontalAlignment="Stretch"
+            AutomationProperties.AutomationId="Library.Edit.Description"/>
+        <StackPanel Spacing="8">
+            <TextBox x:Name="AuthorInput" l:Uids.Uid="Ui_WpLib_EditAuthor" KeyDown="TokenInput_KeyDown"
+                HorizontalAlignment="Stretch" AutomationProperties.AutomationId="Library.Edit.Authors"/>
+            <ItemsRepeater x:Name="AuthorsList" ItemsSource="{x:Bind _authors.Items}"
+                ItemTemplate="{StaticResource InfoTokenTemplate}">
+                <ItemsRepeater.Layout>
+                    <LinedFlowLayout LineHeight="36" LineSpacing="8" MinItemSpacing="8" ItemsStretch="None"/>
+                </ItemsRepeater.Layout>
+            </ItemsRepeater>
+        </StackPanel>
+        <StackPanel Spacing="8">
+            <TextBox x:Name="PersonalTagsInput" l:Uids.Uid="Ui_WpLib_EditPersonalTags" KeyDown="TokenInput_KeyDown"
+                HorizontalAlignment="Stretch" AutomationProperties.AutomationId="Library.Edit.Tags"/>
+            <ItemsRepeater x:Name="TagsList" ItemsSource="{x:Bind _tags.Items}"
+                ItemTemplate="{StaticResource InfoTokenTemplate}">
+                <ItemsRepeater.Layout>
+                    <LinedFlowLayout LineHeight="36" LineSpacing="8" MinItemSpacing="8" ItemsStretch="None"/>
+                </ItemsRepeater.Layout>
+            </ItemsRepeater>
+            <TextBlock x:Name="SourceTagsSummary" TextWrapping="Wrap"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

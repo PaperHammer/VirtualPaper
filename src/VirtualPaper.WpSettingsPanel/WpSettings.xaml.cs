@@ -95,9 +95,42 @@ namespace VirtualPaper.WpSettingsPanel {
             }
         }
 
-        private void FilterBar_SizeChanged(object sender, SizeChangedEventArgs e) {
-            tbSearchName.Width = Math.Clamp(
-                e.NewSize.Width - LibraryTypeFilter.ActualWidth - LibraryBrowseTools.Spacing, 120, 260);
+        private void TagFilter_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+                _viewModel.TagKeyword = sender.Text;
+        }
+
+        private void TagFilter_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args) {
+            if (args.SelectedItem is string tag) {
+                sender.Text = tag;
+                _viewModel.TagKeyword = tag;
+            }
+        }
+
+        private void SortLibrary_Click(object sender, RoutedEventArgs e) {
+            if (sender is RadioMenuFlyoutItem { Tag: string sort }) _viewModel.SortOrder = Enum.Parse<WallpaperSortOrder>(sort);
+        }
+
+        private void SortFlyout_Opening(object sender, object e) {
+            foreach (var item in ((MenuFlyout)sender).Items.OfType<RadioMenuFlyoutItem>()) {
+                item.IsChecked = item.Tag is string sort && Enum.Parse<WallpaperSortOrder>(sort) == _viewModel.SortOrder;
+            }
+        }
+
+        private void ClearLibraryFilters_Click(object sender, RoutedEventArgs e) {
+            tbSearchName.Text = "";
+            _viewModel.ClearLibraryFilters();
+        }
+
+        private async void OrganizeSelectedLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library && sender is MenuFlyoutItem { Tag: string action }) {
+                await library.OrganizeSelectedAsync(action);
+            }
+        }
+
+        private void OrganizationMenu_Opening(object sender, object e) {
+            if (ContentFrame.Content is LibraryContents library && sender is MenuFlyout flyout)
+                library.UpdateOrganizationMenu(flyout);
         }
 
         private void SelectLibraryItems_Click(object sender, RoutedEventArgs e) {
@@ -145,6 +178,7 @@ namespace VirtualPaper.WpSettingsPanel {
                 LanguageUtil.GetI18n(Constants.I18n.WpLib_SelectedCount),
                 selectedCount);
             DeleteSelectedLibraryItems.IsEnabled = selectedCount > 0;
+            OrganizeSelectedLibraryItems.IsEnabled = selectedCount > 0;
         }
 
         private readonly WpSettingsViewModel _viewModel;

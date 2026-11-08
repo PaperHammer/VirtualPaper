@@ -645,7 +645,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>普通壁纸</value>
   </data>
   <data name="WpLib_TypeFilter_All" xml:space="preserve">
-    <value>类型</value>
+    <value>筛选</value>
   </data>
   <data name="WpLib_CardType_Image" xml:space="preserve"><value>图片</value></data>
   <data name="WpLib_CardType_Gif" xml:space="preserve"><value>动图</value></data>
@@ -663,7 +663,7 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
     <value>Web 交互式</value>
   </data>
   <data name="WpLib_Search_Placeholder" xml:space="preserve">
-    <value>按标题搜索...</value>
+    <value>搜索壁纸...</value>
   </data>
   <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
     <value>库内容</value>
@@ -1946,4 +1946,39 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>关闭时提醒尚未导出或入库的结果。未完成的任务始终需要确认。</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>提醒未保存的智能任务结果</value></data>
   <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>无法另存项目。请选择当前项目之外的空文件夹，原项目文件未被修改。&#x0A;{0}</value></data>
+  <data name="WpLib_Favorites" xml:space="preserve"><value>仅看收藏</value></data>
+  <data name="WpLib_FavoritesLabel" xml:space="preserve"><value>收藏</value></data>
+  <data name="WpLib_SearchExplain" xml:space="preserve"><value>搜索整个壁纸库的标题、描述、作者和标签</value></data>
+  <data name="WpLib_SelectLoaded" xml:space="preserve"><value>选择所有已加载的壁纸</value></data>
+  <data name="WpLib_Sort" xml:space="preserve"><value>壁纸排序</value></data>
+  <data name="WpLib_SortLabel" xml:space="preserve"><value>排序</value></data>
+  <data name="WpLib_SortNewest" xml:space="preserve"><value>最新优先</value></data>
+  <data name="WpLib_SortOldest" xml:space="preserve"><value>最早优先</value></data>
+  <data name="WpLib_SortTitle" xml:space="preserve"><value>按标题排序</value></data>
+  <data name="WpLib_SortAuthor" xml:space="preserve"><value>按作者排序</value></data>
+  <data name="WpLib_TagFilter" xml:space="preserve"><value>标签</value></data>
+  <data name="WpLib_TagSearchPlaceholder" xml:space="preserve"><value>输入标签关键词</value></data>
+  <data name="WpLib_ClearFilters" xml:space="preserve"><value>清除筛选</value></data>
+  <data name="WpLib_Organize" xml:space="preserve"><value>整理选中的壁纸</value></data>
+  <data name="WpLib_AddFavorite" xml:space="preserve"><value>添加到收藏</value></data>
+  <data name="WpLib_RemoveFavorite" xml:space="preserve"><value>取消收藏</value></data>
+  <data name="WpLib_EditTags" xml:space="preserve"><value>编辑个人标签</value></data>
+  <data name="WpLib_EditInfo" xml:space="preserve"><value>编辑信息</value></data>
+  <data name="WpLib_IncludedTags" xml:space="preserve"><value>壁纸自带标签（只读）：{0}</value></data>
+  <data name="WpLib_EditTitle" xml:space="preserve"><value>标题</value></data>
+  <data name="WpLib_EditDescription" xml:space="preserve"><value>描述</value></data>
+  <data name="WpLib_TitlePlaceholder" xml:space="preserve"><value>输入壁纸标题</value></data>
+  <data name="WpLib_DescriptionPlaceholder" xml:space="preserve"><value>添加这张壁纸的描述</value></data>
+  <data name="WpLib_EditAuthor" xml:space="preserve"><value>作者</value></data>
+  <data name="WpLib_YourTags" xml:space="preserve"><value>个人标签</value></data>
+  <data name="WpLib_AuthorTokenPlaceholder" xml:space="preserve"><value>输入作者后按回车添加</value></data>
+  <data name="WpLib_TagTokenPlaceholder" xml:space="preserve"><value>输入标签后按回车添加</value></data>
+  <data name="WpLib_RemoveToken" xml:space="preserve"><value>移除此项</value></data>
+  <data name="WpLib_TagsPlaceholder" xml:space="preserve"><value>多个标签以逗号或分号分隔</value></data>
+  <data name="WpLib_TagsExplain" xml:space="preserve"><value>个人标签仅用于你的搜索和筛选，不会修改壁纸原有标签。</value></data>
+  <data name="WpLib_TagMode" xml:space="preserve"><value>应用到选中的壁纸</value></data>
+  <data name="WpLib_TagsAdd" xml:space="preserve"><value>添加标签</value></data>
+  <data name="WpLib_TagsRemove" xml:space="preserve"><value>移除标签</value></data>
+  <data name="WpLib_TagsReplace" xml:space="preserve"><value>替换个人标签</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>没有找到壁纸，可以添加壁纸或调整筛选条件。</value></data>
 </root>

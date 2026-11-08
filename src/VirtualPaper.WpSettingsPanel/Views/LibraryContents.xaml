@@ -14,6 +14,29 @@
     NavigationCacheMode="Enabled">
 
     <arc:ArcPage.Resources>
+      <ResourceDictionary>
+        <Style x:Key="CardFavoriteButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="MinWidth" Value="32"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="#B3000000"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style x:Key="CardEditButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="MinWidth" Value="32"/>
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="#B3000000"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
         <Style x:Key="WallpaperTypeLabelStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -95,11 +118,14 @@
         </Style>
 
         <DataTemplate x:Key="WallpaperItemTemplate" x:DataType="models:IWpBasicData">
-            <Grid
+            <Grid x:Name="WallpaperCard"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 CornerRadius="8"
-                ContextFlyout="{StaticResource WallpaperContextFlyout}">
+                ContextRequested="WallpaperItem_ContextRequested"
+                SizeChanged="WallpaperCard_SizeChanged"
+                PointerEntered="WallpaperCard_PointerEntered" PointerExited="WallpaperCard_PointerExited"
+                PointerCanceled="WallpaperCard_PointerCanceled" Unloaded="WallpaperCard_Unloaded">
 
                 <!-- 原生占位缩略图：无 preview（ThumbnailPath 为空）或图片加载失败时显示 -->
                 <Grid x:Name="NoPreviewPlaceholder"
@@ -185,6 +211,20 @@
                             ToolTipService.ToolTip="{x:Bind Desc, Mode=OneWay}"/>
                     </StackPanel>
                 </Border>
+                <StackPanel x:Name="CardActions" Margin="10" Spacing="6"
+                    DataContext="{x:Bind}" HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Opacity="0" IsHitTestVisible="False" Loaded="CardActions_Loaded" Unloaded="CardActions_Unloaded">
+                    <StackPanel.RenderTransform><TranslateTransform X="48"/></StackPanel.RenderTransform>
+                    <ToggleButton x:Name="FavoriteButton" Style="{StaticResource CardFavoriteButtonStyle}"
+                        IsEnabled="False" IsTabStop="False"
+                        Loaded="FavoriteButton_Loaded" Unloaded="FavoriteButton_Unloaded"
+                        DataContextChanged="FavoriteButton_DataContextChanged" Click="FavoriteButton_Click">
+                        <FontIcon Glyph="&#xE734;" FontSize="14"/>
+                    </ToggleButton>
+                    <Button Style="{StaticResource CardEditButtonStyle}" IsEnabled="False" IsTabStop="False" Click="EditInfoButton_Click">
+                        <FontIcon Glyph="&#xE70F;" FontSize="14"/>
+                    </Button>
+                </StackPanel>
             </Grid>
         </DataTemplate>
 
@@ -198,6 +238,16 @@
         <MenuFlyout x:Key="WallpaperContextFlyout"
             ShowMode="Transient"
             Opening="WallpaperContextFlyout_Opening">
+            <MenuFlyoutItem Tag="AddFavorite" l:Uids.Uid="Ui_WpLib_AddFavorite" Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE734;"/></MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Tag="RemoveFavorite" l:Uids.Uid="Ui_WpLib_RemoveFavorite" Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE735;"/></MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutItem Tag="EditTags" l:Uids.Uid="Ui_WpLib_EditTags" Click="ContextMenu_Click">
+                <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8EC;"/></MenuFlyoutItem.Icon>
+            </MenuFlyoutItem>
+            <MenuFlyoutSeparator/>
             <MenuFlyoutItem
                 Tag="Details"
                 l:Uids.Uid="Ui_Text_Details_Text"
@@ -217,7 +267,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="Edit"
-                l:Uids.Uid="Ui_Text_Edit_Text"
+                l:Uids.Uid="Ui_WpLib_EditInfo"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>
                     <FontIcon Glyph="&#xE70F;" />
@@ -266,6 +316,7 @@
                 </MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
         </MenuFlyout>
+      </ResourceDictionary>
     </arc:ArcPage.Resources>
 
     <ScrollView x:Name="wallpaperLibScrollViewer"
@@ -275,6 +326,12 @@
         <StackPanel
             Orientation="Vertical"
             Spacing="8">
+            <StackPanel Padding="24 56" Spacing="12" HorizontalAlignment="Center" MaxWidth="360"
+                Visibility="{x:Bind _viewModel.IsEmpty, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}">
+                <FontIcon Glyph="&#xE8B9;" FontSize="32" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                <TextBlock TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    l:Uids.Uid="Ui_WpLib_Empty"/>
+            </StackPanel>
             <GridView x:Name="wallpapersLibView"
                 AutomationProperties.AutomationId="Library.Items"
                 ContainerContentChanging="WallpapersLibView_ContainerContentChanging"
@@ -303,7 +360,7 @@
                 <ProgressRing Height="20" Width="20"
                     Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Changing}"/>
                 <TextBlock l:Uids.Uid="Ui_Lib_NotAnyMore_Text" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                    Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Ready}"/>
+                    Visibility="{x:Bind _viewModel.EndOfResults, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}"/>
             </Grid>
         </StackPanel>
     </ScrollView>

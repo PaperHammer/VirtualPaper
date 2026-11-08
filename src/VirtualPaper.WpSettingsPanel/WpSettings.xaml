@@ -16,6 +16,25 @@
     NavigationCacheMode="Enabled">
 
     <arc:ArcPage.Resources>
+        <Style x:Key="LibraryDropDownStyle" TargetType="DropDownButton">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10 0"/>
+            <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="LibraryFavoriteFilterStyle" TargetType="ToggleButton">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="10 0"/>
+            <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}"/>
+            <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
         <Style x:Key="ToolbarButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="36"/>
             <Setter Property="Height" Value="36"/>
@@ -60,14 +79,19 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <Grid x:Name="FilterBar" SizeChanged="FilterBar_SizeChanged">
-                        <StackPanel x:Name="LibraryBrowseTools" Orientation="Horizontal" Spacing="8"
-                            HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Grid x:Name="FilterBar">
+                        <Grid x:Name="LibraryBrowseTools" ColumnSpacing="8" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" MinWidth="120" MaxWidth="260"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
                             <AutoSuggestBox x:Name="tbSearchName"
                                 AutomationProperties.AutomationId="Library.Search"
                                 Style="{StaticResource ArcSearchBoxStyle}"
                                 Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
-                                Width="260"
+                                HorizontalAlignment="Stretch"
                                 Height="36"
                                 QueryIcon="Find"
                                 l:Uids.Uid="Ui_WpLib_Search_Placeholder_PlaceholderText"
@@ -75,24 +99,19 @@
                                 TextChanged="OnFilterChanged"/>
 
                             <DropDownButton x:Name="LibraryTypeFilter"
-                                Width="140"
-                                Height="36"
-                                CornerRadius="8"
-                                Background="{ThemeResource ControlFillColorDefaultBrush}"
-                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
-                                BorderThickness="1"
-                                HorizontalContentAlignment="Left"
-                                VerticalAlignment="Center"
-                                Padding="10 0">
+                                Grid.Column="1" Style="{StaticResource LibraryDropDownStyle}"
+                                Width="140">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <FontIcon Glyph="&#xE71C;" FontSize="13"/>
+                                    <FontIcon Glyph="&#xE71C;" FontSize="14"/>
                                     <TextBlock
+                                    FontSize="14"
                                     VerticalAlignment="Center"
                                     Text="{x:Bind _viewModel.TypeFilterLabel, Mode=OneWay}"
                                     TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
                                 <DropDownButton.Flyout>
                                     <Flyout Placement="BottomEdgeAlignedLeft">
+                                      <StackPanel Spacing="12" MinWidth="220">
                                         <ItemsControl
                                         MinWidth="170"
                                         ItemsSource="{x:Bind _viewModel.TypeFilters}">
@@ -111,11 +130,53 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                        <StackPanel Spacing="6">
+                                            <TextBlock l:Uids.Uid="Ui_WpLib_TagFilterLabel"/>
+                                            <AutoSuggestBox Style="{StaticResource ArcSearchBoxStyle}"
+                                                ItemsSource="{x:Bind _viewModel.TagSuggestions, Mode=OneWay}"
+                                                Text="{x:Bind _viewModel.TagKeyword, Mode=OneWay}"
+                                                TextChanged="TagFilter_TextChanged" SuggestionChosen="TagFilter_SuggestionChosen"
+                                                AutomationProperties.AutomationId="Library.TagFilter"
+                                                HorizontalAlignment="Stretch" MinWidth="220"
+                                                l:Uids.Uid="Ui_WpLib_TagFilter"/>
+                                        </StackPanel>
+                                        <Button HorizontalAlignment="Stretch" Click="ClearLibraryFilters_Click"
+                                            l:Uids.Uid="Ui_WpLib_ClearFilters"/>
+                                      </StackPanel>
                                     </Flyout>
                                 </DropDownButton.Flyout>
                             </DropDownButton>
 
-                        </StackPanel>
+                            <ToggleButton Grid.Column="2" Style="{StaticResource LibraryFavoriteFilterStyle}"
+                                IsChecked="{x:Bind _viewModel.FavoritesOnly, Mode=TwoWay}"
+                                AutomationProperties.AutomationId="Library.FavoritesOnly" l:Uids.Uid="Ui_WpLib_Favorites">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <Grid Width="16" Height="16">
+                                        <FontIcon Glyph="&#xE734;" FontSize="14"
+                                            Visibility="{x:Bind _viewModel.FavoritesOnly, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!True}"/>
+                                        <FontIcon Glyph="&#xE735;" FontSize="14"
+                                            Visibility="{x:Bind _viewModel.FavoritesOnly, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}"/>
+                                    </Grid>
+                                    <TextBlock FontSize="14" VerticalAlignment="Center" l:Uids.Uid="Ui_WpLib_FavoritesLabel"/>
+                                </StackPanel>
+                            </ToggleButton>
+                            <DropDownButton Grid.Column="3" MinWidth="110" Style="{StaticResource LibraryDropDownStyle}"
+                                AutomationProperties.AutomationId="Library.Sort" l:Uids.Uid="Ui_WpLib_Sort">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <FontIcon Glyph="&#xE8CB;" FontSize="14"/>
+                                    <TextBlock FontSize="14" VerticalAlignment="Center" l:Uids.Uid="Ui_WpLib_SortLabel"/>
+                                </StackPanel>
+                                <DropDownButton.Flyout>
+                                    <MenuFlyout Opening="SortFlyout_Opening">
+                                        <RadioMenuFlyoutItem GroupName="LibrarySort" Tag="Newest" IsChecked="True" Click="SortLibrary_Click" l:Uids.Uid="Ui_WpLib_SortNewest"/>
+                                        <RadioMenuFlyoutItem GroupName="LibrarySort" Tag="Oldest" Click="SortLibrary_Click" l:Uids.Uid="Ui_WpLib_SortOldest"/>
+                                        <RadioMenuFlyoutItem GroupName="LibrarySort" Tag="Title" Click="SortLibrary_Click" l:Uids.Uid="Ui_WpLib_SortTitle"/>
+                                        <RadioMenuFlyoutItem GroupName="LibrarySort" Tag="Author" Click="SortLibrary_Click" l:Uids.Uid="Ui_WpLib_SortAuthor"/>
+                                    </MenuFlyout>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
+
+                        </Grid>
 
                         <StackPanel x:Name="LibrarySelectionTools"
                             Orientation="Horizontal"
@@ -144,6 +205,18 @@
                                     <FontIcon Glyph="&#xE74D;" FontSize="14"/>
                                     <TextBlock l:Uids.Uid="Ui_Text_Delete_Text"/>
                                 </StackPanel>
+                            </Button>
+                            <Button x:Name="OrganizeSelectedLibraryItems" Width="36" Height="36" Padding="0"
+                                IsEnabled="False" CornerRadius="8" l:Uids.Uid="Ui_WpLib_Organize">
+                                <FontIcon Glyph="&#xE8D4;" FontSize="16"/>
+                                <Button.Flyout>
+                                    <MenuFlyout Opening="OrganizationMenu_Opening">
+                                        <MenuFlyoutItem Tag="AddFavorite" Click="OrganizeSelectedLibraryItems_Click" l:Uids.Uid="Ui_WpLib_AddFavorite"/>
+                                        <MenuFlyoutItem Tag="RemoveFavorite" Click="OrganizeSelectedLibraryItems_Click" l:Uids.Uid="Ui_WpLib_RemoveFavorite"/>
+                                        <MenuFlyoutSeparator/>
+                                        <MenuFlyoutItem Tag="EditTags" Click="OrganizeSelectedLibraryItems_Click" l:Uids.Uid="Ui_WpLib_EditTags"/>
+                                    </MenuFlyout>
+                                </Button.Flyout>
                             </Button>
                             <Button
                                 Width="36"

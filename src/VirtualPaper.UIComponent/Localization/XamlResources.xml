@@ -354,4 +354,37 @@
   <Resource Name="Ui_WpLib_CardType_Gif_Text.Text" Source="WpLib_CardType_Gif" />
   <Resource Name="Ui_WpLib_CardType_Video_Text.Text" Source="WpLib_TypeFilter_Video" />
   <Resource Name="Ui_WpLib_CardType_Web_Text.Text" Source="WpLib_CardType_Web" />
+  <Resource Name="Ui_WpLib_Favorites.ToolTipService.ToolTip" Source="WpLib_Favorites" />
+  <Resource Name="Ui_WpLib_Favorites.AutomationProperties.Name" Source="WpLib_Favorites" />
+  <Resource Name="Ui_WpLib_FavoritesLabel.Text" Source="WpLib_FavoritesLabel" />
+  <Resource Name="Ui_WpLib_Sort.ToolTipService.ToolTip" Source="WpLib_Sort" />
+  <Resource Name="Ui_WpLib_Sort.AutomationProperties.Name" Source="WpLib_Sort" />
+  <Resource Name="Ui_WpLib_SortLabel.Text" Source="WpLib_SortLabel" />
+  <Resource Name="Ui_WpLib_SortNewest.Text" Source="WpLib_SortNewest" />
+  <Resource Name="Ui_WpLib_SortOldest.Text" Source="WpLib_SortOldest" />
+  <Resource Name="Ui_WpLib_SortTitle.Text" Source="WpLib_SortTitle" />
+  <Resource Name="Ui_WpLib_SortAuthor.Text" Source="WpLib_SortAuthor" />
+  <Resource Name="Ui_WpLib_TagFilterLabel.Text" Source="WpLib_TagFilter" />
+  <Resource Name="Ui_WpLib_TagFilter.AutomationProperties.Name" Source="WpLib_TagFilter" />
+  <Resource Name="Ui_WpLib_TagFilter.PlaceholderText" Source="WpLib_TagSearchPlaceholder" />
+  <Resource Name="Ui_WpLib_ClearFilters.Content" Source="WpLib_ClearFilters" />
+  <Resource Name="Ui_WpLib_Organize.ToolTipService.ToolTip" Source="WpLib_Organize" />
+  <Resource Name="Ui_WpLib_Organize.AutomationProperties.Name" Source="WpLib_Organize" />
+  <Resource Name="Ui_WpLib_AddFavorite.Text" Source="WpLib_AddFavorite" />
+  <Resource Name="Ui_WpLib_RemoveFavorite.Text" Source="WpLib_RemoveFavorite" />
+  <Resource Name="Ui_WpLib_EditTags.Text" Source="WpLib_EditTags" />
+  <Resource Name="Ui_WpLib_EditInfo.Text" Source="WpLib_EditInfo" />
+  <Resource Name="Ui_WpLib_EditTitle.Header" Source="WpLib_EditTitle" />
+  <Resource Name="Ui_WpLib_EditTitle.PlaceholderText" Source="WpLib_TitlePlaceholder" />
+  <Resource Name="Ui_WpLib_EditDescription.Header" Source="WpLib_EditDescription" />
+  <Resource Name="Ui_WpLib_EditDescription.PlaceholderText" Source="WpLib_DescriptionPlaceholder" />
+  <Resource Name="Ui_WpLib_EditAuthor.Header" Source="WpLib_EditAuthor" />
+  <Resource Name="Ui_WpLib_EditAuthor.PlaceholderText" Source="WpLib_AuthorTokenPlaceholder" />
+  <Resource Name="Ui_WpLib_EditPersonalTags.Header" Source="WpLib_YourTags" />
+  <Resource Name="Ui_WpLib_EditPersonalTags.PlaceholderText" Source="WpLib_TagTokenPlaceholder" />
+  <Resource Name="Ui_WpLib_RemoveToken.ToolTipService.ToolTip" Source="WpLib_RemoveToken" />
+  <Resource Name="Ui_WpLib_RemoveToken.AutomationProperties.Name" Source="WpLib_RemoveToken" />
+  <Resource Name="Ui_WpLib_Empty.Text" Source="WpLib_Empty" />
+  <Resource Name="Ui_WpLib_Search_Placeholder_PlaceholderText.ToolTipService.ToolTip" Source="WpLib_SearchExplain" />
+  <Resource Name="Ui_WpLib_SelectAll_Content.ToolTipService.ToolTip" Source="WpLib_SelectLoaded" />
 </Resources>

@@ -45,7 +45,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private LoadingStatus _libLoadingStatus;
         public LoadingStatus LibLoadingStatus {
             get { return _libLoadingStatus; }
-            set { _libLoadingStatus = value; OnPropertyChanged(); }
+            set { _libLoadingStatus = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsEmpty)); OnPropertyChanged(nameof(EndOfResults)); }
         }
 
         public LibraryContentsViewModel(
@@ -95,36 +95,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async Task InitContentAsync() {
             await RefreshLibraryLocationAsync();
             if (_isInited) return;
-
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
-            var loadingCtx = ctx?.LoadingContext;
-            if (loadingCtx == null)
-                return;
-
-            await loadingCtx.RunAsync(
-                operation: async token => {
-                    try {
-                        await _wallpaperIndexService.Initialized.Task;
-
-                        var entries = _wallpaperIndexService.Query(_offset, _limit);
-                        foreach (var entry in entries) {
-                            var jsonPath = entry.JsonPath;
-                            WpBasicData? data = await WpBasicData.LoadAsync(jsonPath);
-                            if (data == null || !data.IsAvailable())
-                                continue;
-
-                            LibraryWallpapers.Add(data);
-                            _libraryWallpapers.Add(data);
-                            _offset++;
-                        }
-
-                        _isInited = true;
-                    }
-                    catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
-                    }
-                });
+            _isInited = true;
+            await ReloadQueryAsync();
         }
 
         internal void ShowDetail(IWpBasicData data) {
@@ -153,30 +125,45 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             }
         }
 
-        internal void ShowEdit(IWpBasicData data) {
+        internal async Task SaveDetailsAsync(IWpBasicData data, WallpaperDetailsEdit edit) {
+            if (data.Title != edit.Title || data.Desc != edit.Description || data.Authors != edit.Authors) {
+                var draft = data.Clone();
+                draft.AppInfo = new() { AppName = data.AppInfo.AppName, AppVersion = data.AppInfo.AppVersion, FileVersion = data.AppInfo.FileVersion };
+                draft.Title = edit.Title;
+                draft.Desc = edit.Description;
+                draft.Authors = edit.Authors;
+                await draft.SaveAsync();
+                data.Title = draft.Title;
+                data.Desc = draft.Desc;
+                data.Authors = draft.Authors;
+                data.AppInfo = draft.AppInfo;
+                _wallpaperIndexService.Update(data);
+            }
+            // Metadata and personal preferences are separate files. Refresh persisted
+            // metadata even if saving preferences fails, so a retry cannot show a stale index.
             try {
-                if (!data.IsAvailable()) return;
-
-                if (_edits.TryGetValue(data.WallpaperUid, out var editDetail)) {
-                    editDetail.Activate();
-                    return;
-                }
-
-                var editDetailWindow = data.FType switch {
-                    FileType.FImage or FileType.FGif or FileType.FVideo or FileType.FWebZip => new OnlyDetails(DataConfigTab.GeneralInfoEdit, data),
-                    _ => throw new NotImplementedException(),
-                };
-                editDetailWindow.Closed += (sender, args) => {
-                    _edits.Remove(data.WallpaperUid);
-                };
-                _edits.Add(data.WallpaperUid, editDetailWindow);
-                editDetailWindow.Show();
-                editDetailWindow.Activate();
+                await _wallpaperIndexService.UpdateOrganizationAsync([data.WallpaperUid], tags: [edit.PersonalTags]);
+                OrganizationChanged?.Invoke(this, EventArgs.Empty);
             }
-            catch (Exception ex) {
-                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                GlobalMessageUtil.ShowException(ex);
+            finally {
+                ApplyLoadedFilter();
+                RefreshTags();
+                if (_isInited) await ReloadQueryAsync();
             }
+        }
+
+        internal static IReadOnlyList<IWpBasicData> ContextItems(IWpBasicData target, IEnumerable<IWpBasicData> selected) {
+            var items = selected.ToArray();
+            return items.Any(item => string.Equals(item.WallpaperUid, target.WallpaperUid, StringComparison.OrdinalIgnoreCase)) ? items : [target];
+        }
+
+        internal (bool CanAdd, bool CanRemove) FavoriteActions(IEnumerable<IWpBasicData> items) {
+            bool canAdd = false, canRemove = false;
+            foreach (var item in items) {
+                if (IsFavorite(item)) canRemove = true;
+                else canAdd = true;
+            }
+            return (canAdd, canRemove);
         }
 
         internal async Task UpdateAsync(IWpBasicData data) {
@@ -438,6 +425,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 handledAny = true;
             }
             if (handledAny) {
+                if (_isInited) _ = ReloadQueryAsync();
                 ItemDeleted?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -446,15 +434,17 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public event EventHandler? ItemDeleted;
 
         public void UpdateLib(IWpBasicData data) {
-            if (_wallpaperIndexService.TryGetValue(data.WallpaperUid, out int idx)) {
-                LibraryWallpapers[idx] = data;
+            int idx = _libraryWallpapers.FindIndex(item => item.WallpaperUid.Equals(data.WallpaperUid, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0) {
                 _libraryWallpapers[idx] = data;
             }
             else {
-                LibraryWallpapers.Insert(0, data);
                 _libraryWallpapers.Insert(0, data);
             }
             _wallpaperIndexService.Update(data);
+            ApplyLoadedFilter();
+            RefreshTags();
+            if (_isInited) _ = ReloadQueryAsync();
 
             // 广播"壁纸已入库"事件，供其他 Panel 订阅（如刷新预览、更新计数等）
             PanelMessageCenter.Publish(
@@ -683,72 +673,137 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public void ApplyFilter(FilterContext context) {
-            var filtered = _libraryWallpapers.Where(data =>
-                MatchesTitle(data, context.TitleKeyword) &&
-                MatchesType(data, context.ActiveTypes)
-            ).ToList();
-            Remove_NonMatching(filtered);
-            AddBack_Procs(filtered);
+            _filter = context;
+            ApplyLoadedFilter();
+            if (_isInited) _ = ReloadQueryAsync();
         }
-
-        private static bool MatchesTitle(IWpBasicData data, string keyword) =>
-            string.IsNullOrEmpty(keyword) ||
-            (data.Title?.Contains(keyword, StringComparison.InvariantCultureIgnoreCase) ?? false);
-
-        private static bool MatchesType(IWpBasicData data, IReadOnlySet<FileType>? activeTypes) =>
-            activeTypes == null || activeTypes.Contains(data.FType);
 
         public void FilterByTitle(string keyword) {
             ApplyFilter(new FilterContext { TitleKeyword = keyword });
         }
 
-        private void Remove_NonMatching(IEnumerable<IWpBasicData> basicDatas) {
+        private void ApplyLoadedFilter() {
+            var byUid = _libraryWallpapers.GroupBy(data => data.WallpaperUid, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+            var entries = WallpaperLibraryQuery.Apply(byUid.Values.Select(WallpaperIndexEntry.FromData), _filter, GetOrganization);
+            ReplaceVisible(entries.Take(Math.Max(_limit, LibraryWallpapers.Count)).Select(entry => byUid[entry.Uid]).ToArray());
+        }
+
+        private void ReplaceVisible(IReadOnlyList<IWpBasicData> items) {
+            var wanted = items.Select(item => item.WallpaperUid).ToHashSet(StringComparer.OrdinalIgnoreCase);
             for (int i = LibraryWallpapers.Count - 1; i >= 0; i--) {
-                var item = LibraryWallpapers[i];
-                if (!basicDatas.Contains(item)) {
-                    LibraryWallpapers.Remove(item);
+                if (!wanted.Contains(LibraryWallpapers[i].WallpaperUid)) LibraryWallpapers.RemoveAt(i);
+            }
+            for (int i = 0; i < items.Count; i++) {
+                if (i < LibraryWallpapers.Count && ReferenceEquals(LibraryWallpapers[i], items[i])) continue;
+                int existing = LibraryWallpapers.ToList().FindIndex(item => item.WallpaperUid == items[i].WallpaperUid);
+                if (existing >= 0) {
+                    if (existing != i) LibraryWallpapers.Move(existing, i);
+                    if (!ReferenceEquals(LibraryWallpapers[i], items[i])) LibraryWallpapers[i] = items[i];
+                }
+                else {
+                    LibraryWallpapers.Insert(i, items[i]);
                 }
             }
+            while (LibraryWallpapers.Count > items.Count) LibraryWallpapers.RemoveAt(LibraryWallpapers.Count - 1);
+            OnPropertyChanged(nameof(IsEmpty));
         }
 
-        private void AddBack_Procs(IEnumerable<IWpBasicData> basicDatas) {
-            // basicDatas 已按 _libraryWallpapers 原始顺序排列。
-            // Remove_NonMatching 执行后，LibraryWallpapers 是 basicDatas 的有序子序列，
-            // 因此只需逐位对比：不匹配则在该位置 Insert，无需 Move。
-            // 保证恢复后顺序与 _libraryWallpapers（及 _wallpaperIndexService）完全一致。
-            var ordered = basicDatas as IList<IWpBasicData> ?? basicDatas.ToList();
-            for (int i = 0; i < ordered.Count; i++) {
-                if (i < LibraryWallpapers.Count &&
-                    ReferenceEquals(LibraryWallpapers[i], ordered[i])) {
-                    continue; // 已在正确位置
-                }
-                LibraryWallpapers.Insert(i, ordered[i]);
-            }
+        public bool IsEmpty => LibraryWallpapers.Count == 0 && LibLoadingStatus != LoadingStatus.Changing;
+        public bool EndOfResults => !_hasMore && !IsEmpty && LibLoadingStatus != LoadingStatus.Changing;
+        public WallpaperOrganization GetOrganization(string uid) => _wallpaperIndexService.GetOrganization(uid) ?? new();
+        public bool IsFavorite(IWpBasicData data) => GetOrganization(data.WallpaperUid).Favorite;
+        public event EventHandler? OrganizationChanged;
+
+        public async Task OrganizeAsync(IEnumerable<IWpBasicData> items, bool? favorite = null,
+            IEnumerable<string>? tags = null, WallpaperTagUpdate mode = WallpaperTagUpdate.Replace) {
+            await _wallpaperIndexService.UpdateOrganizationAsync(items.Select(item => item.WallpaperUid), favorite, tags, mode);
+            RefreshTags();
+            ApplyLoadedFilter();
+            OrganizationChanged?.Invoke(this, EventArgs.Empty);
+            if (_isInited) await ReloadQueryAsync();
         }
 
-        internal async void LoadMoreAsync() {
+        private void RefreshTags() => _wpSettingsViewModel.UpdateTags(_wallpaperIndexService.GetTags() ?? []);
+
+        internal async Task ApplyFilterAsync(FilterContext filter) {
+            _filter = filter;
+            _isInited = true;
+            await ReloadQueryAsync();
+        }
+
+        private async Task ReloadQueryAsync() {
+            int version = unchecked(++_queryVersion);
+            LibLoadingStatus = LoadingStatus.Changing;
+            await _queryGate.WaitAsync();
             try {
-                LibLoadingStatus = LoadingStatus.Changing;
                 await _wallpaperIndexService.Initialized.Task;
-
-                var entries = _wallpaperIndexService.Query(_offset, _limit);
-                foreach (var entry in entries) {
-                    var jsonPath = entry.JsonPath;
-                    WpBasicData? data = await WpBasicData.LoadAsync(jsonPath);
-                    if (data == null || !data.IsAvailable())
-                        continue;
-
-                    LibraryWallpapers.Add(data);
-                    _libraryWallpapers.Add(data);
-                    _offset++;
-                }
+                if (version != _queryVersion) return;
+                await LoadPageAsync(version, reset: true);
+                RefreshTags();
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                LibLoadingStatus = LoadingStatus.Ready;
+                if (version == _queryVersion) LibLoadingStatus = LoadingStatus.Ready;
+                _queryGate.Release();
+            }
+        }
+
+        internal async void LoadMoreAsync() => await LoadMorePageAsync();
+
+        internal async Task LoadMorePageAsync() {
+            if (!_hasMore || LibLoadingStatus == LoadingStatus.Changing) return;
+            int version = _queryVersion;
+            LibLoadingStatus = LoadingStatus.Changing;
+            await _queryGate.WaitAsync();
+            try {
+                await _wallpaperIndexService.Initialized.Task;
+                if (version == _queryVersion) await LoadPageAsync(version, reset: false);
+            }
+            catch (Exception ex) { ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex); GlobalMessageUtil.ShowException(ex); }
+            finally {
+                if (version == _queryVersion) LibLoadingStatus = LoadingStatus.Ready;
+                _queryGate.Release();
+            }
+        }
+
+        private async Task LoadPageAsync(int version, bool reset) {
+            int offset = reset ? 0 : _offset;
+            var filter = _filter;
+            var page = new List<IWpBasicData>();
+            bool more = true;
+            while (page.Count < _limit && more) {
+                int requested = _limit - page.Count;
+                var entries = _wallpaperIndexService.Query(offset, requested, filter);
+                more = entries.Count == requested;
+                foreach (var entry in entries) {
+                    offset++; // Consume invalid/missing metadata too; never get stuck on one page.
+                    if (version != _queryVersion) return;
+                    try {
+                        IWpBasicData? data = _libraryWallpapers.FirstOrDefault(item => item.WallpaperUid == entry.Uid
+                            && Path.Combine(item.FolderPath, Constants.Field.WpBasicDataFileName).Equals(entry.JsonPath, StringComparison.OrdinalIgnoreCase));
+                        data ??= await WpBasicData.LoadAsync(entry.JsonPath);
+                        if (version != _queryVersion) return;
+                        if (data?.IsAvailable() != true) continue;
+                        page.Add(data);
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException or Errors.FileAccessException) {
+                        ArcLog.GetLogger<LibraryContentsViewModel>().Warn($"Skipped wallpaper metadata: {entry.JsonPath}. {ex.Message}");
+                    }
+                }
+            }
+            if (version != _queryVersion) return;
+            _offset = offset;
+            _hasMore = more;
+            if (reset) ReplaceVisible(page);
+            else foreach (var item in page) {
+                if (!LibraryWallpapers.Any(existing => existing.WallpaperUid == item.WallpaperUid)) LibraryWallpapers.Add(item);
+            }
+            foreach (var item in page) {
+                if (!_libraryWallpapers.Any(existing => existing.WallpaperUid == item.WallpaperUid)) _libraryWallpapers.Add(item);
             }
         }
         #endregion
@@ -767,10 +822,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IGlobalDialogService _dialogService;
         private string[] _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
-        private readonly Dictionary<string, ArcWindow> _edits = [];
         private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
         private List<IWpBasicData> _libraryWallpapers = [];
         private bool _isInited;
+        private FilterContext _filter = FilterContext.Empty;
+        private readonly SemaphoreSlim _queryGate = new(1, 1);
+        private int _queryVersion;
+        private bool _hasMore = true;
 
         /// <summary>仅供单元测试使用</summary>
         public void TestPopulate(IEnumerable<IWpBasicData> items) {

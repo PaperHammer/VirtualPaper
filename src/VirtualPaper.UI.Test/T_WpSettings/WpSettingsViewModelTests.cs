@@ -498,6 +498,64 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         // ── 辅助方法 ─────────────────────────────────────────────────
 
+        [TestMethod]
+        public void LibraryOrganizationFilters_AreBroadcastTogetherAndClearPreservesSort() {
+            _vm = CreateVm();
+            var filterable = new Mock<IFilterable>();
+            _vm.RegisterLibraryContents(filterable.Object);
+            _vm.FavoritesOnly = true;
+            _vm.TagKeyword = "nature";
+            _vm.SortOrder = WallpaperSortOrder.Title;
+            _vm.TypeFilters[0].IsSelected = true;
+            _vm.OnFilterChanged(FilterKey.LibraryTitle, "forest");
+
+            filterable.Verify(item => item.ApplyFilter(It.Is<FilterContext>(filter => filter.FavoritesOnly
+                && filter.Tag == "nature" && filter.SortOrder == WallpaperSortOrder.Title
+                && filter.TitleKeyword == "forest" && filter.ActiveTypes!.Contains(FileType.FImage))), Times.Once);
+
+            _vm.ClearLibraryFilters();
+
+            filterable.Verify(item => item.ApplyFilter(It.Is<FilterContext>(filter => !filter.FavoritesOnly
+                && filter.Tag == "" && filter.TitleKeyword == "" && filter.ActiveTypes == null
+                && filter.SortOrder == WallpaperSortOrder.Title)), Times.AtLeastOnce);
+        }
+
+        [TestMethod]
+        public void UpdatingTags_PreservesInputWithoutAddingItToSuggestions() {
+            _vm = CreateVm();
+            _vm.UpdateTags(["nature", "night"]);
+            _vm.TagKeyword = "nat";
+            CollectionAssert.AreEqual(new[] { "nature" }, _vm.TagSuggestions);
+
+            _vm.UpdateTags(["night"]);
+
+            Assert.AreEqual("nat", _vm.TagKeyword);
+            Assert.IsEmpty(_vm.TagSuggestions);
+            _vm.ClearLibraryFilters();
+            Assert.AreEqual("", _vm.TagKeyword);
+            CollectionAssert.AreEqual(new[] { "night" }, _vm.TagSuggestions);
+        }
+
+        [TestMethod]
+        public void TagInput_MatchesSuggestionsAndBroadcastsWithoutRequiringASelection() {
+            _vm = CreateVm();
+            var filterable = new Mock<IFilterable>();
+            _vm.RegisterLibraryContents(filterable.Object);
+            _vm.UpdateTags(["森林夜景", "城市夜景", "Calm Nature", "nature", "NATURE"]);
+
+            _vm.TagKeyword = "夜";
+            CollectionAssert.AreEquivalent(new[] { "森林夜景", "城市夜景" }, _vm.TagSuggestions);
+            filterable.Verify(item => item.ApplyFilter(It.Is<FilterContext>(filter => filter.Tag == "夜")), Times.Once);
+
+            _vm.TagKeyword = " NAT ";
+            CollectionAssert.AreEquivalent(new[] { "Calm Nature", "nature" }, _vm.TagSuggestions);
+            _vm.TagKeyword = "missing";
+            Assert.IsEmpty(_vm.TagSuggestions);
+            _vm.TagKeyword = "  ";
+            Assert.HasCount(4, _vm.TagSuggestions);
+            filterable.Verify(item => item.ApplyFilter(It.Is<FilterContext>(filter => filter.Tag == "  ")), Times.Once);
+        }
+
         private static Mock<IMonitor> MakeMonitor(int systemIndex) {
             var m = new Mock<IMonitor>();
             m.SetupProperty(x => x.SystemIndex, systemIndex);

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
@@ -8,15 +9,21 @@ using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
+using VirtualPaper.WpSettingsPanel.Utils;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -39,12 +46,16 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
             this.DataContext = _viewModel;
             _viewModel.ItemDeleted += ViewModel_ItemDeleted;
+            _viewModel.OrganizationChanged += ViewModel_OrganizationChanged;
+            LanguageUtil.LanguageUpdated += ViewModel_OrganizationChanged;
+            RefreshFavoriteButtons();
             UpdateWallpaperTileSize();
         }
 
         private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
-            this.Unloaded -= LibraryContents_Unloaded;
             _viewModel.ItemDeleted -= ViewModel_ItemDeleted;
+            _viewModel.OrganizationChanged -= ViewModel_OrganizationChanged;
+            LanguageUtil.LanguageUpdated -= ViewModel_OrganizationChanged;
             this.DataContext = null;           
         }
 
@@ -152,6 +163,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 wallpapersLibView.SelectionMode = ListViewSelectionMode.None;
             }
             wallpapersLibView.IsItemClickEnabled = true;
+            RefreshFavoriteButtons();
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
             ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(false, 0);
         }
@@ -161,6 +173,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void NotifySelectionChanged() {
+            RefreshFavoriteButtons();
             var ctx = ArcPageContextManager.GetContext<WpSettings>();
             ctx?.GetPageInstance<WpSettings>().UpdateLibrarySelectionState(
                 wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple,
@@ -169,12 +182,21 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private void WallpaperContextFlyout_Opening(object sender, object e) {
             if (sender is not MenuFlyout flyout) return;
-
-            bool selecting = wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple;
+            var favorites = _viewModel.FavoriteActions(_contextItems);
+            bool single = _contextItems.Count == 1;
             foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) {
-                item.Visibility = !selecting || (item.Tag as string) == "RemoveFromLib"
-                    ? Visibility.Visible
-                    : Visibility.Collapsed;
+                string action = item.Tag as string ?? "";
+                bool visible = action switch {
+                    "AddFavorite" => favorites.CanAdd,
+                    "RemoveFavorite" => favorites.CanRemove,
+                    "EditTags" => _contextItems.Count > 1,
+                    "RemoveFromLib" => _contextItems.Count > 0,
+                    "UpdateConfig" => single && _contextItems[0].AppInfo.FileVersion != Constants.CoreField.FileVersion,
+                    "LockBackground" => single && _contextItems[0].FType is FileType.FImage or FileType.FGif,
+                    _ => single
+                };
+                item.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+                item.IsEnabled = !_isOrganizing;
             }
         }
 
@@ -185,17 +207,16 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
                 var selectedMeun = (MenuFlyoutItem)sender;
                 string? name = selectedMeun.Tag.ToString();
-                if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) {
-                    if (name == "RemoveFromLib") {
-                        if (wallpapersLibView.SelectedItems.Contains(data)) {
-                            await DeleteSelectedItemsAsync();
-                        }
-                        else {
-                            await _viewModel.DeleteAsync(data);
-                        }
-                    }
+                if (name is "AddFavorite" or "RemoveFavorite" or "EditTags" or "Edit") {
+                    await OrganizeItemsAsync(_contextItems.ToArray(), name);
                     return;
                 }
+                if (name == "RemoveFromLib") {
+                    await _viewModel.DeleteAsync(_contextItems.ToArray());
+                    if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) NotifySelectionChanged();
+                    return;
+                }
+                if (_contextItems.Count != 1) return;
 
                 switch (name) {
                     case "Details":
@@ -203,9 +224,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                         break;
                     case "UpdateConfig":
                         await _viewModel.UpdateAsync(data);
-                        break;
-                    case "Edit":
-                        _viewModel.ShowEdit(data);
                         break;
                     case "Preview":
                         var ctx = ArcPageContextManager.GetContext<WpSettings>();
@@ -220,9 +238,6 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                     case "ShowOnDisk":
                         Process.Start("Explorer", "/select," + data.FilePath);
                         break;
-                    case "RemoveFromLib":
-                        await _viewModel.DeleteAsync(data);
-                        break;
                 }
             }
             catch (Exception ex) {
@@ -235,6 +250,233 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             e.AcceptedOperation = DataPackageOperation.Copy;
         }
 
+        private void FavoriteButton_Loaded(object sender, RoutedEventArgs e) {
+            _favoriteButtons.Add((ToggleButton)sender);
+            RefreshFavoriteButtons();
+        }
+
+        private void FavoriteButton_Unloaded(object sender, RoutedEventArgs e) => _favoriteButtons.Remove((ToggleButton)sender);
+
+        private void FavoriteButton_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args) => RefreshFavoriteButtons();
+
+        private async void FavoriteButton_Click(object sender, RoutedEventArgs e) {
+            if (sender is ToggleButton { DataContext: IWpBasicData data }) {
+                await OrganizeItemsAsync([data], _viewModel.IsFavorite(data) ? "RemoveFavorite" : "AddFavorite");
+                RefreshFavoriteButtons();
+            }
+        }
+
+        private async void EditInfoButton_Click(object sender, RoutedEventArgs e) {
+            if (sender is FrameworkElement { DataContext: IWpBasicData data })
+                await OrganizeItemsAsync([data], "Edit");
+        }
+
+        private void ViewModel_OrganizationChanged(object? sender, EventArgs e) {
+            RefreshFavoriteButtons();
+            WallpaperContextFlyout_Opening(Resources["WallpaperContextFlyout"], EventArgs.Empty);
+        }
+
+        private void RefreshFavoriteButtons() {
+            foreach (var button in _favoriteButtons.ToArray()) {
+                if (button.DataContext is not IWpBasicData data) continue;
+                bool favorite = _viewModel.IsFavorite(data);
+                button.IsChecked = favorite;
+                if (VisualTreeHelper.GetParent(button) is not StackPanel actions) continue;
+                var card = VisualTreeHelper.GetParent(actions);
+                bool selecting = wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple;
+                bool show = !selecting && ReferenceEquals(card, _hoveredCard);
+                actions.Visibility = selecting ? Visibility.Collapsed : Visibility.Visible;
+                AnimateCardActions(actions, show);
+                foreach (var control in actions.Children.OfType<Control>()) {
+                    control.IsEnabled = show && !_isOrganizing;
+                    control.IsTabStop = show;
+                }
+                if (button.Content is FontIcon icon) icon.Glyph = favorite ? "\uE735" : "\uE734";
+                string label = LanguageUtil.GetI18n(favorite ? "WpLib_RemoveFavorite" : "WpLib_AddFavorite");
+                ToolTipService.SetToolTip(button, label);
+                AutomationProperties.SetName(button, label);
+                AutomationProperties.SetAutomationId(button, "Library.Favorite." + data.WallpaperUid);
+                if (actions.Children.OfType<Button>().FirstOrDefault() is Button edit) {
+                    string editLabel = LanguageUtil.GetI18n("WpLib_EditInfo");
+                    ToolTipService.SetToolTip(edit, editLabel);
+                    AutomationProperties.SetName(edit, editLabel);
+                    AutomationProperties.SetAutomationId(edit, "Library.Edit." + data.WallpaperUid);
+                }
+            }
+        }
+
+        private void WallpaperCard_PointerEntered(object sender, PointerRoutedEventArgs args) {
+            _hoveredCard = sender as FrameworkElement;
+            RefreshFavoriteButtons();
+        }
+
+        private void WallpaperCard_PointerExited(object sender, PointerRoutedEventArgs args) {
+            if (sender is not FrameworkElement card || !ReferenceEquals(card, _hoveredCard)) return;
+            var point = args.GetCurrentPoint(card).Position;
+            // Exiting a descendant must not hide the corner while still inside the card.
+            if (point.X >= 0 && point.Y >= 0 && point.X < card.ActualWidth && point.Y < card.ActualHeight) return;
+            _hoveredCard = null;
+            RefreshFavoriteButtons();
+        }
+
+        private void WallpaperCard_PointerCanceled(object sender, PointerRoutedEventArgs args) {
+            if (ReferenceEquals(sender, _hoveredCard)) _hoveredCard = null;
+            RefreshFavoriteButtons();
+        }
+
+        private void WallpaperCard_Unloaded(object sender, RoutedEventArgs args) {
+            if (ReferenceEquals(sender, _hoveredCard)) _hoveredCard = null;
+        }
+
+        private void WallpaperCard_SizeChanged(object sender, SizeChangedEventArgs args) {
+            if (sender is FrameworkElement card)
+                card.Clip = new RectangleGeometry { Rect = new Rect(0, 0, args.NewSize.Width, args.NewSize.Height) };
+        }
+
+        private void CardActions_Loaded(object sender, RoutedEventArgs args) {
+            var actions = (FrameworkElement)sender;
+            (actions.Tag as CardActionsState)?.Animation?.Stop();
+            actions.Opacity = 0;
+            ((TranslateTransform)actions.RenderTransform).X = 48;
+            actions.Tag = new CardActionsState(false, null);
+            RefreshFavoriteButtons();
+        }
+
+        private void CardActions_Unloaded(object sender, RoutedEventArgs args) {
+            var actions = (FrameworkElement)sender;
+            (actions.Tag as CardActionsState)?.Animation?.Stop();
+            actions.Tag = null;
+            actions.Opacity = 0;
+            ((TranslateTransform)actions.RenderTransform).X = 48;
+        }
+
+        private static void AnimateCardActions(FrameworkElement actions, bool show) {
+            actions.IsHitTestVisible = show;
+            actions.Tag ??= new CardActionsState(false, null);
+            if (actions.Tag is CardActionsState { Visible: var previous } && previous == show) return;
+            var transform = (TranslateTransform)actions.RenderTransform;
+            double x = transform.X, opacity = actions.Opacity;
+            (actions.Tag as CardActionsState)?.Animation?.Stop();
+            var duration = new Duration(TimeSpan.FromMilliseconds(show ? 160 : 120));
+            var slide = new DoubleAnimation { From = x, To = show ? 0 : 48, Duration = duration,
+                EasingFunction = new CubicEase { EasingMode = show ? EasingMode.EaseOut : EasingMode.EaseIn } };
+            var fade = new DoubleAnimation { From = opacity, To = show ? 1 : 0, Duration = duration };
+            Storyboard.SetTarget(slide, transform);
+            Storyboard.SetTargetProperty(slide, "X");
+            Storyboard.SetTarget(fade, actions);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+            var animation = new Storyboard();
+            animation.Children.Add(slide);
+            animation.Children.Add(fade);
+            actions.Tag = new CardActionsState(show, animation);
+            animation.Begin();
+        }
+
+        public Task OrganizeSelectedAsync(string action) =>
+            OrganizeItemsAsync(wallpapersLibView.SelectedItems.OfType<IWpBasicData>().ToArray(), action);
+
+        public void UpdateOrganizationMenu(MenuFlyout flyout) {
+            var favorites = _viewModel.FavoriteActions(wallpapersLibView.SelectedItems.OfType<IWpBasicData>());
+            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) {
+                item.Visibility = (item.Tag as string) switch {
+                    "AddFavorite" => favorites.CanAdd ? Visibility.Visible : Visibility.Collapsed,
+                    "RemoveFavorite" => favorites.CanRemove ? Visibility.Visible : Visibility.Collapsed,
+                    _ => Visibility.Visible
+                };
+                item.IsEnabled = !_isOrganizing && wallpapersLibView.SelectedItems.Count > 0;
+            }
+        }
+
+        private async Task OrganizeItemsAsync(IReadOnlyList<IWpBasicData> items, string action) {
+            if (_isOrganizing || items.Count == 0) return;
+            _isOrganizing = true;
+            RefreshFavoriteButtons();
+            try {
+                if (action is "AddFavorite" or "RemoveFavorite") {
+                    await _viewModel.OrganizeAsync(items, favorite: action == "AddFavorite");
+                    return;
+                }
+                if (items.Count == 1) {
+                    await EditInfoAsync(items[0]);
+                    return;
+                }
+                var tags = new TextBox {
+                    Header = LanguageUtil.GetI18n("WpLib_YourTags"),
+                    PlaceholderText = LanguageUtil.GetI18n("WpLib_TagsPlaceholder"),
+                    AcceptsReturn = true, TextWrapping = TextWrapping.Wrap, MaxHeight = 140
+                };
+                var mode = new ComboBox {
+                    Header = LanguageUtil.GetI18n("WpLib_TagMode"),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    ItemsSource = new[] { LanguageUtil.GetI18n("WpLib_TagsAdd"), LanguageUtil.GetI18n("WpLib_TagsRemove"), LanguageUtil.GetI18n("WpLib_TagsReplace") },
+                    SelectedIndex = 0
+                };
+                var content = new StackPanel { Spacing = 12, MinWidth = 280, MaxWidth = 420 };
+                content.Children.Add(new TextBlock {
+                    Text = LanguageUtil.GetI18n("WpLib_TagsExplain"), TextWrapping = TextWrapping.Wrap,
+                    Opacity = 0.75
+                });
+                content.Children.Add(mode);
+                content.Children.Add(tags);
+                var dialog = GlobalDialogUtils.CreateDialog(content, LanguageUtil.GetI18n("WpLib_EditTags"), LanguageUtil.GetI18n(Constants.I18n.Text_Save));
+                if (dialog == null) return;
+                dialog.CloseButtonText = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
+                if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+                var update = mode.SelectedIndex switch {
+                    1 => WallpaperTagUpdate.Remove, 2 => WallpaperTagUpdate.Replace, _ => WallpaperTagUpdate.Add
+                };
+                await _viewModel.OrganizeAsync(items, tags: [tags.Text], mode: update);
+            }
+            catch (Exception ex) { ArcLog.GetLogger<LibraryContents>().Error(ex); GlobalMessageUtil.ShowException(ex); }
+            finally { _isOrganizing = false; RefreshFavoriteButtons(); }
+        }
+
+        private async Task EditInfoAsync(IWpBasicData data) {
+            var editor = new WallpaperDetailsEditor(data, _viewModel.GetOrganization(data.WallpaperUid));
+            var dialog = GlobalDialogUtils.CreateDialog(editor, LanguageUtil.GetI18n("WpLib_EditInfo"), LanguageUtil.GetI18n(Constants.I18n.Text_Save));
+            if (dialog == null) return;
+            dialog.CloseButtonText = LanguageUtil.GetI18n(Constants.I18n.Text_Cancel);
+            dialog.DialogWidth = 540;
+            dialog.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+            bool saving = false;
+            dialog.Closing += (_, args) => { if (saving) args.Cancel = true; };
+            dialog.PrimaryButtonClick += async (_, args) => {
+                var deferral = args.GetDeferral();
+                saving = true;
+                editor.IsEnabled = dialog.IsPrimaryButtonEnabled = false;
+                try { await _viewModel.SaveDetailsAsync(data, editor.ReadEdit()); }
+                catch (Exception ex) {
+                    args.Cancel = true;
+                    ArcLog.GetLogger<LibraryContents>().Error(ex);
+                    GlobalMessageUtil.ShowException(ex);
+                }
+                finally {
+                    saving = false;
+                    editor.IsEnabled = dialog.IsPrimaryButtonEnabled = true;
+                    deferral.Complete();
+                }
+            };
+            await dialog.ShowAsync();
+        }
+
+        private void WallpaperItem_ContextRequested(UIElement sender, ContextRequestedEventArgs args) {
+            if (sender is not FrameworkElement { DataContext: IWpBasicData data } target) return;
+            Point? position = args.TryGetPosition(target, out var point) ? point : null;
+            ShowWallpaperContextMenu(target, data, position);
+            args.Handled = true;
+        }
+
+        private void ShowWallpaperContextMenu(FrameworkElement target, IWpBasicData data, Point? position = null) {
+            // A shared flyout has no reliable inherited item DataContext. Capture the
+            // same targets for menu visibility and clicks, for both mouse and keyboard.
+            _contextItems = LibraryContentsViewModel.ContextItems(data,
+                wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple
+                    ? wallpapersLibView.SelectedItems.OfType<IWpBasicData>() : []);
+            var flyout = (MenuFlyout)Resources["WallpaperContextFlyout"];
+            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.DataContext = data;
+            flyout.ShowAt(target, new FlyoutShowOptions { Position = position });
+        }
+
         private async void WallpapersLibView_Drop(object sender, DragEventArgs e) {
             if (e.DataView.Contains(StandardDataFormats.StorageItems)) {
                 var items = await e.DataView.GetStorageItemsAsync();
@@ -243,12 +485,15 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void WallpapersLibView_PreviewKeyDown(object sender, KeyRoutedEventArgs e) {
+            if (e.Key == Windows.System.VirtualKey.Tab) return;
+            if (FocusManager.GetFocusedElement(XamlRoot) is ButtonBase action
+                && VisualTreeHelper.GetParent(action) is StackPanel { Name: "CardActions" }) return;
             e.Handled = e.Key is not (Windows.System.VirtualKey.F10 or Windows.System.VirtualKey.Application);
         }
 
         private void WallpapersLibView_ContextRequested(UIElement sender, ContextRequestedEventArgs args) {
-            // Mouse requests use the existing tile ContextFlyout. Keyboard
-            // requests originate at the focused container, outside that grid.
+            if (args.Handled) return;
+            // Keyboard requests may originate at the container rather than its tile.
             if (args.TryGetPosition(wallpapersLibView, out _)) return;
             if (FocusManager.GetFocusedElement(XamlRoot) is not DependencyObject focused) return;
             while (focused is not GridViewItem && focused != wallpapersLibView) {
@@ -257,14 +502,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             }
             var container = focused as GridViewItem;
             if (container?.Content is not IWpBasicData data) return;
-            var flyout = (MenuFlyout)Resources["WallpaperContextFlyout"];
-            foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.DataContext = data;
-            void Closed(object? source, object e) {
-                flyout.Closed -= Closed;
-                foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.ClearValue(FrameworkElement.DataContextProperty);
-            }
-            flyout.Closed += Closed;
-            flyout.ShowAt(container);
+            ShowWallpaperContextMenu(container, data);
             args.Handled = true;
         }
 
@@ -360,9 +598,14 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private readonly LibraryContentsViewModel _viewModel;
+        private readonly HashSet<ToggleButton> _favoriteButtons = [];
+        private FrameworkElement? _hoveredCard;
+        private IReadOnlyList<IWpBasicData> _contextItems = [];
+        private bool _isOrganizing;
         private const double _scrollThreshold = 200;
         private bool _updatingSelection;
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);
+    sealed record CardActionsState(bool Visible, Storyboard? Animation);
 }

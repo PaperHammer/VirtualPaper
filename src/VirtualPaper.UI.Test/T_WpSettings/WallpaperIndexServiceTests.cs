@@ -9,7 +9,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
 
         [TestInitialize]
         public void Setup() {
-            _service = new WallpaperIndexService();
+            _service = new WallpaperIndexService(Path.Combine(Path.GetTempPath(), "VirtualPaper.Tests", Guid.NewGuid().ToString("N"), "library.json"));
         }
 
         private static Mock<IWpBasicData> MakeWpData(string uid, string title, string folderPath = @"C:\wp\test") {

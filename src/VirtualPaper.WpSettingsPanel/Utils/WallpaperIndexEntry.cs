@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Text.Json.Serialization;
+using System.IO;
+using VirtualPaper.Common;
+using VirtualPaper.Models.Cores.Interfaces;
 
 namespace VirtualPaper.WpSettingsPanel.Utils {
     [JsonSerializable(typeof(WallpaperIndexEntry))]
@@ -13,5 +16,19 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
         public string Title { get; set; } = ""; // 用于模糊匹配
         public string? Author { get; set; }
         public string[] Tags { get; set; } = Array.Empty<string>();
+        public string Description { get; set; } = "";
+        public FileType FType { get; set; }
+
+        internal static WallpaperIndexEntry FromData(IWpBasicData data) => new() {
+            Uid = data.WallpaperUid,
+            FolderPath = data.FolderPath,
+            JsonPath = Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName),
+            CreateTime = data.CreatedTime,
+            Title = data.Title ?? "",
+            Description = data.Desc ?? "",
+            Author = data.Authors,
+            Tags = WallpaperOrganization.NormalizeTags([data.Tags]),
+            FType = data.FType
+        };
     }
 }

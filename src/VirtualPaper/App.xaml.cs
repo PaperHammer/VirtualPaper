@@ -95,7 +95,8 @@ namespace VirtualPaper {
             try {
                 // 清空缓存
                 FileUtil.RemoveDirectory(Constants.CommonPaths.TempDir);
-                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
+                if (!Constants.ApplicationType.IsMSIX)
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
             }
             catch { }
 
@@ -156,6 +157,19 @@ namespace VirtualPaper {
 
             UserSettings.Save<ISettings>();
             #endregion
+
+            // Inno Setup deploys these for the EXE channel. MSIX installs only
+            // immutable package files, so seed missing folders before UI/library startup.
+            if (Constants.ApplicationType.IsMSIX) {
+                try {
+                    BuiltInWallpaperInstaller.InstallMissing(
+                        Path.Combine(AppContext.BaseDirectory, Constants.FolderName.BuiltInWallpapersFolderName),
+                        UserSettings.Settings.BuiltInWallpapersDir);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<App>().Error("Failed to deploy bundled MSIX wallpapers.", ex);
+                }
+            }
 
             #region 启动相关后台服务
             try {

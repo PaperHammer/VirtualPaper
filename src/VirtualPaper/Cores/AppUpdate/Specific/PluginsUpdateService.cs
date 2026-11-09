@@ -33,6 +33,14 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         public async Task InitAsync() {
             UpdateLock.RegisterAll();
 
+            // Store packages are serviced as a whole. Never recover an EXE
+            // channel's pending patch into the read-only package directory.
+            if (Constants.ApplicationType.IsMSIX) {
+                UpdateLock.ReleaseAll();
+                _appBuildService.Refresh();
+                return;
+            }
+
             var hasPending = await CheckAndRecoverAsync();
             if (hasPending) {
                 await ExecutePendingPluginUpdateWithWindowAsync();
@@ -44,6 +52,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task<bool> DownloadUpdateAsync(ReleaseInfo info, IProgress<DownloadProgress> progress, CancellationToken token) {
+            if (Constants.ApplicationType.IsMSIX) return false;
             if (info.PluginPatchUri == null)
                 return false;
 
@@ -54,6 +63,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task<bool> VerifyUpdateAsync(ReleaseInfo info, CancellationToken token) {
+            if (Constants.ApplicationType.IsMSIX) return false;
             if (info.PluginPatchSha256Uri == null)
                 return false;
 
@@ -148,6 +158,8 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         /// Can be called immediately after download, or later on UI close / core start.
         /// </summary>
         public async Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
+            if (Constants.ApplicationType.IsMSIX)
+                return new PluginsUpdateResult { Success = false, ErrorMessage = "MSIX packages are updated by the Store." };
             var result = new PluginsUpdateResult();
             var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
@@ -451,6 +463,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task ExecutePendingPluginUpdateWithWindowAsync() {
+            if (Constants.ApplicationType.IsMSIX) return;
             // Prevent concurrent execution
             lock (_pendingLock) {
                 if (_pendingUpdateTask != null && !_pendingUpdateTask.IsCompleted) return;

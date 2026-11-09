@@ -66,7 +66,7 @@ namespace VirtualPaper.UIComponent.Utils {
                 CreationCollisionOption.OpenIfExists);
 
             // LocalFolder survives upgrades; load the currently bundled translations.
-            string resourceFilePath = $"Strings/{language}/{resourceFileName}";
+            string resourceFilePath = $"Plugins/UI/{Constants.ModuleName.UIComponent}/Strings/{language}/{resourceFileName}";
             StorageFile resourceFile = await LoadStringResourcesFileFromAppResource(resourceFilePath);
             _ = await resourceFile.CopyAsync(languageFolder, resourceFileName, NameCollisionOption.ReplaceExisting);
         }

@@ -29,15 +29,9 @@ namespace VirtualPaper.Services {
                 ArcLog.GetLogger<UIRunnerService>().Warn("Process is running elevated, UI may not work properly.");
             }
 
-            if (Constants.ApplicationType.IsMSIX) {
-                _workingDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\"));
-                _fileName = Path.Combine(_workingDir, Constants.ModuleName.UI);
-
-            }
-            else {
-                _workingDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.WorkingDir.UI);
-                _fileName = Path.Combine(_workingDir, Constants.ModuleName.UI);
-            }
+            // EXE and Core-first MSIX packages share the same plugin layout.
+            _workingDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.WorkingDir.UI);
+            _fileName = Path.Combine(_workingDir, Constants.ModuleName.UI);
         }
 
         public async Task ShowUIAsync() {
@@ -266,7 +260,7 @@ namespace VirtualPaper.Services {
                 // Check for pending plugin update when UI exits normally
                 // (not during an update - UpdateLock would be set in that case)
                 // Installer update is handled in App.ShutDownAsync()
-                if (!UpdateLock.IsAnyLocked) {
+                if (!Constants.ApplicationType.IsMSIX && !UpdateLock.IsAnyLocked) {
                     var pluginFlagPath =Constants.CommonPaths.UpdateFlagPath;
                     if (File.Exists(pluginFlagPath)) {
                         _jobService.PluginsUpdateFinishedEvent += (s, e) => {
@@ -293,7 +287,7 @@ namespace VirtualPaper.Services {
                                 // Prefer a normal close when a pending update exists,
                                 // but never start another UI after this service is disposed.
                                 var flagPath = VirtualPaper.Common.Constants.CommonPaths.UpdateFlagPath;
-                                if (File.Exists(flagPath)) {
+                                if (!Constants.ApplicationType.IsMSIX && File.Exists(flagPath)) {
                                     CloseUI();
                                 }
                                 else {

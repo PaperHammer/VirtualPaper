@@ -126,6 +126,8 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 ## 本地校验
 
+独立的 Core 入口 MSIX 候选包通过 `.github/scripts/Build-Msix.ps1` 构建，详见 [MSIX 打包](../../Msix/README.zh-CN.md)。两条现有工作流尚未调用此入口。包内容检查不替代必需的 Inno 冒烟及独立 UI 证据，Inno 成功也不表示 MSIX 验收通过。
+
 本地执行对应的完整测试、打包及安装验收：
 
 ```powershell

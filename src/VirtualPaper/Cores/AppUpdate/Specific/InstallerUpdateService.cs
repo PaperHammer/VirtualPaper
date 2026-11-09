@@ -20,6 +20,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
 
     public class InstallerUpdateService(IDownloadService downloadService) : UpdateServiceBase<InstallerUpdateService>(downloadService), IInstallerUpdateService {
         public async Task<bool> DownloadUpdateAsync(ReleaseInfo info, IProgress<DownloadProgress> progress, CancellationToken token) {
+            if (Constants.ApplicationType.IsMSIX) return false;
             if (info.InstallerUri == null)
                 return false;
 
@@ -33,6 +34,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task<bool> VerifyUpdateAsync(ReleaseInfo info, CancellationToken token) {
+            if (Constants.ApplicationType.IsMSIX) return false;
             if (_installerPath == null || info.InstallerShaUri == null)
                 return false;
 
@@ -60,6 +62,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task ExecuteAsync() {
+            if (Constants.ApplicationType.IsMSIX) return;
             var flag = await LoadUpdateFlagAsync();
             if (flag == null || flag.Status != UpdateStatus.Pending) {
                 ArcLog.GetLogger<InstallerUpdateService>().Warn("No pending installer update found");

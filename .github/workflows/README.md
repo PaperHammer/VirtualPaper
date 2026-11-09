@@ -126,6 +126,8 @@ These settings must be configured on GitHub; editing local YAML does not change 
 
 ## Local validation
 
+The separate Core-first MSIX candidate uses `.github/scripts/Build-Msix.ps1`; see [MSIX packaging](../../Msix/README.md). Neither workflow currently invokes it. Archive checks do not replace mandatory Inno smoke or independent UI evidence, and Inno success does not establish MSIX acceptance.
+
 The complete local counterpart to the test/package stages is:
 
 ```powershell

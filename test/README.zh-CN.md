@@ -38,9 +38,12 @@ test/
 | 真实 UI 模块或测试集 | `test/Run-UIOperationTests.ps1` | 默认先构建解决方案，`-NoBuild` 跳过构建 |
 | 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 必需安装冒烟：真实安装/覆盖安装、启动/正常退出、语言/数据保留及卸载 |
 | MSIX 包内容 | `test/Test-MsixPackage.ps1 -PackagePath <application.msix>` | 检查实际包，不执行安装或 UI 验收，详见 [MSIX 打包](../Msix/README.zh-CN.md)。 |
+| MSIX 完整验收 | `test/Run-MsixTests.ps1` | Release 重建、八组项目测试、签名测试包、真实首次启动／扩展 UI／重装／数据保留／卸载；需要管理员和未锁定桌面 |
 | 工作流与脚本契约 | `.github/scripts/validate-test-workflow.ps1` | 隔离校验，不安装、不执行真实 UI |
 
-本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
+MSIX 使用独立完整入口：在未锁定 Windows 桌面以管理员执行 `pwsh -NoProfile -File test/Run-MsixTests.ps1`。流程创建本轮独有的测试包身份和临时签名证书，Release 重建后执行八组项目测试及脚本检查（不允许跳过），构建／检查自包含 MSIX，再安装到当前用户。复用现有扩展 UI 套件，真实走 Shell AUMID 激活 → Core → 生产 UI／播放器；原生 API 校验 Core、UI 及重启 UI 的包身份。必需阶段还包括首次自动打开 UI、真实导入、同包重装、偏好／导入卡片／内置壁纸保留、新配置启动和卸载。重装前后的保留配置与扩展 UI 配置分别隔离。只清理本轮测试包和证书，原始报告及隔离配置保存在新 `TestResults/msix-acceptance-*` 目录。UI 失败、缺失或桌面不可用均不能通过；强制清理进程不能算正常退出。WACK、跨版本升级、干净机器运行依赖、持久开机启动／系统设置仍需单独发布验收。现有两条 GitHub 工作流继续只验收 Inno。
+
+Inno 本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
 
 ```powershell
 ./test/Run-Tests.ps1

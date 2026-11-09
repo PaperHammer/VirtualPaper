@@ -41,12 +41,33 @@ function Invoke-MsBuild([string[]] $BuildArguments) {
     if ($LASTEXITCODE -ne 0) { throw "MSBuild failed (exit $LASTEXITCODE): $($BuildArguments[0])" }
 }
 
+function Get-ExeOutputState([string[]] $Roots) {
+    $state = @{}
+    foreach ($root in $Roots) {
+        foreach ($file in Get-ChildItem -LiteralPath $root -File -Recurse) {
+            if ($file.Name -like '*.runtimeconfig.json') {
+                $runtime = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+                if (($runtime.runtimeOptions.PSObject.Properties['frameworks'] -or $runtime.runtimeOptions.PSObject.Properties['framework']) -and
+                    (Test-Path -LiteralPath (Join-Path $file.DirectoryName 'coreclr.dll'))) {
+                    throw "Framework-dependent EXE output contains a stale self-contained runtime. Clean this generated directory and rebuild Release: $($file.DirectoryName)"
+                }
+            }
+            $state[$file.FullName] = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+        }
+    }
+    return ,$state
+}
+
 Push-Location -LiteralPath $repositoryRoot
 try {
     if (-not $SkipSolutionBuild) {
         # Preserve the solution's existing per-project platform mappings.
         Invoke-MsBuild @('src/VirtualPaper.sln', '/restore', '/t:Rebuild', '/p:Configuration=Release', '/p:Platform=Any CPU', '/m')
     }
+    $exeOutputRoots = @('src/VirtualPaper/Plugins/UI', 'src/VirtualPaper/Plugins/PlayerWeb',
+        'src/VirtualPaper/Plugins/ScrSaver', 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0') |
+        ForEach-Object { Join-Path $repositoryRoot $_ }
+    $exeOutputBefore = Get-ExeOutputState $exeOutputRoots
 
     # Publish each process with its own .NET runtime. These properties apply only
     # to this packaging invocation; normal EXE builds keep their existing settings.
@@ -66,6 +87,13 @@ try {
             "/p:MsixPublishProject=$($process.Project)", "/p:MsixPublishOutputRoot=$workDirectory\ProcessBuild",
             "/p:PublishDir=$publishDirectory\")
     }
+
+    $exeOutputAfter = Get-ExeOutputState $exeOutputRoots
+    $changed = @(@($exeOutputBefore.Keys) + @($exeOutputAfter.Keys) | Sort-Object -Unique | Where-Object {
+        -not $exeOutputBefore.ContainsKey($_) -or -not $exeOutputAfter.ContainsKey($_) -or $exeOutputBefore[$_] -cne $exeOutputAfter[$_]
+    })
+    if ($changed.Count) { throw "MSIX publishing changed normal EXE output: $($changed -join ', ')" }
+    Write-Output 'Normal EXE output fingerprints are unchanged after MSIX publishing.'
 
     $releaseDirectory = Join-Path $repositoryRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0'
     foreach ($folder in @('ML', 'Shaders')) {

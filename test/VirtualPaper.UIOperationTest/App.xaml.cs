@@ -52,6 +52,12 @@ public partial class App : Application {
             new UiTestCase("Application.ScreenSaverIdle.RealIdleInputWakeAndRepeat", ScreenSaverIdleTests.RunAsync, true,
                 RequiresIdleEnvironment: true)
         };
+        // Installed-package lifecycle stages are invoked explicitly around a real
+        // reinstall; they must not overwrite the regular suite's isolated profile.
+        if (PackageActivation.ExpectedFullName != null && commandLine.Length == 5 && commandLine[3] == "--module")
+            cases = [.. cases,
+                new UiTestCase("Application.MsixProfile.Prepare", MsixProfileTests.PrepareAsync),
+                new UiTestCase("Application.MsixProfile.Verify", MsixProfileTests.VerifyAsync)];
         if (commandLine.Length == 5 && commandLine[3] == "--module")
             cases = cases.Where(test => test.Name == "Application." + commandLine[4] ||
                 test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();

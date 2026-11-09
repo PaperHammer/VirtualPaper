@@ -112,7 +112,7 @@ internal static class BuiltInWallpaperTests {
             foreach (var item in items) WallpaperLibraryTests.FindItem(window, item.WallpaperUid);
             return window;
         });
-        await WallpaperLibraryTests.WaitForItemsAsync(root, items.Length);
+        await WallpaperLibraryTests.WaitForItemsAsync(root, items.Length, includeBuiltIns: true);
         var rpc = new Grpc_WallpaperControlService.Grpc_WallpaperControlServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
         var evidence = new List<object>();
         context.Evidence["BuiltInPlayback"] = evidence;

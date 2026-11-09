@@ -207,6 +207,7 @@ foreach ($step in [regex]::Matches($releaseWorkflow, '(?ms)^    - name:.*?(?=^  
 }
 
 & (Join-Path $repositoryRoot 'test/Test-UIOperationTestSupport.ps1')
+& (Join-Path $repositoryRoot 'test/Test-MsixTestSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-InstallerTestSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-BuiltInWallpaperTestSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-InstallerProcessSupport.ps1')

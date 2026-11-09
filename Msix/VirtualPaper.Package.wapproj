@@ -41,6 +41,15 @@
     <Content Update="$(MsixPayloadDirectory)\MsixAssets\*.png">
       <ExcludeFromResourceIndex>false</ExcludeFromResourceIndex>
     </Content>
+    <!-- Storage Pickers opens this PRI beside Microsoft.WindowsAppRuntime.dll
+         by filename. Keep the physical files as well as the merged resource maps;
+         normal Content PRI inputs are consumed by the AppX resource merge. -->
+    <AppxPackagePayload Include="$(MsixPayloadDirectory)\**\Microsoft.WindowsAppRuntime.pri">
+      <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </AppxPackagePayload>
+    <AppxUploadPackagePayload Include="$(MsixPayloadDirectory)\**\Microsoft.WindowsAppRuntime.pri">
+      <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </AppxUploadPackagePayload>
   </ItemGroup>
   <Target Name="PrepareMsixManifest" BeforeTargets="PrepareForBuild">
     <Error Condition="'$(Platform)' != 'x64'" Text="VirtualPaper MSIX currently supports x64 only." />

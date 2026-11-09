@@ -4,8 +4,10 @@ using System.Text.Json;
 using System.Windows.Automation;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using GrpcDotNetNamedPipes;
 using Empty = Google.Protobuf.WellKnownTypes.Empty;
 using VirtualPaper.Common;
+using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.UIOperationTest.Infrastructure;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
@@ -168,9 +170,27 @@ internal static class WallpaperLibraryTests {
         }
     }
 
-    internal static Task WaitForItemsAsync(AutomationElement root, int count) => AppProcessSession.WaitAsync(() => Task.Run(() =>
-        ApplicationUi.Find(root, "Library.Items").FindAll(TreeScope.Descendants,
-            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem)).Count == count), $"Library displays {count} items");
+    internal static async Task WaitForItemsAsync(AutomationElement root, int count, bool includeBuiltIns = false) {
+        // MSIX seeds the real bundled collection on every new profile. User
+        // import/delete cases count their own cards; built-in playback checks
+        // explicitly include the bundled cards. Keep the production seeding path.
+        var builtInIds = new HashSet<string>();
+        if (!includeBuiltIns) {
+            var settings = await new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(
+                new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName)).GetSettingsAsync(new Empty(),
+                    deadline: DateTime.UtcNow.AddSeconds(1));
+            if (Directory.Exists(settings.BuiltInWallpapersDir)) {
+                foreach (string path in Directory.GetFiles(settings.BuiltInWallpapersDir,
+                    Constants.Field.WpBasicDataFileName, SearchOption.AllDirectories))
+                    builtInIds.Add("Library.Item." + WpBasicData.Load(path).WallpaperUid);
+            }
+        }
+        await AppProcessSession.WaitAsync(() => Task.Run(() =>
+            ApplicationUi.Find(root, "Library.Items").FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem))
+                .Cast<AutomationElement>().Count(item => !builtInIds.Contains(item.Current.AutomationId)) == count),
+            $"Library displays {count} {(includeBuiltIns ? "total" : "user")} items");
+    }
 
     internal static void WriteImage(string path, int width = 256, int height = 144) {
         byte[] pixels = new byte[width * height * 4];

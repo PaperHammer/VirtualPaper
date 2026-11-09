@@ -128,6 +128,8 @@ These settings must be configured on GitHub; editing local YAML does not change 
 
 The separate Core-first MSIX candidate uses `.github/scripts/Build-Msix.ps1`; see [MSIX packaging](../../Msix/README.md). Neither workflow currently invokes it. Archive checks do not replace mandatory Inno smoke or independent UI evidence, and Inno success does not establish MSIX acceptance.
 
+`test/Run-MsixTests.ps1` is the separate strict local MSIX pipeline: full Release build → all eight project jobs → signed package/content checks → installation → automatic first-run UI → installed extended UI → same-package reinstall → retained/fresh profiles → uninstall/certificate cleanup. It activates the installed AUMID with isolated test data and checks Core/UI package identity. All phases, including real UI, must pass without skips. Use an elevated interactive Windows session; results stay local and do not dispatch these workflows or publish a Store submission.
+
 The complete local counterpart to the test/package stages is:
 
 ```powershell

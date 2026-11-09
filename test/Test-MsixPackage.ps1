@@ -37,6 +37,9 @@ try {
     )) {
         $directory, $name = $process
         foreach ($file in @("$name.exe", "$name.dll", 'coreclr.dll', 'hostpolicy.dll')) { Assert-PackageFile "$directory$file" }
+        if ($files.ContainsKey("${directory}Microsoft.WindowsAppRuntime.dll")) {
+            Assert-PackageFile "${directory}Microsoft.WindowsAppRuntime.pri"
+        }
         $runtime = Read-PackageText "$directory$name.runtimeconfig.json" | ConvertFrom-Json
         if (-not $runtime.runtimeOptions.PSObject.Properties['includedFrameworks']) { throw "$name is not self-contained." }
     }

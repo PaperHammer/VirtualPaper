@@ -128,6 +128,8 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 独立的 Core 入口 MSIX 候选包通过 `.github/scripts/Build-Msix.ps1` 构建，详见 [MSIX 打包](../../Msix/README.zh-CN.md)。两条现有工作流尚未调用此入口。包内容检查不替代必需的 Inno 冒烟及独立 UI 证据，Inno 成功也不表示 MSIX 验收通过。
 
+`test/Run-MsixTests.ps1` 是独立、严格的本地 MSIX 流程：完整 Release 构建 → 八组项目测试 → 签名打包／包内容检查 → 安装 → 首次自动 UI → 已安装包扩展 UI → 同包重装 → 保留／新配置 → 卸载和证书清理。通过已安装 AUMID 激活并隔离测试数据，校验 Core／UI 包身份。所有阶段（包括真实 UI）均要求无跳过通过。需要提升权限的交互式 Windows 会话；结果仅保存在本地，不触发现有工作流或提交商店。
+
 本地执行对应的完整测试、打包及安装验收：
 
 ```powershell

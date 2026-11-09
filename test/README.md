@@ -38,9 +38,12 @@ Run commands from the repository root. AI agents should start with [AGENTS.md](.
 | Real UI module or suite | `test/Run-UIOperationTests.ps1` | Builds the solution unless `-NoBuild`; runs component/application cases |
 | Existing installer | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | Required installer smoke: real install/reinstall, startup/normal exit, language/data retention and uninstall |
 | MSIX payload | `test/Test-MsixPackage.ps1 -PackagePath <application.msix>` | Checks the archive; no installation/UI acceptance. See [MSIX packaging](../Msix/README.md). |
+| Complete MSIX acceptance | `test/Run-MsixTests.ps1` | Release rebuild, eight project jobs, signed test MSIX, installed first-run/extended UI/reinstall/profile retention/uninstall; administrator and unlocked desktop required |
 | Workflow/script contracts | `.github/scripts/validate-test-workflow.ps1` | Isolated checks; no install or real UI |
 
-For the complete local acceptance used before merging, start PowerShell 7.2 or later **as administrator** and run:
+MSIX has a separate complete local entry point. Run `pwsh -NoProfile -File test/Run-MsixTests.ps1` as administrator on an unlocked Windows desktop. It creates a unique test package identity and temporary signing certificate, rebuilds Release, runs all eight project jobs and script checks without skips, builds/checks the self-contained MSIX, and installs it for the current user. The existing extended UI suite runs against that installed package: shell AUMID activation → Core → production UI/players. Native package identity is asserted for Core/UI, including restarted UI. First-run automatic UI startup, real import, same-package reinstall, saved preferences/imported cards/built-in wallpaper preservation, a fresh profile and uninstall are mandatory. A separate profile is retained across reinstall; the extended suite keeps its own isolation. The runner removes only its own package and certificate, and retains raw reports/profiles under a new `TestResults/msix-acceptance-*` directory. Failed/absent/locked-desktop UI blocks success; forced process cleanup never counts as a normal exit. WACK, a different-version upgrade, clean-machine runtime prerequisites and persistent startup/OS settings still need separate release acceptance. The two existing GitHub workflows remain Inno-only.
+
+For the complete Inno local acceptance used before merging, start PowerShell 7.2 or later **as administrator** and run:
 
 ```powershell
 ./test/Run-Tests.ps1

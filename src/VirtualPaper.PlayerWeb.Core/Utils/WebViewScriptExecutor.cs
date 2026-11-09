@@ -11,82 +11,97 @@ using VirtualPaper.Common.Utils.ThreadContext;
 
 namespace VirtualPaper.PlayerWeb.Core.Utils {
     public sealed partial class WebViewScriptExecutor : IDisposable {
-        public WebViewScriptExecutor(WebView2 webView) {
-            _webView = webView ?? throw new ArgumentNullException(nameof(webView));
-            StartLoops();
+        public WebViewScriptExecutor(WebView2 webView)
+            : this(webView ?? throw new ArgumentNullException(nameof(webView)), null) { }
+
+        internal WebViewScriptExecutor(Func<string, Task> dispatch)
+            : this(null, dispatch ?? throw new ArgumentNullException(nameof(dispatch))) { }
+
+        private WebViewScriptExecutor(WebView2? webView, Func<string, Task>? dispatch) {
+            _webView = webView;
+            _dispatch = dispatch ?? DispatchToWebViewAsync;
+            _stopToken = _cts.Token;
+            _completion = Task.WhenAll(Task.Run(RunStateLoopAsync), Task.Run(RunEventLoopAsync));
         }
+
+        internal Task Completion => _completion;
 
         /// <summary>
         /// 用于「状态型」脚本（MouseMove / Parallax 等）
         /// 同一个 key 只保留最后一次
         /// </summary>
         public void EnqueueState(string key, string functionName, params object?[] args) {
-            _stateScripts[key] = BuildScript(functionName, args);
+            if (Volatile.Read(ref _disposed) != 0) return;
+            string script = BuildScript(functionName, args);
+            lock (_queueLock) {
+                // Disposal may have started while the script was being serialized.
+                if (_disposed != 0) return;
+                _stateScripts[key] = script;
+                if (_stateSignal.CurrentCount == 0) _stateSignal.Release();
+            }
         }
 
         /// <summary>
-        /// 用于「事件型」脚本（Slider / Checkbox / Button 等）
-        /// 不会丢，严格顺序
+        /// 用于「事件型」脚本（加载 / 播放 / 停止等命令）
+        /// 运行期间不合并，按入队顺序执行
         /// </summary>
         public void EnqueueEvent(string functionName, params object?[] args) {
-            _eventQueue.Enqueue(BuildScript(functionName, args));
+            EnqueueRawScript(BuildScript(functionName, args));
         }
 
         public void EnqueueRawScript(string script) {
-            _eventQueue.Enqueue(script);
+            lock (_queueLock) {
+                if (_disposed != 0) return;
+                _eventQueue.Enqueue(script);
+                _eventSignal.Release();
+            }
         }
 
-        private void StartLoops() {
-            RunStateLoop();
-            RunEventLoop();
-        }
-
-        private void RunStateLoop() {
-            Task.Run(async () => {
-                try {
-                    while (!_cts.IsCancellationRequested) {
-                        await Task.Delay(StateInterval, _cts.Token);
-
-                        if (_stateScripts.IsEmpty) continue;
-
-                        // 快照后清空，避免遍历期间新数据被误删
-                        var snapshot = _stateScripts.ToArray();
+        private async Task RunStateLoopAsync() {
+            try {
+                while (!_stopToken.IsCancellationRequested) {
+                    await _stateSignal.WaitAsync(_stopToken);
+                    await Task.Delay(StateInterval, _stopToken);
+                    System.Collections.Generic.KeyValuePair<string, string>[] snapshot;
+                    lock (_queueLock) {
+                        snapshot = _stateScripts.ToArray();
                         _stateScripts.Clear();
-
-                        foreach (var kv in snapshot) {
-                            await DispatchAsync(kv.Value);
-                        }
                     }
+                    foreach (var kv in snapshot) await DispatchAsync(kv.Value);
                 }
-                catch (OperationCanceledException) { }
-            });
+            }
+            catch (OperationCanceledException) when (_stopToken.IsCancellationRequested) { }
         }
 
-        private void RunEventLoop() {
-            Task.Run(async () => {
-                try {
-                    while (!_cts.IsCancellationRequested) {
-                        if (_eventQueue.TryDequeue(out var script)) {
-                            await DispatchAsync(script);
-                        }
-                        else {
-                            await Task.Delay(EventIdleDelay, _cts.Token);
-                        }
-                    }
+        private async Task RunEventLoopAsync() {
+            try {
+                while (!_stopToken.IsCancellationRequested) {
+                    await _eventSignal.WaitAsync(_stopToken);
+                    if (_eventQueue.TryDequeue(out var script)) await DispatchAsync(script);
                 }
-                catch (OperationCanceledException) { }
-            });
+            }
+            catch (OperationCanceledException) when (_stopToken.IsCancellationRequested) { }
         }
 
-        private Task DispatchAsync(string script) {
+        private async Task DispatchAsync(string script) {
+            _stopToken.ThrowIfCancellationRequested();
+            try {
+                // A queued UI callback may never run after its window has closed.
+                await _dispatch(script).WaitAsync(_stopToken);
+            }
+            catch (OperationCanceledException) when (_stopToken.IsCancellationRequested) { throw; }
+            catch (Exception ex) { ArcLog.GetLogger<WebViewScriptExecutor>().Error(ex); }
+        }
+
+        private Task DispatchToWebViewAsync(string script) {
             return CrossThreadInvoker.InvokeOnUIThreadAsync(async () => {
                 try {
+                    _stopToken.ThrowIfCancellationRequested();
                     await EnsureCoreAsync();
-                    await _webView.ExecuteScriptAsync(script);
+                    _stopToken.ThrowIfCancellationRequested();
+                    await _webView!.ExecuteScriptAsync(script);
                 }
-                catch (Exception ex) {
-                    ArcLog.GetLogger<WebViewScriptExecutor>().Error(ex);
-                }
+                catch (Exception) when (_stopToken.IsCancellationRequested) { }
             });
         }
 
@@ -107,12 +122,13 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
         private async Task EnsureCoreAsync() {
             if (_coreReady) return;
 
-            await _coreInitLock.WaitAsync();
+            await _coreInitLock.WaitAsync(_stopToken);
             try {
                 if (_coreReady) return; // double-check
-                if (_webView.CoreWebView2 == null) {
+                if (_webView!.CoreWebView2 == null) {
                     await _webView.EnsureCoreWebView2Async();
                 }
+                _stopToken.ThrowIfCancellationRequested();
                 _coreReady = true;
             }
             finally {
@@ -147,24 +163,43 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
         }
 
         public void Dispose() {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
             GC.SuppressFinalize(this);
             _cts.Cancel();
-            _cts.Dispose();
-            _stateScripts.Clear();
-            while (_eventQueue.TryDequeue(out _)) { }
+            lock (_queueLock) {
+                _stateScripts.Clear();
+                while (_eventQueue.TryDequeue(out _)) { }
+            }
+            _ = ReleaseCancellationAsync();
+        }
+
+        private async Task ReleaseCancellationAsync() {
+            try { await _completion.ConfigureAwait(false); }
+            catch (Exception ex) { ArcLog.GetLogger<WebViewScriptExecutor>().Error(ex); }
+            finally {
+                _stateSignal.Dispose();
+                _eventSignal.Dispose();
+                _cts.Dispose();
+            }
         }
 
         // ===== 可调参数 =====
         private static readonly TimeSpan StateInterval = TimeSpan.FromMilliseconds(33); // ~30FPS
-        private static readonly TimeSpan EventIdleDelay = TimeSpan.FromMilliseconds(5);
 
         // ===== 内部状态 =====
         private readonly ConcurrentDictionary<string, string> _stateScripts = new();
         private readonly ConcurrentQueue<string> _eventQueue = new();
 
         private readonly CancellationTokenSource _cts = new();
+        private readonly SemaphoreSlim _stateSignal = new(0, 1);
+        private readonly SemaphoreSlim _eventSignal = new(0);
+        private readonly CancellationToken _stopToken;
+        private readonly Task _completion;
+        private readonly Func<string, Task> _dispatch;
+        private readonly object _queueLock = new();
+        private int _disposed;
 
-        private readonly WebView2 _webView;
+        private readonly WebView2? _webView;
         private bool _coreReady;
     }
 }

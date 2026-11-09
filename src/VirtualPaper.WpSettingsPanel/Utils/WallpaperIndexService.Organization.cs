@@ -68,7 +68,10 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(_organizationPath))!);
                 await FileUtil.WriteAllTextAsync(_organizationPath, JsonSerializer.Serialize(
                     new WallpaperLibraryState { Items = updated }, WallpaperLibraryStateContext.Default.WallpaperLibraryState), new UTF8Encoding(false));
-                lock (_lock) _organization = updated;
+                lock (_lock) {
+                    _organization = updated;
+                    InvalidateCachesUnsafe(tagsChanged: normalized != null);
+                }
             }
             finally { _organizationGate.Release(); }
         }

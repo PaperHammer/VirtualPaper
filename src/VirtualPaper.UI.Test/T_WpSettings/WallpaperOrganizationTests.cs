@@ -146,10 +146,79 @@ public class WallpaperOrganizationTests {
     }
 
     [TestMethod]
+    public void WarmQueriesAndTagInventory_ReflectMetadataAddUpdateAndRemoval() {
+        var filter = new FilterContext { SortOrder = WallpaperSortOrder.Title };
+        var first = Data("a", "Alpha"); first.Tags = "old";
+        _index.Update(first);
+        Assert.AreEqual("Alpha", _index.Query(0, 1, filter).Single().Title);
+        CollectionAssert.AreEqual(new[] { "old" }, _index.GetTags().ToArray());
+
+        var second = Data("b", "Beta"); second.Tags = "new";
+        _index.Update(second);
+        Assert.AreEqual("b", _index.Query(1, 1, filter).Single().Uid);
+        first.Title = "Zebra"; first.Tags = "updated";
+        _index.Update(first);
+        CollectionAssert.AreEqual(new[] { "b", "a" }, _index.Query(0, 10, filter).Select(item => item.Uid).ToArray());
+        CollectionAssert.AreEquivalent(new[] { "new", "updated" }, _index.GetTags().ToArray());
+
+        _index.Remove(second);
+        Assert.AreEqual("a", _index.Query(0, 1, filter).Single().Uid);
+        Assert.IsEmpty(_index.Query(1, 1, filter));
+        CollectionAssert.AreEqual(new[] { "updated" }, _index.GetTags().ToArray());
+    }
+
+    [TestMethod]
+    public async Task WarmQueries_ReflectPersonalFavoritesAndTagChanges() {
+        _index.Update(Data("a", "Alpha"));
+        var favoriteFilter = new FilterContext { FavoritesOnly = true };
+        var tagFilter = new FilterContext { Tag = "night" };
+        Assert.IsEmpty(_index.Query(0, 10, favoriteFilter));
+        Assert.IsEmpty(_index.GetTags());
+        await _index.UpdateOrganizationAsync(["a"], favorite: true);
+        Assert.AreEqual("a", _index.Query(0, 10, favoriteFilter).Single().Uid);
+        Assert.IsEmpty(_index.Query(0, 10, tagFilter));
+        await _index.UpdateOrganizationAsync(["a"], tags: ["night"]);
+        Assert.AreEqual("a", _index.Query(0, 10, tagFilter).Single().Uid);
+        CollectionAssert.AreEqual(new[] { "night" }, _index.GetTags().ToArray());
+        await _index.UpdateOrganizationAsync(["a"], favorite: false, tags: []);
+        Assert.IsEmpty(_index.Query(0, 10, tagFilter));
+        Assert.IsEmpty(_index.Query(0, 10, favoriteFilter));
+        Assert.IsEmpty(_index.GetTags());
+    }
+
+    [TestMethod]
+    public async Task Rebuild_ReplacesWarmQueryAndTagInventoryAfterLibraryMove() {
+        string original = Directory.CreateDirectory(Path.Combine(_root, "original")).FullName;
+        var data = Data("a", "Original");
+        data.FolderPath = Directory.CreateDirectory(Path.Combine(original, "item")).FullName;
+        data.Tags = "original";
+        await data.SaveMetadataAsync();
+        await _index.RebuildAsync([original]);
+        var filter = new FilterContext();
+        Assert.AreEqual("Original", _index.Query(0, 10, filter).Single().Title);
+        CollectionAssert.AreEqual(new[] { "original" }, _index.GetTags().ToArray());
+
+        string moved = Path.Combine(_root, "relocated");
+        Directory.Move(original, moved);
+        var updated = WpBasicData.Load(Path.Combine(moved, "item", Constants.Field.WpBasicDataFileName));
+        updated.Title = "Updated"; updated.Tags = "updated";
+        await updated.SaveMetadataAsync();
+        await _index.RebuildAsync([moved]);
+        var entry = _index.Query(0, 10, filter).Single();
+        Assert.AreEqual("Updated", entry.Title);
+        Assert.StartsWith(moved, entry.FolderPath);
+        CollectionAssert.AreEqual(new[] { "updated" }, _index.GetTags().ToArray());
+    }
+
+    [TestMethod]
     public async Task FailedSave_DoesNotPublishUnsavedChanges() {
+        _index.Update(Data("a", "Alpha"));
+        var filter = new FilterContext { FavoritesOnly = true };
+        Assert.IsEmpty(_index.Query(0, 10, filter));
         Directory.CreateDirectory(_statePath);
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _index.UpdateOrganizationAsync(["a"], favorite: true));
         Assert.IsFalse(_index.GetOrganization("a").Favorite);
+        Assert.IsEmpty(_index.Query(0, 10, filter));
         Assert.IsEmpty(Directory.GetFiles(_root, ".*.tmp"));
     }
 

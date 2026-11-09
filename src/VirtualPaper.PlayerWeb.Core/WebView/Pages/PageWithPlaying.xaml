@@ -10,8 +10,7 @@
     xmlns:comp="using:VirtualPaper.PlayerWeb.Core.WebView.Components"
     mc:Ignorable="d"
     SizeChanged="ArcPage_SizeChanged"
-    Loaded="ArcPage_Loaded"
-    Unloaded="ArcPage_Unloaded">
+    Loaded="ArcPage_Loaded">
 
     <arc:ArcPageHost x:Name="MainHost">
         <Grid x:Name="Root">

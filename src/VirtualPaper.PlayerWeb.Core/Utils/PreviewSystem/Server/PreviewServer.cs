@@ -57,8 +57,8 @@ namespace VirtualPaper.PlayerWeb.Core.Utils.PreviewSystem.Server {
             if (app == null)
                 return;
 
-            await app.StopAsync();
-            await app.DisposeAsync();
+            try { await app.StopAsync(); }
+            finally { await app.DisposeAsync(); }
         }
 
         private WebApplication? _app;

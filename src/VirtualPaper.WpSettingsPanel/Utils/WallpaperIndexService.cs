@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,6 +30,7 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
             lock (_lock) {
                 _index = rebuilt;
                 RebuildUidIndexMapUnsafe();
+                InvalidateCachesUnsafe();
             }
         }
 
@@ -37,13 +39,20 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
         }
 
         public IReadOnlyList<WallpaperIndexEntry> Query(int offset, int limit, FilterContext filter) {
-            lock (_lock) return WallpaperLibraryQuery.Apply(_index.Items, filter, OrganizationUnsafe)
-                .Skip(Math.Max(0, offset)).Take(Math.Max(0, limit)).ToList();
+            lock (_lock) {
+                // Keep one result snapshot for the current filter; later pages only slice it.
+                if (_queryResults == null || _queryFilter != filter || _queryCulture != CultureInfo.CurrentCulture) {
+                    _queryResults = WallpaperLibraryQuery.Apply(_index.Items, filter, OrganizationUnsafe).ToArray();
+                    _queryFilter = filter;
+                    _queryCulture = CultureInfo.CurrentCulture;
+                }
+                return _queryResults.Skip(Math.Max(0, offset)).Take(Math.Max(0, limit)).ToArray();
+            }
         }
 
         public IReadOnlyList<string> GetTags() {
-            lock (_lock) return WallpaperOrganization.NormalizeTags(_index.Items
-                .SelectMany(entry => entry.Tags.Concat(OrganizationUnsafe(entry.Uid).Tags)));
+            lock (_lock) return _tagsCache ??= Array.AsReadOnly(WallpaperOrganization.NormalizeTags(_index.Items
+                .SelectMany(entry => entry.Tags.Concat(OrganizationUnsafe(entry.Uid).Tags))));
         }
 
         public bool TryGetValue(string wallpaperUid, out int idx) {
@@ -64,6 +73,7 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
                 _index.Items.RemoveAt(idx);
                 _uidToIndex.Remove(data.WallpaperUid);
                 RebuildUidIndexMapUnsafe();
+                InvalidateCachesUnsafe();
             }
         }
 
@@ -81,14 +91,20 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
                 else {
                     _index.Items.Add(newEntry);
                     idx = _index.Items.Count - 1;
-                    RebuildUidIndexMapUnsafe();
                 }
 
                 _uidToIndex[data.WallpaperUid] = idx;
+                InvalidateCachesUnsafe();
             }
         }
 
         #region utils
+        private void InvalidateCachesUnsafe(bool tagsChanged = true) {
+            _queryResults = null;
+            _queryFilter = null;
+            if (tagsChanged) _tagsCache = null;
+        }
+
         private void RebuildUidIndexMapUnsafe() {
             _uidToIndex.Clear();
             for (int i = 0; i < _index.Items.Count; i++) {
@@ -100,6 +116,10 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
 
         private readonly object _lock = new();
         private WallpaperIndexFile _index = new();
+        private FilterContext? _queryFilter;
+        private CultureInfo? _queryCulture;
+        private WallpaperIndexEntry[]? _queryResults;
+        private IReadOnlyList<string>? _tagsCache;
         private readonly Dictionary<string, int> _uidToIndex = new(StringComparer.OrdinalIgnoreCase);
     }
 }

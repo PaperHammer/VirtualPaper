@@ -17,12 +17,13 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
         public async Task RebuildIndexAsync(IEnumerable<string> storeDirs, CancellationToken token = default) {
             var items = new ConcurrentBag<WallpaperIndexEntry>();
 
-            var folders = storeDirs
+            var roots = storeDirs.ToArray();
+            var folders = await Task.Run(() => roots
                 .SelectMany(dir => {
                     var root = new DirectoryInfo(dir);
                     return root.Exists ? root.GetDirectories() : Array.Empty<DirectoryInfo>();
                 })
-                .ToArray();
+                .ToArray(), token);
 
             var parallelOptions = new ParallelOptions {
                 CancellationToken = token,

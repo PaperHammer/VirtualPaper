@@ -73,7 +73,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private void InitColletions() {
             _wallpaperInstallFolders = GetWallpaperInstallFolders();
             LibraryWallpapers = [];
-            _libraryWallpapers = [];
+            _libraryWallpapers.Clear();
         }
 
         private string[] GetWallpaperInstallFolders() => WallpaperLibraryDirectories.All
@@ -89,6 +89,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             LibraryWallpapers.Clear();
             _libraryWallpapers.Clear();
             _offset = 0;
+            _loadedFilter = null;
             _isInited = false;
         }
 
@@ -146,9 +147,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 OrganizationChanged?.Invoke(this, EventArgs.Empty);
             }
             finally {
-                ApplyLoadedFilter();
-                RefreshTags();
-                if (_isInited) await ReloadQueryAsync();
+                await RefreshLibraryAsync();
             }
         }
 
@@ -420,7 +419,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 .GroupBy(item => item.WallpaperUid)
                 .Select(group => group.First())) {
                 LibraryWallpapers.Remove(data);
-                _libraryWallpapers.Remove(data);
+                _libraryWallpapers.Remove(data.WallpaperUid);
                 _wallpaperIndexService.Remove(data);
                 handledAny = true;
             }
@@ -434,19 +433,23 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public event EventHandler? ItemDeleted;
 
         public void UpdateLib(IWpBasicData data) {
-            int idx = _libraryWallpapers.FindIndex(item => item.WallpaperUid.Equals(data.WallpaperUid, StringComparison.OrdinalIgnoreCase));
-            if (idx >= 0) {
-                _libraryWallpapers[idx] = data;
-            }
-            else {
-                _libraryWallpapers.Insert(0, data);
-            }
-            _wallpaperIndexService.Update(data);
-            ApplyLoadedFilter();
-            RefreshTags();
-            if (_isInited) _ = ReloadQueryAsync();
+            UpdateLibraryEntry(data);
+            _ = RefreshLibraryAsync();
+        }
 
-            // 广播"壁纸已入库"事件，供其他 Panel 订阅（如刷新预览、更新计数等）
+        internal async Task UpdateLibAsync(IEnumerable<IWpBasicData> items) {
+            bool changed = false;
+            foreach (var data in items) {
+                UpdateLibraryEntry(data);
+                changed = true;
+            }
+            if (changed) await RefreshLibraryAsync();
+        }
+
+        private void UpdateLibraryEntry(IWpBasicData data) {
+            _libraryWallpapers[data.WallpaperUid] = data;
+            _wallpaperIndexService.Update(data);
+            // Keep per-wallpaper notifications; refresh the list once for the batch.
             PanelMessageCenter.Publish(
                 PanelContracts.WpSettings.Id,
                 PanelContracts.WpSettings.Event_WallpaperImported,
@@ -482,58 +485,65 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             var ctsImport = new CancellationTokenSource();
             int finishedCnt = 0;
             int total = importValues.Count;
-            await loadingCtx.RunWithProgressAsync(
-                operation: async (token, reportProgress) => {
-                    foreach (var importValue in importValues) {
-                        try {
-                            token.ThrowIfCancellationRequested();
+            var imported = new List<IWpBasicData>();
+            try {
+                await loadingCtx.RunWithProgressAsync(
+                    operation: async (token, reportProgress) => {
+                        foreach (var importValue in importValues) {
+                            try {
+                                token.ThrowIfCancellationRequested();
 
-                            if (importValue.FType != FileType.FUnknown) {
-                                var grpcData = await _wpControlClient.CreateBasicDataAsync(
-                                    importValue.FilePath,
-                                    importValue.FType,
-                                    token);
+                                if (importValue.FType != FileType.FUnknown) {
+                                    var grpcData = await _wpControlClient.CreateBasicDataAsync(
+                                        importValue.FilePath,
+                                        importValue.FType,
+                                        token);
 
-                                if (grpcData == null) {
-                                    GlobalMessageUtil.ShowError(
-                                        Constants.I18n.InfobarMsg_ImportErr,
-                                        isNeedLocalizer: true,
-                                        extraMsg: importValue.FilePath);
-                                    return;
-                                }
+                                    if (grpcData == null) {
+                                        GlobalMessageUtil.ShowError(
+                                            Constants.I18n.InfobarMsg_ImportErr,
+                                            isNeedLocalizer: true,
+                                            extraMsg: importValue.FilePath);
+                                        return;
+                                    }
 
-                                var data = DataAssist.GrpcToBasicData(grpcData);
-                                if (data.IsAvailable()) {
-                                    UpdateLib(data);
+                                    var data = DataAssist.GrpcToBasicData(grpcData);
+                                    if (data.IsAvailable()) {
+                                        imported.Add(data);
+                                    }
+                                    else {
+                                        GlobalMessageUtil.ShowError(
+                                            Constants.I18n.InfobarMsg_ImportErr,
+                                            isNeedLocalizer: true,
+                                            extraMsg: importValue.FilePath);
+                                    }
                                 }
                                 else {
                                     GlobalMessageUtil.ShowError(
-                                        Constants.I18n.InfobarMsg_ImportErr,
+                                        Constants.I18n.Dialog_Content_Import_Failed_Lib,
                                         isNeedLocalizer: true,
                                         extraMsg: importValue.FilePath);
                                 }
-                            }
-                            else {
-                                GlobalMessageUtil.ShowError(
-                                    Constants.I18n.Dialog_Content_Import_Failed_Lib,
-                                    isNeedLocalizer: true,
-                                    extraMsg: importValue.FilePath);
-                            }
 
-                            reportProgress(++finishedCnt, total);
+                                reportProgress(++finishedCnt, total);
+                            }
+                            catch (Exception ex) when (
+                                ex is OperationCanceledException ||
+                                (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
+                                GlobalMessageUtil.ShowCanceled();
+                                return;
+                            }
+                            catch (Exception ex) {
+                                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                                GlobalMessageUtil.ShowException(ex);
+                            }
                         }
-                        catch (Exception ex) when (
-                            ex is OperationCanceledException ||
-                            (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                            GlobalMessageUtil.ShowCanceled();
-                            return;
-                        }
-                        catch (Exception ex) {
-                            ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                            GlobalMessageUtil.ShowException(ex);
-                        }
-                    }
-                }, total: importValues.Count, cts: ctsImport);
+                    }, total: importValues.Count, cts: ctsImport);
+            }
+            finally {
+                // Publish successful imports even if a later item fails or is cancelled.
+                await UpdateLibAsync(imported);
+            }
         }
 
         private async Task<RuntimeType> GetWallpaperRTypeByFTypeAsync(FileType ftype) {
@@ -673,9 +683,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public void ApplyFilter(FilterContext context) {
+            bool textChanged = _filter.TitleKeyword != context.TitleKeyword || _filter.Tag != context.Tag;
             _filter = context;
-            ApplyLoadedFilter();
-            if (_isInited) _ = ReloadQueryAsync();
+            if (_isInited) _ = ReloadQueryAsync(debounce: textChanged);
+            else ApplyLoadedFilter();
         }
 
         public void FilterByTitle(string keyword) {
@@ -683,20 +694,20 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void ApplyLoadedFilter() {
-            var byUid = _libraryWallpapers.GroupBy(data => data.WallpaperUid, StringComparer.OrdinalIgnoreCase)
-                .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
-            var entries = WallpaperLibraryQuery.Apply(byUid.Values.Select(WallpaperIndexEntry.FromData), _filter, GetOrganization);
-            ReplaceVisible(entries.Take(Math.Max(_limit, LibraryWallpapers.Count)).Select(entry => byUid[entry.Uid]).ToArray());
+            var entries = WallpaperLibraryQuery.Apply(_libraryWallpapers.Values.Select(WallpaperIndexEntry.FromData), _filter, GetOrganization);
+            ReplaceVisible(entries.Take(Math.Max(_limit, LibraryWallpapers.Count)).Select(entry => _libraryWallpapers[entry.Uid]).ToArray());
         }
 
         private void ReplaceVisible(IReadOnlyList<IWpBasicData> items) {
             var wanted = items.Select(item => item.WallpaperUid).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var existingItems = LibraryWallpapers.ToDictionary(item => item.WallpaperUid, StringComparer.OrdinalIgnoreCase);
             for (int i = LibraryWallpapers.Count - 1; i >= 0; i--) {
                 if (!wanted.Contains(LibraryWallpapers[i].WallpaperUid)) LibraryWallpapers.RemoveAt(i);
             }
             for (int i = 0; i < items.Count; i++) {
                 if (i < LibraryWallpapers.Count && ReferenceEquals(LibraryWallpapers[i], items[i])) continue;
-                int existing = LibraryWallpapers.ToList().FindIndex(item => item.WallpaperUid == items[i].WallpaperUid);
+                int existing = existingItems.TryGetValue(items[i].WallpaperUid, out var existingItem)
+                    ? LibraryWallpapers.IndexOf(existingItem) : -1;
                 if (existing >= 0) {
                     if (existing != i) LibraryWallpapers.Move(existing, i);
                     if (!ReferenceEquals(LibraryWallpapers[i], items[i])) LibraryWallpapers[i] = items[i];
@@ -714,27 +725,39 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public WallpaperOrganization GetOrganization(string uid) => _wallpaperIndexService.GetOrganization(uid) ?? new();
         public bool IsFavorite(IWpBasicData data) => GetOrganization(data.WallpaperUid).Favorite;
         public event EventHandler? OrganizationChanged;
+        public event EventHandler? QueryReset;
 
         public async Task OrganizeAsync(IEnumerable<IWpBasicData> items, bool? favorite = null,
             IEnumerable<string>? tags = null, WallpaperTagUpdate mode = WallpaperTagUpdate.Replace) {
             await _wallpaperIndexService.UpdateOrganizationAsync(items.Select(item => item.WallpaperUid), favorite, tags, mode);
-            RefreshTags();
-            ApplyLoadedFilter();
             OrganizationChanged?.Invoke(this, EventArgs.Empty);
+            // A favorite toggle cannot change this result set unless favorites are filtered.
+            if (favorite != null && tags == null && !_filter.FavoritesOnly) return;
+            await RefreshLibraryAsync();
+        }
+
+        private async Task RefreshLibraryAsync() {
             if (_isInited) await ReloadQueryAsync();
+            else {
+                ApplyLoadedFilter();
+                RefreshTags();
+            }
         }
 
         private void RefreshTags() => _wpSettingsViewModel.UpdateTags(_wallpaperIndexService.GetTags() ?? []);
 
-        internal async Task ApplyFilterAsync(FilterContext filter) {
+        internal async Task ApplyFilterAsync(FilterContext filter, bool debounce = false) {
             _filter = filter;
             _isInited = true;
-            await ReloadQueryAsync();
+            await ReloadQueryAsync(debounce);
         }
 
-        private async Task ReloadQueryAsync() {
+        private async Task ReloadQueryAsync(bool debounce = false) {
             int version = unchecked(++_queryVersion);
             LibLoadingStatus = LoadingStatus.Changing;
+            if (debounce) await Task.Delay(180);
+            // Superseded input never reaches the index, disk or visible collection.
+            if (version != _queryVersion) return;
             await _queryGate.WaitAsync();
             try {
                 await _wallpaperIndexService.Initialized.Task;
@@ -773,18 +796,22 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private async Task LoadPageAsync(int version, bool reset) {
             int offset = reset ? 0 : _offset;
             var filter = _filter;
+            // Data updates keep the loaded range; only a different filter resets scrolling.
+            bool filterChanged = _loadedFilter != filter;
+            int pageSize = reset && !filterChanged ? Math.Max(_limit, LibraryWallpapers.Count) : _limit;
             var page = new List<IWpBasicData>();
             bool more = true;
-            while (page.Count < _limit && more) {
-                int requested = _limit - page.Count;
+            while (page.Count < pageSize && more) {
+                int requested = pageSize - page.Count;
                 var entries = _wallpaperIndexService.Query(offset, requested, filter);
                 more = entries.Count == requested;
                 foreach (var entry in entries) {
                     offset++; // Consume invalid/missing metadata too; never get stuck on one page.
                     if (version != _queryVersion) return;
                     try {
-                        IWpBasicData? data = _libraryWallpapers.FirstOrDefault(item => item.WallpaperUid == entry.Uid
-                            && Path.Combine(item.FolderPath, Constants.Field.WpBasicDataFileName).Equals(entry.JsonPath, StringComparison.OrdinalIgnoreCase));
+                        _libraryWallpapers.TryGetValue(entry.Uid, out var data);
+                        if (data != null && !Path.Combine(data.FolderPath, Constants.Field.WpBasicDataFileName)
+                            .Equals(entry.JsonPath, StringComparison.OrdinalIgnoreCase)) data = null;
                         data ??= await WpBasicData.LoadAsync(entry.JsonPath);
                         if (version != _queryVersion) return;
                         if (data?.IsAvailable() != true) continue;
@@ -798,12 +825,19 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             if (version != _queryVersion) return;
             _offset = offset;
             _hasMore = more;
-            if (reset) ReplaceVisible(page);
-            else foreach (var item in page) {
-                if (!LibraryWallpapers.Any(existing => existing.WallpaperUid == item.WallpaperUid)) LibraryWallpapers.Add(item);
+            if (reset) {
+                ReplaceVisible(page);
+                _loadedFilter = filter;
+                if (filterChanged) QueryReset?.Invoke(this, EventArgs.Empty);
+            }
+            else {
+                var visible = LibraryWallpapers.Select(item => item.WallpaperUid).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                foreach (var item in page) {
+                    if (visible.Add(item.WallpaperUid)) LibraryWallpapers.Add(item);
+                }
             }
             foreach (var item in page) {
-                if (!_libraryWallpapers.Any(existing => existing.WallpaperUid == item.WallpaperUid)) _libraryWallpapers.Add(item);
+                _libraryWallpapers[item.WallpaperUid] = item;
             }
         }
         #endregion
@@ -823,9 +857,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private string[] _wallpaperInstallFolders = [];
         private readonly Dictionary<string, ArcWindow> _details = [];
         private readonly Dictionary<(string uid, RuntimeType rtype), ArcWindow> _previews = [];
-        private List<IWpBasicData> _libraryWallpapers = [];
+        private readonly Dictionary<string, IWpBasicData> _libraryWallpapers = new(StringComparer.OrdinalIgnoreCase);
         private bool _isInited;
         private FilterContext _filter = FilterContext.Empty;
+        private FilterContext? _loadedFilter;
         private readonly SemaphoreSlim _queryGate = new(1, 1);
         private int _queryVersion;
         private bool _hasMore = true;
@@ -833,7 +868,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         /// <summary>仅供单元测试使用</summary>
         public void TestPopulate(IEnumerable<IWpBasicData> items) {
             foreach (var item in items) {
-                _libraryWallpapers.Add(item);
+                _libraryWallpapers[item.WallpaperUid] = item;
                 LibraryWallpapers.Add(item);
             }
         }

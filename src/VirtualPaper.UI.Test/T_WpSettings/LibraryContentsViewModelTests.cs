@@ -432,6 +432,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         public async Task FullLibrarySearch_PaginatesMatchesBeyondInitiallyLoadedItems() {
             string root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "VirtualPaper.Tests", "LibraryPages-" + Guid.NewGuid().ToString("N"))).FullName;
             try {
+                int resets = 0;
+                _vm.QueryReset += (_, _) => resets++;
                 var index = new WallpaperIndexService(Path.Combine(root, "preferences.json"));
                 ReadyIndex();
                 _wallpaperIndexService.Setup(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()))
@@ -458,6 +460,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 await _vm.ApplyFilterAsync(FilterContext.Empty);
                 Assert.HasCount(30, _vm.LibraryWallpapers);
                 Assert.IsTrue(_vm.LibraryWallpapers.All(item => item.Title == "Forest"));
+                Assert.AreEqual(3, resets); // New queries reset scrolling; appending pages does not.
             }
             finally { Directory.Delete(root, true); }
         }
@@ -517,6 +520,147 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             Assert.IsEmpty(_vm.LibraryWallpapers);
             _vm.ApplyFilter(FilterContext.Empty);
             Assert.AreSame(forest, _vm.LibraryWallpapers.Single());
+        }
+
+        [TestMethod]
+        public async Task RapidTextChanges_OnlyQueryTheLastInputAndKeepCurrentCardsUntilReady() {
+            ReadyIndex();
+            var forest = MakeWpData("forest", "Forest");
+            var ocean = MakeWpData("ocean", "Ocean");
+            PopulateLibrary(forest, ocean);
+            _wallpaperIndexService.Setup(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()))
+                .Returns((int offset, int limit, FilterContext filter) => new[] { forest, ocean }
+                    .Where(item => item.Title == filter.TitleKeyword).Select(WallpaperIndexEntry.FromData).Skip(offset).Take(limit).ToArray());
+
+            Task oldQuery = _vm.ApplyFilterAsync(new FilterContext { TitleKeyword = "Forest" }, debounce: true);
+            Task latestQuery = _vm.ApplyFilterAsync(new FilterContext { TitleKeyword = "Ocean" }, debounce: true);
+            Assert.HasCount(2, _vm.LibraryWallpapers);
+            _wallpaperIndexService.Verify(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()), Times.Never);
+
+            await Task.WhenAll(oldQuery, latestQuery);
+
+            Assert.AreSame(ocean, _vm.LibraryWallpapers.Single());
+            _wallpaperIndexService.Verify(service => service.Query(It.IsAny<int>(), It.IsAny<int>(),
+                It.Is<FilterContext>(filter => filter.TitleKeyword == "Forest")), Times.Never);
+            _wallpaperIndexService.Verify(service => service.Query(0, 30,
+                It.Is<FilterContext>(filter => filter.TitleKeyword == "Ocean")), Times.Once);
+        }
+
+        [TestMethod]
+        public async Task FavoriteToggle_WithoutFavoritesFilter_PreservesLoadedPagesWithoutRequery() {
+            ReadyIndex();
+            var items = Enumerable.Range(0, 31).Select(i => MakeWpData("uid-" + i, "Item " + i)).ToArray();
+            PopulateLibrary(items);
+            _wallpaperIndexService.Setup(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()))
+                .Returns((int offset, int limit, FilterContext _) => items.Select(WallpaperIndexEntry.FromData).Skip(offset).Take(limit).ToArray());
+            await _vm.ApplyFilterAsync(FilterContext.Empty);
+            await _vm.LoadMorePageAsync();
+            Assert.HasCount(31, _vm.LibraryWallpapers);
+            _wallpaperIndexService.Invocations.Clear();
+            int notifications = 0;
+            _vm.OrganizationChanged += (_, _) => notifications++;
+
+            await _vm.OrganizeAsync([items[30]], favorite: true);
+
+            Assert.HasCount(31, _vm.LibraryWallpapers);
+            Assert.AreSame(items[30], _vm.LibraryWallpapers[30]);
+            Assert.AreEqual(1, notifications);
+            _wallpaperIndexService.Verify(service => service.UpdateOrganizationAsync(
+                It.IsAny<IEnumerable<string>>(), true, null, WallpaperTagUpdate.Replace), Times.Once);
+            _wallpaperIndexService.Verify(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task BatchUpdate_RefreshesOnceAndKeepsEveryItemAvailableForPaging() {
+            ReadyIndex();
+            var index = ConnectOrganizationIndex(Path.Combine(Path.GetTempPath(), "VirtualPaper.Tests", Guid.NewGuid().ToString("N"), "preferences.json"));
+            _wallpaperIndexService.Setup(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()))
+                .Returns((int offset, int limit, FilterContext filter) => index.Query(offset, limit, filter));
+            await _vm.ApplyFilterAsync(FilterContext.Empty);
+            _wallpaperIndexService.Invocations.Clear();
+            int resets = 0;
+            _vm.QueryReset += (_, _) => resets++;
+            var items = Enumerable.Range(0, 45).Select(i => MakeWpData("batch-" + i, "Item " + i)).ToArray();
+
+            await _vm.UpdateLibAsync(items);
+
+            Assert.HasCount(30, _vm.LibraryWallpapers);
+            Assert.AreEqual(0, resets);
+            _wallpaperIndexService.Verify(service => service.Update(It.IsAny<IWpBasicData>()), Times.Exactly(45));
+            _wallpaperIndexService.Verify(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()), Times.Once);
+            _wallpaperIndexService.Verify(service => service.GetTags(), Times.Once);
+            await _vm.LoadMorePageAsync();
+            CollectionAssert.AreEquivalent(items.Select(item => item.WallpaperUid).ToArray(),
+                _vm.LibraryWallpapers.Select(item => item.WallpaperUid).ToArray());
+
+            _wallpaperIndexService.Invocations.Clear();
+            await _vm.UpdateLibAsync([]);
+            _wallpaperIndexService.Verify(service => service.Update(It.IsAny<IWpBasicData>()), Times.Never);
+            _wallpaperIndexService.Verify(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()), Times.Never);
+            _wallpaperIndexService.Verify(service => service.GetTags(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task TagEdit_PreservesLoadedRangeWithoutScrollResetAndContinuesPaging() {
+            string root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "VirtualPaper.Tests", "LibraryRefresh-" + Guid.NewGuid().ToString("N"))).FullName;
+            try {
+                ReadyIndex();
+                var index = ConnectOrganizationIndex(Path.Combine(root, "preferences.json"));
+                _wallpaperIndexService.Setup(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()))
+                    .Returns((int offset, int limit, FilterContext filter) => index.Query(offset, limit, filter));
+                var items = Enumerable.Range(0, 66).Select(i => MakeWpData("uid-" + i, "Item " + i)).ToArray();
+                PopulateLibrary(items);
+                foreach (var item in items) index.Update(item);
+                await _vm.ApplyFilterAsync(FilterContext.Empty);
+                await _vm.LoadMorePageAsync();
+                Assert.HasCount(60, _vm.LibraryWallpapers);
+                var before = _vm.LibraryWallpapers.ToArray();
+                _wallpaperIndexService.Invocations.Clear();
+                int resets = 0;
+                _vm.QueryReset += (_, _) => resets++;
+
+                await _vm.OrganizeAsync([items[0]], tags: ["Personal"]);
+
+                CollectionAssert.AreEqual(before, _vm.LibraryWallpapers.ToArray());
+                Assert.AreEqual(0, resets);
+                CollectionAssert.AreEqual(new[] { "Personal" }, index.GetOrganization(items[0].WallpaperUid).Tags);
+                _wallpaperIndexService.Verify(service => service.Query(0, 60, It.IsAny<FilterContext>()), Times.Once);
+                await _vm.LoadMorePageAsync();
+                Assert.HasCount(66, _vm.LibraryWallpapers);
+                Assert.HasCount(66, _vm.LibraryWallpapers.Select(item => item.WallpaperUid).Distinct().ToArray());
+                _wallpaperIndexService.Verify(service => service.Query(60, 30, It.IsAny<FilterContext>()), Times.Once);
+            }
+            finally { Directory.Delete(root, true); }
+        }
+
+        [TestMethod]
+        public async Task BatchUpdate_DuringPendingFilter_StillResetsToFirstPageOfNewFilter() {
+            ReadyIndex();
+            var index = ConnectOrganizationIndex(Path.Combine(Path.GetTempPath(), "VirtualPaper.Tests", Guid.NewGuid().ToString("N"), "preferences.json"));
+            _wallpaperIndexService.Setup(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()))
+                .Returns((int offset, int limit, FilterContext filter) => index.Query(offset, limit, filter));
+            var items = Enumerable.Range(0, 66).Select(i => MakeWpData("uid-" + i, i < 31 ? "Forest" : "Ocean")).ToArray();
+            PopulateLibrary(items);
+            foreach (var item in items) index.Update(item);
+            await _vm.ApplyFilterAsync(FilterContext.Empty);
+            await _vm.LoadMorePageAsync();
+            Assert.HasCount(60, _vm.LibraryWallpapers);
+            _wallpaperIndexService.Invocations.Clear();
+            int resets = 0;
+            _vm.QueryReset += (_, _) => resets++;
+
+            Task filterQuery = _vm.ApplyFilterAsync(new FilterContext { TitleKeyword = "Ocean" }, debounce: true);
+            await _vm.UpdateLibAsync([MakeWpData("imported", "Ocean")]);
+            await filterQuery;
+
+            Assert.HasCount(30, _vm.LibraryWallpapers);
+            Assert.IsTrue(_vm.LibraryWallpapers.All(item => item.Title == "Ocean"));
+            Assert.AreEqual(1, resets);
+            _wallpaperIndexService.Verify(service => service.Query(0, 30,
+                It.Is<FilterContext>(filter => filter.TitleKeyword == "Ocean")), Times.Once);
+            await _vm.LoadMorePageAsync();
+            Assert.HasCount(36, _vm.LibraryWallpapers);
+            Assert.AreEqual(1, resets);
         }
 
         private void ReadyIndex() {

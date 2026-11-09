@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -40,6 +42,10 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             this.Loaded += LibraryContents_Loaded;
             this.Unloaded += LibraryContents_Unloaded;
             _viewModel = AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>();
+            _hoverTimer = DispatcherQueue.CreateTimer();
+            _hoverTimer.Interval = TimeSpan.FromMilliseconds(120);
+            _hoverTimer.IsRepeating = false;
+            _hoverTimer.Tick += HoverTimer_Tick;
             this.DataContext = _viewModel;
         }
 
@@ -47,28 +53,41 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             this.DataContext = _viewModel;
             _viewModel.ItemDeleted += ViewModel_ItemDeleted;
             _viewModel.OrganizationChanged += ViewModel_OrganizationChanged;
+            _viewModel.QueryReset += ViewModel_QueryReset;
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
             LanguageUtil.LanguageUpdated += ViewModel_OrganizationChanged;
+            wallpapersLibView.ApplyTemplate();
+            _scrollViewer = FindScrollViewer(wallpapersLibView);
+            if (_scrollViewer != null) _scrollViewer.ViewChanged += WallpaperLibScrollViewer_ViewChanged;
             RefreshFavoriteButtons();
             UpdateWallpaperTileSize();
+            QueueLoadMoreIfNeeded();
         }
 
         private void LibraryContents_Unloaded(object sender, RoutedEventArgs e) {
             _viewModel.ItemDeleted -= ViewModel_ItemDeleted;
             _viewModel.OrganizationChanged -= ViewModel_OrganizationChanged;
+            _viewModel.QueryReset -= ViewModel_QueryReset;
+            _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
             LanguageUtil.LanguageUpdated -= ViewModel_OrganizationChanged;
+            ClearCardHover();
+            if (_scrollViewer != null) _scrollViewer.ViewChanged -= WallpaperLibScrollViewer_ViewChanged;
+            _scrollViewer = null;
+            wallpapersLibView.LayoutUpdated -= LoadMoreAfterLayout;
+            _loadMoreQueued = false;
             this.DataContext = null;           
         }
 
-        private void ViewModel_ItemDeleted(object? sender, EventArgs e) {
-            if (wallpaperLibScrollViewer == null) return;
+        private void ViewModel_ItemDeleted(object? sender, EventArgs e) => QueueLoadMoreIfNeeded();
 
-            // ScrollableHeight = 内容总高度 - 视口高度
-            // 若剩余可滚动距离 <= threshold，说明内容不够多，需要补充加载
-            if (wallpaperLibScrollViewer.ScrollableHeight <= _scrollThreshold) {
-                if (_viewModel.LibLoadingStatus != LoadingStatus.Changing) {
-                    _viewModel.LoadMoreAsync();
-                }
-            }
+        private void ViewModel_QueryReset(object? sender, EventArgs e) {
+            ClearCardHover();
+            _scrollViewer?.ChangeView(null, 0, null, disableAnimation: true);
+        }
+
+        private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs args) {
+            if (args.PropertyName == nameof(LibraryContentsViewModel.LibLoadingStatus)
+                && _viewModel.LibLoadingStatus != LoadingStatus.Changing) QueueLoadMoreIfNeeded();
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {            
@@ -107,6 +126,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         public void EnterSelectionMode() {
+            ClearCardHover();
             // WinUI 的 ItemClick 模式与原生多选互斥；关闭后点击会立即更新 SelectedItems 和选中视觉态。
             wallpapersLibView.IsItemClickEnabled = false;
             wallpapersLibView.SelectionMode = ListViewSelectionMode.Multiple;
@@ -252,12 +272,16 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private void FavoriteButton_Loaded(object sender, RoutedEventArgs e) {
             _favoriteButtons.Add((ToggleButton)sender);
-            RefreshFavoriteButtons();
+            RefreshFavoriteButton((ToggleButton)sender);
         }
 
         private void FavoriteButton_Unloaded(object sender, RoutedEventArgs e) => _favoriteButtons.Remove((ToggleButton)sender);
 
-        private void FavoriteButton_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args) => RefreshFavoriteButtons();
+        private void FavoriteButton_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args) {
+            if (VisualTreeHelper.GetParent(sender) is StackPanel actions
+                && ReferenceEquals(VisualTreeHelper.GetParent(actions), _hoveredCard)) ClearCardHover();
+            RefreshFavoriteButton((ToggleButton)sender);
+        }
 
         private async void FavoriteButton_Click(object sender, RoutedEventArgs e) {
             if (sender is ToggleButton { DataContext: IWpBasicData data }) {
@@ -277,37 +301,36 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void RefreshFavoriteButtons() {
-            foreach (var button in _favoriteButtons.ToArray()) {
-                if (button.DataContext is not IWpBasicData data) continue;
-                bool favorite = _viewModel.IsFavorite(data);
-                button.IsChecked = favorite;
-                if (VisualTreeHelper.GetParent(button) is not StackPanel actions) continue;
-                var card = VisualTreeHelper.GetParent(actions);
-                bool selecting = wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple;
-                bool show = !selecting && ReferenceEquals(card, _hoveredCard);
-                actions.Visibility = selecting ? Visibility.Collapsed : Visibility.Visible;
-                AnimateCardActions(actions, show);
-                foreach (var control in actions.Children.OfType<Control>()) {
-                    control.IsEnabled = show && !_isOrganizing;
-                    control.IsTabStop = show;
-                }
-                if (button.Content is FontIcon icon) icon.Glyph = favorite ? "\uE735" : "\uE734";
-                string label = LanguageUtil.GetI18n(favorite ? "WpLib_RemoveFavorite" : "WpLib_AddFavorite");
-                ToolTipService.SetToolTip(button, label);
-                AutomationProperties.SetName(button, label);
-                AutomationProperties.SetAutomationId(button, "Library.Favorite." + data.WallpaperUid);
-                if (actions.Children.OfType<Button>().FirstOrDefault() is Button edit) {
-                    string editLabel = LanguageUtil.GetI18n("WpLib_EditInfo");
-                    ToolTipService.SetToolTip(edit, editLabel);
-                    AutomationProperties.SetName(edit, editLabel);
-                    AutomationProperties.SetAutomationId(edit, "Library.Edit." + data.WallpaperUid);
-                }
+            foreach (var button in _favoriteButtons) RefreshFavoriteButton(button);
+        }
+
+        private void RefreshFavoriteButton(ToggleButton button) {
+            if (button.DataContext is not IWpBasicData data) return;
+            bool favorite = _viewModel.IsFavorite(data);
+            button.IsChecked = favorite;
+            if (VisualTreeHelper.GetParent(button) is not StackPanel actions) return;
+            bool selecting = wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple;
+            actions.Visibility = selecting ? Visibility.Collapsed : Visibility.Visible;
+            UpdateActionAvailability(actions, !selecting && ReferenceEquals(actions, _visibleActions));
+            if (button.Content is FontIcon icon) icon.Glyph = favorite ? "\uE735" : "\uE734";
+            string label = LanguageUtil.GetI18n(favorite ? "WpLib_RemoveFavorite" : "WpLib_AddFavorite");
+            ToolTipService.SetToolTip(button, label);
+            AutomationProperties.SetName(button, label);
+            AutomationProperties.SetAutomationId(button, "Library.Favorite." + data.WallpaperUid);
+            if (actions.Children.OfType<Button>().FirstOrDefault() is Button edit) {
+                string editLabel = LanguageUtil.GetI18n("WpLib_EditInfo");
+                ToolTipService.SetToolTip(edit, editLabel);
+                AutomationProperties.SetName(edit, editLabel);
+                AutomationProperties.SetAutomationId(edit, "Library.Edit." + data.WallpaperUid);
             }
         }
 
         private void WallpaperCard_PointerEntered(object sender, PointerRoutedEventArgs args) {
-            _hoveredCard = sender as FrameworkElement;
-            RefreshFavoriteButtons();
+            if (sender is not FrameworkElement card || ReferenceEquals(card, _hoveredCard)) return;
+            ClearCardHover();
+            if (_isOrganizing || wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) return;
+            _hoveredCard = card;
+            _hoverTimer.Start();
         }
 
         private void WallpaperCard_PointerExited(object sender, PointerRoutedEventArgs args) {
@@ -315,17 +338,39 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             var point = args.GetCurrentPoint(card).Position;
             // Exiting a descendant must not hide the corner while still inside the card.
             if (point.X >= 0 && point.Y >= 0 && point.X < card.ActualWidth && point.Y < card.ActualHeight) return;
-            _hoveredCard = null;
-            RefreshFavoriteButtons();
+            ClearCardHover();
         }
 
         private void WallpaperCard_PointerCanceled(object sender, PointerRoutedEventArgs args) {
-            if (ReferenceEquals(sender, _hoveredCard)) _hoveredCard = null;
-            RefreshFavoriteButtons();
+            if (ReferenceEquals(sender, _hoveredCard)) ClearCardHover();
         }
 
         private void WallpaperCard_Unloaded(object sender, RoutedEventArgs args) {
-            if (ReferenceEquals(sender, _hoveredCard)) _hoveredCard = null;
+            if (ReferenceEquals(sender, _hoveredCard)) ClearCardHover();
+        }
+
+        private void HoverTimer_Tick(DispatcherQueueTimer sender, object args) {
+            if (_hoveredCard is not { IsLoaded: true } card || _isOrganizing
+                || wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) return;
+            if (card.FindName("CardActions") is not StackPanel actions) return;
+            _visibleActions = actions;
+            ShowCardActions(actions);
+            UpdateActionAvailability(actions, true);
+        }
+
+        private void ClearCardHover() {
+            _hoverTimer.Stop();
+            _hoveredCard = null;
+            if (_visibleActions is { } actions) ResetCardActions(actions);
+            _visibleActions = null;
+        }
+
+        private void UpdateActionAvailability(StackPanel actions, bool visible) {
+            actions.IsHitTestVisible = visible && !_isOrganizing;
+            foreach (var control in actions.Children.OfType<Control>()) {
+                control.IsEnabled = visible && !_isOrganizing;
+                control.IsTabStop = visible;
+            }
         }
 
         private void WallpaperCard_SizeChanged(object sender, SizeChangedEventArgs args) {
@@ -334,33 +379,29 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         }
 
         private void CardActions_Loaded(object sender, RoutedEventArgs args) {
-            var actions = (FrameworkElement)sender;
-            (actions.Tag as CardActionsState)?.Animation?.Stop();
-            actions.Opacity = 0;
-            ((TranslateTransform)actions.RenderTransform).X = 48;
-            actions.Tag = new CardActionsState(false, null);
-            RefreshFavoriteButtons();
+            ResetCardActions((StackPanel)sender);
         }
 
         private void CardActions_Unloaded(object sender, RoutedEventArgs args) {
-            var actions = (FrameworkElement)sender;
-            (actions.Tag as CardActionsState)?.Animation?.Stop();
+            if (ReferenceEquals(sender, _visibleActions)) ClearCardHover();
+            ResetCardActions((StackPanel)sender);
+        }
+
+        private void ResetCardActions(StackPanel actions) {
+            (actions.Tag as Storyboard)?.Stop();
             actions.Tag = null;
             actions.Opacity = 0;
             ((TranslateTransform)actions.RenderTransform).X = 48;
+            UpdateActionAvailability(actions, false);
         }
 
-        private static void AnimateCardActions(FrameworkElement actions, bool show) {
-            actions.IsHitTestVisible = show;
-            actions.Tag ??= new CardActionsState(false, null);
-            if (actions.Tag is CardActionsState { Visible: var previous } && previous == show) return;
+        private static void ShowCardActions(FrameworkElement actions) {
             var transform = (TranslateTransform)actions.RenderTransform;
-            double x = transform.X, opacity = actions.Opacity;
-            (actions.Tag as CardActionsState)?.Animation?.Stop();
-            var duration = new Duration(TimeSpan.FromMilliseconds(show ? 160 : 120));
-            var slide = new DoubleAnimation { From = x, To = show ? 0 : 48, Duration = duration,
-                EasingFunction = new CubicEase { EasingMode = show ? EasingMode.EaseOut : EasingMode.EaseIn } };
-            var fade = new DoubleAnimation { From = opacity, To = show ? 1 : 0, Duration = duration };
+            (actions.Tag as Storyboard)?.Stop();
+            var duration = new Duration(TimeSpan.FromMilliseconds(160));
+            var slide = new DoubleAnimation { From = 48, To = 0, Duration = duration,
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
+            var fade = new DoubleAnimation { From = 0, To = 1, Duration = duration };
             Storyboard.SetTarget(slide, transform);
             Storyboard.SetTargetProperty(slide, "X");
             Storyboard.SetTarget(fade, actions);
@@ -368,7 +409,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             var animation = new Storyboard();
             animation.Children.Add(slide);
             animation.Children.Add(fade);
-            actions.Tag = new CardActionsState(show, animation);
+            actions.Tag = animation;
             animation.Begin();
         }
 
@@ -390,7 +431,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private async Task OrganizeItemsAsync(IReadOnlyList<IWpBasicData> items, string action) {
             if (_isOrganizing || items.Count == 0) return;
             _isOrganizing = true;
-            RefreshFavoriteButtons();
+            ClearCardHover();
             try {
                 if (action is "AddFavorite" or "RemoveFavorite") {
                     await _viewModel.OrganizeAsync(items, favorite: action == "AddFavorite");
@@ -508,6 +549,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private void WallpapersLibView_SizeChanged(object sender, SizeChangedEventArgs e) {
             UpdateWallpaperTileSize();
+            QueueLoadMoreIfNeeded();
         }
 
         private void UpdateWallpaperTileSize() {
@@ -540,15 +582,9 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             var presenter = (FrameworkElement)root.Children[0];
             var visual = ElementCompositionPreview.GetElementVisual(presenter);
 
-            // Loaded 时新加载的 item 布局尚未完成，ActualWidth/Height 可能为 0
-            // 用 SizeChanged 保证尺寸确定后再更新 CenterPoint
-            presenter.SizeChanged += (s, _) => {
-                var fe = (FrameworkElement)s;
-                visual.CenterPoint = new Vector3(
-                    (float)fe.ActualWidth * 0.5f,
-                    (float)fe.ActualHeight * 0.5f,
-                    0f);
-            };
+            // Containers can be loaded repeatedly as they enter the viewport.
+            presenter.SizeChanged -= CardPresenter_SizeChanged;
+            presenter.SizeChanged += CardPresenter_SizeChanged;
 
             // 初始加载时尺寸已知，直接设置；新加载 item 尺寸为 0 时跳过，等 SizeChanged
             if (presenter.ActualWidth > 0 && presenter.ActualHeight > 0) {
@@ -559,6 +595,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             }
 
             visual.Scale = Vector3.One;
+            if (root.Tag is ScaleAnimationContext existing && ReferenceEquals(existing.Visual, visual)) return;
 
             var compositor = visual.Compositor;
             var ease = compositor.CreateCubicBezierEasingFunction(
@@ -576,6 +613,11 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             root.Tag = context;
         }
 
+        private void CardPresenter_SizeChanged(object sender, SizeChangedEventArgs args) {
+            var visual = ElementCompositionPreview.GetElementVisual((UIElement)sender);
+            visual.CenterPoint = new Vector3((float)args.NewSize.Width * 0.5f, (float)args.NewSize.Height * 0.5f, 0f);
+        }
+
         private static void AnimateScale(object sender, bool hover) {
             if (sender is not Grid root || root.Tag is not ScaleAnimationContext ctx)
                 return;
@@ -584,22 +626,43 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             visual.StartAnimation(nameof(visual.Scale), hover ? ctx.ScaleToHover : ctx.ScaleToNormal);
         }
 
-        private void WallpaperLibScrollViewer_ViewChanged(ScrollView sender, object args) {
-            if (sender == null) return;
-
-            double verticalOffset = sender.VerticalOffset;
-            double maxVerticalOffset = sender.ScrollableHeight;
-
-            if (maxVerticalOffset - verticalOffset <= _scrollThreshold) {
-                if (_viewModel.LibLoadingStatus != LoadingStatus.Changing) {
-                    _viewModel.LoadMoreAsync();
-                }
+        private static ScrollViewer? FindScrollViewer(DependencyObject root) {
+            if (root is ScrollViewer scrollViewer) return scrollViewer;
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) {
+                var result = FindScrollViewer(VisualTreeHelper.GetChild(root, i));
+                if (result != null) return result;
             }
+            return null;
+        }
+
+        private void WallpaperLibScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs args) {
+            // Scrolling must not leave a delayed reveal on a recycled/moving card.
+            ClearCardHover();
+            QueueLoadMoreIfNeeded();
+        }
+
+        private void QueueLoadMoreIfNeeded() {
+            if (_loadMoreQueued || !IsLoaded) return;
+            _loadMoreQueued = true;
+            // Measure newly appended cards before deciding whether another page is needed.
+            wallpapersLibView.LayoutUpdated += LoadMoreAfterLayout;
+        }
+
+        private void LoadMoreAfterLayout(object? sender, object args) {
+            wallpapersLibView.LayoutUpdated -= LoadMoreAfterLayout;
+            _loadMoreQueued = false;
+            if (!IsLoaded || _scrollViewer is not { ViewportHeight: > 0 } scrollViewer) return;
+            if (scrollViewer.ScrollableHeight - scrollViewer.VerticalOffset <= _scrollThreshold
+                && _viewModel.LibLoadingStatus != LoadingStatus.Changing) _viewModel.LoadMoreAsync();
         }
 
         private readonly LibraryContentsViewModel _viewModel;
         private readonly HashSet<ToggleButton> _favoriteButtons = [];
+        private readonly DispatcherQueueTimer _hoverTimer;
         private FrameworkElement? _hoveredCard;
+        private StackPanel? _visibleActions;
+        private ScrollViewer? _scrollViewer;
+        private bool _loadMoreQueued;
         private IReadOnlyList<IWpBasicData> _contextItems = [];
         private bool _isOrganizing;
         private const double _scrollThreshold = 200;
@@ -607,5 +670,4 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     }
 
     sealed record ScaleAnimationContext(Visual Visual, Vector3KeyFrameAnimation ScaleToNormal, Vector3KeyFrameAnimation ScaleToHover);
-    sealed record CardActionsState(bool Visible, Storyboard? Animation);
 }

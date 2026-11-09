@@ -45,6 +45,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         internal string? PreviewUrl { get; set; }
 
         public PageWithPlaying() {
+            _lifetimeToken = _lifetimeCts.Token;
             this.InitializeComponent();
             ArcContext.AttachLoadingComponent(this.MainHost.LoadingControlHost);
         }
@@ -53,6 +54,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             base.OnEnter(payload);
             Payload = payload;
             if (payload != null) {
+                if (_ownerWindow != null) _ownerWindow.Closed -= OwnerWindow_Closed;
+                payload.TryGet(NaviPayloadKey.ArcWindow.ToString(), out _ownerWindow);
+                if (_ownerWindow != null) _ownerWindow.Closed += OwnerWindow_Closed;
                 payload.TryGet(NaviPayloadKey.StartArgs.ToString(), out _startArgs);
                 payload.TryGet(PreviewUrlPayloadKey, out string? previewUrl);
                 PreviewUrl = previewUrl;
@@ -66,20 +70,29 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         protected override void ArcPage_Unloaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
-            base.ArcPage_Unloaded(sender, e);
             OnUnloaded();
+            base.ArcPage_Unloaded(sender, e);
         }
 
-        private void ArcPage_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
+        private async void ArcPage_Loaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs e) {
             var loadingCtx = ArcContext?.LoadingContext;
-            if (loadingCtx == null)
+            if (loadingCtx == null || _unloaded || _initializing)
                 return;
 
-            _ = loadingCtx.RunAsync(async token => {
-                await InitializeWebViewAsync();
-                _scriptExecutor = new WebViewScriptExecutor(Webview2);
-                await _loadedTcs.Task;
-            });
+            _initializing = true;
+            try {
+                await loadingCtx.RunAsync(async _ => {
+                    await InitializeWebViewAsync();
+                    _lifetimeToken.ThrowIfCancellationRequested();
+                    _scriptExecutor = new WebViewScriptExecutor(Webview2);
+                    await _loadedTcs.Task.WaitAsync(_lifetimeToken);
+                });
+            }
+            catch (Exception) when (_lifetimeToken.IsCancellationRequested) { }
+            catch (Exception ex) {
+                ArcLog.GetLogger<PageWithPlaying>().Error(ex);
+                OnUnloaded();
+            }
         }
 
         private void ArcPage_SizeChanged(object sender, Microsoft.UI.Xaml.SizeChangedEventArgs e) {
@@ -96,17 +109,25 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         /// for cleanup in <see cref="OnUnloaded"/>.
         /// </summary>
         private async Task<string> ServeFileAsync(string? filePath) {
+            _lifetimeToken.ThrowIfCancellationRequested();
             if (string.IsNullOrEmpty(filePath)) return string.Empty;
             var dir = Path.GetDirectoryName(filePath)!;
             var entry = Path.GetFileName(filePath);
             var server = new PreviewServer();
-            await server.StartAsync(dir, new PreviewServerOptions {
-                AllowedOrigin = _shellServer is null
-                    ? null
-                    : $"http://127.0.0.1:{_shellServer.Port}"
-            });
-            _resourceServers.Add(server);
-            return server.GetUrl(entry);
+            try {
+                await server.StartAsync(dir, new PreviewServerOptions {
+                    AllowedOrigin = _shellServer is null
+                        ? null
+                        : $"http://127.0.0.1:{_shellServer.Port}"
+                });
+                _lifetimeToken.ThrowIfCancellationRequested();
+                _resourceServers.Add(server);
+                return server.GetUrl(entry);
+            }
+            catch {
+                await StopServerAsync(server);
+                throw;
+            }
         }
 
         //private void InputLayer_PointerEntered(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e) {
@@ -129,7 +150,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             switch (e.Value) {
                 case double:
                 case int:
-                    _scriptExecutor?.EnqueueEvent(Fields.PropertyListener, e.PropertyName, e.Value);
+                    _scriptExecutor?.EnqueueState($"{Fields.PropertyListener}:{e.PropertyName}",
+                        Fields.PropertyListener, e.PropertyName, e.Value);
                     break;
                 case bool b:
                     ExecuteCheckBoxSet(e.PropertyName, b);
@@ -213,8 +235,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             _tpCts?.Dispose();
             _tpCts = null;
 
+            if (_lifetimeToken.IsCancellationRequested) return;
             if (isTimePerceptionOn) {
-                _tpCts = new CancellationTokenSource();
+                _tpCts = CancellationTokenSource.CreateLinkedTokenSource(_lifetimeToken);
                 _ = TimePerceptionLoopAsync(_tpCts.Token);
             }
             else {
@@ -228,26 +251,25 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         /// 每天重新计算日出日落，下发参数给 JS
         /// </summary>
         private async Task TimePerceptionLoopAsync(CancellationToken ct) {
-            while (!ct.IsCancellationRequested) {
-                // 计算今日参数并下发
-                await SendTimePerceptionConfigAsync();
+            try {
+                while (!ct.IsCancellationRequested) {
+                    // 计算今日参数并下发
+                    await SendTimePerceptionConfigAsync(ct);
 
-                // 等到次日 00:01 再重新计算
-                var now = DateTime.Now;
-                var nextMidnight = now.Date.AddDays(1).AddMinutes(1);
-                var delay = nextMidnight - now;
-
-                try {
+                    // 等到次日 00:01 再重新计算
+                    var now = DateTime.Now;
+                    var nextMidnight = now.Date.AddDays(1).AddMinutes(1);
+                    var delay = nextMidnight - now;
                     await Task.Delay(delay, ct);
                 }
-                catch (TaskCanceledException) {
-                    break;
-                }
             }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
+            catch (Exception ex) { ArcLog.GetLogger<PageWithPlaying>().Error(ex); }
         }
 
-        private async Task SendTimePerceptionConfigAsync() {
-            var (latitude, longitude) = await Win32Util.GetSystemLocationAsync();
+        private async Task SendTimePerceptionConfigAsync(CancellationToken token) {
+            var (latitude, longitude) = await Win32Util.GetSystemLocationAsync().WaitAsync(token);
+            token.ThrowIfCancellationRequested();
             var (sunriseLocal, sunsetLocal) = SunCalc.Calculate(DateTime.UtcNow.Date, latitude, longitude);
 
             //DebugUtil.Output($"sunriseLocal: {sunriseLocal:HH:mm}");
@@ -276,7 +298,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         #region webview2 event
         private async Task InitializeWebViewAsync() {
             var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
+            _lifetimeToken.ThrowIfCancellationRequested();
             await Webview2.EnsureCoreWebView2Async(env);
+            _lifetimeToken.ThrowIfCancellationRequested();
 
             Webview2.CoreWebView2.ProcessFailed += CoreWebView2_ProcessFailed;
             Webview2.CoreWebView2.DownloadStarting += CoreWebView2_DownloadStarting;
@@ -285,13 +309,21 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
             var shellDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PLAYER_Web");
             var entry = Path.GetFileName(playingFile); // default.html or 3d_depth_map.html
 
-            _shellServer = new PreviewServer();
-            await _shellServer.StartAsync(shellDir);
-            var shellUrl = _shellServer.GetUrl(entry);
-            Webview2.CoreWebView2.Navigate(shellUrl);
+            var server = new PreviewServer();
+            try {
+                await server.StartAsync(shellDir);
+                _lifetimeToken.ThrowIfCancellationRequested();
+                _shellServer = server;
+                Webview2.CoreWebView2.Navigate(server.GetUrl(entry));
+            }
+            catch {
+                await StopServerAsync(server);
+                throw;
+            }
         }
 
         private void CoreWebView2_ProcessFailed(object? sender, CoreWebView2ProcessFailedEventArgs e) {
+            if (_lifetimeToken.IsCancellationRequested) return;
             // Expected behavior: DebugActiveProcess(CEF_D3DRenderingSubProcess)
             // Ref: https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2processfailedkind
             if (e.Reason == CoreWebView2ProcessFailedReason.Unresponsive)
@@ -306,8 +338,19 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private async void Webview2_NavigationCompleted(WebView2 sender, CoreWebView2NavigationCompletedEventArgs args) {
+            if (_lifetimeToken.IsCancellationRequested) return;
+            try { await CompleteNavigationAsync(args); }
+            catch (OperationCanceledException) when (_lifetimeToken.IsCancellationRequested) { }
+            catch (Exception ex) {
+                if (!_lifetimeToken.IsCancellationRequested && !_loadedTcs.TrySetException(ex))
+                    ArcLog.GetLogger<PageWithPlaying>().Error(ex);
+            }
+        }
+
+        private async Task CompleteNavigationAsync(CoreWebView2NavigationCompletedEventArgs args) {
             if (!args.IsSuccess) {
-                ArcLog.GetLogger<PageWithPlaying>().Error($"WebView navigation failed: {args.WebErrorStatus}");
+                var error = new InvalidOperationException($"WebView navigation failed: {args.WebErrorStatus}");
+                if (!_loadedTcs.TrySetException(error)) ArcLog.GetLogger<PageWithPlaying>().Error(error);
                 return;
             }
 
@@ -348,6 +391,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
                 default:
                     break;
             }
+            _lifetimeToken.ThrowIfCancellationRequested();
             LoadWpEffect(_startArgs.WpEffectFilePathUsing);
             _scriptExecutor?.EnqueueEvent(Fields.Play);
 
@@ -390,9 +434,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void UpdateRectToWebview() {
-            if (Webview2 == null || Webview2.CoreWebView2 == null) return;
+            if (_lifetimeToken.IsCancellationRequested || Webview2 == null || Webview2.CoreWebView2 == null) return;
 
-            _scriptExecutor?.EnqueueEvent(Fields.UpdateDimensions, _pageRegion.Right - _pageRegion.Left, _pageRegion.Bottom - _pageRegion.Top);
+            _scriptExecutor?.EnqueueState(Fields.UpdateDimensions, Fields.UpdateDimensions,
+                _pageRegion.Right - _pageRegion.Left, _pageRegion.Bottom - _pageRegion.Top);
         }
 
         private void LoadWpEffect(string? wpEffectFilePath) {
@@ -436,13 +481,40 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         }
 
         private void OnUnloaded() {
+            if (_unloaded) return;
+            _unloaded = true;
+            if (_ownerWindow != null) _ownerWindow.Closed -= OwnerWindow_Closed;
+            _ownerWindow = null;
+            _lifetimeCts.Cancel();
+            _loadedTcs.TrySetCanceled(_lifetimeToken);
+            _tpCts?.Cancel();
+            _tpCts?.Dispose();
+            _tpCts = null;
+            _scriptExecutor?.Dispose();
+            _scriptExecutor = null;
             Payload = null;
-            _ = _shellServer?.StopAsync();
-            foreach (var s in _resourceServers) _ = s.StopAsync();
+            var shell = _shellServer;
+            _shellServer = null;
+            if (shell != null) _ = StopServerAsync(shell);
+            foreach (var server in _resourceServers) _ = StopServerAsync(server);
             _resourceServers.Clear();
-            CrossThreadInvoker.InvokeOnUIThread(() => {
+            try {
+                if (Webview2?.CoreWebView2 is { } core) {
+                    core.ProcessFailed -= CoreWebView2_ProcessFailed;
+                    core.DownloadStarting -= CoreWebView2_DownloadStarting;
+                }
+                Webview2!.NavigationCompleted -= Webview2_NavigationCompleted;
                 Webview2?.Close();
-            });
+            }
+            catch (Exception ex) { ArcLog.GetLogger<PageWithPlaying>().Error(ex); }
+            finally { _lifetimeCts.Dispose(); }
+        }
+
+        private void OwnerWindow_Closed(object sender, Microsoft.UI.Xaml.WindowEventArgs args) => OnUnloaded();
+
+        private static async Task StopServerAsync(PreviewServer server) {
+            try { await server.StopAsync(); }
+            catch (Exception ex) { ArcLog.GetLogger<PageWithPlaying>().Error(ex); }
         }
         #endregion
 
@@ -454,7 +526,12 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         //private volatile int _isParallaxRunning = 0; // 0 = stopped, 1 = running
         //private bool _isPointerInsidePage;
         private bool _devToolsOpened;
-        private readonly TaskCompletionSource _loadedTcs = new();
+        private readonly TaskCompletionSource _loadedTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly CancellationTokenSource _lifetimeCts = new();
+        private readonly CancellationToken _lifetimeToken;
+        private bool _unloaded;
+        private bool _initializing;
+        private ArcWindow? _ownerWindow;
         private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
             AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
         };

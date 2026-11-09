@@ -54,8 +54,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             get => _sortOrder;
             set { if (_sortOrder == value) return; _sortOrder = value; OnPropertyChanged(); BroadcastFilter(); }
         }
+
         internal void UpdateTags(IEnumerable<string> tags) {
-            _libraryTags = WallpaperOrganization.NormalizeTags(tags);
+            var normalized = WallpaperOrganization.NormalizeTags(tags);
+            if (_libraryTags.SequenceEqual(normalized)) return;
+            _libraryTags = normalized;
             // Inventory refreshes must not replace the user's input or invent a tag for it.
             UpdateTagSuggestions();
         }

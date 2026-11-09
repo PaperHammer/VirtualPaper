@@ -319,49 +319,51 @@
       </ResourceDictionary>
     </arc:ArcPage.Resources>
 
-    <ScrollView x:Name="wallpaperLibScrollViewer"
-         HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Hidden"
-         Padding="12 0 12 0" Margin="0 0 0 20"
-         ViewChanged="WallpaperLibScrollViewer_ViewChanged">
-        <StackPanel
-            Orientation="Vertical"
-            Spacing="8">
-            <StackPanel Padding="24 56" Spacing="12" HorizontalAlignment="Center" MaxWidth="360"
-                Visibility="{x:Bind _viewModel.IsEmpty, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}">
-                <FontIcon Glyph="&#xE8B9;" FontSize="32" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
-                <TextBlock TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    l:Uids.Uid="Ui_WpLib_Empty"/>
-            </StackPanel>
-            <GridView x:Name="wallpapersLibView"
-                AutomationProperties.AutomationId="Library.Items"
-                ContainerContentChanging="WallpapersLibView_ContainerContentChanging"
-                ContextRequested="WallpapersLibView_ContextRequested"
-                Margin="0 0 -12 0"
-                SizeChanged="WallpapersLibView_SizeChanged"
-                DataContext="{x:Bind _viewModel}"
-                ItemsSource="{x:Bind _viewModel.LibraryWallpapers}"
-                Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
-                AllowDrop="True"
-                DragOver="WallpapersLibView_DragOver"
-                Drop="WallpapersLibView_Drop"
-                HorizontalAlignment="Stretch"
-                VerticalContentAlignment="Stretch"
-                ItemClick="WallpapersLibView_ItemClick"
-                IsItemClickEnabled="True"
-                SelectionMode="None"
-                SelectionChanged="WallpapersLibView_SelectionChanged"
-                ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
-                ItemTemplate="{StaticResource WallpaperItemTemplate}"
-                ItemsPanel="{StaticResource WallpaperItemsPanel}"
-                PreviewKeyDown="WallpapersLibView_PreviewKeyDown">
-            </GridView>
-
-            <Grid HorizontalAlignment="Center">
-                <ProgressRing Height="20" Width="20"
-                    Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Changing}"/>
-                <TextBlock l:Uids.Uid="Ui_Lib_NotAnyMore_Text" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                    Visibility="{x:Bind _viewModel.EndOfResults, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}"/>
-            </Grid>
-        </StackPanel>
-    </ScrollView>
+    <!-- Let GridView own a bounded viewport so off-screen cards can be recycled. -->
+    <Grid Margin="12 0 12 20">
+        <GridView x:Name="wallpapersLibView"
+            AutomationProperties.AutomationId="Library.Items"
+            ContainerContentChanging="WallpapersLibView_ContainerContentChanging"
+            ContextRequested="WallpapersLibView_ContextRequested"
+            Margin="0 0 -12 0"
+            Padding="0"
+            ScrollViewer.HorizontalScrollMode="Disabled"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ScrollViewer.VerticalScrollMode="Enabled"
+            ScrollViewer.VerticalScrollBarVisibility="Auto"
+            SizeChanged="WallpapersLibView_SizeChanged"
+            DataContext="{x:Bind _viewModel}"
+            ItemsSource="{x:Bind _viewModel.LibraryWallpapers}"
+            Background="{ThemeResource SolidBackgroundFillColorSecondaryBrush}"
+            AllowDrop="True"
+            DragOver="WallpapersLibView_DragOver"
+            Drop="WallpapersLibView_Drop"
+            HorizontalAlignment="Stretch"
+            VerticalContentAlignment="Stretch"
+            ItemClick="WallpapersLibView_ItemClick"
+            IsItemClickEnabled="True"
+            SelectionMode="None"
+            SelectionChanged="WallpapersLibView_SelectionChanged"
+            ItemContainerStyle="{StaticResource LibGridViewItemStyle}"
+            ItemTemplate="{StaticResource WallpaperItemTemplate}"
+            ItemsPanel="{StaticResource WallpaperItemsPanel}"
+            PreviewKeyDown="WallpapersLibView_PreviewKeyDown">
+            <GridView.Header>
+                <StackPanel Padding="24 56" Spacing="12" HorizontalAlignment="Center" MaxWidth="360"
+                    Visibility="{x:Bind _viewModel.IsEmpty, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}">
+                    <FontIcon Glyph="&#xE8B9;" FontSize="32" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    <TextBlock TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        l:Uids.Uid="Ui_WpLib_Empty"/>
+                </StackPanel>
+            </GridView.Header>
+            <GridView.Footer>
+                <Grid HorizontalAlignment="Center">
+                    <ProgressRing Height="20" Width="20"
+                        Visibility="{x:Bind _viewModel.LibLoadingStatus, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=Changing}"/>
+                    <TextBlock l:Uids.Uid="Ui_Lib_NotAnyMore_Text" Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Visibility="{x:Bind _viewModel.EndOfResults, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}"/>
+                </Grid>
+            </GridView.Footer>
+        </GridView>
+    </Grid>
 </arc:ArcPage>

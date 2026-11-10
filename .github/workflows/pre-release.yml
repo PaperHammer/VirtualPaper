@@ -13,6 +13,10 @@ concurrency:
   group: pre-release-main
   cancel-in-progress: false  # 同一时间只允许一个构建，确保版本号不发生竞争
 
+defaults:
+  run:
+    shell: pwsh
+
 permissions:
   contents: write
   statuses: read
@@ -26,6 +30,9 @@ jobs:
     name: Prepare Metadata
     runs-on: windows-latest
     outputs:
+      msstore_enabled: ${{ steps.release-pr.outputs.msstore_enabled }}
+      selection_labels: ${{ steps.release-pr.outputs.selection_labels }}
+      msix_version: ${{ steps.store-config.outputs.msix_version }}
       current_version: ${{ steps.release-version.outputs.current_version }}
       new_version: ${{ steps.release-version.outputs.new_version }}
       main_sha: ${{ steps.release-pr.outputs.merge_sha }}
@@ -53,9 +60,12 @@ jobs:
           const allowed = ['version:major', 'version:minor', 'version:build', 'version:revision'];
           const selected = pr.labels.map(label => label.name).filter(name => allowed.includes(name));
           if (selected.length !== 1) throw new Error(`Select exactly one version label: ${allowed.join(', ')}.`);
+          const msstore = pr.labels.some(label => label.name === 'channel:msstore');
+          core.setOutput('msstore_enabled', msstore.toString());
+          core.setOutput('selection_labels', JSON.stringify(pr.labels.map(label => label.name).filter(name => name.startsWith('version:') || name.startsWith('update-plugin') || name === 'channel:msstore').sort()));
           const { data: checks } = await github.rest.repos.getCombinedStatusForRef({ ...context.repo, ref: pr.head.sha });
           const check = checks.statuses.find(status => status.context === 'pre-merge-check');
-          if (check?.state !== 'success' || !check.description?.startsWith(`[PR #${number} | ${selected[0]}] `)) {
+          if (check?.state !== 'success' || !check.description?.startsWith(`[PR #${number} | ${selected[0]} | msstore:${msstore}] `)) {
             throw new Error('The merged PR head must have a successful manual pre-merge-check status for this PR and version label.');
           }
           const { data: main } = await github.rest.git.getRef({ ...context.repo, ref: 'heads/main' });
@@ -127,6 +137,22 @@ jobs:
         foreach ($entry in $outputs.GetEnumerator()) { "$($entry.Key)=$($entry.Value)" >> $env:GITHUB_OUTPUT }
         Write-Host "$currentVersion -> $newVersion | $releaseTitle"
 
+    - name: Validate Partner Center configuration
+      id: store-config
+      if: steps.release-pr.outputs.msstore_enabled == 'true'
+      shell: pwsh
+      env:
+        MSSTORE_APPLICATION_ID: ${{ vars.MSSTORE_APPLICATION_ID }}
+        MSSTORE_IDENTITY_NAME: ${{ vars.MSSTORE_IDENTITY_NAME }}
+        MSSTORE_PUBLISHER: ${{ vars.MSSTORE_PUBLISHER }}
+        MSSTORE_PUBLISHER_DISPLAY_NAME: ${{ vars.MSSTORE_PUBLISHER_DISPLAY_NAME }}
+        MSSTORE_TENANT_ID: ${{ vars.MSSTORE_TENANT_ID }}
+        MSSTORE_CLIENT_ID: ${{ vars.MSSTORE_CLIENT_ID }}
+        MSSTORE_CLIENT_SECRET: ${{ secrets.MSSTORE_CLIENT_SECRET }}
+        BUILD_NUMBER: ${{ steps.release-version.outputs.build_number }}
+        SOURCE_SHA: ${{ steps.release-pr.outputs.merge_sha }}
+      run: ./.github/scripts/Invoke-StoreDraft.ps1 -Action Validate -BuildNumber $env:BUILD_NUMBER -SourceSha $env:SOURCE_SHA
+
     - name: Check release availability
       shell: pwsh
       env:
@@ -150,7 +176,6 @@ jobs:
         $manifest = New-ComponentManifest -BuildNumber $env:BUILD_NUMBER -PluginUpdate:($env:HAS_PLUGIN_UPDATE -eq 'true') -UpdatePlugins $plugins -Previous $baseline.manifest
         $json = $manifest | ConvertTo-Json -Depth 10 -Compress
         "app_comp_manifest=$json" >> $env:GITHUB_OUTPUT
-
   build-release:
     name: Build Release
     runs-on: windows-latest
@@ -192,7 +217,7 @@ jobs:
     - name: Set up MSBuild
       uses: microsoft/setup-msbuild@v2
 
-    - name: Rebuild solution
+    - name: Build Release solution
       run: msbuild src/VirtualPaper.sln /t:Rebuild /p:Configuration=Release /p:Platform="Any CPU" /restore /m
 
     - name: Write component manifest
@@ -227,11 +252,105 @@ jobs:
         name: app-comp-manifest
         path: app_comp_manifest.json
         retention-days: 30
-
+  package-exe:
+    name: Package EXE
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
+        persist-credentials: false
+    - name: Download build output
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: build-release-output
+        path: .
+    - name: Install Inno Setup 6.7.1
+      run: choco install innosetup --version=6.7.1 --no-progress -y
+    - name: Package EXE
+      env:
+        SOURCE_SHA: ${{ needs.prepare-metadata.outputs.main_sha }}
+        RELEASE_VERSION: ${{ needs.prepare-metadata.outputs.new_version }}
+        BUILD_NUMBER: ${{ needs.prepare-metadata.outputs.build_number }}
+        UPDATE_PLUGINS: ${{ needs.prepare-metadata.outputs.update_plugins }}
+      run: |
+        ./.github/scripts/New-CIExePackage.ps1 -SourceSha $env:SOURCE_SHA -Version $env:RELEASE_VERSION `
+          -BuildNumber $env:BUILD_NUMBER -UpdatePlugins $env:UPDATE_PLUGINS
+    - name: Upload package-exe
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: package-exe
+        path: dist/exe/
+        if-no-files-found: error
+        retention-days: 30
+  package-msix:
+    name: Package MSIX
+    runs-on: windows-latest
+    needs: [prepare-metadata, build-release]
+    if: needs.prepare-metadata.outputs.msstore_enabled == 'true'
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
+        persist-credentials: false
+    - name: Download build output
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: build-release-output
+        path: .
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v6.1.0
+      with:
+        dotnet-version: 8.0.x
+    - name: Package signed MSIX
+      env:
+        SOURCE_SHA: ${{ needs.prepare-metadata.outputs.main_sha }}
+        MSSTORE_IDENTITY_NAME: ${{ vars.MSSTORE_IDENTITY_NAME }}
+        MSSTORE_PUBLISHER: ${{ vars.MSSTORE_PUBLISHER }}
+        MSSTORE_PUBLISHER_DISPLAY_NAME: ${{ vars.MSSTORE_PUBLISHER_DISPLAY_NAME }}
+        MSIX_VERSION: ${{ needs.prepare-metadata.outputs.msix_version }}
+      run: |
+        ./.github/scripts/New-CIMsixPackage.ps1 -SourceSha $env:SOURCE_SHA -Store `
+          -IdentityName $env:MSSTORE_IDENTITY_NAME -Publisher $env:MSSTORE_PUBLISHER `
+          -PublisherDisplayName $env:MSSTORE_PUBLISHER_DISPLAY_NAME -PackageVersion $env:MSIX_VERSION
+    - name: Upload package-msix
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: package-msix
+        path: |
+          dist/msix/*.msix
+          dist/msix/*.msixupload
+          dist/msix/*.appxupload
+          dist/msix/package.json
+          dist/msix/acceptance.cer
+        if-no-files-found: error
+        retention-days: 30
+  packages-ready:
+    name: Packages Ready
+    runs-on: ubuntu-latest
+    needs: [prepare-metadata, build-release, package-exe, package-msix]
+    if: always() && !cancelled()
+    steps:
+    - name: Require selected packages
+      env:
+        JOB_RESULTS: ${{ toJSON(needs) }}
+        MSIX_ENABLED: ${{ needs.prepare-metadata.outputs.msstore_enabled }}
+      run: |
+        $jobs = $env:JOB_RESULTS | ConvertFrom-Json -AsHashtable
+        foreach ($name in @('prepare-metadata', 'build-release', 'package-exe')) {
+          if ($jobs[$name].result -ne 'success') { throw "Required prerequisite failed: $name" }
+        }
+        $expected = if ($env:MSIX_ENABLED -eq 'true') { 'success' } else { 'skipped' }
+        if ($jobs['package-msix'].result -ne $expected) { throw 'MSIX packaging did not match channel selection.' }
   test-artifacts:
     name: Artifact Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -243,11 +362,10 @@ jobs:
       with:
         job-id: test-artifacts
         require-complete-execution: 'true'
-
   test-core:
     name: Core Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -259,11 +377,10 @@ jobs:
       with:
         job-id: test-core
         require-complete-execution: 'true'
-
   test-ui-logic:
     name: UI Logic Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -290,11 +407,10 @@ jobs:
       with:
         job-id: test-ui-logic
         require-complete-execution: 'true'
-
   test-images:
     name: Static Image Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -306,11 +422,10 @@ jobs:
       with:
         job-id: test-images
         require-complete-execution: 'true'
-
   test-web-backdrop:
     name: Web Backdrop Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -322,11 +437,10 @@ jobs:
       with:
         job-id: test-web-backdrop
         require-complete-execution: 'true'
-
   test-ui-components:
     name: UI Component Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -338,11 +452,10 @@ jobs:
       with:
         job-id: test-ui-components
         require-complete-execution: 'true'
-
   test-ml:
     name: ML Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -355,11 +468,10 @@ jobs:
         job-id: test-ml
         require-complete-execution: 'true'
         include-ml-integration: 'true'
-
   test-shader:
     name: Shader Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release]
+    needs: [prepare-metadata, build-release, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -371,205 +483,27 @@ jobs:
       with:
         job-id: test-shader
         require-complete-execution: 'true'
-
-  package-release:
-    name: Package and Smoke Test
-    runs-on: windows-latest
-    needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
-    timeout-minutes: 30
-    steps:
-    - name: Check out source
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
-        persist-credentials: false
-
-    - name: Download build output
-      uses: actions/download-artifact@v8.0.2
-      with:
-        name: build-release-output
-        path: .
-
-    - name: Download project reports
-      uses: actions/download-artifact@v8.0.2
-      with:
-        pattern: test-results-*
-        path: TestResults/
-
-    - name: Validate project reports
-      shell: pwsh
-      run: |
-        . ./test/TestReportSupport.ps1
-        Get-ProjectTestReports -Root TestResults -RequireCompleteExecution | Format-Table Total, Executed, Passed
-
-    - name: Set up .NET
-      uses: actions/setup-dotnet@v6.1.0
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Install Inno Setup 6.7.1
-      shell: pwsh
-      run: choco install innosetup --version=6.7.1 --no-progress -y
-
-    - name: Set installer version
-      shell: pwsh
-      env:
-        NEW_VERSION: ${{ needs.prepare-metadata.outputs.new_version }}
-      run: |
-        $setupPath = "InnoSetup/setup.iss"
-        $content = Get-Content $setupPath -Raw
-        $newVersion = $env:NEW_VERSION
-        $newVersionText = $newVersion.Replace('.', '_')
-        $newContent = $content -replace '#define MyAppVersion "[\d\.]+"', "#define MyAppVersion `"$newVersion`""
-        $newContent = $newContent -replace '#define MyAppVersionText "[\d_]+"', "#define MyAppVersionText `"$newVersionText`""
-        Set-Content $setupPath -Value $newContent -NoNewline
-        Write-Host "Patched InnoSetup version to $newVersion (build-time only)"
-
-    - name: Compile installer
-      shell: pwsh
-      run: |
-        $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-        if (-not (Test-Path $iscc)) {
-            Write-Error "ISCC.exe not found at: $iscc"
-            exit 1
-        }
-        & $iscc "InnoSetup\setup.iss" /O+
-        if ($LASTEXITCODE -ne 0) {
-            Write-Error "Inno Setup compilation failed (exit code $LASTEXITCODE)"
-            exit 1
-        }
-        Write-Host "[OK]" -ForegroundColor Green -NoNewline; Write-Host " Installer compiled successfully"
-
-    - name: Read installer package
-      id: installer-details
-      shell: pwsh
-      run: |
-        $installers = @(Get-ChildItem InnoSetup/Output -Filter *.exe -File)
-        if ($installers.Count -ne 1) { throw "Expected one installer, found $($installers.Count)." }
-        $installer = $installers[0]
-        (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content InnoSetup/Output/SHA256.txt -Encoding utf8NoBOM
-        "installer_path=$($installer.FullName)" >> $env:GITHUB_OUTPUT
-
-    - name: Run installer smoke
-      shell: pwsh
-      env:
-        INSTALLER_PATH: ${{ steps.installer-details.outputs.installer_path }}
-      run: |
-        ./test/Run-InstallerTests.ps1 -InstallerPath $env:INSTALLER_PATH -NoBuild `
-          -ReportPath TestResults/test-results-installer/installer-results.json
-
-    - name: Upload installer results
-      if: always()
-      uses: actions/upload-artifact@v7.0.2
-      with:
-        overwrite: true
-        name: test-results-installer
-        path: TestResults/test-results-installer/
-        if-no-files-found: warn
-        retention-days: 7
-
-    - name: Upload installer package
-      uses: actions/upload-artifact@v7.0.2
-      with:
-        overwrite: true
-        name: VirtualPaper-Installer-v${{ needs.prepare-metadata.outputs.new_version }}
-        path: |
-          ${{ steps.installer-details.outputs.installer_path }}
-          InnoSetup/Output/SHA256.txt
-        retention-days: 30
-
-    - name: Build plugin package
-      if: needs.prepare-metadata.outputs.has_plugin_update == 'true'
-      shell: pwsh
-      env:
-        BUILD_NUMBER: ${{ needs.prepare-metadata.outputs.build_number }}
-        UPDATE_PLUGINS: ${{ needs.prepare-metadata.outputs.update_plugins }}
-      run: |
-        $workDir = 'plugin-packages'
-        New-Item -ItemType Directory -Path $workDir -Force | Out-Null
-        Copy-Item "$env:RELEASE_BIN_DIR/app_comp_manifest.json" "$workDir/app_comp_manifest.json"
-        $manifest = Get-Content "$workDir/app_comp_manifest.json" -Raw | ConvertFrom-Json -AsHashtable
-        $pending = @{ plugins = [ordered]@{} }
-        $files = @("$workDir/app_comp_manifest.json", "$workDir/pending_update_plugins_manifest.json")
-        foreach ($plugin in ($env:UPDATE_PLUGINS -split ';' | Where-Object { $_ })) {
-            $pluginDir = "$env:RELEASE_BIN_DIR/Plugins/$plugin"
-            if (-not (Test-Path -LiteralPath $pluginDir -PathType Container)) { throw "Missing plugin directory: $pluginDir" }
-            $zipName = "plugin-$($plugin.ToLowerInvariant())-$env:BUILD_NUMBER.zip"
-            $zipPath = "$workDir/$zipName"
-            Compress-Archive -Path $pluginDir -DestinationPath $zipPath -Force
-            $pending.plugins[$plugin] = [ordered]@{
-                build_number = $manifest.plugins[$plugin]
-                asset = $zipName
-                sha256 = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
-            }
-            $files += $zipPath
-        }
-        if ($pending.plugins.Count -eq 0) { throw 'Plugin update must contain at least one plugin.' }
-        $pending | ConvertTo-Json -Depth 10 | Set-Content "$workDir/pending_update_plugins_manifest.json" -Encoding utf8NoBOM
-        Compress-Archive -Path $files -DestinationPath plugins_patch.zip -Force
-        # Keep the existing asset spelling: clients already request this filename.
-        (Get-FileHash plugins_patch.zip -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content PLUGINS_PATCH_SHS256.txt -Encoding utf8NoBOM
-
-    - name: Upload plugin package
-      if: needs.prepare-metadata.outputs.has_plugin_update == 'true'
-      uses: actions/upload-artifact@v7.0.2
-      with:
-        overwrite: true
-        name: VirtualPaper-Plugins-v${{ needs.prepare-metadata.outputs.new_version }}
-        path: |
-          plugins_patch.zip
-          PLUGINS_PATCH_SHS256.txt
-        retention-days: 30
-
-  test-ui-operation:
-    name: Real UI Acceptance
-    runs-on: windows-latest
-    needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
-    timeout-minutes: 25
-    # This job contains only optional UI acceptance; installer smoke is separate.
-    continue-on-error: true
-    outputs:
-      result: ${{ steps.ui-tests.outcome }}
-    steps:
-    - name: Check out source
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
-        persist-credentials: false
-
-    - name: Download build output
-      uses: actions/download-artifact@v8.0.2
-      with:
-        name: build-release-output
-        path: .
-
-    - name: Set up .NET
-      uses: actions/setup-dotnet@v6.1.0
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Run real UI acceptance
-      id: ui-tests
-      shell: pwsh
-      run: |
-        ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
-          -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
-          -ReportPath TestResults/UIOperation/ui-operation-results.json
-
-    - name: Upload WinUI results
-      if: always()
-      uses: actions/upload-artifact@v7.0.2
-      with:
-        overwrite: true
-        name: test-results-ui-operation
-        path: TestResults/UIOperation/
-        if-no-files-found: warn
-        retention-days: 7
-
+  test-exe-acceptance:
+    name: EXE Installed Acceptance
+    needs: [prepare-metadata, build-release, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    uses: ./.github/workflows/package-acceptance.yml
+    with:
+      channel: exe
+      source-sha: ${{ needs.prepare-metadata.outputs.main_sha }}
+      build-artifact: build-release-output
+  test-msix-acceptance:
+    name: MSIX Installed Acceptance
+    needs: [prepare-metadata, build-release, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    if: needs.prepare-metadata.outputs.msstore_enabled == 'true'
+    uses: ./.github/workflows/package-acceptance.yml
+    with:
+      channel: msix
+      source-sha: ${{ needs.prepare-metadata.outputs.main_sha }}
+      build-artifact: build-release-output
   summarize-tests:
-    name: Release Test Summary
+    name: Test Summary
     runs-on: ubuntu-latest
-    needs: [prepare-metadata, build-release, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, package-release, test-ui-operation]
+    needs: [prepare-metadata, build-release, package-exe, package-msix, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-exe-acceptance, test-msix-acceptance]
     if: always() && needs.prepare-metadata.result == 'success'
     outputs:
       ui_outcome: ${{ steps.reports.outputs.ui_outcome }}
@@ -579,21 +513,33 @@ jobs:
       with:
         ref: ${{ needs.prepare-metadata.outputs.main_sha }}
         persist-credentials: false
-
     - name: Download test reports
       uses: actions/download-artifact@v8.0.2
       with:
         pattern: test-results-*
         path: TestResults/
-
-    - name: Validate release checks
+    - name: Download package-exe
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: package-exe
+        path: PackageArtifacts/exe
+    - name: Download package-msix
+      if: always() && needs.package-msix.result == 'success'
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: package-msix
+        path: PackageArtifacts/msix
+    - name: Summarize package acceptance
       id: reports
-      shell: pwsh
+      if: always()
       env:
-        UI_JOB_RESULT: ${{ needs.test-ui-operation.outputs.result || needs.test-ui-operation.result }}
-      run: ./test/Summarize-TestResults.ps1 -Root TestResults -RequireFullAcceptance -AllowUIFailure -UIJobResult $env:UI_JOB_RESULT
-
-    - name: Upload release test summary
+        JOB_RESULTS: ${{ toJSON(needs) }}
+        SOURCE_SHA: ${{ needs.prepare-metadata.outputs.main_sha }}
+        MSIX_ENABLED: ${{ needs.prepare-metadata.outputs.msstore_enabled }}
+      run: |
+        ./test/Summarize-PipelineTests.ps1 -Root TestResults -ArtifactsRoot PackageArtifacts `
+          -SourceSha $env:SOURCE_SHA -JobResultsJson $env:JOB_RESULTS -MsixEnabled:($env:MSIX_ENABLED -eq 'true')
+    - name: Upload test summary
       if: always()
       uses: actions/upload-artifact@v7.0.2
       with:
@@ -602,12 +548,10 @@ jobs:
         path: TestResults/
         if-no-files-found: warn
         retention-days: 30
-
-  # Push only version fields to main and dev together. A failure leaves both remote refs unchanged.
   sync-versions:
     name: Sync Versions
     runs-on: windows-latest
-    needs: [prepare-metadata, package-release, summarize-tests]
+    needs: [prepare-metadata, package-exe, summarize-tests]
     if: needs.prepare-metadata.outputs.has_plugin_update != 'true'
     outputs:
       main_sha: ${{ steps.sync-versions.outputs.main_sha }}
@@ -618,6 +562,19 @@ jobs:
         ref: ${{ needs.prepare-metadata.outputs.main_sha }}
         token: ${{ secrets.RELEASE_PAT }}
         fetch-depth: 0
+    - name: Recheck release selection
+      uses: actions/github-script@v7
+      env:
+        EXPECTED_MSSTORE: ${{ needs.prepare-metadata.outputs.msstore_enabled }}
+        EXPECTED_SELECTION: ${{ needs.prepare-metadata.outputs.selection_labels }}
+      with:
+        script: |
+          const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: Number(context.payload.inputs.pr_number)});
+          const selection = JSON.stringify(pr.labels.map(label => label.name).filter(name => name.startsWith('version:') || name.startsWith('update-plugin') || name === 'channel:msstore').sort());
+          if (selection !== process.env.EXPECTED_SELECTION || !pr.merged || pr.merge_commit_sha !== '${{ needs.prepare-metadata.outputs.main_sha }}' ||
+              pr.labels.some(label => label.name === 'channel:msstore') !== (process.env.EXPECTED_MSSTORE === 'true')) {
+            throw new Error('Release PR/channel changed during this run.');
+          }
     - name: Recheck release availability
       shell: pwsh
       env:
@@ -627,7 +584,7 @@ jobs:
         . ./.github/scripts/ReleaseMetadata.ps1
         Assert-ReleaseTagAvailable -Repository $env:GITHUB_REPOSITORY -Tag $env:RELEASE_TAG
 
-    - name: Sync main and dev versions
+    - name: Commit main version and merge main into dev
       id: sync-versions
       shell: pwsh
       env:
@@ -640,15 +597,14 @@ jobs:
         Invoke-ReleaseGit @('config', 'user.name', 'GitHub Action')
         $sha = Sync-ReleaseVersion -Root $PWD.Path -MergeSha $env:MERGE_SHA -Version $env:NEW_VERSION -ExpectedVersion $env:CURRENT_VERSION
         "main_sha=$sha" >> $env:GITHUB_OUTPUT
-
   draft-release:
     name: Draft Release
     runs-on: ubuntu-latest
-    needs: [prepare-metadata, package-release, summarize-tests, sync-versions]
+    needs: [prepare-metadata, package-exe, summarize-tests, sync-versions]
     if: |
       !cancelled() &&
       needs.prepare-metadata.result == 'success' &&
-      needs.package-release.result == 'success' &&
+      needs.package-exe.result == 'success' &&
       needs.summarize-tests.result == 'success' &&
       (needs.prepare-metadata.outputs.has_plugin_update == 'true' || needs.sync-versions.result == 'success')
 
@@ -659,25 +615,30 @@ jobs:
         ref: ${{ needs.prepare-metadata.outputs.main_sha }}
         persist-credentials: false
 
-    - name: Download installer package
+    - name: Download package-exe
       uses: actions/download-artifact@v8.0.2
       with:
-        name: VirtualPaper-Installer-v${{ needs.prepare-metadata.outputs.new_version }}
+        name: package-exe
         path: dist/
-
-    - name: Download plugin update package
-      if: needs.prepare-metadata.outputs.has_plugin_update == 'true'
-      uses: actions/download-artifact@v8.0.2
-      with:
-        name: VirtualPaper-Plugins-v${{ needs.prepare-metadata.outputs.new_version }}
-        path: dist/
-
     - name: Download component manifest
       uses: actions/download-artifact@v8.0.2
       with:
         name: app-comp-manifest
         path: dist/manifest/
 
+    - name: Recheck release selection
+      uses: actions/github-script@v7
+      env:
+        EXPECTED_MSSTORE: ${{ needs.prepare-metadata.outputs.msstore_enabled }}
+        EXPECTED_SELECTION: ${{ needs.prepare-metadata.outputs.selection_labels }}
+      with:
+        script: |
+          const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: Number(context.payload.inputs.pr_number)});
+          const selection = JSON.stringify(pr.labels.map(label => label.name).filter(name => name.startsWith('version:') || name.startsWith('update-plugin') || name === 'channel:msstore').sort());
+          if (selection !== process.env.EXPECTED_SELECTION || !pr.merged || pr.merge_commit_sha !== '${{ needs.prepare-metadata.outputs.main_sha }}' ||
+              pr.labels.some(label => label.name === 'channel:msstore') !== (process.env.EXPECTED_MSSTORE === 'true')) {
+            throw new Error('Release PR/channel changed during this run.');
+          }
     - name: Check release availability
       shell: pwsh
       env:
@@ -722,5 +683,82 @@ jobs:
         - Tag: $env:RELEASE_TAG
         - Commit: $env:TARGET_SHA
         - Draft: $env:DRAFT_OUTCOME
-        - Real UI acceptance: $env:UI_OUTCOME (non-blocking in CI)
+        - Installed EXE/MSIX UI acceptance: $env:UI_OUTCOME (required)
         "@ >> $env:GITHUB_STEP_SUMMARY
+  draft-msstore:
+    name: Draft Microsoft Store Submission
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    needs: [prepare-metadata, package-msix, summarize-tests, sync-versions]
+    if: |
+      !cancelled() &&
+      needs.prepare-metadata.result == 'success' &&
+      needs.prepare-metadata.outputs.msstore_enabled == 'true' &&
+      needs.package-msix.result == 'success' &&
+      needs.summarize-tests.result == 'success' &&
+      (needs.prepare-metadata.outputs.has_plugin_update == 'true' || needs.sync-versions.result == 'success')
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.prepare-metadata.outputs.main_sha }}
+        persist-credentials: false
+    - name: Download package-msix
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: package-msix
+        path: PackageArtifacts/msix
+    - name: Recheck release selection
+      uses: actions/github-script@v7
+      env:
+        EXPECTED_MSSTORE: ${{ needs.prepare-metadata.outputs.msstore_enabled }}
+        EXPECTED_SELECTION: ${{ needs.prepare-metadata.outputs.selection_labels }}
+      with:
+        script: |
+          const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: Number(context.payload.inputs.pr_number)});
+          const selection = JSON.stringify(pr.labels.map(label => label.name).filter(name => name.startsWith('version:') || name.startsWith('update-plugin') || name === 'channel:msstore').sort());
+          if (selection !== process.env.EXPECTED_SELECTION || !pr.merged || pr.merge_commit_sha !== '${{ needs.prepare-metadata.outputs.main_sha }}' ||
+              pr.labels.some(label => label.name === 'channel:msstore') !== (process.env.EXPECTED_MSSTORE === 'true')) {
+            throw new Error('Release PR/channel changed during this run.');
+          }
+    - name: Create Partner Center draft
+      shell: pwsh
+      env:
+        MSSTORE_APPLICATION_ID: ${{ vars.MSSTORE_APPLICATION_ID }}
+        MSSTORE_IDENTITY_NAME: ${{ vars.MSSTORE_IDENTITY_NAME }}
+        MSSTORE_PUBLISHER: ${{ vars.MSSTORE_PUBLISHER }}
+        MSSTORE_PUBLISHER_DISPLAY_NAME: ${{ vars.MSSTORE_PUBLISHER_DISPLAY_NAME }}
+        MSSTORE_TENANT_ID: ${{ vars.MSSTORE_TENANT_ID }}
+        MSSTORE_CLIENT_ID: ${{ vars.MSSTORE_CLIENT_ID }}
+        MSSTORE_CLIENT_SECRET: ${{ secrets.MSSTORE_CLIENT_SECRET }}
+        BUILD_NUMBER: ${{ needs.prepare-metadata.outputs.build_number }}
+        SOURCE_SHA: ${{ needs.prepare-metadata.outputs.main_sha }}
+      run: |
+        ./.github/scripts/Invoke-StoreDraft.ps1 -Action Draft -BuildNumber $env:BUILD_NUMBER -SourceSha $env:SOURCE_SHA `
+          -PackageArtifact PackageArtifacts/msix/package.json -ReportPath store-draft.json
+    - name: Upload store-draft
+      if: always()
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: store-draft
+        path: store-draft.json
+        if-no-files-found: warn
+        retention-days: 30
+  summarize-release:
+    name: Release Draft Summary
+    runs-on: ubuntu-latest
+    needs: [prepare-metadata, summarize-tests, draft-release, draft-msstore]
+    if: always() && needs.prepare-metadata.result == 'success'
+    steps:
+    - name: Summarize both draft channels
+      env:
+        MSIX_ENABLED: ${{ needs.prepare-metadata.outputs.msstore_enabled }}
+        EXE_DRAFT: ${{ needs.draft-release.result }}
+        STORE_DRAFT: ${{ needs.draft-msstore.result }}
+        TEST_RESULT: ${{ needs.summarize-tests.result }}
+      run: |
+        $store = if ($env:MSIX_ENABLED -eq 'true') { $env:STORE_DRAFT } else { 'NotSelected' }
+        "### Release drafts`n`n| Channel | Result |`n| --- | --- |`n| Acceptance | $env:TEST_RESULT |`n| GitHub EXE | $env:EXE_DRAFT |`n| Partner Center MSIX | $store |" >> $env:GITHUB_STEP_SUMMARY
+        if ($env:TEST_RESULT -ne 'success' -or $env:EXE_DRAFT -ne 'success' -or
+            ($env:MSIX_ENABLED -eq 'true' -and $env:STORE_DRAFT -ne 'success')) { throw 'Required release draft failed. Retry failed jobs in this run.' }

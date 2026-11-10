@@ -62,3 +62,26 @@ function Convert-MsixUIResources {
         Copy-Item -LiteralPath (Join-Path $UiDirectory "Assets/$name") -Destination $assets
     }
 }
+
+function Assert-VirtualPaperWpfResources([IO.Stream] $AssemblyStream, [string] $ProductVersion) {
+    $loadContext = [Runtime.Loader.AssemblyLoadContext]::new("MSIX-WPF-$([guid]::NewGuid())", $true)
+    $assemblyBytes = [IO.MemoryStream]::new()
+    $entryStream = $AssemblyStream
+    try {
+        $entryStream.CopyTo($assemblyBytes); $assemblyBytes.Position = 0
+        $assembly = $loadContext.LoadFromStream($assemblyBytes)
+        if ($ProductVersion -and $assembly.GetName().Version -ne [version]$ProductVersion) {
+            throw 'Packaged Core version differs from the shared Release build.'
+        }
+        $resourceStream = $assembly.GetManifestResourceStream('VirtualPaper.g.resources')
+        if (-not $resourceStream) { throw 'MSIX Core is missing WPF resources.' }
+        $resourceReader = [Resources.ResourceReader]::new($resourceStream)
+        try {
+            $keys = @(); $enumerator = $resourceReader.GetEnumerator()
+            while ($enumerator.MoveNext()) { $keys += [string]$enumerator.Key }
+            foreach ($key in @('app.baml', 'mainwindow.baml', 'views/windowsmsg/rawinputmsgwindow.baml', 'views/windowsmsg/wndprocmsgwindow.baml')) {
+                if ($keys -cnotcontains $key) { throw "MSIX Core lost compiled WPF XAML: $key" }
+            }
+        } finally { $resourceReader.Dispose() }
+    } finally { $assemblyBytes.Dispose(); $loadContext.Unload() }
+}

@@ -68,17 +68,20 @@ try {
         'src/VirtualPaper/Plugins/ScrSaver', 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0') |
         ForEach-Object { Join-Path $repositoryRoot $_ }
     $exeOutputBefore = Get-ExeOutputState $exeOutputRoots
+    $productVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $exeOutputRoots[-1] 'VirtualPaper.exe')).FileVersion
 
     # Publish each process with its own .NET runtime. These properties apply only
     # to this packaging invocation; normal EXE builds keep their existing settings.
     foreach ($process in @(
-        @{ Project = 'VirtualPaper'; Platform = 'AnyCPU'; Folder = '' },
-        @{ Project = 'VirtualPaper.UI'; Platform = 'AnyCPU'; Folder = 'Plugins/UI' },
-        @{ Project = 'VirtualPaper.PlayerWeb'; Platform = 'AnyCPU'; Folder = 'Plugins/PlayerWeb' },
-        @{ Project = 'VirtualPaper.ScreenSaver'; Platform = 'AnyCPU'; Folder = 'Plugins/ScrSaver' }
+        @{ Project = 'VirtualPaper'; Platform = 'AnyCPU'; Folder = ''; Wpf = $true },
+        @{ Project = 'VirtualPaper.UI'; Platform = 'AnyCPU'; Folder = 'Plugins/UI'; Wpf = $false },
+        @{ Project = 'VirtualPaper.PlayerWeb'; Platform = 'AnyCPU'; Folder = 'Plugins/PlayerWeb'; Wpf = $false },
+        @{ Project = 'VirtualPaper.ScreenSaver'; Platform = 'AnyCPU'; Folder = 'Plugins/ScrSaver'; Wpf = $true }
     )) {
         $publishDirectory = Join-Path $payload $process.Folder
-        Invoke-MsBuild @("src/$($process.Project)/$($process.Project).csproj", '/restore', '/t:Publish',
+        # Rebuild each head with invocation-local absolute intermediates, including
+        # WPF local-type markup compilation, before self-contained publication.
+        $publishArguments = @("src/$($process.Project)/$($process.Project).csproj", '/restore', '/t:Rebuild;Publish',
             '/p:Configuration=Release', "/p:Platform=$($process.Platform)", '/p:RuntimeIdentifier=win-x64',
             '/p:PlatformTarget=x64', '/p:AppendRuntimeIdentifierToOutputPath=false',
             '/p:SelfContained=true', '/p:WindowsAppSDKSelfContained=true', '/p:WindowsPackageType=None',
@@ -86,8 +89,19 @@ try {
             "/p:CustomAfterMicrosoftCommonTargets=$repositoryRoot\Msix\Publish.props",
             "/p:MsixPublishProject=$($process.Project)", "/p:MsixPublishOutputRoot=$workDirectory\ProcessBuild",
             "/p:PublishDir=$publishDirectory\")
+        # WinUI's MSIX SDK owns CustomBeforeMicrosoftCommonTargets itself.
+        if ($process.Wpf) { $publishArguments += "/p:CustomBeforeMicrosoftCommonTargets=$repositoryRoot\Msix\Publish.Intermediate.props" }
+        Invoke-MsBuild $publishArguments
+        if ($process.Project -eq 'VirtualPaper') {
+            $stream = [IO.File]::OpenRead((Join-Path $payload 'VirtualPaper.dll'))
+            try { Assert-VirtualPaperWpfResources $stream $productVersion } finally { $stream.Dispose() }
+            Write-Output 'Core compiled WPF resources are complete.'
+        }
     }
 
+    # Reject missing local-type BAML before spending time compressing the package.
+    $coreStream = [IO.File]::OpenRead((Join-Path $payload 'VirtualPaper.dll'))
+    try { Assert-VirtualPaperWpfResources $coreStream $productVersion } finally { $coreStream.Dispose() }
     $exeOutputAfter = Get-ExeOutputState $exeOutputRoots
     $changed = @(@($exeOutputBefore.Keys) + @($exeOutputAfter.Keys) | Sort-Object -Unique | Where-Object {
         -not $exeOutputBefore.ContainsKey($_) -or -not $exeOutputAfter.ContainsKey($_) -or $exeOutputBefore[$_] -cne $exeOutputAfter[$_]
@@ -96,6 +110,8 @@ try {
     Write-Output 'Normal EXE output fingerprints are unchanged after MSIX publishing.'
 
     $releaseDirectory = Join-Path $repositoryRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0'
+    $componentManifest = Join-Path $releaseDirectory 'app_comp_manifest.json'
+    if (Test-Path -LiteralPath $componentManifest) { Copy-Item -LiteralPath $componentManifest -Destination $payload }
     foreach ($folder in @('ML', 'Shaders')) {
         Copy-Item -LiteralPath (Join-Path $releaseDirectory "Plugins/$folder") -Destination (Join-Path $payload 'Plugins') -Recurse
     }

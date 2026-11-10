@@ -5,6 +5,8 @@ param(
     [string]$CoreExe,
     [string]$HostExe,
     [string]$PackageFullName,
+    [string]$CIOwnershipPath,
+    [string]$BuiltInPayload,
     [string]$DataRoot,
     [ValidatePattern('^[A-Za-z][A-Za-z0-9]*(\.[A-Za-z][A-Za-z0-9]*)*$')][string]$Module,
     [ValidateSet('Standard', 'Extended')][string]$Suite = 'Standard',
@@ -14,7 +16,13 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Module -and $Suite -ne 'Standard') { throw 'Choose either a single module or an extended suite.' }
 if ($DataRoot -and -not $PackageFullName) { throw 'An external retained DataRoot is only supported for installed MSIX acceptance.' }
-if ($PackageFullName -and $PackageFullName -notmatch '^PaperHammer\.VirtualPaper\.Test\.[0-9a-f]{16}_') {
+. (Join-Path $PSScriptRoot 'PackageArtifactSupport.ps1')
+$ciArtifact = $null
+if ($CIOwnershipPath) {
+    if (-not $PackageFullName) { throw 'CI ownership requires installed package activation.' }
+    $ciArtifact = Assert-MsixCIOwnership $CIOwnershipPath $PackageFullName
+}
+if ($PackageFullName -and -not $ciArtifact -and $PackageFullName -notmatch '^PaperHammer\.VirtualPaper\.Test\.[0-9a-f]{16}_') {
     throw 'MSIX UI acceptance requires a per-run test identity from Run-MsixTests.ps1; daily Store/preview packages cannot be used.'
 }
 if ($DataRoot) {
@@ -56,6 +64,8 @@ if ($PackageFullName) {
     if ($CoreExe) { throw 'Choose installed package activation or an unpackaged Core executable.' }
     $installed = @(Get-AppxPackage | Where-Object PackageFullName -CEQ $PackageFullName)
     if ($installed.Count -ne 1) { throw 'The exact MSIX package must be installed for the current user.' }
+    if ($ciArtifact -and ($installed[0].Name -cne $ciArtifact.IdentityName -or $installed[0].Publisher -cne $ciArtifact.Publisher -or
+        $installed[0].Version.ToString() -cne $ciArtifact.PackageVersion)) { throw 'Installed CI package differs from its artifact.' }
     $CoreExe = Join-Path $installed[0].InstallLocation 'VirtualPaper.exe'
 }
 if (-not $CoreExe) { $CoreExe = Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.exe" }
@@ -94,13 +104,19 @@ if ($Module) {
     $startInfo.ArgumentList.Add('Extended')
 }
 $sessionId = [guid]::NewGuid().ToString('N')
+# Keep WebView2 media/cache paths below native MAX_PATH even under a long TEMP.
 $sessionRoot = if ($DataRoot) { [IO.Path]::GetFullPath($DataRoot) } else {
-    [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
+    [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VPUI-' + $sessionId)))
 }
 New-Item -ItemType Directory -Path $sessionRoot -Force | Out-Null
 $startInfo.Environment['VIRTUALPAPER_TEST_SESSION'] = $sessionId
 $startInfo.Environment['VIRTUALPAPER_TEST_DATA_ROOT'] = $sessionRoot
 $startInfo.Environment['VIRTUALPAPER_TEST_CORE_EXE'] = $CoreExe
+if ($BuiltInPayload) {
+    $BuiltInPayload = [IO.Path]::GetFullPath($BuiltInPayload)
+    if (-not (Test-Path -LiteralPath $BuiltInPayload -PathType Container)) { throw 'Installed built-in wallpaper fixture is missing.' }
+    $startInfo.Environment['VIRTUALPAPER_TEST_BUILTIN_PAYLOAD'] = $BuiltInPayload
+} else { [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_BUILTIN_PAYLOAD') }
 if ($PackageFullName) {
     $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_FULL_NAME'] = $PackageFullName
     $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_AUMID'] = "$($installed[0].PackageFamilyName)!App"
@@ -155,7 +171,7 @@ finally {
         Copy-Item -LiteralPath (Join-Path $sessionRoot 'user_settings.json') -Destination $artifactPath
     }
     if (-not $DataRoot) {
-        $expectedRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
+        $expectedRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VPUI-' + $sessionId)))
         if ($sessionRoot -ne $expectedRoot -or -not $sessionRoot.StartsWith([IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
             throw 'Unexpected test session cleanup path'
         }

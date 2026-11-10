@@ -3,6 +3,7 @@
 param([Parameter(Mandatory)][string] $PackagePath)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot '../.github/scripts/MsixResources.ps1')
 $package = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $PackagePath).Path)
 try {
     $files = @{}
@@ -28,6 +29,9 @@ try {
         throw 'The MSIX startup task must match WindowsAutoStart and launch Core.'
     }
     Assert-PackageFile 'resources.pri'
+    Assert-PackageFile 'VirtualPaper.dll'
+    $assemblyStream = $files['VirtualPaper.dll'].Open()
+    try { Assert-VirtualPaperWpfResources $assemblyStream } finally { $assemblyStream.Dispose() }
     Assert-PackageFile 'MsixAssets/StoreLogo.scale-200.png'
     Assert-PackageFile 'MsixAssets/Square150x150Logo.scale-200.png'
     Assert-PackageFile 'MsixAssets/Square44x44Logo.scale-200.png'

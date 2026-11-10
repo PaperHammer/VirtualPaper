@@ -15,8 +15,10 @@ using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 namespace VirtualPaper.UIOperationTest.Cases;
 
 internal static class BuiltInWallpaperTests {
-    private static string Payload => Path.Combine(Path.GetDirectoryName(
-        Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE"))!, "BuiltInWallpapers");
+    // Inno deploys this collection to the user's library rather than {app}.
+    // Installed EXE acceptance supplies the verified installer-created collection.
+    private static string Payload => Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_BUILTIN_PAYLOAD")
+        ?? Path.Combine(Path.GetDirectoryName(Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE"))!, "BuiltInWallpapers");
 
     private static WpBasicData[] ReadItems(string root) {
         Check(Directory.Exists(root), "Built-in wallpaper payload is missing: " + root);

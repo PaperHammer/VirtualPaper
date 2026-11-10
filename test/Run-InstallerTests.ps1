@@ -3,6 +3,7 @@
 param(
     [Parameter(Mandatory)][string] $InstallerPath,
     [string] $ReportPath = 'TestResults/Installer/installer-results.json',
+    [string] $ExtendedUIReportPath,
     [ValidateSet('english', 'chinese')][string] $InstallerLanguage = 'english',
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
     [ValidateRange(10, 600)][int] $TimeoutSeconds = 240,
@@ -172,6 +173,16 @@ try {
         Assert-InitialBuiltInWallpapers $builtIns
     } -Open {
         Invoke-ApplicationProbe 'first' $preservedRoot 'prepare' $firstAppLanguage
+        if ($ExtendedUIReportPath) {
+            # This job owns its installation; the ordinary smoke job runs independently.
+            & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
+                -CoreExe (Join-Path $installDir 'VirtualPaper.exe') `
+                -HostExe (Join-Path $repositoryRoot 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe') `
+                -BuiltInPayload $builtIns.Destination `
+                -ReportPath $ExtendedUIReportPath
+            $ui = Get-Content -LiteralPath $ExtendedUIReportPath -Raw | ConvertFrom-Json
+            if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') { throw 'Installed EXE extended UI must pass without skips.' }
+        }
     } -Reinstall {
         # Only overwrite this run's registered installation, never relax the initial clean-install guard.
         $registrations = @(Get-InstallRegistrations $appId)

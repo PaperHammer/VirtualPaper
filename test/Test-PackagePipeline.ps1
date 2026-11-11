@@ -174,6 +174,18 @@ try {
     $jobs = @{}
     foreach ($id in @('packages-ready','package-exe','package-msix','test-exe-acceptance','test-msix-acceptance') + @(Get-ProjectTestSpecs | ForEach-Object Id)) { $jobs[$id] = @{ result = 'success' } }
     $arguments = @{ Root = $raw; ArtifactsRoot = "$fixture/artifacts"; SourceSha = $sha }
+    function Reject-ChangedReport([string] $Path, [string] $CheckName, [scriptblock] $Change) {
+        $original = [IO.File]::ReadAllText($Path)
+        try {
+            $report = $original | ConvertFrom-Json
+            & $Change $report
+            Save-Json $report $Path
+            Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
+            $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
+            Require (@($summary.Checks | Where-Object { $_.Name -ceq $CheckName -and $_.Status -ceq 'Failed' }).Count -eq 1) "Expected report guard did not reject $Path : $CheckName"
+        } catch { throw "Report mutation check failed for $Path ($CheckName): $_" }
+        finally { [IO.File]::WriteAllText($Path, $original) }
+    }
     & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-pass.log"
     foreach ($id in @('test-exe-acceptance','test-msix-acceptance','package-msix','test-core')) {
         foreach ($result in @('failure', 'cancelled', 'skipped')) {
@@ -184,9 +196,12 @@ try {
         Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
         $jobs[$id] = @{ result = 'success' }
     }
-    # A successful reusable-workflow result alone cannot replace any of the four raw reports.
-    foreach ($path in @('test-results-installer/installer-results.json', 'test-results-ui-operation/ui-operation-results.json',
-                         'test-results-msix-smoke/msix-acceptance.json', 'test-results-msix-ui/msix-acceptance.json')) {
+    # A successful reusable-workflow result alone cannot replace raw lifecycle/UI reports.
+    foreach ($path in @('test-results-installer/installer-results.json', 'test-results-ui-operation/installed-acceptance.json',
+                         'test-results-ui-operation/ui-operation-results.json', 'test-results-msix-smoke/msix-acceptance.json',
+                         'test-results-msix-ui/msix-acceptance.json', 'test-results-msix-ui/extended-ui/ui-operation-results.json',
+                         'test-results-msix-smoke/first-run/ui-operation-results.json', 'test-results-msix-smoke/retained-profile/ui-operation-results.json',
+                         'test-results-msix-smoke/fresh-profile/ui-operation-results.json')) {
         $reportPath = Join-Path $raw $path
         [IO.File]::Move($reportPath, "$reportPath.held")
         try {
@@ -199,10 +214,36 @@ try {
             Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
         } finally { Save-Json $ui "$raw/$path" }
     }
-    $smokePath = "$raw/test-results-msix-smoke/msix-acceptance.json"
-    $smoke = Get-Content $smokePath -Raw | ConvertFrom-Json; $smoke.PackageSha256 = '0' * 64; Save-Json $smoke $smokePath
-    Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
+    foreach ($path in @('test-results-installer/installer-results.json', 'test-results-ui-operation/installed-acceptance.json')) {
+        Reject-ChangedReport "$raw/$path" 'EXE artifact identity' { param($report) $report.InstallerSha256 = '0' * 64 }
+        Reject-ChangedReport "$raw/$path" 'EXE artifact identity' { param($report) $report.PackageVersion = '0.6.0.1' }
+    }
+    $msixCheck = 'MSIX smoke / installed UI / artifact identity'
+    foreach ($mode in @('smoke', 'ui')) {
+        $path = "$raw/test-results-msix-$mode/msix-acceptance.json"
+        Reject-ChangedReport $path $msixCheck { param($report) $report.PackageSha256 = '0' * 64 }
+        Reject-ChangedReport $path $msixCheck { param($report) $report.SourceSha = 'b' * 40 }
+    }
+    foreach ($property in @('InitialDeployment', 'MissingFolderRestored', 'ExistingDataPreserved', 'SavedDirectoryHonored', 'UninstallDataPreserved')) {
+        Reject-ChangedReport "$raw/test-results-msix-smoke/msix-acceptance.json" $msixCheck { param($report) $report.BuiltInWallpapers.$property = $false }
+    }
+    Reject-ChangedReport "$raw/test-results-msix-ui/msix-acceptance.json" $msixCheck { param($report) $report.PackageFullName = 'different_1.2611.1.0_x64__publisher' }
+    Reject-ChangedReport "$msix/package.json" $msixCheck { param($report) $report.ProductVersion = '0.6.0.1' }
+    # Counts alone cannot distinguish a reduced UI suite from full installed acceptance.
+    foreach ($path in @('test-results-ui-operation/ui-operation-results.json', 'test-results-msix-ui/extended-ui/ui-operation-results.json')) {
+        $check = if ($path.StartsWith('test-results-msix-')) { $msixCheck } else { 'EXE artifact identity' }
+        foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor', 'ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
+            Reject-ChangedReport "$raw/$path" $check {
+                param($report)
+                $report.Results = @($report.Results | Where-Object Name -NotLike "Application.$module.*")
+                $report.ExpectedCount = $report.Results.Count
+            }
+        }
+    }
+    & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-restored.log"
     foreach ($id in @('package-msix','test-msix-acceptance')) { $jobs[$id].result = 'skipped' }
+    # An unselected channel must not consume leftover evidence from a different run.
+    Save-Json @{ Passed = $false; SourceSha = 'b' * 40 } "$raw/test-results-msix-smoke/msix-acceptance.json"
     & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -MsixEnabled:$false -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-exe.log"
     $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
     Require ($summary.Passed -eq $true -and ($summary.Checks | Where-Object Name -EQ 'MSIX').Status -ceq 'NotSelected') 'Disabled Store channel must not be reported as passed.'

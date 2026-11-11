@@ -182,6 +182,7 @@ try {
                 -ReportPath $ExtendedUIReportPath
             $ui = Get-Content -LiteralPath $ExtendedUIReportPath -Raw | ConvertFrom-Json
             if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') { throw 'Installed EXE extended UI must pass without skips.' }
+            Assert-ExtendedUIModules $ui
         }
     } -Reinstall {
         # Only overwrite this run's registered installation, never relax the initial clean-install guard.

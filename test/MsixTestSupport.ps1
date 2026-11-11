@@ -30,14 +30,7 @@ function Assert-MsixUIReport([string] $Path, [string] $PackageFullName, [switch]
         $_.Evidence.PackageFullName -cne $PackageFullName -or $_.Evidence.PackageActivation -cne 'AUMID' -or
         $_.Evidence.UnitTestBehaviorOverridesEnabled -ne $false
     }).Count) { throw 'MSIX UI evidence must prove installed package identity, shell activation and real behavior.' }
-    if ($Extended) {
-        foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor',
-            'ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
-            if (@($application | Where-Object Name -Like "Application.$module.*").Count -lt 1) {
-                throw "Missing required installed MSIX UI module: $module"
-            }
-        }
-    }
+    if ($Extended) { Assert-ExtendedUIModules $report }
     return $report
 }
 

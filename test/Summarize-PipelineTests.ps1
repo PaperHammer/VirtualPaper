@@ -58,6 +58,7 @@ Check 'EXE artifact identity' {
         }
     }
     $ui = Get-Content -LiteralPath "$Root/test-results-ui-operation/ui-operation-results.json" -Raw | ConvertFrom-Json
+    Assert-ExtendedUIModules $ui
     $details.EXE = @{ ProductVersion = $exe.PackageVersion; PackageVersion = $exe.PackageVersion
         PackageSha256 = $exe.PackageSha256; UICases = @($ui.Results).Count }
 }

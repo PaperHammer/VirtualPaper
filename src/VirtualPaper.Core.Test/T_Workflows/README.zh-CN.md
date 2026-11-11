@@ -18,4 +18,6 @@ dotnet test src/VirtualPaper.Core.Test/VirtualPaper.Core.Test.csproj -p:Platform
 
 `BuiltInWallpaperWorkflowTests` 将实际内置素材搬到隔离目录，与用户图片共同扫描，解码图片、GIF／视频帧及深度图，检查 Web 入口元数据与正式索引，并验证原始素材及用户条目没有变化。真实 ISS 部署和桌面播放分别由安装冒烟及 WallpaperLibrary UI 用例覆盖。
 
+`BuiltInWallpaperInstallerTests` 使用真实文件验证 MSIX 内置壁纸部署：复制失败不发布半成品、临时目录会清理、失败后可重试、同名文件冲突保留用户数据，以及后续素材集仅新增缺失文件夹。`PackageTestActivationTests` 验证安装包测试启动的配置隔离、路径规范化，以及拒绝不完整或有歧义的测试参数。
+
 这些业务流程测试不会启动真实 XAML 页面，也不验证渲染像素。桌面 UI 交互由独立的 [UIOperationTest](../../../test/README.zh-CN.md) 覆盖。渲染效果与性能验收仍需单独验证。

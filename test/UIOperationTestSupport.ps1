@@ -123,3 +123,14 @@ function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
     }
     return 'Passed'
 }
+
+# Standard and focused reports remain valid for their callers. Installed extended
+# acceptance additionally requires every application module, regardless of counts.
+function Assert-ExtendedUIModules($Report) {
+    foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor',
+        'ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
+        if (@($Report.Results | Where-Object Name -Like "Application.$module.*").Count -lt 1) {
+            throw "Missing required installed UI module: $module"
+        }
+    }
+}

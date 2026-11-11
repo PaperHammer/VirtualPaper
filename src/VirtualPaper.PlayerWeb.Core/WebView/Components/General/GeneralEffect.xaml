@@ -15,16 +15,28 @@
         Loaded="MainGrid_Loaded"
         Padding="3 8 0 8">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
             <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
 
-        <ScrollViewer Padding="10 8 16 0">
+        <StackPanel x:Name="PresetActions" Padding="10 0 16 8" Spacing="8">
+            <ComboBox x:Name="PresetSelector" HorizontalAlignment="Stretch"
+                AutomationProperties.AutomationId="GeneralEffect.Preset"
+                l:Uids.Uid="Ui_EffectPreset_Selector"
+                DropDownOpened="PresetSelector_DropDownOpened" SelectionChanged="PresetSelector_SelectionChanged"/>
+            <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                l:Uids.Uid="Ui_EffectPreset_TrialHint"/>
+            <Button x:Name="CancelPreset" Visibility="Collapsed" Click="CancelPreset_Click"
+                AutomationProperties.AutomationId="GeneralEffect.CancelPreset" l:Uids.Uid="Ui_EffectPreset_CancelTrial"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Padding="10 8 16 0">
             <StackPanel x:Name="skPanel" Orientation="Vertical" />
         </ScrollViewer>
 
-        <StackPanel 
-            Grid.Row="1" 
+        <StackPanel x:Name="EffectActionButtons"
+            Grid.Row="2"
             HorizontalAlignment="Right" 
             Orientation="Horizontal"
             Padding="0 0 16 0">

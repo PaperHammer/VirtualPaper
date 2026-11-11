@@ -704,14 +704,35 @@ namespace VirtualPaper.Cores.WpControl {
             return data;
         }
 
-        public Task<IWpBasicData> UpdateBasicDataAsync(
+        public async Task<IWpBasicData> UpdateBasicDataAsync(
             string folderPath,
             string folderName,
             string filePath,
             FileType ftype,
             CancellationToken token = default) {
-            return WallpaperMetadataMigrator.MigrateAsync(folderPath,
+            var data = (WpBasicData)await WallpaperMetadataMigrator.MigrateAsync(folderPath,
                 oldData => RebuildLegacyBasicData(oldData, folderName, filePath, ftype, token), token);
+            token.ThrowIfCancellationRequested();
+            // Format migration and refreshing derived media properties are separate:
+            // an already-current wallpaper must still be refreshable on every request.
+            if (data.FType is FileType.FImage or FileType.FGif or FileType.FVideo) {
+                var properties = WallpaperUtil.GetWpProperty(data.FilePath, data.FType);
+                data.Resolution = properties.Resolution;
+                data.AspectRatio = properties.AspectRatio;
+                data.FileSize = properties.FileSize;
+                data.FileExtension = properties.FileExtension;
+            }
+            else if (data.FType == FileType.FWebZip) {
+                data.Resolution = data.AspectRatio = "-";
+                data.FileExtension = ".zip";
+                // The original archive size cannot be recovered from an installed Web project.
+                if (string.IsNullOrWhiteSpace(data.FileSize)) data.FileSize = "-";
+            }
+            data.AppInfo.AppName = _userSettings.Settings.AppName;
+            data.AppInfo.AppVersion = _userSettings.Settings.AppVersion;
+            token.ThrowIfCancellationRequested();
+            await data.SaveMetadataAsync();
+            return data;
         }
 
         private IWpBasicData RebuildLegacyBasicData(
@@ -721,6 +742,8 @@ namespace VirtualPaper.Cores.WpControl {
 
             try {
                 newData.Merge(oldData);
+                newData.WallpaperUid = oldData.WallpaperUid;
+                newData.CreatedTime = oldData.CreatedTime;
                 newData.Save();
             }
             catch (Exception ex) {
@@ -752,8 +775,9 @@ namespace VirtualPaper.Cores.WpControl {
         }
 
         public Grpc_MonitorData GetRunMonitorByWallpaper(string wpUid) {
-            IMonitor monitor = _wallpapers.Find(x => x.Data.WallpaperUid == wpUid)!.Monitor;
-            return DataAssist.MonitorDataToGrpc(monitor);
+            // Saved layouts describe what to restore, not what is playing now.
+            var player = _wallpapers.Find(x => x.Data.WallpaperUid == wpUid && !x.IsExited);
+            return player?.Monitor is { } monitor ? DataAssist.MonitorDataToGrpc(monitor) : new Grpc_MonitorData();
         }
         #endregion
 

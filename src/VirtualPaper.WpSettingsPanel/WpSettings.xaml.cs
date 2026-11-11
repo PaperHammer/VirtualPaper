@@ -67,9 +67,19 @@ namespace VirtualPaper.WpSettingsPanel {
             _viewModel.InitFlyoutData();
         }
 
+        private async void ManageEffectPresets_Click(object sender, RoutedEventArgs e) {
+            try {
+                var dialog = new EffectPresetManagerDialog(AppServiceLocator.Services.GetRequiredService<Utils.Interfaces.IWallpaperIndexService>()) {
+                    XamlRoot = XamlRoot, RequestedTheme = ActualTheme
+                };
+                await dialog.ShowAsync();
+            }
+            catch (Exception ex) { ArcLog.GetLogger<WpSettings>().Error(ex); GlobalMessageUtil.ShowException(ex); }
+        }
+
         private async void ScreenFit_Click(object sender, RoutedEventArgs e) {
-            if (sender is not Button button || !button.IsEnabled) return;
-            button.IsEnabled = false;
+            if (sender is not Control control || !control.IsEnabled) return;
+            control.IsEnabled = false;
             try {
                 var viewModel = ActivatorUtilities.CreateInstance<ScreenFitViewModel>(AppServiceLocator.Services);
                 if (_viewModel.SelectedMonitorIndex >= 0 && _viewModel.SelectedMonitorIndex < _viewModel.Monitors.Count) {
@@ -86,7 +96,7 @@ namespace VirtualPaper.WpSettingsPanel {
                 }
             }
             catch (Exception ex) { ArcLog.GetLogger<WpSettings>().Error(ex); GlobalMessageUtil.ShowException(ex); }
-            finally { button.IsEnabled = true; }
+            finally { control.IsEnabled = true; }
         }
 
         private void OnFilterChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {
@@ -135,12 +145,7 @@ namespace VirtualPaper.WpSettingsPanel {
 
         private void SelectLibraryItems_Click(object sender, RoutedEventArgs e) {
             if (ContentFrame.Content is LibraryContents library) {
-                if (SelectLibraryItems.IsChecked == true) {
-                    library.EnterSelectionMode();
-                }
-                else {
-                    library.ExitSelectionMode();
-                }
+                library.EnterSelectionMode();
             }
         }
 
@@ -169,9 +174,7 @@ namespace VirtualPaper.WpSettingsPanel {
         }
 
         internal void UpdateLibrarySelectionState(bool isSelecting, int selectedCount) {
-            SelectLibraryItems.IsChecked = isSelecting;
-            AddToLib.IsEnabled = !isSelecting;
-            ScreenFitButton.IsEnabled = !isSelecting;
+            LibraryActionButtons.Visibility = isSelecting ? Visibility.Collapsed : Visibility.Visible;
             LibraryBrowseTools.Visibility = isSelecting ? Visibility.Collapsed : Visibility.Visible;
             LibrarySelectionTools.Visibility = isSelecting ? Visibility.Visible : Visibility.Collapsed;
             LibrarySelectionCount.Text = string.Format(

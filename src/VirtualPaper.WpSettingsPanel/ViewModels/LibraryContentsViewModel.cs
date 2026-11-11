@@ -190,8 +190,6 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                             ?? throw new Exception("Config update failed.");
                         data = DataAssist.GrpcToBasicData(grpc_basicData);
                         UpdateLib(data);
-
-                        GlobalMessageUtil.ShowSuccess(message: Constants.I18n.InfobarMsg_Success, isNeedLocalizer: true);
                     }
                     catch (Exception ex) {
                         ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
@@ -447,6 +445,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void UpdateLibraryEntry(IWpBasicData data) {
+            // Older Core messages did not carry creation time. Keep the known date
+            // so a metadata refresh cannot send an existing card to the end.
+            if (data.CreatedTime == default && _libraryWallpapers.TryGetValue(data.WallpaperUid, out var existing))
+                data.CreatedTime = existing.CreatedTime;
             _libraryWallpapers[data.WallpaperUid] = data;
             _wallpaperIndexService.Update(data);
             // Keep per-wallpaper notifications; refresh the list once for the batch.
@@ -588,8 +590,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         public async Task<bool> IsFileInUseAsync(IWpBasicData data) {
-            await _userSettingsClient.LoadAsync<List<IWallpaperLayout>>();
-            return _userSettingsClient.WallpaperLayouts.Any(wl => wl.FolderPath == data.FolderPath);
+            return await _wpControlClient.GetRunMonitorByWallpaperAsync(data.WallpaperUid) != null;
         }
 
         public bool IsFileInPreview(IWpBasicData data) {

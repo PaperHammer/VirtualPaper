@@ -8,30 +8,11 @@
     VerticalContentAlignment="Top">
     <UserControl.Resources>
       <ResourceDictionary>
-        <ResourceDictionary.ThemeDictionaries>
-            <ResourceDictionary x:Key="Default">
-                <SolidColorBrush x:Key="InfoTokenBackground" Color="#1B3551"/>
-                <SolidColorBrush x:Key="InfoTokenBorder" Color="#325A80"/>
-                <SolidColorBrush x:Key="InfoTokenForeground" Color="#D6E9FF"/>
-            </ResourceDictionary>
-            <ResourceDictionary x:Key="Light">
-                <SolidColorBrush x:Key="InfoTokenBackground" Color="#E7F2FF"/>
-                <SolidColorBrush x:Key="InfoTokenBorder" Color="#C6DEF7"/>
-                <SolidColorBrush x:Key="InfoTokenForeground" Color="#194C7D"/>
-            </ResourceDictionary>
-            <ResourceDictionary x:Key="HighContrast">
-                <SolidColorBrush x:Key="InfoTokenBackground" Color="{ThemeResource SystemColorWindowColor}"/>
-                <SolidColorBrush x:Key="InfoTokenBorder" Color="{ThemeResource SystemColorWindowTextColor}"/>
-                <SolidColorBrush x:Key="InfoTokenForeground" Color="{ThemeResource SystemColorWindowTextColor}"/>
-            </ResourceDictionary>
-        </ResourceDictionary.ThemeDictionaries>
         <DataTemplate x:Key="InfoTokenTemplate" x:DataType="x:String">
-            <Border CornerRadius="6" Background="{ThemeResource InfoTokenBackground}"
-                BorderBrush="{ThemeResource InfoTokenBorder}" BorderThickness="1" Padding="10 1 2 1">
+            <Border Style="{StaticResource InfoTokenBorderStyle}" Padding="10 1 2 1">
                 <StackPanel Orientation="Horizontal" Spacing="4">
-                    <TextBlock Text="{x:Bind}" FontSize="16" MaxWidth="200" TextTrimming="CharacterEllipsis"
-                        Foreground="{ThemeResource InfoTokenForeground}"
-                        VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind}"/>
+                    <TextBlock Text="{x:Bind}" Style="{StaticResource InfoTokenTextStyle}"
+                        ToolTipService.ToolTip="{x:Bind}"/>
                     <Button Tag="{x:Bind}" Width="32" Height="32" MinWidth="32" MinHeight="32"
                         Padding="0" CornerRadius="4" Background="Transparent" BorderThickness="0"
                         Foreground="{ThemeResource InfoTokenForeground}"

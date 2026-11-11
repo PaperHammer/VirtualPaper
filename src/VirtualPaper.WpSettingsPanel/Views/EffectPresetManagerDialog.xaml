@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dialogs:ArcContentDialog
+    x:Class="VirtualPaper.WpSettingsPanel.Views.EffectPresetManagerDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:WinUI3Localizer"
+    xmlns:dialogs="using:VirtualPaper.UIComponent.Dialogs"
+    xmlns:localUtils="using:VirtualPaper.WpSettingsPanel.Utils"
+    DialogWidth="960" DialogMaxWidth="1000" DialogMaxHeight="820"
+    l:Uids.Uid="Ui_EffectPreset_Manager" DefaultButton="Primary"
+    PrimaryButtonClick="Save_Click"
+    Closing="Dialog_Closing" Closed="Dialog_Closed" Opened="Dialog_Opened">
+    <dialogs:ArcContentDialog.Resources>
+        <localUtils:WallpaperSourceThumbnailConverter x:Key="SourceThumbnailConverter"/>
+        <Style x:Key="PresetInfoStatusStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource InfoBarInformationalSeverityBackgroundBrush}"/>
+        </Style>
+        <Style x:Key="PresetWarningStatusStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource InfoBarWarningSeverityBackgroundBrush}"/>
+        </Style>
+    </dialogs:ArcContentDialog.Resources>
+    <Grid RowSpacing="16">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid Height="36" ColumnSpacing="8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <Button x:Name="NewPreset" VerticalAlignment="Center" Click="New_Click" Style="{StaticResource AccentButtonStyle}"
+                l:Uids.Uid="Ui_EffectPreset_New" AutomationProperties.AutomationId="EffectPresets.New"/>
+            <Button x:Name="CopyPreset" Grid.Column="1" VerticalAlignment="Center" Click="Copy_Click" l:Uids.Uid="Ui_EffectPreset_Copy"
+                AutomationProperties.AutomationId="EffectPresets.NewFromSelected"/>
+            <Border x:Name="StateNotice" Grid.Column="2" Height="32" Padding="8 0" Margin="8 0"
+                HorizontalAlignment="Left" VerticalAlignment="Center" CornerRadius="4" Visibility="Collapsed">
+                <Grid ColumnSpacing="6" VerticalAlignment="Center">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <FontIcon x:Name="StateIcon" FontSize="14" Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                        AutomationProperties.AccessibilityView="Raw"/>
+                    <TextBlock x:Name="StateText" Grid.Column="1" FontSize="12" MaxLines="1" TextTrimming="CharacterEllipsis"
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" AutomationProperties.AutomationId="EffectPresets.State"/>
+                </Grid>
+            </Border>
+            <Button x:Name="MoreActions" Grid.Column="3" VerticalAlignment="Center" Padding="8" l:Uids.Uid="Ui_EffectPreset_Actions">
+                <FontIcon Glyph="&#xE712;" FontSize="16"/>
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Click="NewFromWallpaper_Click" l:Uids.Uid="Ui_EffectPreset_NewFromWallpaper"/>
+                        <MenuFlyoutItem x:Name="Discard" Click="Discard_Click" l:Uids.Uid="Ui_EffectPreset_Discard"/>
+                    </MenuFlyout>
+                </Button.Flyout>
+            </Button>
+        </Grid>
+        <InfoBar x:Name="Notice" Grid.Row="1" IsOpen="False" IsClosable="True"/>
+        <Grid Grid.Row="2" Height="460" ColumnSpacing="24">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="230"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid RowSpacing="12">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <TextBlock FontWeight="SemiBold" l:Uids.Uid="Ui_EffectPreset_ListHeader"/>
+                <ListView x:Name="PresetList" Grid.Row="1" SelectionMode="Single" SelectionChanged="Preset_SelectionChanged"
+                    ScrollViewer.HorizontalScrollMode="Disabled" AutomationProperties.AutomationId="EffectPresets.List">
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate><ItemsStackPanel/></ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Padding" Value="10 8"/>
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="localUtils:EffectPresetListItem">
+                            <StackPanel Spacing="3" ToolTipService.ToolTip="{x:Bind Label}">
+                                <TextBlock Text="{x:Bind Label}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                <TextBlock Text="{x:Bind Kind}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <Button x:Name="DeletePreset" Grid.Row="2" MinWidth="96" l:Uids.Uid="Ui_EffectPreset_Delete"
+                    AutomationProperties.AutomationId="EffectPresets.Delete">
+                    <Button.Flyout>
+                        <Flyout x:Name="DeleteFlyout" Placement="TopEdgeAlignedLeft" Opened="DeleteFlyout_Opened" Closed="DeleteFlyout_Closed">
+                            <StackPanel Width="300" Spacing="12">
+                                <TextBlock TextWrapping="Wrap" l:Uids.Uid="Ui_EffectPreset_DeleteConfirm"/>
+                                <TextBlock x:Name="DeleteTargetName" FontWeight="SemiBold" TextWrapping="Wrap"
+                                    MaxLines="2" TextTrimming="CharacterEllipsis" AutomationProperties.AutomationId="EffectPresets.Delete.Name"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Click="ConfirmDelete_Click" MinWidth="96" Style="{StaticResource AccentButtonStyle}"
+                                        l:Uids.Uid="Ui_EffectPreset_Delete" AutomationProperties.AutomationId="EffectPresets.Delete.Confirm"/>
+                                    <Button Click="CancelDelete_Click" MinWidth="96" l:Uids.Uid="Ui_Text_Cancel_Content"
+                                        AutomationProperties.AutomationId="EffectPresets.Delete.Cancel"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
+            <Grid x:Name="EditorPanel" Grid.Column="1">
+                <StackPanel x:Name="SourcePanel" Width="440" HorizontalAlignment="Left" Spacing="16" Visibility="Collapsed">
+                    <TextBlock FontSize="20" FontWeight="SemiBold" l:Uids.Uid="Ui_EffectPreset_SourceTitle"/>
+                    <TextBlock TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" l:Uids.Uid="Ui_EffectPreset_SourceHint"/>
+                    <StackPanel Spacing="8" VerticalAlignment="Bottom">
+                        <TextBlock l:Uids.Uid="Ui_EffectPreset_Source"/>
+                        <DropDownButton x:Name="SourcePickerButton" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                            Height="32" Padding="10 0" CornerRadius="6" AutomationProperties.AutomationId="EffectPresets.Source"
+                            l:Uids.Uid="Ui_EffectPreset_SourcePicker">
+                            <TextBlock x:Name="SourceName" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                            <DropDownButton.Flyout>
+                                <Flyout x:Name="SourceFlyout" Placement="BottomEdgeAlignedLeft" Opened="SourceFlyout_Opened" Closed="SourceFlyout_Closed">
+                                    <Grid Width="420" Height="400" RowSpacing="12">
+                                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <AutoSuggestBox x:Name="SourceSearch" Height="36" QueryIcon="Find"
+                                                TextChanged="SourceSearch_TextChanged" l:Uids.Uid="Ui_EffectPreset_SourceSearch"
+                                                AutomationProperties.AutomationId="EffectPresets.Source.Search"/>
+                                            <ToggleButton x:Name="SourceFavorites" Grid.Column="1" Height="36" Padding="10 0" CornerRadius="6"
+                                                Checked="SourceFavorites_Changed" Unchecked="SourceFavorites_Changed"
+                                                l:Uids.Uid="Ui_WpLib_Favorites" AutomationProperties.AutomationId="EffectPresets.Source.FavoritesOnly"/>
+                                        </Grid>
+                                        <ListView x:Name="SourcePicker" Grid.Row="1" SelectionMode="Single" IsItemClickEnabled="True"
+                                            ItemClick="Source_ItemClick"
+                                            AutomationProperties.AutomationId="EffectPresets.Source.List"
+                                            ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                            <ListView.ItemsPanel>
+                                                <ItemsPanelTemplate><ItemsStackPanel/></ItemsPanelTemplate>
+                                            </ListView.ItemsPanel>
+                                            <ListView.ItemContainerStyle>
+                                                <Style TargetType="ListViewItem">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                    <Setter Property="Padding" Value="6"/>
+                                                    <Setter Property="CornerRadius" Value="6"/>
+                                                </Style>
+                                            </ListView.ItemContainerStyle>
+                                            <ListView.ItemTemplate>
+                                                <DataTemplate x:DataType="localUtils:WallpaperIndexEntry">
+                                                    <Grid ColumnSpacing="12" ToolTipService.ToolTip="{x:Bind DisplayName}">
+                                                        <Grid.ColumnDefinitions><ColumnDefinition Width="72"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                        <Border Width="72" Height="44" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                                                            <Grid>
+                                                                <FontIcon x:Name="SourceNoPreview" Glyph="&#xEB9F;" FontSize="20"
+                                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                    AutomationProperties.AccessibilityView="Raw"
+                                                                    Visibility="{x:Bind ThumbnailPath, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}"/>
+                                                                <Image Source="{x:Bind ThumbnailPath, Converter={StaticResource SourceThumbnailConverter}}"
+                                                                    Stretch="UniformToFill" ImageFailed="SourceThumbnail_ImageFailed"
+                                                                    AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Grid>
+                                                        </Border>
+                                                        <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                            <TextBlock Text="{x:Bind DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                                            <TextBlock Text="{x:Bind Author}" FontSize="12" TextTrimming="CharacterEllipsis" MaxLines="1"
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                Visibility="{x:Bind Author, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListView.ItemTemplate>
+                                        </ListView>
+                                        <TextBlock x:Name="SourceEmpty" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed"
+                                            l:Uids.Uid="Ui_EffectPreset_SourceEmpty"/>
+                                        <ProgressRing x:Name="SourceLoading" Grid.Row="1" Width="28" Height="28" IsActive="False"/>
+                                    </Grid>
+                                </Flyout>
+                            </DropDownButton.Flyout>
+                        </DropDownButton>
+                    </StackPanel>
+                    <ComboBox x:Name="RuntimePicker" HorizontalAlignment="Stretch" Visibility="Collapsed"
+                        SelectionChanged="Runtime_SelectionChanged" l:Uids.Uid="Ui_EffectPreset_SourceConfig">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="localUtils:EffectPresetRuntimeItem">
+                                <TextBlock Text="{x:Bind Label}" TextTrimming="CharacterEllipsis"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="FromWallpaper" Click="FromWallpaper_Click" Style="{StaticResource AccentButtonStyle}"
+                            l:Uids.Uid="Ui_EffectPreset_FromWallpaper"/>
+                        <Button x:Name="CancelSource" Click="CancelSource_Click" l:Uids.Uid="Ui_EffectPreset_CancelSource"/>
+                    </StackPanel>
+                </StackPanel>
+                <Grid x:Name="PresetWorkspace" RowSpacing="12">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="180"/></Grid.ColumnDefinitions>
+                        <TextBox x:Name="PresetName" MaxLength="80" TextChanging="Name_Changing" TextChanged="Name_Changed" l:Uids.Uid="Ui_EffectPreset_Name"
+                            AutomationProperties.AutomationId="EffectPresets.Name"/>
+                        <StackPanel x:Name="ReadOnlyNamePanel" Spacing="8" Visibility="Collapsed">
+                            <TextBlock l:Uids.Uid="Ui_EffectPreset_ReadOnlyNameHeader"/>
+                            <TextBlock x:Name="ReadOnlyPresetName" MinHeight="32" Padding="0 5" TextWrapping="Wrap"
+                                IsTextSelectionEnabled="True" AutomationProperties.AutomationId="EffectPresets.Name.ReadOnly"/>
+                        </StackPanel>
+                        <ComboBox x:Name="TypePicker" Grid.Column="1" HorizontalAlignment="Stretch" l:Uids.Uid="Ui_EffectPreset_Type"
+                            SelectionChanged="Type_Changed" AutomationProperties.AutomationId="EffectPresets.Type"/>
+                    </Grid>
+                    <ContentControl x:Name="EditorHost" Grid.Row="1" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+                </Grid>
+            </Grid>
+        </Grid>
+        <TextBlock x:Name="ManagerHint" Grid.Row="3" TextWrapping="Wrap" FontSize="12"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}" l:Uids.Uid="Ui_EffectPreset_ManagerHint"/>
+    </Grid>
+</dialogs:ArcContentDialog>

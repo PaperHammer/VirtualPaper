@@ -211,7 +211,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                     "RemoveFavorite" => favorites.CanRemove,
                     "EditTags" => _contextItems.Count > 1,
                     "RemoveFromLib" => _contextItems.Count > 0,
-                    "UpdateConfig" => single && _contextItems[0].AppInfo.FileVersion != Constants.CoreField.FileVersion,
+                    "UpdateConfig" => single,
                     "LockBackground" => single && _contextItems[0].FType is FileType.FImage or FileType.FGif,
                     _ => single
                 };

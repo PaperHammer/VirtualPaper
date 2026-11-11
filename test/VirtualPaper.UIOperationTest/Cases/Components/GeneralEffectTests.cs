@@ -58,11 +58,16 @@ internal static class GeneralEffectTests {
             atmosphere.Flyout.Hide();
             await context.WaitAsync(() => !slider.IsLoaded);
             Invoke((Button)page.FindName("btnRestore"));
-            await context.WaitAsync(() => slider.Value == 50);
+            // Restore rebuilds parameter controls; inspect the current control,
+            // not the slider detached from the preceding flyout.
+            await context.WaitAsync(() => ((StackPanel)((Flyout)atmosphere.Flyout).Content).Children
+                .OfType<Slider>().Single(control => control.Name == "AtmosphereIntensity").Value == 50);
             Check(panel.Children.Count == rootCount, "Root controls accumulated after restore");
             Check(groups.Select(GroupCount).SequenceEqual(groupCounts), "Flyout controls accumulated after restore");
             Check(groups.All(group => panel.Children.Contains(group)), "A flyout detached after restore");
         }
+
+        await VerifyPresetTrialAsync(context, page, effects, args);
 
         var edited = await OpenIntensityAsync(context, atmosphere);
         Pattern<IRangeValueProvider>(edited, PatternInterface.RangeValue).SetValue(71);
@@ -87,6 +92,102 @@ internal static class GeneralEffectTests {
     }
 
     private static int GroupCount(DropDownButton group) => ((StackPanel)((Flyout)group.Flyout).Content).Children.Count;
+
+    private static async Task VerifyPresetTrialAsync(UiTestContext context, GeneralEffect page, RecordingEffects effects, StartArgsWeb args) {
+        var selector = (ComboBox)page.FindName("PresetSelector");
+        await context.WaitAsync(() => selector.Items.OfType<ComboBoxItem>().Any(item => Equals(item.Tag, "builtin:Snow")),
+            "Load effect preset choices");
+        string before = page.GetPresetParameters().ToJsonString();
+        string saved = await File.ReadAllTextAsync(args.WpEffectFilePathUsing);
+        int edits = 0;
+        EventHandler onEdited = (_, _) => edits++;
+        page.ParametersChanged += onEdited;
+        try {
+            foreach (string id in new[] { "builtin:Soft", "builtin:Snow" }) {
+                var presetItem = selector.Items.OfType<ComboBoxItem>().Single(item => Equals(item.Tag, id));
+                var preset = (EffectPreset)presetItem.DataContext;
+                selector.SelectedItem = presetItem;
+                await context.WaitForLayoutAsync();
+                Check(ReferenceEquals(selector.SelectedItem, presetItem), "Loading parameter controls reset the selected preset to Custom");
+                Check(edits == 0, "Loading a preset emitted a manual parameter edit");
+                Check(effects.Saturation == preset.Values[nameof(UniverseCostumise.Saturation)].GetDouble()
+                    && effects.Intensity == preset.Values[nameof(UniverseCostumise.AtmosphereIntensity)].GetDouble(),
+                    "Trying a preset did not send its values to the effect service");
+                Check((double)page.GetPresetParameters()[nameof(UniverseCostumise.Saturation)]!["Value"]! == effects.Saturation,
+                    "Displayed preset parameters differ from the values sent to the player");
+
+                Pattern<IExpandCollapseProvider>(selector, PatternInterface.ExpandCollapse).Expand();
+                await context.WaitForLayoutAsync();
+                Check(ReferenceEquals(selector.SelectedItem, presetItem), "Reopening the preset dropdown replaced the active choice");
+                Pattern<IExpandCollapseProvider>(selector, PatternInterface.ExpandCollapse).Collapse();
+            }
+
+            await VerifyPresetCatalogRefreshAsync(context, page, selector, effects, args);
+            Check(edits == 0, "Refreshing and reapplying a saved preset emitted a manual parameter edit");
+
+            var saturation = ((StackPanel)page.FindName("skPanel")).Children.OfType<Slider>()
+                .Single(item => item.Name == nameof(UniverseCostumise.Saturation));
+            Pattern<IRangeValueProvider>(saturation, PatternInterface.RangeValue).SetValue(1.5);
+            await context.WaitAsync(() => effects.Saturation == 1.5 && edits == 1);
+            Check((selector.SelectedItem as ComboBoxItem)?.Tag == null, "Manual editing did not switch the preset label to Custom");
+            Invoke((Button)page.FindName("CancelPreset"));
+            await context.WaitForLayoutAsync();
+            Check(page.GetPresetParameters().ToJsonString() == before, "Cancel did not restore the parameters from before the first trial");
+            Check(saved == await File.ReadAllTextAsync(args.WpEffectFilePathUsing), "Trying or cancelling presets changed the saved wallpaper config");
+            Check(edits == 1, "Programmatic restoration emitted a manual parameter edit");
+            context.Evidence["PresetSelectionTrialCancelVerified"] = true;
+        }
+        finally { page.ParametersChanged -= onEdited; }
+    }
+
+    private static async Task VerifyPresetCatalogRefreshAsync(UiTestContext context, GeneralEffect page,
+        ComboBox selector, RecordingEffects effects, StartArgsWeb args) {
+        Check(TestProcessEnvironment.IsEnabled && string.Equals(Constants.CommonPaths.AppDataDir,
+            TestProcessEnvironment.DataRoot, StringComparison.OrdinalIgnoreCase), "Preset catalog tests require isolated app data");
+        var store = new EffectPresetStore();
+        var original = EffectPresets.Capture("UI preset " + Guid.NewGuid().ToString("N"),
+            Enum.Parse<RuntimeType>(args.RuntimeType!), page.GetPresetParameters());
+        original.Values[nameof(UniverseCostumise.Saturation)] = JsonSerializer.SerializeToElement(0.63);
+        ComboBoxItem? FindItem() => selector.Items.OfType<ComboBoxItem>().FirstOrDefault(item => Equals(item.Tag, original.Id));
+        async Task ReloadCatalogAsync(Func<bool> loaded) {
+            var provider = Pattern<IExpandCollapseProvider>(selector, PatternInterface.ExpandCollapse);
+            provider.Expand();
+            try { await context.WaitAsync(loaded, "Refresh changed preset catalog"); }
+            finally { provider.Collapse(); }
+        }
+
+        try {
+            await store.SaveAsync(original);
+            await ReloadCatalogAsync(() => FindItem() != null);
+            var item = FindItem()!;
+            selector.SelectedItem = item;
+            await context.WaitAsync(() => effects.Saturation == 0.63);
+
+            var renamed = original with { Name = "Renamed " + original.Name };
+            await store.SaveAsync(renamed);
+            await ReloadCatalogAsync(() => FindItem()?.DataContext is EffectPreset preset && preset.Name == renamed.Name);
+            Check(ReferenceEquals(selector.SelectedItem, item), "Renaming a preset cleared its active selection");
+            Check(effects.Saturation == 0.63, "Renaming a preset changed the live effect");
+
+            var revised = renamed with { Values = new(renamed.Values) };
+            revised.Values[nameof(UniverseCostumise.Saturation)] = JsonSerializer.SerializeToElement(1.13);
+            await store.SaveAsync(revised);
+            string beforeRefresh = page.GetPresetParameters().ToJsonString();
+            await ReloadCatalogAsync(() => FindItem()?.DataContext is EffectPreset preset
+                && preset.Values[nameof(UniverseCostumise.Saturation)].GetDouble() == 1.13
+                && (selector.SelectedItem as ComboBoxItem)?.Tag == null);
+            Check(effects.Saturation == 0.63 && page.GetPresetParameters().ToJsonString() == beforeRefresh,
+                "Refreshing revised preset parameters changed the live trial before selection");
+
+            selector.SelectedItem = FindItem();
+            await context.WaitAsync(() => effects.Saturation == 1.13);
+            Check(Equals((selector.SelectedItem as ComboBoxItem)?.Tag, original.Id), "The revised preset could not be selected again");
+            Check((double)page.GetPresetParameters()[nameof(UniverseCostumise.Saturation)]!["Value"]! == 1.13,
+                "Reselecting the revised preset did not update the displayed parameters");
+            context.Evidence["PresetCatalogRefreshVerified"] = true;
+        }
+        finally { await store.DeleteAsync(original.Id); }
+    }
 
     private static async Task<Slider> OpenIntensityAsync(UiTestContext context, DropDownButton group) {
         await context.WaitAsync(() => group.IsLoaded && group.ActualWidth > 0, "Load effect option button");
@@ -114,8 +215,10 @@ internal static class GeneralEffectTests {
 
     private sealed class RecordingEffects : IEffectService {
         public double? Intensity { get; private set; }
+        public double? Saturation { get; private set; }
         public void UpdateEffectValue<T>(EffectValueChanged<T> value) {
             if (value.PropertyName == "AtmosphereIntensity") Intensity = Convert.ToDouble(value.Value);
+            if (value.PropertyName == nameof(UniverseCostumise.Saturation)) Saturation = Convert.ToDouble(value.Value);
         }
     }
 

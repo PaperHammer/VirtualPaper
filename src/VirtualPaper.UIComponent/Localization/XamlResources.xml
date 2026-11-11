@@ -336,8 +336,14 @@
   <Resource Name="Ui_WebBackdrop_WebWallpaperPackage_Text.Text" Source="WebBackdrop_WebWallpaperPackage" />
   <Resource Name="Ui_WpLib_AddWallpaper_ToolTipService_ToolTip__WpLib_AddWallpaper_AutomationProperties_Name.AutomationProperties.Name" Source="WpLib_AddWallpaper" />
   <Resource Name="Ui_WpLib_AddWallpaper_ToolTipService_ToolTip__WpLib_AddWallpaper_AutomationProperties_Name.ToolTipService.ToolTip" Source="WpLib_AddWallpaper" />
+  <Resource Name="Ui_WpLib_AddWallpaperLabel.Text" Source="WpLib_AddWallpaper" />
   <Resource Name="Ui_WpLib_DisplayControls_ToolTipService_ToolTip__WpLib_DisplayControls_AutomationProperties_Name.AutomationProperties.Name" Source="WpLib_DisplayControls" />
   <Resource Name="Ui_WpLib_DisplayControls_ToolTipService_ToolTip__WpLib_DisplayControls_AutomationProperties_Name.ToolTipService.ToolTip" Source="WpLib_DisplayControls" />
+  <Resource Name="Ui_WpLib_DisplayControlsLabel.Text" Source="WpLib_DisplayControls" />
+  <Resource Name="Ui_WpLib_MoreLabel.Text" Source="Text_More" />
+  <Resource Name="Ui_WpLib_FinishSelection.Content" Source="WpLib_FinishSelection" />
+  <Resource Name="Ui_WpLib_SelectItems_Menu.Text" Source="WpLib_SelectItems" />
+  <Resource Name="Ui_ScreenFit_Menu.Text" Source="ScreenFit_Title" />
   <Resource Name="Ui_WpLib_InvertSelection_Content.Content" Source="WpLib_InvertSelection" />
   <Resource Name="Ui_WpLib_Search_Placeholder_PlaceholderText.PlaceholderText" Source="WpLib_Search_Placeholder" />
   <Resource Name="Ui_WpLib_SelectAll_Content.Content" Source="WpLib_SelectAll" />
@@ -356,7 +362,8 @@
   <Resource Name="Ui_WpLib_CardType_Web_Text.Text" Source="WpLib_CardType_Web" />
   <Resource Name="Ui_WpLib_Favorites.ToolTipService.ToolTip" Source="WpLib_Favorites" />
   <Resource Name="Ui_WpLib_Favorites.AutomationProperties.Name" Source="WpLib_Favorites" />
-  <Resource Name="Ui_WpLib_FavoritesLabel.Text" Source="WpLib_FavoritesLabel" />
+  <Resource Name="Ui_WpLib_Favorites.Content" Source="WpLib_Favorites" />
+  <Resource Name="Ui_WpLib_TypeFilterLabel.Text" Source="WpLib_TypeFilterHeading" />
   <Resource Name="Ui_WpLib_Sort.ToolTipService.ToolTip" Source="WpLib_Sort" />
   <Resource Name="Ui_WpLib_Sort.AutomationProperties.Name" Source="WpLib_Sort" />
   <Resource Name="Ui_WpLib_SortLabel.Text" Source="WpLib_SortLabel" />
@@ -370,6 +377,7 @@
   <Resource Name="Ui_WpLib_ClearFilters.Content" Source="WpLib_ClearFilters" />
   <Resource Name="Ui_WpLib_Organize.ToolTipService.ToolTip" Source="WpLib_Organize" />
   <Resource Name="Ui_WpLib_Organize.AutomationProperties.Name" Source="WpLib_Organize" />
+  <Resource Name="Ui_WpLib_OrganizeLabel.Text" Source="WpLib_OrganizeLabel" />
   <Resource Name="Ui_WpLib_AddFavorite.Text" Source="WpLib_AddFavorite" />
   <Resource Name="Ui_WpLib_RemoveFavorite.Text" Source="WpLib_RemoveFavorite" />
   <Resource Name="Ui_WpLib_EditTags.Text" Source="WpLib_EditTags" />
@@ -387,4 +395,37 @@
   <Resource Name="Ui_WpLib_Empty.Text" Source="WpLib_Empty" />
   <Resource Name="Ui_WpLib_Search_Placeholder_PlaceholderText.ToolTipService.ToolTip" Source="WpLib_SearchExplain" />
   <Resource Name="Ui_WpLib_SelectAll_Content.ToolTipService.ToolTip" Source="WpLib_SelectLoaded" />
+  <Resource Name="Ui_EffectPreset_Manager.Title" Source="EffectPreset_Title" />
+  <Resource Name="Ui_EffectPreset_ListHeader.Text" Source="EffectPreset_List" />
+  <Resource Name="Ui_EffectPreset_ManagerHint.Text" Source="EffectPreset_ManagerHint" />
+  <Resource Name="Ui_EffectPreset_More.ToolTipService.ToolTip" Source="EffectPreset_More" />
+  <Resource Name="Ui_EffectPreset_More.AutomationProperties.Name" Source="EffectPreset_More" />
+  <Resource Name="Ui_EffectPreset_Manage.Text" Source="EffectPreset_Manage" />
+  <Resource Name="Ui_EffectPreset_Name.Header" Source="EffectPreset_Name" />
+  <Resource Name="Ui_EffectPreset_ReadOnlyNameHeader.Text" Source="EffectPreset_Name" />
+  <Resource Name="Ui_EffectPreset_Name.PlaceholderText" Source="EffectPreset_NameHint" />
+  <Resource Name="Ui_EffectPreset_Type.Header" Source="EffectPreset_Type" />
+  <Resource Name="Ui_EffectPreset_Type.ToolTipService.ToolTip" Source="EffectPreset_TypeHint" />
+  <Resource Name="Ui_EffectPreset_Actions.ToolTipService.ToolTip" Source="EffectPreset_Actions" />
+  <Resource Name="Ui_EffectPreset_Actions.AutomationProperties.Name" Source="EffectPreset_Actions" />
+  <Resource Name="Ui_EffectPreset_SourceTitle.Text" Source="EffectPreset_FromWallpaper" />
+  <Resource Name="Ui_EffectPreset_SourceHint.Text" Source="EffectPreset_SourceHint" />
+  <Resource Name="Ui_EffectPreset_CancelSource.Content" Source="Text_Cancel" />
+  <Resource Name="Ui_EffectPreset_Source.Text" Source="EffectPreset_Source" />
+  <Resource Name="Ui_EffectPreset_SourcePicker.AutomationProperties.Name" Source="EffectPreset_Source" />
+  <Resource Name="Ui_EffectPreset_SourceSearch.PlaceholderText" Source="EffectPreset_SourceSearch" />
+  <Resource Name="Ui_EffectPreset_SourceSearch.AutomationProperties.Name" Source="EffectPreset_SourceSearch" />
+  <Resource Name="Ui_EffectPreset_SourceEmpty.Text" Source="EffectPreset_SourceEmpty" />
+  <Resource Name="Ui_EffectPreset_SourceConfig.Header" Source="EffectPreset_SourceConfig" />
+  <Resource Name="Ui_EffectPreset_FromWallpaper.Content" Source="EffectPreset_UseSource" />
+  <Resource Name="Ui_EffectPreset_New.Content" Source="EffectPreset_New" />
+  <Resource Name="Ui_EffectPreset_NewFromWallpaper.Text" Source="EffectPreset_FromWallpaper" />
+  <Resource Name="Ui_EffectPreset_Copy.Content" Source="EffectPreset_Copy" />
+  <Resource Name="Ui_EffectPreset_Copy.ToolTipService.ToolTip" Source="EffectPreset_CopyHint" />
+  <Resource Name="Ui_EffectPreset_Delete.Content" Source="EffectPreset_Delete" />
+  <Resource Name="Ui_EffectPreset_DeleteConfirm.Text" Source="EffectPreset_DeleteConfirm" />
+  <Resource Name="Ui_EffectPreset_Discard.Text" Source="EffectPreset_Discard" />
+  <Resource Name="Ui_EffectPreset_Selector.Header" Source="EffectPreset_Selector" />
+  <Resource Name="Ui_EffectPreset_TrialHint.Text" Source="EffectPreset_TrialHint" />
+  <Resource Name="Ui_EffectPreset_CancelTrial.Content" Source="EffectPreset_CancelTrial" />
 </Resources>

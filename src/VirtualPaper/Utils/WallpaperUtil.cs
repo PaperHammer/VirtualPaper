@@ -1,11 +1,13 @@
 using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Files.Models;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
@@ -252,25 +254,22 @@ namespace VirtualPaper.Utils {
                         var fps = capture.Fps;
                         int width = capture.FrameWidth;
                         int height = capture.FrameHeight;
-                        double ratio = (double)width / height;
+                        if (width <= 0 || height <= 0) throw new InvalidDataException("The media dimensions could not be read.");
 
                         fileProperty.Resolution = $"{width} * {height} ({fps:0.00} fps)";
-                        fileProperty.AspectRatio = GetRatio(ratio);
+                        fileProperty.AspectRatio = AspectRatioUtil.Format(width, height);
 
                         capture.Release();
 
                         break;
                     }
                 case FileType.FImage: {
-                        using var img = new Mat(filePath);
-
-                        Size sz = img.Size();
+                        Size sz = ReadImageSize(filePath);
                         int width = sz.Width;
                         int height = sz.Height;
-                        double ratio = (double)width / height;
 
                         fileProperty.Resolution = $"{width} * {height}";
-                        fileProperty.AspectRatio = GetRatio(ratio);
+                        fileProperty.AspectRatio = AspectRatioUtil.Format(width, height);
 
                         break;
                     }
@@ -279,17 +278,35 @@ namespace VirtualPaper.Utils {
             return fileProperty;
         }
 
-        private static string GetRatio(double aspectRatio) {
-            if (Math.Abs(aspectRatio - 1.6) < 0.01) {
-                return "16:10";
+        private static Size ReadImageSize(string filePath) {
+            try {
+                using var stream = File.OpenRead(filePath);
+                // Read dimensions without creating a decoded pixel buffer or retaining the file.
+                var decoder = BitmapDecoder.Create(stream,
+                    BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                var frame = decoder.Frames[0];
+                int width = frame.PixelWidth, height = frame.PixelHeight;
+                if (width > 0 && height > 0) {
+                    // Match OpenCV's EXIF-oriented dimensions for JPEG and TIFF images.
+                    string? orientationQuery = decoder switch {
+                        JpegBitmapDecoder => "/app1/ifd/{ushort=274}",
+                        TiffBitmapDecoder => "/ifd/{ushort=274}",
+                        _ => null
+                    };
+                    if (orientationQuery != null && frame.Metadata is BitmapMetadata metadata &&
+                        metadata.GetQuery(orientationQuery) is ushort orientation && orientation is >= 5 and <= 8) {
+                        (width, height) = (height, width);
+                    }
+                    return new Size(width, height);
+                }
             }
-            else if (Math.Abs(aspectRatio - 1.7778) < 0.01) {
-                return "16:9";
+            catch (Exception ex) when (ex is NotSupportedException or FileFormatException or IOException or ArgumentException or COMException) {
+                // Some formats or metadata are unsupported by Windows codecs; keep OpenCV compatibility.
             }
-            else if (Math.Abs(aspectRatio - 1.3333) < 0.01) {
-                return "4:3";
-            }
-            return "-";
+
+            using var image = new Mat(filePath);
+            if (image.Empty()) throw new InvalidDataException("The image could not be read.");
+            return image.Size();
         }
 
         // Add NETSCAPE2.0 Application Extension for looping.

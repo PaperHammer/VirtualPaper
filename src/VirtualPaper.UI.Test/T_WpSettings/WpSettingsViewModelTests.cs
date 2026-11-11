@@ -374,6 +374,21 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             Assert.Contains("(2)", _vm.TypeFilterLabel);
         }
 
+        [TestMethod]
+        public void TypeFilterLabel_WhenFavoritesChanges_UpdatesActiveFilterCount() {
+            _vm = CreateVm();
+            string baseLabel = _vm.TypeFilterLabel;
+
+            _vm.FavoritesOnly = true;
+            Assert.Contains("(1)", _vm.TypeFilterLabel);
+
+            _vm.FavoritesOnly = false;
+            Assert.AreEqual(baseLabel, _vm.TypeFilterLabel);
+
+            _vm.FavoritesOnly = null;
+            Assert.AreEqual(baseLabel, _vm.TypeFilterLabel);
+        }
+
         // ── Detect ────────────────────────────────────────────────────
 
         [TestMethod]
@@ -509,11 +524,15 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm.TypeFilters[0].IsSelected = true;
             _vm.OnFilterChanged(FilterKey.LibraryTitle, "forest");
 
+            Assert.Contains("(3)", _vm.TypeFilterLabel);
+
             filterable.Verify(item => item.ApplyFilter(It.Is<FilterContext>(filter => filter.FavoritesOnly
                 && filter.Tag == "nature" && filter.SortOrder == WallpaperSortOrder.Title
                 && filter.TitleKeyword == "forest" && filter.ActiveTypes!.Contains(FileType.FImage))), Times.Once);
 
             _vm.ClearLibraryFilters();
+
+            Assert.DoesNotContain("(", _vm.TypeFilterLabel);
 
             filterable.Verify(item => item.ApplyFilter(It.Is<FilterContext>(filter => !filter.FavoritesOnly
                 && filter.Tag == "" && filter.TitleKeyword == "" && filter.ActiveTypes == null

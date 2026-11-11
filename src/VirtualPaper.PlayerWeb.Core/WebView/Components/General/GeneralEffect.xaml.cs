@@ -25,6 +25,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
     public sealed partial class GeneralEffect : Page, IDisposable {
         public GeneralEffect() {
             this.InitializeComponent();
+            Loaded += PresetPage_Loaded;
+            Unloaded += PresetPage_Unloaded;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
@@ -33,6 +35,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 payload.TryGet(NaviPayloadKey.IEffectService.ToString(), out _effectService);
                 payload.TryGet(NaviPayloadKey.StartArgs.ToString(), out _startArgs);
                 payload.TryGet(NaviPayloadKey.ApplyService.ToString(), out _applyService);
+                AttachPresetOwner(payload);
             }
         }
 
@@ -49,9 +52,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 return;
             }
 
-            _wpEffectData = JsonNodeUtil.GetWritableJson(_startArgs.WpEffectFilePathUsing);
-            EnsureEffectProperties(_wpEffectData.AsObject());
-            GenerateUIElements();
+            SetParameters(JsonNodeUtil.GetWritableJson(_startArgs.WpEffectFilePathUsing).AsObject(), false);
         }
 
         private void PreCleanup() {
@@ -64,7 +65,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         private void EnsureEffectProperties(JsonObject properties) {
             AtmosphereProperties.EnsureAtmosphereProperties(properties);
-            if (_startArgs.RuntimeType == nameof(RuntimeType.RImage3D)) {
+            if (CurrentRuntimeType == RuntimeType.RImage3D) {
                 ParallaxProperties.EnsureDepthProperties(properties);
             }
         }
@@ -158,12 +159,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                             MinWidth = MIN_WIDTH,
                             HorizontalAlignment = HorizontalAlignment.Left,
                             Margin = MARGIN,
-                            SelectedIndex = (int)item.Value["Value"],
                         };
                         var array = item.Value["Items"].AsArray();
                         foreach (var dropItem in array) {
                             cmbBox.Items.Add(GetDropdownItemText(item.Key, dropItem.ToString()));
                         }
+                        // Selecting before Items exist can coerce a saved choice to -1.
+                        cmbBox.SelectedIndex = (int)item.Value["Value"];
                         cmbBox.SelectionChanged += ComboBox_SelectionChanged;
                     }
                     obj = cmbBox;
@@ -246,12 +248,13 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
             foreach (var item in property["Items"]!.AsArray()) {
                 styles.Items.Add(GetDropdownItemText(nameof(UniverseCostumise.AtmosphereStyle), item!.ToString()));
             }
-            styles.IsEnabled = styles.Items.Count > 0;
-            styles.SelectedIndex = styles.IsEnabled ? (int)property["Value"]! : -1;
+            bool hasStyles = styles.Items.Count > 0;
+            styles.IsEnabled = hasStyles;
+            styles.SelectedIndex = hasStyles ? (int)property["Value"]! : -1;
             styles.SelectionChanged += ComboBox_SelectionChanged;
             if (_controls.TryGetValue(nameof(UniverseCostumise.AtmosphereIntensity), out var intensity)
                 && intensity is Slider slider) {
-                slider.IsEnabled = styles.IsEnabled;
+                slider.IsEnabled = hasStyles;
             }
         }
 
@@ -298,9 +301,9 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                         ref _atmosphereButton, ref _atmosphereSummary);
                 }
                 if (obj is FrameworkElement element) element.HorizontalAlignment = HorizontalAlignment.Stretch;
-                _atmospherePanel.Children.Add(obj);
+                _atmospherePanel.Children.Add(WrapPresetParameter(obj, needTrack));
             }
-            else if (_startArgs.RuntimeType == nameof(RuntimeType.RImage3D)
+            else if (CurrentRuntimeType == RuntimeType.RImage3D
                 && propertyName is nameof(Picture3DCostumize.Parallax)
                     or nameof(Picture3DCostumize.ParallaxStrength)
                     or nameof(Picture3DCostumize.ParallaxAutoDrift)) {
@@ -312,10 +315,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 if (name == nameof(Picture3DCostumize.Parallax) && obj is CheckBox mouse) {
                     mouse.Content = LanguageUtil.GetI18n("ParallaxMode_Mouse");
                 }
-                _parallaxPanel.Children.Add(obj);
+                _parallaxPanel.Children.Add(WrapPresetParameter(obj, needTrack));
             }
             else {
-                skPanel.Children.Add(obj);
+                skPanel.Children.Add(WrapPresetParameter(obj, needTrack));
             }
             if (needTrack) {
                 _controls[name] = obj;
@@ -337,6 +340,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 };
                 AutomationProperties.SetAutomationId(button, "GeneralEffect." + name);
             }
+            UpdatePresetSummaryLayout(button, summary);
             skPanel.Children.Add(new TextBlock { Text = LanguageUtil.GetI18n(titleKey) });
             skPanel.Children.Add(button);
         }
@@ -396,14 +400,21 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                 }
             }
             _controls.Clear();
+            _presetParameterHosts.Clear();
         }
         #endregion
 
         #region ui event
+        // Rebuilt controls can still have queued notifications. Only the current
+        // control may change the model; repeated values are ignored by each handler.
+        private bool CanUpdateParameter(Control control) => !_rebuildingParameters && !_isDisposed
+            && _controls.TryGetValue(control.Name, out var current) && ReferenceEquals(current, control);
+
         #region slider
         private void Slider_ValueChanged(object sender, RangeBaseValueChangedEventArgs? e = null) {
             try {
                 var item = (Slider)sender;
+                if (!CanUpdateParameter(item) || (double)_wpEffectData![item.Name]!["Value"]! == item.Value) return;
                 _wpEffectData[item.Name]["Value"] = item.Value;
 
                 string valueKey = item.Name + "_Value";
@@ -421,7 +432,8 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e = default) {
             try {
                 var item = (ComboBox)sender;
-                if (item.SelectedIndex < 0) return;
+                if (!CanUpdateParameter(item) || item.SelectedIndex < 0
+                    || (int)_wpEffectData![item.Name]!["Value"]! == item.SelectedIndex) return;
                 _wpEffectData[item.Name]["Value"] = item.SelectedIndex;
                 if (item.Name == nameof(UniverseCostumise.Atmosphere)) {
                     AtmosphereProperties.UpdateStyleItems(_wpEffectData.AsObject());
@@ -600,12 +612,15 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
             File.Copy(_startArgs.WpEffectFilePathUsing, _startArgs.WpEffectFilePathTemporary, true);
             InitUI();
+            SendAllEffectValues();
+            EndPresetTrial();
 
             btnRestore.IsEnabled = true;
         }
 
         private void SaveAndApplyBtn_Click(object sender, RoutedEventArgs e) {
             UpdatePropertyFile(true);
+            EndPresetTrial();
             _applyService?.OnApply(new ApplyEventArgs() {
                 WpEffectFilePathUsing = _startArgs.WpEffectFilePathUsing,
                 WpEffectFilePathTemplate = _startArgs.WpEffectFilePathTemplate,
@@ -618,6 +633,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private void Checkbox_CheckedChanged(object sender, RoutedEventArgs e = default) {
             try {
                 var item = (CheckBox)sender;
+                if (!CanUpdateParameter(item) || (bool)_wpEffectData![item.Name]!["Value"]! == (item.IsChecked == true)) return;
                 _wpEffectData[item.Name]["Value"] = item.IsChecked == true;
                 OnEffectValueChanged(new EffectValueChanged<bool> { ControlName = "Checkbox", PropertyName = item.Name, Value = (bool)item.IsChecked });
             }
@@ -629,6 +645,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private void Textbox_TextChanged(object sender, TextChangedEventArgs e = default) {
             try {
                 var item = (TextBox)sender;
+                if (!CanUpdateParameter(item) || _wpEffectData![item.Name]!["Value"]!.ToString() == item.Text) return;
                 _wpEffectData[item.Name]["Value"] = item.Text;
                 OnEffectValueChanged(new EffectValueChanged<string> { ControlName = "Textbox", PropertyName = item.Name, Value = item.Text });
             }
@@ -639,7 +656,10 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
 
         #region value changed        
         private void OnEffectValueChanged<T>(EffectValueChanged<T> e) {
+            if (_rebuildingParameters) return;
+            ShowCustomPresetSelection();
             _effectService?.UpdateEffectValue(e);
+            ParametersChanged?.Invoke(this, EventArgs.Empty);
             if (e.PropertyName is nameof(UniverseCostumise.Atmosphere)
                 or nameof(UniverseCostumise.AtmosphereStyle)
                 or nameof(UniverseCostumise.AtmosphereIntensity)) {
@@ -672,6 +692,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
         private void Dispose(bool disposing) {
             if (!_isDisposed) {
                 if (disposing) {
+                    DetachPresetEvents();
                     _atmosphereButton?.Flyout?.Hide();
                     _parallaxButton?.Flyout?.Hide();
                     UnSubscribe();

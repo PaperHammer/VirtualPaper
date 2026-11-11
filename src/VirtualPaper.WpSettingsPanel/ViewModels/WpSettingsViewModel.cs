@@ -35,7 +35,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private bool? _favoritesOnly = false;
         public bool? FavoritesOnly {
             get => _favoritesOnly;
-            set { if (_favoritesOnly == value) return; _favoritesOnly = value; OnPropertyChanged(); BroadcastFilter(); }
+            set {
+                if (_favoritesOnly == value) return;
+                _favoritesOnly = value;
+                OnPropertyChanged();
+                UpdateTypeFilterLabel();
+                BroadcastFilter();
+            }
         }
         private string _tagKeyword = "";
         public string TagKeyword {
@@ -84,7 +90,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private string _typeFilterLabel = string.Empty;
-        /// <summary>类型过滤按钮显示文本，如"类型"或"类型 (2)"。</summary>
+        /// <summary>筛选按钮显示文本，包含已启用的类型、标签和收藏条件数量。</summary>
         public string TypeFilterLabel {
             get => _typeFilterLabel;
             private set { _typeFilterLabel = value; OnPropertyChanged(); }
@@ -262,7 +268,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void UpdateTypeFilterLabel() {
-            int count = TypeFilters.Count(f => f.IsSelected == true) + (string.IsNullOrWhiteSpace(TagKeyword) ? 0 : 1);
+            int count = TypeFilters.Count(f => f.IsSelected == true)
+                + (string.IsNullOrWhiteSpace(TagKeyword) ? 0 : 1) + (FavoritesOnly == true ? 1 : 0);
             string baseLabel = LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_All);
             TypeFilterLabel = count == 0 ? baseLabel : $"{baseLabel} ({count})";
         }

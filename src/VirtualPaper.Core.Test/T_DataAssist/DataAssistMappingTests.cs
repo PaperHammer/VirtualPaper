@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using VirtualPaper.Common;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Service.CommonModels;
@@ -52,6 +53,29 @@ public class DataAssistMappingTests {
         Assert.AreEqual(src.Rating, restored.Rating);
         Assert.AreEqual(src.FileSize, restored.FileSize);
         Assert.AreEqual(src.IsSingleRType, restored.IsSingleRType);
+        Assert.AreEqual(src.IsSubscribed, restored.IsSubscribed);
+    }
+
+    [TestMethod]
+    [DataRow(DateTimeKind.Utc)]
+    [DataRow(DateTimeKind.Local)]
+    [DataRow(DateTimeKind.Unspecified)]
+    public void BasicData_WireRoundtrip_PreservesCreationTime(DateTimeKind kind) {
+        var source = MakeBasicData();
+        source.CreatedTime = new DateTime(2026, 5, 18, 2, 32, 17, kind).AddTicks(1234);
+        var message = Grpc_WpBasicData.Parser.ParseFrom(DataAssist.BasicDataToGrpcData(source).ToByteArray());
+        var restored = DataAssist.GrpcToBasicData(message);
+
+        Assert.AreEqual(kind == DateTimeKind.Local ? source.CreatedTime.ToUniversalTime() : source.CreatedTime,
+            restored.CreatedTime);
+        Assert.AreEqual(DateTimeKind.Utc, restored.CreatedTime.Kind);
+    }
+
+    [TestMethod]
+    public void BasicData_LegacyMessageWithoutCreationTime_RemainsReadable() {
+        var message = DataAssist.BasicDataToGrpcData(MakeBasicData());
+        message.CreatedTime = null;
+        Assert.AreEqual(default(DateTime), DataAssist.GrpcToBasicData(message).CreatedTime);
     }
 
     [TestMethod]
@@ -502,6 +526,7 @@ public class DataAssistMappingTests {
         Rating = 4,
         FType = ftype,
         IsSingleRType = true,
+        IsSubscribed = true,
         Partition = "nature",
         Tags = "tag1,tag2",
         FolderName = "uid-test-001",

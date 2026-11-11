@@ -155,7 +155,11 @@ namespace VirtualPaper.Common.Utils.Files {
             return string.Format(pattern, max);
         }
 
-        public static async Task WriteAllTextAsync(string filePath, string content, Encoding encoding) {
+        public static Task WriteAllTextAsync(string filePath, string content, Encoding encoding) =>
+            WriteAllTextAsync(filePath, content, encoding, useFileReplace: false);
+
+        // File.Replace lets readers sharing deletion finish on the previous file snapshot.
+        public static async Task WriteAllTextAsync(string filePath, string content, Encoding encoding, bool useFileReplace) {
             var directory = Path.GetDirectoryName(filePath);
             if (string.IsNullOrEmpty(directory)) {
                 throw new ArgumentException("The file path must have a directory.", nameof(filePath));
@@ -164,7 +168,8 @@ namespace VirtualPaper.Common.Utils.Files {
             var tempPath = Path.Combine(directory, $".{Path.GetRandomFileName()}.tmp");
             try {
                 await File.WriteAllTextAsync(tempPath, content, encoding);
-                File.Move(tempPath, filePath, overwrite: true);
+                if (useFileReplace && File.Exists(filePath)) File.Replace(tempPath, filePath, null);
+                else File.Move(tempPath, filePath, overwrite: true);
             }
             finally {
                 if (File.Exists(tempPath)) {

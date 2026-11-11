@@ -284,6 +284,7 @@ message Grpc_WpBasicData {
 	string file_extension = 19;
 
 	bool is_subscribed = 20;
+	google.protobuf.Timestamp created_time = 21;
 }
 
 message Grpc_WpRuntimeData {

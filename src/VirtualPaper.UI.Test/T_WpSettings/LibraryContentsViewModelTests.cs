@@ -1,8 +1,11 @@
 using Moq;
+using System.Collections.Specialized;
 using VirtualPaper.Common;
+using VirtualPaper.DataAssistor;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Grpc.Client.Interfaces;
+using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.UI.Test.Utils;
@@ -249,33 +252,43 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         // ── IsFileInUseAsync ──────────────────────────────────────────
 
         [TestMethod]
-        public async Task IsFileInUseAsync_WhenLayoutContainsFolderPath_ReturnsTrue() {
+        public async Task IsFileInUseAsync_WhenPlayerIsRunningWithoutSavedLayout_ReturnsTrue() {
             var data = MakeWpData("uid-1", "Test", folderPath: @"C:\Wallpapers\uid-1");
-            var layout = MakeWallpaperLayout(@"C:\Wallpapers\uid-1");
-
-            _userSettingsClient.Setup(u => u.LoadAsync<List<IWallpaperLayout>>())
-                .Returns(Task.CompletedTask);
-            _userSettingsClient.Setup(u => u.WallpaperLayouts)
-                .Returns(new List<IWallpaperLayout> { layout });
+            _userSettingsClient.Setup(u => u.WallpaperLayouts).Returns([]);
+            _wpControlClient.Setup(w => w.GetRunMonitorByWallpaperAsync(data.WallpaperUid))
+                .ReturnsAsync(new Grpc_MonitorData { DeviceId = "active-display" });
 
             var result = await _vm.IsFileInUseAsync(data);
 
             Assert.IsTrue(result);
+            _wpControlClient.Verify(w => w.GetRunMonitorByWallpaperAsync(data.WallpaperUid), Times.Once);
         }
 
         [TestMethod]
-        public async Task IsFileInUseAsync_WhenLayoutDoesNotContainFolderPath_ReturnsFalse() {
+        public async Task IsFileInUseAsync_WhenSavedLayoutRemainsWithoutPlayer_ReturnsFalse() {
             var data = MakeWpData("uid-1", "Test", folderPath: @"C:\Wallpapers\uid-1");
-            var layout = MakeWallpaperLayout(@"C:\Wallpapers\other");
+            var layout = MakeWallpaperLayout(data.FolderPath);
 
             _userSettingsClient.Setup(u => u.LoadAsync<List<IWallpaperLayout>>())
                 .Returns(Task.CompletedTask);
             _userSettingsClient.Setup(u => u.WallpaperLayouts)
                 .Returns(new List<IWallpaperLayout> { layout });
+            _wpControlClient.Setup(w => w.GetRunMonitorByWallpaperAsync(data.WallpaperUid))
+                .ReturnsAsync((Grpc_MonitorData?)null);
 
             var result = await _vm.IsFileInUseAsync(data);
 
             Assert.IsFalse(result);
+            _userSettingsClient.Verify(u => u.LoadAsync<List<IWallpaperLayout>>(), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task IsFileInUseAsync_WhenLiveStateCannotBeRead_DoesNotTreatItAsUnused() {
+            var data = MakeWpData("uid-1", "Test");
+            _wpControlClient.Setup(w => w.GetRunMonitorByWallpaperAsync(data.WallpaperUid))
+                .ThrowsAsync(new IOException("Core is unavailable."));
+
+            await Assert.ThrowsExactlyAsync<IOException>(() => _vm.IsFileInUseAsync(data));
         }
 
         // ── LibLoadingStatus property ─────────────────────────────────
@@ -661,6 +674,46 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             await _vm.LoadMorePageAsync();
             Assert.HasCount(36, _vm.LibraryWallpapers);
             Assert.AreEqual(1, resets);
+        }
+
+        [TestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public async Task MetadataRefresh_KeepsCardPositionAndNewestImportsStillAppearFirst(bool legacyMessage) {
+            ReadyIndex();
+            var index = ConnectOrganizationIndex(Path.Combine(Path.GetTempPath(), "VirtualPaper.Tests", Guid.NewGuid().ToString("N"), "preferences.json"));
+            _wallpaperIndexService.Setup(service => service.Query(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<FilterContext>()))
+                .Returns((int offset, int limit, FilterContext filter) => index.Query(offset, limit, filter));
+            await _vm.ApplyFilterAsync(FilterContext.Empty);
+            var items = Enumerable.Range(0, 3).Select(i => {
+                var data = MakeWpData("item-" + i, "Wallpaper " + i);
+                data.CreatedTime = new DateTime(2026, 5, 18, 0, 0, 0, DateTimeKind.Utc).AddDays(-i);
+                return data;
+            }).ToArray();
+            await _vm.UpdateLibAsync(items);
+            string[] order = _vm.LibraryWallpapers.Select(item => item.WallpaperUid).ToArray();
+            var changes = new List<NotifyCollectionChangedAction>();
+            _vm.LibraryWallpapers.CollectionChanged += (_, args) => changes.Add(args.Action);
+            int resets = 0;
+            _vm.QueryReset += (_, _) => resets++;
+
+            var response = DataAssist.BasicDataToGrpcData(items[1]);
+            if (legacyMessage) response.CreatedTime = null;
+            var updated = DataAssist.GrpcToBasicData(response);
+            updated.AspectRatio = "729:512";
+            await _vm.UpdateLibAsync([updated]);
+
+            CollectionAssert.AreEqual(order, _vm.LibraryWallpapers.Select(item => item.WallpaperUid).ToArray());
+            Assert.AreSame(updated, _vm.LibraryWallpapers[1]);
+            Assert.AreEqual(items[1].CreatedTime, updated.CreatedTime);
+            CollectionAssert.AreEqual(new[] { NotifyCollectionChangedAction.Replace }, changes);
+            Assert.AreEqual(0, resets, "A metadata refresh must not reset scrolling.");
+
+            var imported = MakeWpData("new-import", "New wallpaper");
+            imported.CreatedTime = items[0].CreatedTime.AddDays(1);
+            await _vm.UpdateLibAsync([imported]);
+            CollectionAssert.AreEqual(new[] { imported.WallpaperUid }.Concat(order).ToArray(),
+                _vm.LibraryWallpapers.Select(item => item.WallpaperUid).ToArray());
         }
 
         private void ReadyIndex() {

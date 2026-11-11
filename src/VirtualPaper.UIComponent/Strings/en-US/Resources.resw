@@ -283,13 +283,13 @@ The file cannot be imported: </value>
     <value>Select wallpapers</value>
   </data>
   <data name="WpLib_DisplayControls" xml:space="preserve">
-    <value>Display controls</value>
+    <value>Screen controls</value>
   </data>
   <data name="Text_ShowOnDisk" xml:space="preserve">
     <value>Open in explorer</value>
   </data>
   <data name="Text_UpdateConfig" xml:space="preserve">
-    <value>Update config</value>
+    <value>Update basic info</value>
   </data>
   <data name="ScreenSaver_Add" xml:space="preserve">
     <value>Add app</value>
@@ -647,20 +647,21 @@ Author: PaperHammer</value>
   <data name="WpLib_TypeFilter_All" xml:space="preserve">
     <value>Filters</value>
   </data>
+  <data name="WpLib_TypeFilterHeading" xml:space="preserve"><value>Type</value></data>
   <data name="WpLib_CardType_Image" xml:space="preserve"><value>Image</value></data>
   <data name="WpLib_CardType_Gif" xml:space="preserve"><value>GIF</value></data>
   <data name="WpLib_CardType_Web" xml:space="preserve"><value>Web</value></data>
   <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
-    <value>Static Image</value>
+    <value>Image</value>
   </data>
   <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
-    <value>Dynamic Image</value>
+    <value>Animated image</value>
   </data>
   <data name="WpLib_TypeFilter_Video" xml:space="preserve">
     <value>Video</value>
   </data>
   <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
-    <value>Web Interactive</value>
+    <value>Web</value>
   </data>
   <data name="WpLib_Search_Placeholder" xml:space="preserve">
     <value>Search wallpapers...</value>
@@ -1947,7 +1948,8 @@ The following words cannot be used as usernames:
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Remind about unsaved intelligent results</value></data>
   <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Could not save a project copy. Choose an empty folder outside the current project. The original files have not been changed.&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>Favorites only</value></data>
-  <data name="WpLib_FavoritesLabel" xml:space="preserve"><value>Favorites</value></data>
+  <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Favorites and tags</value></data>
+  <data name="WpLib_FinishSelection" xml:space="preserve"><value>Done</value></data>
   <data name="WpLib_SearchExplain" xml:space="preserve"><value>Search titles, descriptions, authors and tags across your library</value></data>
   <data name="WpLib_SelectLoaded" xml:space="preserve"><value>Select all loaded wallpapers</value></data>
   <data name="WpLib_Sort" xml:space="preserve"><value>Sort wallpapers</value></data>
@@ -1956,7 +1958,7 @@ The following words cannot be used as usernames:
   <data name="WpLib_SortOldest" xml:space="preserve"><value>Oldest first</value></data>
   <data name="WpLib_SortTitle" xml:space="preserve"><value>Title (A–Z)</value></data>
   <data name="WpLib_SortAuthor" xml:space="preserve"><value>Author (A–Z)</value></data>
-  <data name="WpLib_TagFilter" xml:space="preserve"><value>Tag</value></data>
+  <data name="WpLib_TagFilter" xml:space="preserve"><value>Tags</value></data>
   <data name="WpLib_TagSearchPlaceholder" xml:space="preserve"><value>Type to match tags</value></data>
   <data name="WpLib_ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
   <data name="WpLib_Organize" xml:space="preserve"><value>Organize selected wallpapers</value></data>
@@ -1981,4 +1983,58 @@ The following words cannot be used as usernames:
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>Remove tags</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>Replace your tags</value></data>
   <data name="WpLib_Empty" xml:space="preserve"><value>No wallpapers found. Add wallpapers or change your filters.</value></data>
+  <data name="EffectPreset_Title" xml:space="preserve"><value>Effect presets</value></data>
+  <data name="EffectPreset_More" xml:space="preserve"><value>More library actions</value></data>
+  <data name="EffectPreset_Manage" xml:space="preserve"><value>Effect presets…</value></data>
+  <data name="EffectPreset_ManagerHint" xml:space="preserve"><value>Save stores this preset. Apply it from a wallpaper's effects panel.</value></data>
+  <data name="EffectPreset_List" xml:space="preserve"><value>Presets</value></data>
+  <data name="EffectPreset_UnsavedHint" xml:space="preserve"><value>Save this preset to keep your changes. Switching presets or closing discards them.</value></data>
+  <data name="EffectPreset_ReadOnly" xml:space="preserve"><value>Built-in · Read-only</value></data>
+  <data name="EffectPreset_ReadOnlyHint" xml:space="preserve"><value>Built-in presets are read-only. Use New from selected to create an editable copy.</value></data>
+  <data name="EffectPreset_Name" xml:space="preserve"><value>Preset name</value></data>
+  <data name="EffectPreset_Type" xml:space="preserve"><value>Wallpaper type</value></data>
+  <data name="EffectPreset_TypeHint" xml:space="preserve"><value>The wallpaper types this preset supports. Choosing a type does not apply the preset.</value></data>
+  <data name="EffectPreset_Source" xml:space="preserve"><value>Wallpaper</value></data>
+  <data name="EffectPreset_SelectWallpaper" xml:space="preserve"><value>Select a wallpaper</value></data>
+  <data name="EffectPreset_SourceSearch" xml:space="preserve"><value>Search name or author</value></data>
+  <data name="EffectPreset_SourceEmpty" xml:space="preserve"><value>No matching wallpapers</value></data>
+  <data name="EffectPreset_SourceConfig" xml:space="preserve"><value>Saved effects</value></data>
+  <data name="EffectPreset_FromWallpaper" xml:space="preserve"><value>Create from wallpaper</value></data>
+  <data name="EffectPreset_New" xml:space="preserve"><value>New (defaults)</value></data>
+  <data name="EffectPreset_Copy" xml:space="preserve"><value>New from selected</value></data>
+  <data name="EffectPreset_CopyHint" xml:space="preserve"><value>Create an editable copy of the selected preset, with a new name and ID.</value></data>
+  <data name="EffectPreset_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="EffectPreset_Discard" xml:space="preserve"><value>Discard edits</value></data>
+  <data name="EffectPreset_NewName" xml:space="preserve"><value>New preset</value></data>
+  <data name="EffectPreset_CopySuffix" xml:space="preserve"><value> (copy)</value></data>
+  <data name="EffectPreset_User" xml:space="preserve"><value>User preset</value></data>
+  <data name="EffectPreset_Actions" xml:space="preserve"><value>More preset actions</value></data>
+  <data name="EffectPreset_NameHint" xml:space="preserve"><value>Enter a preset name</value></data>
+  <data name="EffectPreset_SourceHint" xml:space="preserve"><value>Choose a wallpaper and create a preset from its saved effects.</value></data>
+  <data name="EffectPreset_BuiltIn" xml:space="preserve"><value>Built-in</value></data>
+  <data name="EffectPreset_Draft" xml:space="preserve"><value>New preset · Not saved</value></data>
+  <data name="EffectPreset_Modified" xml:space="preserve"><value>Unsaved changes</value></data>
+  <data name="EffectPreset_Save" xml:space="preserve"><value>Save preset</value></data>
+  <data name="EffectPreset_UseSource" xml:space="preserve"><value>Create preset</value></data>
+  <data name="EffectPreset_Saving" xml:space="preserve"><value>Saving changes…</value></data>
+  <data name="EffectPreset_DeleteConfirm" xml:space="preserve"><value>Delete this preset? Wallpapers already using these effects will keep their settings.</value></data>
+  <data name="EffectPreset_NoSource" xml:space="preserve"><value>This wallpaper has no saved effects yet. Save its effect settings once, or start with a new preset.</value></data>
+  <data name="EffectPreset_DuplicateName" xml:space="preserve"><value>A user preset with this name already exists. Choose another name.</value></data>
+  <data name="EffectPreset_LoadError" xml:space="preserve"><value>Could not load effect presets. Saved data has not been changed.</value></data>
+  <data name="EffectPreset_SaveError" xml:space="preserve"><value>Could not save effect presets. Check the name and storage permissions, then try again.</value></data>
+  <data name="EffectPreset_ApplyError" xml:space="preserve"><value>This preset could not be applied. Check its wallpaper type and effect values.</value></data>
+  <data name="EffectPreset_Selector" xml:space="preserve"><value>Effect preset</value></data>
+  <data name="EffectPreset_TrialHint" xml:space="preserve"><value>Try a preset here. Apply and close saves the effects to this wallpaper.</value></data>
+  <data name="EffectPreset_CancelTrial" xml:space="preserve"><value>Cancel preset preview</value></data>
+  <data name="EffectPreset_Custom" xml:space="preserve"><value>Custom settings</value></data>
+  <data name="EffectPreset_Default" xml:space="preserve"><value>Default effects</value></data>
+  <data name="EffectPreset_Natural" xml:space="preserve"><value>Natural</value></data>
+  <data name="EffectPreset_Soft" xml:space="preserve"><value>Soft colors</value></data>
+  <data name="EffectPreset_Snow" xml:space="preserve"><value>Light snow</value></data>
+  <data name="EffectPreset_Stardust" xml:space="preserve"><value>Stardust</value></data>
+  <data name="EffectPreset_Type_RUnknown" xml:space="preserve"><value>All wallpaper types</value></data>
+  <data name="EffectPreset_Type_RImage" xml:space="preserve"><value>Image / GIF</value></data>
+  <data name="EffectPreset_Type_RImage3D" xml:space="preserve"><value>3D image</value></data>
+  <data name="EffectPreset_Type_RVideo" xml:space="preserve"><value>Video</value></data>
+  <data name="EffectPreset_Type_RWeb" xml:space="preserve"><value>Web</value></data>
 </root>

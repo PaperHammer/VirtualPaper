@@ -171,7 +171,7 @@ namespace VirtualPaper.Grpc.Client {
             };
             Grpc_MonitorData? monitor_data = await _client.GetRunMonitorByWallpaperAsync(request);
 
-            return monitor_data;
+            return string.IsNullOrEmpty(monitor_data?.DeviceId) ? null : monitor_data;
         }
 
         public async Task SendMessageWallpaperAsync(string deviceId, IpcMessage msg) {

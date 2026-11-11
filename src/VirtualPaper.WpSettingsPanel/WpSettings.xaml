@@ -26,23 +26,117 @@
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="LibraryFavoriteFilterStyle" TargetType="ToggleButton">
+        <Style x:Key="ToolbarActionButtonStyle" TargetType="Button">
             <Setter Property="Height" Value="36"/>
-            <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="10 0"/>
+            <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Background" Value="{ThemeResource ControlFillColorDefaultBrush}"/>
             <Setter Property="BorderBrush" Value="{ThemeResource ControlStrokeColorDefaultBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <Style x:Key="ToolbarButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="36"/>
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
+        <SolidColorBrush x:Key="LibraryImportBackground" Color="{ThemeResource SystemAccentColor}" Opacity="0.08"/>
+        <SolidColorBrush x:Key="LibraryImportBorder" Color="{ThemeResource SystemAccentColor}" Opacity="0.32"/>
+        <Style x:Key="LibraryImportButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolbarActionButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource LibraryImportBackground}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LibraryImportBorder}"/>
+            <Setter Property="Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+        </Style>
+        <SolidColorBrush x:Key="LibraryFilterSelectedBackground" Color="{ThemeResource SystemAccentColor}" Opacity="0.10"/>
+        <SolidColorBrush x:Key="LibraryFilterSelectedPointerOverBackground" Color="{ThemeResource SystemAccentColor}" Opacity="0.14"/>
+        <SolidColorBrush x:Key="LibraryFilterSelectedPressedBackground" Color="{ThemeResource SystemAccentColor}" Opacity="0.18"/>
+        <Style x:Key="LibraryFilterItemStyle" TargetType="ToggleButton">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="8 0"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}"/>
+            <Setter Property="UseSystemFocusVisuals" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="ItemBackground" Background="Transparent" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <VisualStateManager.VisualStateGroups>
+                                <VisualStateGroup x:Name="CommonStates">
+                                    <VisualState x:Name="Normal"/>
+                                    <VisualState x:Name="PointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Pressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorTertiaryBrush}"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Disabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Opacity" Value="0.4"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <!-- ToggleButton combines check and pointer states. -->
+                                    <VisualState x:Name="Checked">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{StaticResource LibraryFilterSelectedBackground}"/>
+                                            <Setter Target="ItemContent.Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                            <Setter Target="ItemContent.FontWeight" Value="SemiBold"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="CheckedPointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{StaticResource LibraryFilterSelectedPointerOverBackground}"/>
+                                            <Setter Target="ItemContent.Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                            <Setter Target="ItemContent.FontWeight" Value="SemiBold"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="CheckedPressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{StaticResource LibraryFilterSelectedPressedBackground}"/>
+                                            <Setter Target="ItemContent.Foreground" Value="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                                            <Setter Target="ItemContent.FontWeight" Value="SemiBold"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="CheckedDisabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{StaticResource LibraryFilterSelectedBackground}"/>
+                                            <Setter Target="ItemContent.FontWeight" Value="SemiBold"/>
+                                            <Setter Target="ItemBackground.Opacity" Value="0.4"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="Indeterminate"/>
+                                    <VisualState x:Name="IndeterminatePointerOver">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="IndeterminatePressed">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorTertiaryBrush}"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                    <VisualState x:Name="IndeterminateDisabled">
+                                        <VisualState.Setters>
+                                            <Setter Target="ItemBackground.Opacity" Value="0.4"/>
+                                        </VisualState.Setters>
+                                    </VisualState>
+                                </VisualStateGroup>
+                            </VisualStateManager.VisualStateGroups>
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter x:Name="ItemContent" Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}" FontWeight="{TemplateBinding FontWeight}"
+                                    Foreground="{TemplateBinding Foreground}" VerticalAlignment="Center"/>
+                                <FontIcon x:Name="SelectedCheck" Grid.Column="1" Glyph="&#xE73E;" FontSize="12"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    AutomationProperties.AccessibilityView="Raw"
+                                    Visibility="{Binding IsChecked, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource VisibilityByValueConverter}}"/>
+                            </Grid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style x:Key="ToolbarIconStyle" TargetType="Path">
             <Setter Property="StrokeThickness" Value="1.6"/>
@@ -52,6 +146,28 @@
         </Style>
     </arc:ArcPage.Resources>
 
+    <Grid>
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="CompactLibraryToolbar">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="FilterBar.(Grid.ColumnSpan)" Value="2"/>
+                        <Setter Target="LibraryActionButtons.(Grid.Row)" Value="1"/>
+                        <Setter Target="LibraryActionButtons.(Grid.Column)" Value="0"/>
+                        <Setter Target="LibraryActionButtons.(Grid.ColumnSpan)" Value="2"/>
+                        <Setter Target="LibraryActionButtons.Margin" Value="0 8 0 0"/>
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="WideLibraryToolbar">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="1040"/>
+                    </VisualState.StateTriggers>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
     <arc:ArcPageHost x:Name="MainHost">
         <NavigationView x:Name="NvLocal" 
             Padding="10 0"
@@ -75,6 +191,10 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <Grid x:Name="LibraryToolbar" Margin="12 4 12 8" ColumnSpacing="16">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
@@ -83,7 +203,6 @@
                         <Grid x:Name="LibraryBrowseTools" ColumnSpacing="8" VerticalAlignment="Center">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" MinWidth="120" MaxWidth="260"/>
-                                <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
@@ -111,27 +230,32 @@
                                 </StackPanel>
                                 <DropDownButton.Flyout>
                                     <Flyout Placement="BottomEdgeAlignedLeft">
-                                      <StackPanel Spacing="12" MinWidth="220">
-                                        <ItemsControl
-                                        MinWidth="170"
-                                        ItemsSource="{x:Bind _viewModel.TypeFilters}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="localUtils:WpTypeFilterItem">
-                                                    <CheckBox
-                                                    MinWidth="150"
-                                                    MinHeight="32"
-                                                    Padding="4 0"
-                                                    VerticalContentAlignment="Center"
-                                                    IsChecked="{x:Bind IsSelected, Mode=TwoWay}">
-                                                        <TextBlock
-                                                        VerticalAlignment="Center"
-                                                        Text="{x:Bind Label, Mode=OneWay}"/>
-                                                    </CheckBox>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
-                                        <StackPanel Spacing="6">
-                                            <TextBlock l:Uids.Uid="Ui_WpLib_TagFilterLabel"/>
+                                      <StackPanel Spacing="8" Width="260">
+                                        <StackPanel Spacing="4">
+                                            <TextBlock Margin="8 0" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                l:Uids.Uid="Ui_WpLib_TypeFilterLabel"/>
+                                            <ItemsControl ItemsSource="{x:Bind _viewModel.TypeFilters}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="localUtils:WpTypeFilterItem">
+                                                        <ToggleButton Style="{StaticResource LibraryFilterItemStyle}"
+                                                            IsChecked="{x:Bind IsSelected, Mode=TwoWay}"
+                                                            ToolTipService.ToolTip="{x:Bind Label, Mode=OneWay}"
+                                                            AutomationProperties.Name="{x:Bind Label, Mode=OneWay}">
+                                                            <TextBlock Text="{x:Bind Label, Mode=OneWay}"
+                                                                TextTrimming="CharacterEllipsis"/>
+                                                        </ToggleButton>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <Border Height="1" Margin="8 0" Background="{ThemeResource ControlStrokeColorDefaultBrush}"/>
+                                        <ToggleButton Style="{StaticResource LibraryFilterItemStyle}"
+                                            IsChecked="{x:Bind _viewModel.FavoritesOnly, Mode=TwoWay}"
+                                            AutomationProperties.AutomationId="Library.FavoritesOnly"
+                                            l:Uids.Uid="Ui_WpLib_Favorites"/>
+                                        <StackPanel Spacing="6" Margin="8 0">
+                                            <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                l:Uids.Uid="Ui_WpLib_TagFilterLabel"/>
                                             <AutoSuggestBox Style="{StaticResource ArcSearchBoxStyle}"
                                                 ItemsSource="{x:Bind _viewModel.TagSuggestions, Mode=OneWay}"
                                                 Text="{x:Bind _viewModel.TagKeyword, Mode=OneWay}"
@@ -140,27 +264,15 @@
                                                 HorizontalAlignment="Stretch" MinWidth="220"
                                                 l:Uids.Uid="Ui_WpLib_TagFilter"/>
                                         </StackPanel>
-                                        <Button HorizontalAlignment="Stretch" Click="ClearLibraryFilters_Click"
+                                        <HyperlinkButton HorizontalAlignment="Left" Padding="8 0" MinHeight="28"
+                                            Click="ClearLibraryFilters_Click"
                                             l:Uids.Uid="Ui_WpLib_ClearFilters"/>
                                       </StackPanel>
                                     </Flyout>
                                 </DropDownButton.Flyout>
                             </DropDownButton>
 
-                            <ToggleButton Grid.Column="2" Style="{StaticResource LibraryFavoriteFilterStyle}"
-                                IsChecked="{x:Bind _viewModel.FavoritesOnly, Mode=TwoWay}"
-                                AutomationProperties.AutomationId="Library.FavoritesOnly" l:Uids.Uid="Ui_WpLib_Favorites">
-                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                    <Grid Width="16" Height="16">
-                                        <FontIcon Glyph="&#xE734;" FontSize="14"
-                                            Visibility="{x:Bind _viewModel.FavoritesOnly, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!True}"/>
-                                        <FontIcon Glyph="&#xE735;" FontSize="14"
-                                            Visibility="{x:Bind _viewModel.FavoritesOnly, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}"/>
-                                    </Grid>
-                                    <TextBlock FontSize="14" VerticalAlignment="Center" l:Uids.Uid="Ui_WpLib_FavoritesLabel"/>
-                                </StackPanel>
-                            </ToggleButton>
-                            <DropDownButton Grid.Column="3" MinWidth="110" Style="{StaticResource LibraryDropDownStyle}"
+                            <DropDownButton Grid.Column="2" MinWidth="110" Style="{StaticResource LibraryDropDownStyle}"
                                 AutomationProperties.AutomationId="Library.Sort" l:Uids.Uid="Ui_WpLib_Sort">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <FontIcon Glyph="&#xE8CB;" FontSize="14"/>
@@ -206,87 +318,51 @@
                                     <TextBlock l:Uids.Uid="Ui_Text_Delete_Text"/>
                                 </StackPanel>
                             </Button>
-                            <Button x:Name="OrganizeSelectedLibraryItems" Width="36" Height="36" Padding="0"
-                                IsEnabled="False" CornerRadius="8" l:Uids.Uid="Ui_WpLib_Organize">
-                                <FontIcon Glyph="&#xE8D4;" FontSize="16"/>
-                                <Button.Flyout>
+                            <DropDownButton x:Name="OrganizeSelectedLibraryItems" Style="{StaticResource LibraryDropDownStyle}"
+                                IsEnabled="False" l:Uids.Uid="Ui_WpLib_Organize">
+                                <TextBlock l:Uids.Uid="Ui_WpLib_OrganizeLabel"/>
+                                <DropDownButton.Flyout>
                                     <MenuFlyout Opening="OrganizationMenu_Opening">
                                         <MenuFlyoutItem Tag="AddFavorite" Click="OrganizeSelectedLibraryItems_Click" l:Uids.Uid="Ui_WpLib_AddFavorite"/>
                                         <MenuFlyoutItem Tag="RemoveFavorite" Click="OrganizeSelectedLibraryItems_Click" l:Uids.Uid="Ui_WpLib_RemoveFavorite"/>
                                         <MenuFlyoutSeparator/>
                                         <MenuFlyoutItem Tag="EditTags" Click="OrganizeSelectedLibraryItems_Click" l:Uids.Uid="Ui_WpLib_EditTags"/>
                                     </MenuFlyout>
-                                </Button.Flyout>
-                            </Button>
+                                </DropDownButton.Flyout>
+                            </DropDownButton>
                             <Button
-                                Width="36"
                                 Height="36"
-                                Padding="0"
-                                Background="Transparent"
-                                BorderThickness="0"
+                                Padding="10 0"
+                                AutomationProperties.AutomationId="Library.Selection.Done"
                                 Click="CancelLibrarySelection_Click"
-                                l:Uids.Uid="Ui_Text_Cancel_ToolTipService_ToolTip">
-                                <FontIcon Glyph="&#xE711;" FontSize="14"/>
-                            </Button>
+                                l:Uids.Uid="Ui_WpLib_FinishSelection"/>
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                    <StackPanel x:Name="LibraryActionButtons" Grid.Column="1" Orientation="Horizontal" Spacing="8"
                         HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <StackPanel x:Name="LibraryActionButtons" Orientation="Horizontal" Spacing="4">
-                            <Button x:Name="AddToLib" Style="{StaticResource ToolbarButtonStyle}"
-                                AutomationProperties.AutomationId="Library.Import"
-                                l:Uids.Uid="Ui_WpLib_AddWallpaper_ToolTipService_ToolTip__WpLib_AddWallpaper_AutomationProperties_Name"
-
-                                Command="{x:Bind _viewModel.AddToLibCommand}">
-                                <Viewbox Width="24" Height="24">
-                                    <Canvas Width="24" Height="24">
-                                        <Path Style="{StaticResource ToolbarIconStyle}"
-                                            Stroke="{Binding Foreground, ElementName=AddToLib}"
-                                            Data="M12,5 L12,19 M5,12 L19,12"/>
-                                    </Canvas>
-                                </Viewbox>
-                            </Button>
-                            <Button x:Name="ScreenFitButton" Style="{StaticResource ToolbarButtonStyle}"
-                                AutomationProperties.AutomationId="Library.ScreenFit"
-                                l:Uids.Uid="Ui_ScreenFit_Title_ToolTipService_ToolTip__ScreenFit_Title_AutomationProperties_Name"
-
-                                Click="ScreenFit_Click">
-                                <Viewbox Width="24" Height="24">
-                                    <Canvas Width="24" Height="24">
-                                        <Path Style="{StaticResource ToolbarIconStyle}"
-                                            Stroke="{Binding Foreground, ElementName=ScreenFitButton}"
-                                            Data="M9,4 L4,4 L4,9 M15,4 L20,4 L20,9 M4,15 L4,20 L9,20 M20,15 L20,20 L15,20 M8,15 L11,12 L13,14 L16,10"/>
-                                    </Canvas>
-                                </Viewbox>
-                            </Button>
-                            <ToggleButton x:Name="SelectLibraryItems"
-                                Width="36" Height="36" Padding="0" CornerRadius="8"
-                                Background="Transparent" BorderThickness="0"
-                                VerticalAlignment="Center"
-                                l:Uids.Uid="Ui_WpLib_SelectItems_ToolTipService_ToolTip__WpLib_SelectItems_AutomationProperties_Name"
-
-                                Click="SelectLibraryItems_Click">
-                                <Viewbox Width="24" Height="24">
-                                    <Canvas Width="24" Height="24">
-                                        <Path Style="{StaticResource ToolbarIconStyle}"
-                                            Stroke="{Binding Foreground, ElementName=SelectLibraryItems}"
-                                            Data="M4,6 L6,8 L9,4 M12,6 L20,6 M4,15 L6,17 L9,13 M12,15 L20,15 M12,20 L20,20"/>
-                                    </Canvas>
-                                </Viewbox>
-                            </ToggleButton>
-                        </StackPanel>
-                        <Button x:Name="ControlCenter" Style="{StaticResource ToolbarButtonStyle}"
+                        <Button x:Name="AddToLib" Style="{StaticResource LibraryImportButtonStyle}"
+                            AutomationProperties.AutomationId="Library.Import"
+                            l:Uids.Uid="Ui_WpLib_AddWallpaper_ToolTipService_ToolTip__WpLib_AddWallpaper_AutomationProperties_Name"
+                            Command="{x:Bind _viewModel.AddToLibCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <FontIcon Glyph="&#xE710;" FontSize="14"/>
+                                <TextBlock l:Uids.Uid="Ui_WpLib_AddWallpaperLabel"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="ControlCenter" Style="{StaticResource ToolbarActionButtonStyle}"
                             AutomationProperties.AutomationId="Library.DisplayControls"
-                            l:Uids.Uid="Ui_WpLib_DisplayControls_ToolTipService_ToolTip__WpLib_DisplayControls_AutomationProperties_Name"
-                            >
-                            <Viewbox Width="24" Height="24">
-                                <Canvas Width="24" Height="24">
-                                    <Path Style="{StaticResource ToolbarIconStyle}"
-                                        Stroke="{Binding Foreground, ElementName=ControlCenter}"
-                                        Data="M4,4 L20,4 Q21,4 21,5 L21,15 Q21,16 20,16 L4,16 Q3,16 3,15 L3,5 Q3,4 4,4 Z M12,16 L12,20 M8,20 L16,20"/>
-                                </Canvas>
-                            </Viewbox>
+                            l:Uids.Uid="Ui_WpLib_DisplayControls_ToolTipService_ToolTip__WpLib_DisplayControls_AutomationProperties_Name">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <Viewbox Width="18" Height="18">
+                                    <Canvas Width="24" Height="24">
+                                        <Path Style="{StaticResource ToolbarIconStyle}"
+                                            Stroke="{Binding Foreground, ElementName=ControlCenter}"
+                                            Data="M4,4 L20,4 Q21,4 21,5 L21,15 Q21,16 20,16 L4,16 Q3,16 3,15 L3,5 Q3,4 4,4 Z M12,16 L12,20 M8,20 L16,20"/>
+                                    </Canvas>
+                                </Viewbox>
+                                <TextBlock l:Uids.Uid="Ui_WpLib_DisplayControlsLabel"/>
+                            </StackPanel>
                             <Button.Flyout>
                                 <Flyout Opening="Flyout_Opening">
                                     <Flyout.FlyoutPresenterStyle>
@@ -390,6 +466,23 @@
                                 </Flyout>
                             </Button.Flyout>
                         </Button>
+                        <Button Style="{StaticResource ToolbarActionButtonStyle}"
+                            AutomationProperties.AutomationId="Library.More" l:Uids.Uid="Ui_EffectPreset_More">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <TextBlock l:Uids.Uid="Ui_WpLib_MoreLabel"/>
+                                <FontIcon Glyph="&#xE712;" FontSize="16"/>
+                            </StackPanel>
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem AutomationProperties.AutomationId="Library.SelectItems"
+                                        Click="SelectLibraryItems_Click" l:Uids.Uid="Ui_WpLib_SelectItems_Menu"/>
+                                    <MenuFlyoutSeparator/>
+                                    <MenuFlyoutItem AutomationProperties.AutomationId="Library.ScreenFit"
+                                        Click="ScreenFit_Click" l:Uids.Uid="Ui_ScreenFit_Menu"/>
+                                    <MenuFlyoutItem Click="ManageEffectPresets_Click" l:Uids.Uid="Ui_EffectPreset_Manage"/>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                        </Button>
                     </StackPanel>
                 </Grid>
 
@@ -398,4 +491,5 @@
             </Grid>
         </NavigationView>
     </arc:ArcPageHost>
+    </Grid>
 </arc:ArcPage>

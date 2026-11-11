@@ -29,7 +29,7 @@ internal static class ScreenFitTests {
         });
         string selectedMonitor = string.Empty, containPlan = string.Empty, coverPlan = string.Empty;
         await Task.Run(() => {
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit"));
+            OpenScreenFit(root);
             ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true);
             Check(!Primary(root).Current.IsEnabled, "Screen fit allowed applying without a selected image");
             SelectImage(ui, ownerWindow, root, source);
@@ -49,7 +49,7 @@ internal static class ScreenFitTests {
         await AppProcessSession.WaitForJsonAsync(Constants.CommonPaths.WallpaperLayoutPath, json => json.AsArray().Count == 0);
 
         await Task.Run(() => {
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit"));
+            OpenScreenFit(root);
             ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true);
             Check(!Primary(root).Current.IsEnabled, "Reopened screen fit retained a cancelled source");
             SelectImage(ui, ownerWindow, root, source);
@@ -97,7 +97,7 @@ internal static class ScreenFitTests {
             root = AutomationElement.FromHandle(ownerWindow);
             ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Library"));
             WallpaperLibraryTests.FindItem(root, data.WallpaperUid);
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit"));
+            OpenScreenFit(root);
             ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true);
             Check(!Primary(root).Current.IsEnabled, "Current wallpaper preview incorrectly enabled applying without a source");
             ApplicationUi.Find(root, "ScreenFit.Preview", visible: true);
@@ -128,6 +128,11 @@ internal static class ScreenFitTests {
         context.Evidence["DesktopWindowHandle"] = desktopWindow.ToInt64();
         context.Evidence["PreviewCancelApplyAndReopenVerified"] = true;
         context.Evidence["SuperResolutionInferenceTested"] = false;
+    }
+
+    private static void OpenScreenFit(AutomationElement root) {
+        ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.More", visible: true));
+        ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit", visible: true));
     }
 
     private static AutomationElement Primary(AutomationElement root) => root.FindFirst(TreeScope.Descendants,

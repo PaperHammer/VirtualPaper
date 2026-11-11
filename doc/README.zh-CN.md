@@ -11,6 +11,7 @@
 - [项目概览](project-overview.md)：产品范围、技术栈、主要进程和源码模块。
 - [架构](architecture.md)：Core、依赖方向、壁纸运行时和数据流。
 - [开发与构建](development-guide.md)：环境要求、构建、测试和建议的阅读顺序。
+- [微软商店 MSIX](../Msix/README.zh-CN.md)：Core 入口打包、本地预览和商店身份参数。
 - [WebBackdrop](webbackdrop.md)：Web 壁纸项目格式、编辑器、文件树、预览和保存。
 
 ## 源码入口

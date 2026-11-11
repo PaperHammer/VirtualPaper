@@ -38,6 +38,7 @@ jobs:
       head_sha: ${{ steps.pr.outputs.head_sha }}
       test_sha: ${{ steps.pr.outputs.test_sha }}
       base_sha: ${{ steps.pr.outputs.base_sha }}
+      msstore_enabled: ${{ steps.pr.outputs.msstore_enabled }}
       version_label: ${{ steps.pr.outputs.version_label }}
     steps:
     - name: Check PR rules and snapshot
@@ -49,6 +50,7 @@ jobs:
           if (!Number.isSafeInteger(number) || number <= 0) throw new Error('Enter a positive PR number.');
           const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: number });
           core.setOutput('head_sha', pr.head.sha);
+          core.setOutput('msstore_enabled', pr.labels.some(label => label.name === 'channel:msstore').toString());
           const status = state => github.rest.repos.createCommitStatus({
             ...context.repo, sha: pr.head.sha, context: 'pre-merge-check', state,
             description: state === 'pending' ? 'Manual pre-merge checks are running' : 'PR policy validation failed',
@@ -79,9 +81,8 @@ jobs:
             await status('failure');
             throw error;
           }
-
   build-solution:
-    name: Build Solution
+    name: Build Release
     runs-on: windows-latest
     needs: validate-pr
     steps:
@@ -110,7 +111,7 @@ jobs:
         key: nuget-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props') }}
         restore-keys: nuget-${{ runner.os }}-
 
-    - name: Build solution
+    - name: Build Release solution
       # 使用 msbuild 而非 dotnet build，确保 .sln 的 Platform Mapping 生效：
       # VirtualPaper.UI（WinAppSDK）在 .sln 中映射为 Release|x64，
       # dotnet build 不读取此映射，msbuild 才能正确路由到 x64 构建。
@@ -144,11 +145,93 @@ jobs:
           test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj
           test/VirtualPaper.InstallerTest/bin/Release/
 
-  # Build once; installer smoke and real UI acceptance run independently after project tests.
+  # Build once, package both formats, then require all project tests before channel acceptance.
+  package-exe:
+    name: Package EXE
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution]
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+    - name: Download build output
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: build-output
+        path: .
+    - name: Install Inno Setup 6.7.1
+      run: choco install innosetup --version=6.7.1 --no-progress -y
+    - name: Package EXE
+      env:
+        SOURCE_SHA: ${{ needs.validate-pr.outputs.test_sha }}
+      run: ./.github/scripts/New-CIExePackage.ps1 -SourceSha $env:SOURCE_SHA
+    - name: Upload package-exe
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: package-exe
+        path: dist/exe/
+        if-no-files-found: error
+        retention-days: 30
+  package-msix:
+    name: Package MSIX
+    runs-on: windows-latest
+    needs: [validate-pr, build-solution]
+    steps:
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ needs.validate-pr.outputs.test_sha }}
+        persist-credentials: false
+    - name: Download build output
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: build-output
+        path: .
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v6.1.0
+      with:
+        dotnet-version: 8.0.x
+    - name: Package signed MSIX
+      env:
+        SOURCE_SHA: ${{ needs.validate-pr.outputs.test_sha }}
+      run: ./.github/scripts/New-CIMsixPackage.ps1 -SourceSha $env:SOURCE_SHA
+    - name: Upload package-msix
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: package-msix
+        path: |
+          dist/msix/*.msix
+          dist/msix/*.msixupload
+          dist/msix/*.appxupload
+          dist/msix/package.json
+          dist/msix/acceptance.cer
+        if-no-files-found: error
+        retention-days: 30
+  packages-ready:
+    name: Packages Ready
+    runs-on: ubuntu-latest
+    needs: [validate-pr, build-solution, package-exe, package-msix]
+    if: always() && !cancelled()
+    steps:
+    - name: Require selected packages
+      env:
+        JOB_RESULTS: ${{ toJSON(needs) }}
+        MSIX_ENABLED: 'true'
+      run: |
+        $jobs = $env:JOB_RESULTS | ConvertFrom-Json -AsHashtable
+        foreach ($name in @('validate-pr', 'build-solution', 'package-exe')) {
+          if ($jobs[$name].result -ne 'success') { throw "Required prerequisite failed: $name" }
+        }
+        $expected = if ($env:MSIX_ENABLED -eq 'true') { 'success' } else { 'skipped' }
+        if ($jobs['package-msix'].result -ne $expected) { throw 'MSIX packaging did not match channel selection.' }
   test-artifacts:
     name: Artifact Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -159,11 +242,11 @@ jobs:
       uses: ./test/actions/run-project
       with:
         job-id: test-artifacts
-
+        require-complete-execution: 'true'
   test-core:
     name: Core Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -174,11 +257,11 @@ jobs:
       uses: ./test/actions/run-project
       with:
         job-id: test-core
-
+        require-complete-execution: 'true'
   test-ui-logic:
     name: UI Logic Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -204,11 +287,11 @@ jobs:
       uses: ./test/actions/run-project
       with:
         job-id: test-ui-logic
-
+        require-complete-execution: 'true'
   test-images:
     name: Static Image Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -219,11 +302,11 @@ jobs:
       uses: ./test/actions/run-project
       with:
         job-id: test-images
-
+        require-complete-execution: 'true'
   test-web-backdrop:
     name: Web Backdrop Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -234,11 +317,11 @@ jobs:
       uses: ./test/actions/run-project
       with:
         job-id: test-web-backdrop
-
+        require-complete-execution: 'true'
   test-ui-components:
     name: UI Component Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -249,11 +332,11 @@ jobs:
       uses: ./test/actions/run-project
       with:
         job-id: test-ui-components
-
+        require-complete-execution: 'true'
   test-ml:
     name: ML Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -265,11 +348,11 @@ jobs:
       with:
         job-id: test-ml
         include-ml-integration: ${{ inputs.include_ml_integration }}
-
+        require-complete-execution: 'true'
   test-shader:
     name: Shader Tests
     runs-on: windows-latest
-    needs: [validate-pr, build-solution]
+    needs: [validate-pr, build-solution, packages-ready]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -280,122 +363,23 @@ jobs:
       uses: ./test/actions/run-project
       with:
         job-id: test-shader
-
-  test-installer-smoke:
-    name: Installer Smoke
-    runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
-    timeout-minutes: 30
-
-    steps:
-    - name: Check out source
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ needs.validate-pr.outputs.test_sha }}
-        persist-credentials: false
-
-    - name: Download build output
-      uses: actions/download-artifact@v8.0.2
-      with:
-        name: build-output
-        path: .
-
-    - name: Download prerequisite reports
-      uses: actions/download-artifact@v8.0.2
-      with:
-        pattern: test-results-*
-        path: PrerequisiteTestResults/
-
-    - name: Validate prerequisite reports
-      run: |
-        . ./test/TestReportSupport.ps1
-        Get-ProjectTestReports -Root PrerequisiteTestResults | Format-Table Total, Executed, Passed
-
-    - name: Set up .NET
-      uses: actions/setup-dotnet@v6.1.0
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Install Inno Setup 6.7.1
-      run: choco install innosetup --version=6.7.1 --no-progress -y
-
-    - name: Compile installer
-      run: |
-        & "${env:ProgramFiles(x86)}/Inno Setup 6/ISCC.exe" InnoSetup/setup.iss
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-    - name: Upload test installer
-      uses: actions/upload-artifact@v7.0.2
-      with:
-        overwrite: true
-        name: test-installer-package
-        path: InnoSetup/Output/*.exe
-        if-no-files-found: error
-        retention-days: 7
-
-    - name: Run installer smoke
-      shell: pwsh
-      run: |
-        $installers = @(Get-ChildItem -LiteralPath InnoSetup/Output -Filter '*.exe' -File)
-        if ($installers.Count -ne 1) { throw 'Expected exactly one installer.' }
-        ./test/Run-InstallerTests.ps1 -InstallerPath $installers[0].FullName -NoBuild `
-          -ReportPath TestResults/Installer/installer-results.json
-
-    - name: Upload installer results
-      uses: actions/upload-artifact@v7.0.2
-      if: always()
-      with:
-        overwrite: true
-        name: test-results-installer
-        path: TestResults/Installer/
-        if-no-files-found: warn
-        retention-days: 7
-
-  test-ui-operation:
-    name: Real UI Acceptance
-    runs-on: windows-latest
-    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
-    timeout-minutes: 25
-    # This job contains only optional UI acceptance; installer smoke is separate.
-    continue-on-error: true
-    outputs:
-      result: ${{ steps.ui-tests.outcome }}
-    steps:
-    - name: Check out source
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ needs.validate-pr.outputs.test_sha }}
-        persist-credentials: false
-
-    - name: Download build output
-      uses: actions/download-artifact@v8.0.2
-      with:
-        name: build-output
-        path: .
-
-    - name: Set up .NET
-      uses: actions/setup-dotnet@v6.1.0
-      with:
-        dotnet-version: 8.0.x
-
-    - name: Run real UI acceptance
-      id: ui-tests
-      shell: pwsh
-      run: |
-        ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
-          -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
-          -ReportPath TestResults/UIOperation/ui-operation-results.json
-
-    - name: Upload WinUI results
-      if: always()
-      uses: actions/upload-artifact@v7.0.2
-      with:
-        overwrite: true
-        name: test-results-ui-operation
-        path: TestResults/UIOperation/
-        if-no-files-found: warn
-        retention-days: 7
-
+        require-complete-execution: 'true'
+  test-exe-acceptance:
+    name: EXE Installed Acceptance
+    needs: [validate-pr, build-solution, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    uses: ./.github/workflows/package-acceptance.yml
+    with:
+      channel: exe
+      source-sha: ${{ needs.validate-pr.outputs.test_sha }}
+      build-artifact: build-output
+  test-msix-acceptance:
+    name: MSIX Installed Acceptance
+    needs: [validate-pr, build-solution, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    uses: ./.github/workflows/package-acceptance.yml
+    with:
+      channel: msix
+      source-sha: ${{ needs.validate-pr.outputs.test_sha }}
+      build-artifact: build-output
   summarize-tests:
     permissions:
       contents: read
@@ -403,37 +387,51 @@ jobs:
       statuses: write
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [validate-pr, build-solution, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-installer-smoke, test-ui-operation]
+    needs: [validate-pr, build-solution, package-exe, package-msix, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-exe-acceptance, test-msix-acceptance]
     if: always() && needs.validate-pr.result == 'success'
-
+    outputs:
+      ui_outcome: ${{ steps.reports.outputs.ui_outcome }}
     steps:
     - name: Check out source
       uses: actions/checkout@v4
       with:
         ref: ${{ needs.validate-pr.outputs.test_sha }}
         persist-credentials: false
-
     - name: Download test reports
       uses: actions/download-artifact@v8.0.2
       with:
         pattern: test-results-*
         path: TestResults/
-
-    - name: Summarize test reports
+    - name: Download package-exe
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: package-exe
+        path: PackageArtifacts/exe
+    - name: Download package-msix
+      if: always() && needs.package-msix.result == 'success'
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: package-msix
+        path: PackageArtifacts/msix
+    - name: Summarize package acceptance
       id: reports
-      env:
-        UI_JOB_RESULT: ${{ needs.test-ui-operation.outputs.result || needs.test-ui-operation.result }}
-      run: ./test/Summarize-TestResults.ps1 -Root TestResults -AllowUIFailure -UIJobResult $env:UI_JOB_RESULT
-
-    - name: Upload report bundle
-      uses: actions/upload-artifact@v7.0.2
       if: always()
+      env:
+        JOB_RESULTS: ${{ toJSON(needs) }}
+        SOURCE_SHA: ${{ needs.validate-pr.outputs.test_sha }}
+        MSIX_ENABLED: 'true'
+      run: |
+        ./test/Summarize-PipelineTests.ps1 -Root TestResults -ArtifactsRoot PackageArtifacts `
+          -SourceSha $env:SOURCE_SHA -JobResultsJson $env:JOB_RESULTS -MsixEnabled:($env:MSIX_ENABLED -eq 'true')
+    - name: Upload test summary
+      if: always()
+      uses: actions/upload-artifact@v7.0.2
       with:
         overwrite: true
         name: test-summary-${{ needs.validate-pr.outputs.head_sha }}
         path: TestResults/
+        if-no-files-found: warn
         retention-days: 30
-
     - name: Update PR status
       if: always()
       uses: actions/github-script@v7
@@ -441,31 +439,28 @@ jobs:
         REPORT_JOB_STATUS: ${{ job.status }}
         JOB_RESULTS: ${{ toJSON(needs) }}
         UI_OUTCOME: ${{ steps.reports.outputs.ui_outcome }}
-        INSTALLER_OUTCOME: ${{ steps.reports.outputs.installer_outcome }}
       with:
         script: |
           const { data: pr } = await github.rest.pulls.get({
             ...context.repo, pull_number: Number(context.payload.inputs.pr_number)
           });
           const passed = process.env.REPORT_JOB_STATUS === 'success' &&
-            Object.entries(JSON.parse(process.env.JOB_RESULTS)).filter(([name]) => name !== 'test-ui-operation').every(([, job]) => job.result === 'success') &&
-            ['Passed', 'Skipped', 'Failed'].includes(process.env.UI_OUTCOME);
+            Object.values(JSON.parse(process.env.JOB_RESULTS)).every(job => job.result === 'success') &&
+            process.env.UI_OUTCOME === 'Passed';
           let state = passed ? 'success' : 'failure';
-          let description = !passed ? 'Required checks failed or results missing [FAILED]' :
-            process.env.UI_OUTCOME === 'Failed' ? 'Required checks passed; UI acceptance failed [WARNING]' :
-            process.env.UI_OUTCOME === 'Skipped' ?
-              'Required checks passed; UI acceptance skipped [SKIPPED]' : 'All tests passed [OK]';
+          let description = passed ? 'All required checks passed [OK]' : 'Required checks failed or results missing [FAILED]';
           const head = '${{ needs.validate-pr.outputs.head_sha }}';
           const selected = pr.labels.map(label => label.name).filter(name =>
             ['version:major', 'version:minor', 'version:build', 'version:revision'].includes(name));
-          if (pr.state !== 'open' || pr.head.sha !== head ||
+          if (pr.labels.some(label => label.name === 'channel:msstore') !== ('${{ needs.validate-pr.outputs.msstore_enabled }}' === 'true') ||
+              pr.state !== 'open' || pr.head.sha !== head ||
               pr.base.sha !== '${{ needs.validate-pr.outputs.base_sha }}' ||
               (pr.base.ref === 'main' && (pr.head.ref !== 'dev' || selected.length !== 1 || selected[0] !== '${{ needs.validate-pr.outputs.version_label }}')) ||
               !((pr.base.ref === 'main' && pr.head.ref === 'dev') || (pr.base.ref === 'dev' && !['main', 'dev'].includes(pr.head.ref)))) {
             state = 'failure';
             description = 'PR changed during this run; manually rerun Pre-merge Check';
           }
-          const marker = pr.base.ref === 'main' ? `PR #${context.payload.inputs.pr_number} | ${{ needs.validate-pr.outputs.version_label }}` : `PR #${context.payload.inputs.pr_number}`;
+          const marker = pr.base.ref === 'main' ? `PR #${context.payload.inputs.pr_number} | ${{ needs.validate-pr.outputs.version_label }} | msstore:${{ needs.validate-pr.outputs.msstore_enabled }}` : `PR #${context.payload.inputs.pr_number}`;
           description = `[${marker}] ${description}`;
           await github.rest.repos.createCommitStatus({
             ...context.repo, sha: head, state, description,

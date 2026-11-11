@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap desktop rescap">
+  <!-- Local preview identity. Build-Msix.ps1 supplies the Partner Center identity for Store builds. -->
+  <Identity Name="PaperHammer.VirtualPaper.Preview" Publisher="CN=PaperHammer" Version="1.0.0.0" ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>Virtual Paper</DisplayName>
+    <PublisherDisplayName>PaperHammer</PublisherDisplayName>
+    <Logo>MsixAssets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+    <PackageDependency Name="Microsoft.VCLibs.140.00.UWPDesktop" MinVersion="14.0.30704.0" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" />
+  </Dependencies>
+  <Resources>
+    <Resource Language="en-US" />
+    <Resource Language="zh-CN" />
+  </Resources>
+  <Applications>
+    <Application Id="App" Executable="VirtualPaper.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="Virtual Paper" Description="Virtual Paper desktop wallpapers"
+                          BackgroundColor="transparent" Square150x150Logo="MsixAssets\Square150x150Logo.png"
+                          Square44x44Logo="MsixAssets\Square44x44Logo.png" />
+      <Extensions>
+        <desktop:Extension Category="windows.startupTask" Executable="VirtualPaper.exe" EntryPoint="Windows.FullTrustApplication">
+          <desktop:StartupTask TaskId="AppStartup" Enabled="false" DisplayName="Virtual Paper" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+    <DeviceCapability Name="location" />
+  </Capabilities>
+</Package>

@@ -11,6 +11,7 @@ The detailed guides linked below are currently in Chinese.
 - [Project overview](project-overview.md): product scope, technology stack, main processes, and source modules.
 - [Architecture](architecture.md): Core, dependency direction, wallpaper runtimes, and data flows.
 - [Development and builds](development-guide.md): prerequisites, builds, tests, and a suggested reading order.
+- [Microsoft Store MSIX](../Msix/README.md): Core-first packaging, local preview and Store identity parameters.
 - [WebBackdrop](webbackdrop.md): Web wallpaper project formats, the editor, file tree, preview, and saving.
 
 ## Source entry points

@@ -1,0 +1,10 @@
+<Project>
+  <!-- Redirect only the process being published. Referenced libraries continue
+       to use the complete solution's Release outputs and platform mappings. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == '$(MsixPublishProject)'">
+    <OutputPath>$(MsixPublishOutputRoot)\$(MSBuildProjectName)\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <TargetDir>$(OutDir)</TargetDir>
+    <TargetPath>$(TargetDir)$(TargetFileName)</TargetPath>
+  </PropertyGroup>
+</Project>

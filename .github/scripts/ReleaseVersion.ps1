@@ -56,6 +56,21 @@ function Invoke-ReleaseGit {
     return $output
 }
 
+function Resolve-ReleaseMainConflicts {
+    # -X theirs handles content conflicts. Resolve remaining file-state conflicts to main,
+    # including main deleting a file that dev modified, without touching other dev paths.
+    $paths = ((@(Invoke-ReleaseGit @('diff', '--name-only', '--diff-filter=U', '-z'))) -join "`n").Split([char]0, [StringSplitOptions]::RemoveEmptyEntries)
+    foreach ($path in $paths) {
+        if (Invoke-ReleaseGit @('--literal-pathspecs', 'ls-tree', '-z', 'main', '--', $path)) {
+            Invoke-ReleaseGit @('--literal-pathspecs', 'restore', '--source=main', '--staged', '--worktree', '--', $path) | Out-Host
+        } else {
+            Invoke-ReleaseGit @('--literal-pathspecs', 'rm', '-f', '--', $path) | Out-Host
+        }
+        Write-Host "[OK] Merge conflict resolved using main: $path"
+    }
+    return $paths.Count
+}
+
 function Sync-ReleaseVersion {
     param(
         [Parameter(Mandatory)][string]$Root,
@@ -66,6 +81,8 @@ function Sync-ReleaseVersion {
     Push-Location -LiteralPath $Root
     try {
         if (Invoke-ReleaseGit @('status', '--porcelain')) { throw 'Version sync requires a clean checkout.' }
+        $mergeState = Invoke-ReleaseGit @('rev-parse', '--git-path', 'MERGE_HEAD')
+        if (Test-Path -LiteralPath $mergeState) { throw 'Version sync cannot start during an existing merge.' }
         Invoke-ReleaseGit @('fetch', 'origin', 'main', 'dev') | Out-Host
         $message = "[Github CI] chore: bump version to $Version"
         $mainSha = Invoke-ReleaseGit @('rev-parse', 'origin/main')
@@ -79,26 +96,34 @@ function Sync-ReleaseVersion {
                 throw 'The existing bump commit changed files outside the version sync scope.'
             }
         }
+        # The bump is a single main commit; dev receives that exact commit through a merge.
         Invoke-ReleaseGit @('checkout', '-B', 'main', 'origin/main') | Out-Host
         Set-ReleaseVersion -Root $Root -Version $Version -ExpectedVersion $ExpectedVersion
         if (Invoke-ReleaseGit @('status', '--porcelain')) {
             Invoke-ReleaseGit @('add', 'src/VirtualPaper/VirtualPaper.csproj', 'InnoSetup/setup.iss', 'README.md') | Out-Host
             Invoke-ReleaseGit @('commit', '-m', $message) | Out-Host
         }
-
         # Share main's release history instead of creating a second version commit on dev.
+        $versionSha = Invoke-ReleaseGit @('rev-parse', 'main')
         Invoke-ReleaseGit @('checkout', '-B', 'dev', 'origin/dev') | Out-Host
         try {
-            Invoke-ReleaseGit @('merge', '--no-edit', 'main') | Out-Host
-        }
-        catch {
-            if (Test-Path -LiteralPath (Invoke-ReleaseGit @('rev-parse', '--git-path', 'MERGE_HEAD'))) {
-                Invoke-ReleaseGit @('merge', '--abort') | Out-Host
+            try {
+                Invoke-ReleaseGit @('merge', '--no-ff', '--no-commit', '-X', 'theirs', 'main') | Out-Host
+            } catch {
+                # Only an actual conflicted merge may be completed automatically.
+                if (-not (Test-Path -LiteralPath $mergeState) -or (Resolve-ReleaseMainConflicts) -eq 0) { throw }
             }
-            throw
+            if (Test-Path -LiteralPath $mergeState) {
+                Invoke-ReleaseGit @('commit', '-m', "[Github CI] chore: merge main into dev after version $Version") | Out-Host
+            }
+        } catch {
+            $mergeError = $_
+            if (Test-Path -LiteralPath $mergeState) { Invoke-ReleaseGit @('merge', '--abort') | Out-Host }
+            throw $mergeError
         }
-        # Prepare both refs locally; a conflict or rejected atomic push changes neither remote ref.
+        Invoke-ReleaseGit @('merge-base', '--is-ancestor', $versionSha, 'dev') | Out-Host
+        # Prepare both histories first, then advance both remote refs or neither. Never force-push.
         Invoke-ReleaseGit @('push', '--atomic', 'origin', 'main', 'dev') | Out-Host
-        return Invoke-ReleaseGit @('rev-parse', 'main')
+        return $versionSha
     } finally { Pop-Location }
 }

@@ -1,0 +1,142 @@
+name: Package Acceptance
+
+on:
+  workflow_call:
+    inputs:
+      channel:
+        description: 'Package channel: exe or msix'
+        required: true
+        type: string
+      source-sha:
+        description: 'Frozen source SHA used by the package and shared build'
+        required: true
+        type: string
+      build-artifact:
+        description: 'Shared Release build artifact'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  installed:
+    name: ${{ inputs.channel }} smoke then installed UI
+    # Each invocation owns a fresh hosted VM; never share an interactive desktop.
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+    - name: Validate acceptance inputs and runner
+      env:
+        CHANNEL: ${{ inputs.channel }}
+        SOURCE_SHA: ${{ inputs.source-sha }}
+        BUILD_ARTIFACT: ${{ inputs.build-artifact }}
+      run: |
+        if ($env:CHANNEL -cnotin @('exe', 'msix') -or $env:SOURCE_SHA -cnotmatch '^[0-9a-f]{40}$' -or
+            $env:BUILD_ARTIFACT -cnotin @('build-output', 'build-release-output')) {
+          throw 'Invalid channel, source SHA or shared build artifact.'
+        }
+        if ($env:RUNNER_ENVIRONMENT -cne 'github-hosted') {
+          throw 'Installed acceptance requires a separate disposable GitHub-hosted Windows VM per channel.'
+        }
+    - name: Check out source
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.source-sha }}
+        persist-credentials: false
+    - name: Download build output
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: ${{ inputs.build-artifact }}
+        path: .
+    - name: Download channel package
+      uses: actions/download-artifact@v8.0.2
+      with:
+        name: package-${{ inputs.channel }}
+        path: PackageArtifacts/${{ inputs.channel }}
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v6.1.0
+      with:
+        dotnet-version: 8.0.x
+    - name: Verify package snapshot and hashes
+      env:
+        CHANNEL: ${{ inputs.channel }}
+        SOURCE_SHA: ${{ inputs.source-sha }}
+      run: |
+        . ./test/PackageArtifactSupport.ps1
+        $null = Get-PackageArtifact "PackageArtifacts/$env:CHANNEL/package.json" $env:CHANNEL $env:SOURCE_SHA
+    - name: Run EXE smoke and uninstall
+      id: exe-smoke
+      if: success() && inputs.channel == 'exe'
+      env:
+        SOURCE_SHA: ${{ inputs.source-sha }}
+      run: |
+        . ./test/PackageArtifactSupport.ps1
+        $package = Get-PackageArtifact PackageArtifacts/exe/package.json EXE $env:SOURCE_SHA
+        $installer = Join-Path "$PWD/PackageArtifacts/exe" $package.PackageFile
+        ./test/Run-InstallerTests.ps1 -InstallerPath $installer -NoBuild `
+          -ReportPath TestResults/Installer/installer-results.json
+    - name: Run MSIX smoke and uninstall
+      id: msix-smoke
+      if: success() && inputs.channel == 'msix'
+      run: |
+        ./test/Run-MsixTests.ps1 -PackageArtifact PackageArtifacts/msix/package.json -Mode Smoke `
+          -ResultsRoot TestResults/MSIXSmoke
+    - name: Reinstall EXE and run installed UI then uninstall
+      id: exe-ui
+      if: success() && inputs.channel == 'exe'
+      env:
+        SOURCE_SHA: ${{ inputs.source-sha }}
+      run: |
+        . ./test/PackageArtifactSupport.ps1
+        $package = Get-PackageArtifact PackageArtifacts/exe/package.json EXE $env:SOURCE_SHA
+        $installer = Join-Path "$PWD/PackageArtifacts/exe" $package.PackageFile
+        ./test/Run-InstallerTests.ps1 -InstallerPath $installer -NoBuild `
+          -ReportPath TestResults/UIOperation/installed-acceptance.json `
+          -ExtendedUIReportPath TestResults/UIOperation/ui-operation-results.json
+    - name: Reinstall MSIX and run installed UI then uninstall
+      id: msix-ui
+      if: success() && inputs.channel == 'msix'
+      run: |
+        ./test/Run-MsixTests.ps1 -PackageArtifact PackageArtifacts/msix/package.json -Mode UI `
+          -ResultsRoot TestResults/MSIXUI
+    - name: Upload test-results-installer
+      if: always() && inputs.channel == 'exe'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: test-results-installer
+        path: TestResults/Installer/
+        if-no-files-found: warn
+        retention-days: 7
+    - name: Upload test-results-ui-operation
+      if: always() && inputs.channel == 'exe'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: test-results-ui-operation
+        path: TestResults/UIOperation/
+        if-no-files-found: warn
+        retention-days: 7
+    - name: Upload test-results-msix-smoke
+      if: always() && inputs.channel == 'msix'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: test-results-msix-smoke
+        path: TestResults/MSIXSmoke/
+        if-no-files-found: warn
+        retention-days: 7
+    - name: Upload test-results-msix-ui
+      if: always() && inputs.channel == 'msix'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: test-results-msix-ui
+        path: TestResults/MSIXUI/
+        if-no-files-found: warn
+        retention-days: 7

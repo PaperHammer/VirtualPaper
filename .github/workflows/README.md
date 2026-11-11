@@ -2,61 +2,59 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-The repository has two workflows, both triggered only by `workflow_dispatch`. Commits, PR creation or updates, label changes, and merges do not start runs automatically.
+Both entry workflows are manual `workflow_dispatch` only; `package-acceptance.yml` accepts only `workflow_call`. Pushing, editing labels and merging do not dispatch them. The selected PR fixes the tested source; the Run workflow branch selects the workflow definition. Deploy workflow changes to the default branch before using its manual entry.
 
-| File | Manual inputs | Purpose |
+| Workflow | Input | Channels |
 | --- | --- | --- |
-| `pre-merge-check.yml` | Open PR number; whether to include model integration tests | Validate source and version label → build → parallel tests → required installer smoke + independent UI acceptance → report PR status |
-| `pre-release.yml` | Merged `dev → main` PR number | Verify PR → set version/build → parallel tests → package/smoke + independent UI → summary gate → sync versions → draft |
+| Pre-merge Check | Open same-repository PR number; optional ML integration | Always EXE and MSIX |
+| Pre-release | Merged `dev → main` PR number | Always EXE; also MSIX when PR has `channel:msstore` |
 
-Both workflows have independent installer-smoke and real-UI jobs. Installer smoke is mandatory: install → open/normal exit → same-package reinstall → preserved/fresh-profile startup/normal exit → uninstall. Every smoke stage must pass without skips. Only `test-ui-operation` uses job-level `continue-on-error`; its runner outcome and raw reports remain visible. Summaries use `-AllowUIFailure -UIJobResult` so UI failures/timeouts or missing reports do not block required checks, version synchronization or drafts. Local runners remain strict by default.
+## Build and acceptance
 
-## Everyday workflow
+Shared stages use the same display names in both entry workflows, including `Build Release` and `Test Summary`. All run blocks default to PowerShell (`pwsh`) on both Windows and Ubuntu, including package barriers and summaries.
 
-The required installer smoke also checks actual built-in deployment, preservation of edited/deleted user files, a relocated saved library directory, missing-item addition and data retention after uninstall. Artifact/Core checks validate the authored collection and decoded media. Independent UI adds one multi-format picker import and playback checks for every prepared item; its non-blocking CI policy is unchanged. See the [test coverage](../../test/README.md#wallpaper-library).
+1. Validate the PR and freeze its source SHA/version/channel selection. Build the complete Release solution once with Visual Studio MSBuild and the solution's Any CPU mappings, including both test hosts.
+2. Run `package-exe` and `package-msix` independently against that build. EXE uses Inno Setup 6.7.1; MSIX publishes isolated self-contained outputs without changing EXE binaries. `packages-ready` requires every selected package to succeed.
+3. After all selected packages succeed, run the eight shared project test jobs once, in parallel. Both channel acceptance calls wait for all eight jobs to pass; a failure or skip blocks installation.
+4. `test-exe-acceptance` and `test-msix-acceptance` call the same `package-acceptance.yml` template on separate fresh GitHub-hosted Windows VMs. Within each VM, run smoke through uninstall/cleanup, then independently reinstall the same artifact for extended UI and uninstall/cleanup. The channels may run in parallel; smoke and UI within a channel are sequential.
+5. `Summarize-PipelineTests.ps1` validates selected channel results and their raw smoke/UI reports (two per channel), TRX/coverage, installer lifecycle, actual installed UI, source SHA and package SHA256. Missing/failed/skipped required checks block success. UI is required in both workflows. An unselected Store channel is `NotSelected`, never a passing test.
+6. Pre-merge writes the final `pre-merge-check` status on the PR head. Pre-release commits the product version on main once after acceptance, merges that main into dev and atomically pushes both refs, then independently creates the GitHub EXE draft and selected Partner Center draft. A final job summarizes both draft results.
 
-1. Open a feature or fix PR targeting `dev`.
-2. Select **Actions → Pre-merge Check → Run workflow** and enter the PR number.
-3. Merge into `dev` after the check succeeds.
-4. Open a `dev → main` PR, select one version label, and manually run **Pre-merge Check**.
-5. Merge into `main` after the check succeeds.
-6. Select **Actions → Pre-release → Run workflow** and enter that merged PR number.
-7. Download and verify the draft release assets, then publish manually.
+The reusable workflow fixes its single job to `windows-latest` and rejects a non-GitHub-hosted runner. Each channel therefore owns a separate Windows VM and desktop; distinct physical cloud hosts are not promised or required. Two runner processes on the same self-hosted desktop are not an allowed substitute. Smoke and UI use separate installations/profiles sequentially within each VM; smoke cleanup failure blocks UI. They require an active, unlocked Default desktop, Explorer, a usable display, elevation for installation/trust, runtime prerequisites and the preinstalled model assets. Unavailable desktop checks remain explicit skips and fail the gate. Do not turn skips into passes to work around runner limitations.
 
-The branch selected in the Run workflow form chooses the workflow definition. The supplied PR determines the code being tested or released; the selected branch's HEAD is not substituted for it. Running from the default branch is recommended. The former `ci-check-approval` and `publish-approval` environments and deployment approvals are no longer used.
+EXE UI calls `Run-InstallerTests.ps1 -ExtendedUIReportPath ...`: it installs its own copy, runs extended UI against that installed Core, completes lifecycle checks and uninstalls. It does not borrow the smoke installation or test unpackaged Release output. Existing daily-install/AppId/shortcut guards remain mandatory.
 
-Workflow files must reach the default branch before GitHub shows the manual entry point. During initial migration, an administrator must coordinate replacing required checks so PRs do not wait for removed checks. See [GitHub's manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+MSIX jobs call `Run-MsixTests.ps1 -PackageArtifact ... -Mode Smoke|UI`. They consume the signed package without rebuilding, install via AppX, activate Core through its AUMID, verify process package identities and normal exits, uninstall and remove only their own certificate trust. Smoke covers automatic first UI, same-package reinstall, retained/fresh profiles and built-in wallpaper preservation; UI runs the complete extended suite on an independent installation.
 
-## Pre-merge Check
+The MSIX runner reuses an installed x64 VC AppX framework. Only a disposable hosted CI VM downloads/installs the missing Microsoft-signed framework; local runs require this prerequisite in advance.
 
-Only same-repository PRs are supported:
+`package.json` binds channel, source SHA, identity/version and package hashes. Only the public test certificate crosses jobs; the packaging job deletes its non-exportable private key. WAP signs upload/side-load packages separately: their complete application payloads must match, allowing differences only in `AppxSignature.p7x` and `AppxMetadata/CodeIntegrity.cat`. Both archive hashes are retained. Formal identity installation is permitted only on disposable GitHub-hosted CI with newly-created registration/ownership evidence; local daily Store installations remain protected.
 
-- Into `main`: the source must be `dev`, with exactly one of the four version labels.
-- Into `dev`: feature/fix branches other than `main` or `dev` are accepted; no version label is required.
-- Other base branches and fork PRs are rejected.
+## PR and release rules
 
-Each manual run reads the current source, labels, PR head, and base branch, then verifies that GitHub's merge snapshot matches both current commits. All builds and tests use that fixed snapshot.
+Pre-merge accepts feature/fix branches into `dev`, and `dev` into `main`, only within this repository. `dev → main` requires exactly one of `version:major`, `version:minor`, `version:build`, `version:revision`. It verifies the current merge snapshot and rechecks PR head/base/version/channel before reporting success. Changes require a new manual check.
 
-After the shared build, eight project jobs run in parallel. When they pass, two independent jobs run:
+Pre-release accepts only the latest merged same-repository `dev → main` PR. Its head must have a successful matching Pre-merge status for the same PR, version label and Store channel choice; `main` must still point to its merge commit. Channel/version/plugin label changes during the run block version writes/drafts. Existing successful statuses from the earlier workflow format must be refreshed.
 
-1. **Installer Smoke** compiles ISS, installs in English, opens the installed Core/UI, retains test settings and a wallpaper, and verifies normal exit. The same package reinstalls in Chinese; the original profile must preserve its language/settings/wallpaper, while a separate fresh profile initializes in Chinese. Both sessions must exit normally, then the real uninstaller runs. Package/file hashes, shortcuts, registration and residue are checked.
-2. **Real UI Acceptance** runs the extended suite against the Release build in its own runner, starts real Core/UI/player processes with isolated profiles, and cleans up its own sessions. It does not use the smoke installation or installer. Failures are non-blocking warnings; unavailable desktops produce explicit UI skips.
+Product labels increment the corresponding component of four-part `AssemblyVersion` and reset components to its right. `update-plugins` and `update-plugin-ui/playerweb/scrsaver/ml/shaders` retain the product version, use existing plugin package/tag conventions and skip product-version synchronization. A selected Store channel still ships the complete MSIX for plugin updates.
 
-Desktop smoke runs operate the install/reinstall/uninstall wizards. Without a desktop, silent install/reinstall/uninstall diagnostics are retained, but skipped startup/profile checks **fail smoke in both workflows**. Forced recovery never counts as normal exit.
+Release metadata allocates `YYMMRxx` build numbers from published releases, drafts and component manifests. Draft numbers remain reserved; R99 is the monthly limit. A standalone `app_comp_manifest.json` remains attached to GitHub releases, including plugin updates. Legacy releases without a manifest can bootstrap a full release; plugin-only releases need a published baseline.
 
-Required-stage failures block later phases. Reports are still collected; missing, empty, failed, aborted, or exceptional project/installer results fail the final check. Extended UI failures are non-blocking warnings and retain their raw errors. The seven regular test projects retain separate Cobertura coverage reports.
+The Store package version is independent of `AssemblyVersion`: build `2611R02` becomes `1.2611.2.0`. Thus product revision/plugin updates also advance the Store version, whose major must be nonzero and fourth component zero. Pre-release checks the published Store baseline before packaging and again before creating its draft. A higher existing Store version blocks this mapping; do not silently downgrade or reuse it. See [Microsoft package version rules](https://learn.microsoft.com/windows/apps/publish/publish-your-app/msix/app-package-requirements).
 
-The eight project jobs share `test/actions/run-project` and `test/Run-ProjectTests.ps1`. `test/TestReportSupport.ps1` maps projects to reports, and `test/Summarize-TestResults.ps1` creates the summary. Project jobs and the summary use the same TRX validation logic.
+Version synchronization writes the version fields only on `main`, creates its bump commit, then merges that updated `main` into the latest `dev` with `--no-ff`. This brings the exact main version commit and any main-only changes back to dev while preserving dev history. Only after both local histories are ready does one atomic push advance `main` and `dev`; no force push or protection bypass is used. Conflicting text hunks favor main (`-X theirs`); remaining conflicted paths use the main file version or its deletion. Nonconflicting dev changes remain, including separate hunks in the same text file. This does not replace the entire dev tree with main. Git-operation failures abort the pending merge, and push rejection leaves both remote refs unchanged and blocks drafts. Retries reuse the main bump and do not duplicate an already completed merge. `RELEASE_PAT` must have permission under repository rules.
 
-`build-output` preserves the repository-root `src/` layout and both test hosts. Smoke packages this build; independent UI runs its Release executables directly without rebuilding. The two reports are validated independently. The actual UI runner outcome takes precedence over a nominally passing report if the host or cleanup failed.
+## Separate release drafts
 
-Artifact transfers use `actions/upload-artifact@v7.0.2` and `actions/download-artifact@v8.0.2`, both with a bundled Node.js 24 runtime (minimum Actions Runner `2.327.1`). This runtime is separate from the Node version selected for Web player script tests. Uploads retain ZIP archives and `overwrite: true`; downloads retain extraction and reject digest mismatches by default. See the upstream [upload release](https://github.com/actions/upload-artifact/releases/tag/v7.0.2) and [download release](https://github.com/actions/download-artifact/releases/tag/v8.0.2). Changes to workflow action versions require a new **Run workflow**; rerunning an old run retains its original workflow version.
+GitHub retains the existing EXE/plugin release tag and update assets. No additional MSIX-only GitHub Release is created, so existing clients' release selection remains unchanged. Drafts are not public and are not automatically marked latest.
 
-SDK setup and NuGet caching use `actions/setup-dotnet@v6.1.0` and `actions/cache@v6.1.0` with updated Node.js 24 dependencies; the requested .NET SDK remains `8.0.x`, and cache keys/paths are unchanged. `download-artifact@v8.0.2` can still emit `DEP0005` (`Buffer()`) during ZIP extraction, including in Smoke and UI jobs. This is an [upstream issue](https://github.com/actions/download-artifact/issues/484); its [fix](https://github.com/actions/download-artifact/pull/490) is not yet merged. Keep digest validation and normal extraction enabled; do not suppress Node warnings or pin an unmerged action build.
+For `channel:msstore`, `Invoke-StoreDraft.ps1` creates/updates a Partner Center MSIX submission, preserves listing/pricing/declarations and other architectures, replaces the previous x64 package and uploads the validated Store archive. It leaves `targetPublishMode=Manual` and `status=PendingCommit`: no submission commit, certification request or publication occurs. Upload success is not certification success.
 
-Raw reports use `test-results-*`; combined summaries use `test-summary-*`, so raw-report downloads do not include earlier summaries. Uploads set `overwrite: true` to support rerunning jobs within the same run. The summary reads designated project report paths rather than recursively including other packages.
+Store retries reuse only an uncommitted draft owned by the same repository/workflow run/source SHA and package hash. Unrelated/manual submissions and already committed submissions are rejected, never deleted. If creation succeeds but ownership cannot be recorded, resolve the pending draft explicitly before retrying. Once an API-owned submission exists, continue managing it through the API; Microsoft's API warns against editing it in Partner Center. See [submission API prerequisites](https://learn.microsoft.com/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services).
 
-ML tests categorized as `Integration` are excluded by default. Select **Also run real model inference tests** to include them. These regular ML tests require model files and explicitly skip when files are missing; they do not download models. This differs from the opt-in UI ModelInference case, which fails if its model is missing. To run the regular integration category locally:
+## Additional checks and version labels
+
+Pre-merge excludes ML tests categorized as `Integration` by default; select **Also run real model inference tests** to include them. Pre-release always includes them. These regular ML tests require model files and explicitly skip when files are missing; they do not download models. Selected integration cases must execute without skips or the workflow fails; the extended UI ModelInference case fails directly if its model is missing. To run the regular integration category locally:
 
 ```powershell
 dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --filter "TestCategory=Integration" --settings src/test.runsettings
@@ -81,68 +79,39 @@ These labels control the four-part product version. Missing or multiple version 
 
 Independent plugin updates use `update-plugins` or `update-plugin-ui/playerweb/scrsaver/ml/shaders`, retaining the existing plugin build-number and client-compatible tag formats. With a plugin-update label, the product version is unchanged and no product-version synchronization commit is made. A `dev → main` PR still requires exactly one of the four version labels.
 
-## Pre-release
+Product version synchronization changes only `AssemblyVersion` in `src/VirtualPaper/VirtualPaper.csproj`, `MyAppVersion`/`MyAppVersionText` in `InnoSetup/setup.iss`, and the release badge in `README.md`. The `.sln` has no product version; `app_comp_manifest.json` is generated output. The main bump is merged into dev; no independent dev bump is created. The next dev-to-main merge retains that shared release history.
 
-Only a merged, same-repository `dev → main` PR is accepted. Its head must have a successful `pre-merge-check` status corresponding to this PR and its current version label, and `main` must still point to the PR's merge commit. Unmerged, older, unchecked, or incorrectly labeled PRs are rejected.
+The component manifest is generated once and reused for release assets and plugin patches. Fetch it with `GITHUB_TOKEN`; network, permission, download and parsing errors stop the release. A full release may establish a baseline when historical manifests are absent. Plugin patches require a valid published baseline; a corrupt existing manifest must not use the no-baseline path. A regular release advances every bundled plugin build number, while a plugin release advances only selected plugins. Monthly numbering stops at R99, resets at a new month and rejects a build clock behind historical numbering.
 
-1. Calculate the target product version from `AssemblyVersion` at the fixed merge commit and the selected label. Plugin updates keep the product version. Read published component manifests and historical release titles/plugin tags to allocate the next `YYMMRxx` build number; numbers used by drafts are reserved too. Check target tag/release conflicts before building.
-2. Temporarily update `VirtualPaper.csproj` before compilation and `InnoSetup/setup.iss` before packaging so the binaries and installer use the target version.
-3. Retest the new build through the same eight project jobs/actions as Pre-merge Check: artifact checks plus seven regular test projects. Release includes ML integration tests and Web player script checks. No test job rebuilds the application.
-4. Compile ISS and run mandatory installer smoke, then create requested plugin packages. Independently, `test-ui-operation` runs extended real UI acceptance against the release build. `summarize-tests` downloads both sets of reports and uses `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure -UIJobResult <outcome>`: failed/missing/skipped smoke or project checks block progress; independent UI failures and skips remain explicit non-blocking results.
-5. Recheck tag/release conflicts before version synchronization. For a regular release, create one version commit on `main` updating only the following fields, then merge that `main` into the latest `dev`. Prepare both branches locally before pushing them together with `git push --atomic`. Merge conflicts stop the synchronization; if either push is rejected, neither remote branch advances:
-   - `src/VirtualPaper/VirtualPaper.csproj`: `AssemblyVersion`
-   - `InnoSetup/setup.iss`: `MyAppVersion`, `MyAppVersionText`
-   - `README.md`: release badge
-6. Create a draft release using the PR description. Every release includes the installer and complete `app_comp_manifest.json`; plugin releases also include patch packages. The tag targets the synchronized `main` commit, or the original merge commit for plugin updates. Publishing remains manual.
-
-The stages are `prepare-metadata → build-release → parallel project tests → package-release + test-ui-operation → summarize-tests → sync-versions → draft-release`. Packaging/smoke and optional UI run independently. Version synchronization and draft creation require successful packaging and the validated summary. Plugin releases use the same gates but skip product-version synchronization. Required smoke and selected release project tests cannot be skipped; only independent UI may fail or skip.
-
-One root-layout build artifact contains application/plugin output, all project tests, and both test hosts. Parallel tests and packaging download that same build; only the application output is packaged. The component manifest is generated once and reused for release assets and plugin patches. Locking, registry-modification UI cases and real idle screen-saver tests remain excluded under the existing test policy.
-
-Component manifests are fetched with `GITHUB_TOKEN` authentication. Network, permission, download, or parsing errors stop the release. A regular release assigns a new build number to every bundled plugin. Plugin releases update only selected plugins and retain other entries from the previous published manifest.
-
-If historical releases lack a manifest, including `v0.5.2.0` without recorded build numbers, one full release may establish a baseline. Every bundled plugin receives the new build number; old plugin versions are not guessed. Historical title/tag build numbers still reserve numbers. With no historical numbers, allocation starts at the current month's `R01`. Plugin patches require a valid baseline manifest. A corrupt existing manifest does not fall back to the no-baseline path.
-
-The monthly sequence has two digits and stops at `R99`, avoiding older clients treating `R100` as older through string comparison. A new month starts at `R01`. A build-machine clock behind historical numbering also causes an error.
-
-Version synchronization brings the complete `main` release history back into `dev`, preserving business code and documentation added to `dev` during packaging. If possible, `dev` fast-forwards to the version commit; otherwise Git creates a merge commit. No separate version commit is created on `dev`. Conflicts are aborted without pushing, and an unchanged retry does not create duplicate commits. Concurrent remote updates that prevent a fast-forward push, unexpected version fields, or insufficient push permissions stop synchronization and draft creation. No remote history is rewritten. The `.sln` contains no product version and needs no change. `app_comp_manifest.json` is generated output.
-
-If synchronization succeeds but draft creation fails, use **Re-run failed jobs** on the original run. Restarting the whole workflow is blocked because `main` has advanced, preventing a second increment. Artifacts can overwrite earlier uploads in the same run. Manifests, release packages and the release test summary are retained for 30 days; build output and raw test reports are retained for seven days.
-
-Existing tags or incompatible releases block progress. An interrupted draft upload may resume only when tag, title, and target commit match. Remote checks and writes are not one atomic transaction; do not manually create the same tag or publish that draft during preparation. There is no automatic forced rollback or separate manual rollback workflow.
+If version synchronization or one draft succeeds and a later draft fails, use **Re-run failed jobs** in the original run. Matching GitHub drafts/Store drafts are reusable; the workflow does not roll back external state. Do not restart the complete workflow after version synchronization advanced `main`.
 
 ## Repository configuration
 
-Prepared built-in wallpapers come from [`resources/BuiltInWallpapers`](../../resources/BuiltInWallpapers/README.md). The solution build carries them in `BuiltInWallpapers/` within Core output, so the shared build artifact and full ISS installer include the same payload. Setup installs missing folders into the saved `BuiltInWallpapersDir`, falling back to a sibling of `WallpaperDir` for older profiles; existing folders are left intact. The single library directory picker moves both directories together and saves both paths. Plugin-only packages do not deploy these resources. Installer tests use an isolated data root for this step as well.
+Configure these before dispatching Pre-release with `channel:msstore`. Missing values fail preparation before any package/version/draft writes; Pre-merge needs none of them and uses a unique test identity.
 
-These settings must be configured on GitHub; editing local YAML does not change remote branch rules:
+| Setting | Type | Value |
+| --- | --- | --- |
+| `MSSTORE_APPLICATION_ID` | Repository variable | Product Store ID |
+| `MSSTORE_IDENTITY_NAME` | Repository variable | Package/Identity/Name |
+| `MSSTORE_PUBLISHER` | Repository variable | Package/Identity/Publisher |
+| `MSSTORE_PUBLISHER_DISPLAY_NAME` | Repository variable | PublisherDisplayName |
+| `MSSTORE_TENANT_ID` | Repository variable | Entra tenant GUID |
+| `MSSTORE_CLIENT_ID` | Repository variable | Associated application GUID |
+| `MSSTORE_CLIENT_SECRET` | Repository secret | Application key with Partner Center Manager permissions |
 
 - For `main`, require a PR and the `pre-merge-check` status. If `dev` should also require PRs, configure the same protection there. If direct pushes to `dev` are allowed, they do not trigger these manual workflows; Pre-merge Check still requires an open PR.
 - Remove obsolete required checks such as `Check Source Branch` and `ci-check/pre-publish-tests`; the new workflows do not provide them.
 - Consider requiring the PR branch to be up to date with its base, and rerun checks after base changes.
-- `RELEASE_PAT` must allow the version-sync bot to update both `main` and `dev` under the repository's rules. Rules for `dev` must allow a merge commit when development has advanced; a linear-history rule needs an appropriate bot exemption or adjustment. Insufficient permissions fail synchronization; the workflow does not force-push around protection.
+- `RELEASE_PAT` must allow the version-sync bot to update both `main` and `dev` under the repository's rules. Rules for `dev` must allow the main-to-dev merge commit; a linear-history rule needs an appropriate bot exemption or adjustment. Insufficient permissions fail synchronization; the workflow does not force-push around protection.
 - Create the four fixed `version:*` labels once.
 - Local workflow changes do not delete old remote branches such as `release` or `bugfix`. Clean them up separately after checking for unmerged work.
 
-## Local validation
+Reserve the product and complete the initial Partner Center submission setup, including age ratings, before using the submission API. Product creation itself is manual. Complete WACK, clean-machine ordinary-user prerequisites, cross-version upgrades and other Store requirements before actual submission; automated draft creation does not establish those checks.
 
-The complete local counterpart to the test/package stages is:
+Keep the four `version:*` labels and add `channel:msstore`. Branch protection must require `pre-merge-check` (remove obsolete status names separately). Workflows do not change repository labels/rules remotely. Do not modify/release matching tags while a workflow is running.
 
-```powershell
-# Elevated PowerShell 7.2+, clean Windows test installation:
-pwsh -NoProfile -File test/Run-Tests.ps1
-# Include the regular ML integration category too:
-pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
-```
+## Reports and local checks
 
-The local chain uses the working tree and does not validate PRs, post status, synchronize versions or create drafts. It builds, runs project tests, packages and completes smoke including uninstall, then runs independent extended UI against Release output. It downloads no models. Smoke skips/failures and local UI failures remain blocking; CI explicitly opts into non-blocking UI at the job/summary level.
+Raw reports use `test-results-*`; bundles use `test-summary-*`/`release-test-summary`. Summary JSON/Markdown retain channel outcomes and source SHA; package manifests retain versions/hashes. `store-draft.json` records the submission ID, uploaded archive/package hashes and `Committed=false`, without access tokens or SAS URLs. Package/draft/summary artifacts last 30 days; build/raw reports last 7 days. Artifact uploads use overwrite on retries; downloads validate digests.
 
-See the [testing guide](../../test/README.md) for prerequisites, focused runners and report paths, and the [repository test skill](../../.agents/skills/virtualpaper-testing/SKILL.md) for AI instructions. Changes to testing behavior should update these guides and their Chinese versions together.
-
-For workflow/script contracts alone, without an installation or UI run:
-
-```powershell
-pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1
-```
-
-This validates workflow dependencies, shared test entry points, TRX/coverage checks, retry report isolation, UI environment skips, installer reports, release metadata, and version-sync contracts. It uses isolated Git repositories and mocked GitHub responses. It does not install the application, lock the session, modify the registry, or push to a remote repository.
+Run `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` for the DAG (packages → all project jobs → channel calls), fixed hosted-VM isolation, sequential smoke/UI, strict missing/failed/skipped reports, artifact payloads, metadata/version synchronization, plugin package and Store HTTP-mock/retry contracts. It does not install applications or contact Partner Center/GitHub. Local complete acceptance remains `test/Run-Tests.ps1` for EXE and `test/Run-MsixTests.ps1` for MSIX; see the [testing guide](../../test/README.md).

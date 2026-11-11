@@ -37,9 +37,13 @@ test/
 | 单个项目回归 | `test/Run-ProjectTests.ps1 -JobId <id>` | 使用已有 Release 产物，不构建 |
 | 真实 UI 模块或测试集 | `test/Run-UIOperationTests.ps1` | 默认先构建解决方案，`-NoBuild` 跳过构建 |
 | 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 必需安装冒烟：真实安装/覆盖安装、启动/正常退出、语言/数据保留及卸载 |
+| MSIX 包内容 | `test/Test-MsixPackage.ps1 -PackagePath <application.msix>` | 检查实际包，不执行安装或 UI 验收，详见 [MSIX 打包](../Msix/README.zh-CN.md)。 |
+| MSIX 完整验收 | `test/Run-MsixTests.ps1` | Release 重建、八组项目测试、签名测试包、真实首次启动／扩展 UI／重装／数据保留／卸载；需要管理员和未锁定桌面 |
 | 工作流与脚本契约 | `.github/scripts/validate-test-workflow.ps1` | 隔离校验，不安装、不执行真实 UI |
 
-本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
+MSIX 使用独立完整入口：在未锁定 Windows 桌面以管理员执行 `pwsh -NoProfile -File test/Run-MsixTests.ps1`。流程创建本轮独有的测试包身份和临时签名证书，Release 重建后执行八组项目测试及脚本检查（不允许跳过），构建／检查自包含 MSIX，再安装到当前用户。复用现有扩展 UI 套件，真实走 Shell AUMID 激活 → Core → 生产 UI／播放器；原生 API 校验 Core、UI 及重启 UI 的包身份。必需阶段还包括首次自动打开 UI、真实导入、同包重装、偏好／导入卡片／内置壁纸保留、新配置启动和卸载。重装前后的保留配置与扩展 UI 配置分别隔离。只清理本轮测试包和证书，原始报告及隔离配置保存在新 `TestResults/msix-acceptance-*` 目录。UI 失败、缺失或桌面不可用均不能通过；强制清理进程不能算正常退出。WACK、跨版本升级、干净机器运行依赖、持久开机启动／系统设置仍需单独发布验收。现有两条 GitHub 工作流继续只验收 Inno。
+
+Inno 本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
 
 ```powershell
 ./test/Run-Tests.ps1
@@ -67,7 +71,7 @@ flowchart LR
     F --> G[汇总]
 ```
 
-本地失败阻止后续阶段，一旦尝试安装仍执行清理。本地使用工作区代码，CI 使用 PR 合并快照或设置新版本后的构建。安装冒烟默认每阶段最多 240 秒（安装向导为 230 秒），完整安装包解压与应用启动分别限时。两个 CI 工作流仅对独立 UI job 使用 `continue-on-error`，汇总显式添加 `-AllowUIFailure`；必需项目测试和冒烟仍阻塞。本地默认仍拒绝 UI 失败，不修改 GitHub 状态或版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+本地失败阻止后续阶段，尝试安装后仍执行清理；真实 UI 在本地顺序运行。CI 固定 PR/版本化源码，先并行生成选中的包，再运行一轮八组共享项目测试。全部通过后，EXE/MSIX 验收子流程在两台独立 hosted Windows VM 上并行，每路内部先冒烟卸载，再重新安装运行扩展 UI 并卸载。所有选中的检查（含扩展 UI）必须无跳过通过。本地不回写 PR 状态或同步版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 安装验收使用较短的隔离临时配置路径，避免超出 Inno Setup 6 的路径限制。验收结束后复制到安装报告旁的 `.artifacts/profiles` 目录，再清理临时目录。
 
@@ -135,7 +139,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 环境不适用时，生成包含 `Status: Skipped`、`Passed: false`、`ExpectedCount: 0` 及原因的报告，并以退出码 0 结束。原因包括 `WindowsRequired`、`NoInteractiveDesktop`、`NoDisplay` 和 `NoDesktopShell`。详细信息写入 `.artifacts/environment.json`。
 
-无可用桌面时独立 UI 可以明确跳过，摘要如实显示。本地 UI 失败、超时和报告缺失默认仍失败；CI 仅允许独立 UI job 不阻塞。两个工作流的安装冒烟都必须完成启动、正常退出和全部配置检查，不能以跳过代替通过。检测不修改会话、注册表或显示配置。
+无可用桌面时 UI 写入明确的跳过报告。选中的 CI 安装冒烟/UI 均拒绝跳过；本地严格验收也拒绝失败、超时和报告缺失。桌面检测不修改会话、注册表或显示配置。
 
 ## 默认覆盖范围
 
@@ -394,7 +398,7 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`，与本地/Web 脚本的 Node.js 设置独立。版本及摘要校验说明见[工作流指南](../.github/workflows/README.zh-CN.md)。
 
-构建及并行项目测试通过后，CI 独立运行 **Installer Smoke** 和 **Real UI Acceptance**，两者不共享安装包或安装目录，UI 直接运行 Release 输出。本地完整入口先完成冒烟并卸载，再运行独立 UI，避免争抢前台。
+所选包全部成功后，CI 的八组共享项目测试只运行一轮，内部并行。全部通过后，`test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，分别使用全新的 GitHub-hosted Windows VM。每路内部顺序执行冒烟卸载 → 独立重装并扩展 UI → 卸载；清理失败阻止 UI。消费既有渠道产物并核对源码 SHA/哈希，选中渠道的原始冒烟/UI 报告仍必须齐全（每渠道两份）。同一 Windows 桌面上的两个 runner 进程不满足隔离要求。本地完整入口仍先完成冒烟并卸载，再运行独立 Release UI。
 
 `Run-InstallerTests.ps1` 只对一个真实安装包、一个独有临时安装目录执行必需冒烟：
 
@@ -420,7 +424,7 @@ CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，�
 ./test/Test-InstallerWizard.ps1
 ```
 
-仅 CI 的 `test-ui-operation` 使用 job 级 `continue-on-error`，记录 `steps.ui-tests.outcome`，失败仍上传原始报告。汇总通过 `-AllowUIFailure -UIJobResult <结果>` 保留 UI 失败、超时、报告缺失/不可读及环境跳过，不阻塞 PR 状态、同步版本或生成草稿。冒烟/项目失败和冒烟报告缺失始终阻塞；Pre-release 还拒绝选中项目测试跳过。本地 UI 默认严格，未添加 UI 放宽开关的 `-RequireFullAcceptance` 也拒绝 UI 跳过。
+CI 使用 `Summarize-PipelineTests.ps1`：共享 TRX/覆盖率、选中的包、对应子流程结果及原始冒烟/UI 报告均须通过。报告缺失、清理失败、桌面验收跳过或源码/包哈希变化均阻止 PR 成功与版本/草稿写入。版本同步契约使用隔离本地 Git 仓库，验证 main 单次版本提交、dev 真实合并祖先关系、并行开发保留、重跑幂等、文本/二进制/删除/重命名冲突采用 main、dev 不冲突块保留及原子推送拒绝。旧 `Summarize-TestResults.ps1 -AllowUIFailure` 仅保留诊断兼容用途，两条 CI 均不调用。渠道选择、正式商店变量和重试见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 工作流契约包含隔离 Git 测试，覆盖仅在 `main` 生成版本提交、合回 `dev`、保留新增开发内容、冲突清理、重跑、下一次发布及原子推送被拒绝。测试仅使用本地 fixture 远端，不向 GitHub 推送。
 

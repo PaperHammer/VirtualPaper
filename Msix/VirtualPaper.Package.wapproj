@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <WapProjPath Condition="'$(WapProjPath)' == ''">$(MSBuildExtensionsPath)\Microsoft\DesktopBridge\</WapProjPath>
+    <Platform Condition="'$(Platform)' == ''">x64</Platform>
+  </PropertyGroup>
+  <Import Project="$(WapProjPath)Microsoft.DesktopBridge.props" />
+  <Import Project="$(MsixIdentityProps)" Condition="'$(MsixIdentityProps)' != ''" />
+  <PropertyGroup>
+    <ProjectGuid>{59C1E2F2-04C6-4C39-A26D-7C26B30D9630}</ProjectGuid>
+    <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxAutoIncrementPackageRevision>false</AppxAutoIncrementPackageRevision>
+    <AppxBundle>Never</AppxBundle>
+    <GenerateAppInstallerFile>false</GenerateAppInstallerFile>
+    <GenerateAppxPackageOnBuild>true</GenerateAppxPackageOnBuild>
+    <AppxSymbolPackageEnabled>false</AppxSymbolPackageEnabled>
+    <AppxGenerateTestArtifactsEnabled>false</AppxGenerateTestArtifactsEnabled>
+    <AppxPackageResourceIndexMode>packaged</AppxPackageResourceIndexMode>
+    <EntryPointExe>VirtualPaper.exe</EntryPointExe>
+    <MsixPayloadDirectory Condition="'$(MsixPayloadDirectory)' == ''">$(MSBuildProjectDirectory)\obj\Payload</MsixPayloadDirectory>
+    <MsixIdentityName Condition="'$(MsixIdentityName)' == ''">PaperHammer.VirtualPaper.Preview</MsixIdentityName>
+    <MsixPublisher Condition="'$(MsixPublisher)' == ''">CN=PaperHammer</MsixPublisher>
+    <MsixPublisherDisplayName Condition="'$(MsixPublisherDisplayName)' == ''">PaperHammer</MsixPublisherDisplayName>
+    <MsixPackageVersion Condition="'$(MsixPackageVersion)' == ''">1.0.0.0</MsixPackageVersion>
+    <MsixGeneratedManifest>$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Package.appxmanifest</MsixGeneratedManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <AppxManifest Include="$(MsixGeneratedManifest)" />
+    <!-- Consume already published files; never rebuild projects with WAP's platform overrides. -->
+    <!-- Only relocated root PRI files participate in the package resource merge. -->
+    <Content Include="$(MsixPayloadDirectory)\**\*" Exclude="$(MsixPayloadDirectory)\Plugins\UI\*.pri">
+      <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      <!-- Payload files are loaded by path. PRI contents are merged separately;
+           indexing the input .pri filenames would leave dangling file resources. -->
+      <ExcludeFromResourceIndex>true</ExcludeFromResourceIndex>
+    </Content>
+    <Content Update="$(MsixPayloadDirectory)\MsixAssets\*.png">
+      <ExcludeFromResourceIndex>false</ExcludeFromResourceIndex>
+    </Content>
+    <!-- Storage Pickers opens this PRI beside Microsoft.WindowsAppRuntime.dll
+         by filename. Keep the physical files as well as the merged resource maps;
+         normal Content PRI inputs are consumed by the AppX resource merge. -->
+    <AppxPackagePayload Include="$(MsixPayloadDirectory)\**\Microsoft.WindowsAppRuntime.pri">
+      <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </AppxPackagePayload>
+    <AppxUploadPackagePayload Include="$(MsixPayloadDirectory)\**\Microsoft.WindowsAppRuntime.pri">
+      <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </AppxUploadPackagePayload>
+  </ItemGroup>
+  <Target Name="PrepareMsixManifest" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(Platform)' != 'x64'" Text="VirtualPaper MSIX currently supports x64 only." />
+    <Error Condition="!Exists('$(MsixPayloadDirectory)\VirtualPaper.exe')" Text="Run .github/scripts/Build-Msix.ps1 to publish the Core-first payload before packaging." />
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(MsixGeneratedManifest)'))" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Package.appxmanifest" DestinationFiles="$(MsixGeneratedManifest)" />
+    <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Name" Value="$(MsixIdentityName)" />
+    <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Publisher" Value="$(MsixPublisher)" />
+    <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Version" Value="$(MsixPackageVersion)" />
+    <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Properties']/*[local-name()='PublisherDisplayName']" Value="$(MsixPublisherDisplayName)" />
+  </Target>
+  <Import Project="$(WapProjPath)Microsoft.DesktopBridge.targets" />
+</Project>

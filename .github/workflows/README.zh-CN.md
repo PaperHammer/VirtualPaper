@@ -2,61 +2,59 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-仓库包含两个工作流，均仅通过 `workflow_dispatch` 手动触发。提交代码、创建或更新 PR、修改标签以及合并，都不会自动运行工作流。
+两个主入口均仅通过 `workflow_dispatch` 手动运行；`package-acceptance.yml` 仅接受 `workflow_call` 调用。推送、修改标签及合并不会自动触发。输入 PR 决定固定源码 SHA，Run workflow 选择的分支决定工作流定义；新定义应先进入默认分支。
 
-| 文件 | 手动输入 | 用途 |
+| 工作流 | 输入 | 打包渠道 |
 | --- | --- | --- |
-| `pre-merge-check.yml` | 未合并的 PR 编号；是否包含模型集成测试 | 检查来源与版本标签 → 构建 → 并行测试 → 必需安装冒烟 + 独立真实 UI → 回写 PR 状态 |
-| `pre-release.yml` | 已合并的 `dev → main` PR 编号 | 核验 PR → 设置版本并构建 → 并行测试 → 打包/冒烟 + 独立 UI → 汇总检查 → 同步版本 → 草稿 |
+| Pre-merge Check | 未合并的同仓 PR；可选 ML 集成测试 | 始终 EXE + MSIX |
+| Pre-release | 已合并的 `dev → main` PR | 始终 EXE；PR 有 `channel:msstore` 时增加 MSIX |
 
-两个工作流均拆分为独立的安装冒烟与真实 UI 任务。安装冒烟必须通过：安装 → 打开并正常退出 → 同包覆盖安装 → 原配置/新配置启动并正常退出 → 卸载，不能以跳过代替通过。仅 `test-ui-operation` 使用 job 级 `continue-on-error`，保留入口实际结果与原始报告；汇总通过 `-AllowUIFailure -UIJobResult` 将 UI 失败、超时、报告缺失记录为非阻塞警告。本地默认仍严格拒绝 UI 失败。
+## 构建和验收
 
-## 日常流程
+两个主入口中相同阶段使用一致的显示名称，包括 `Build Release` 和 `Test Summary`。 Windows 和 Ubuntu 的 run 块均默认使用 PowerShell（`pwsh`），包括打包门禁和汇总。
 
-强制安装冒烟还检查内置素材的真实部署、用户修改与删除记录的保留、迁移后保存的库目录、缺失条目的补入及卸载后的数据保留。产物与 Core 测试检查素材清单和媒体解码；独立 UI 增加一次多格式多文件导入，以及每项预处理壁纸的播放检查，其 CI 非阻塞策略不变。详见[测试覆盖](../../test/README.zh-CN.md)。
+1. 校验 PR，固定源码 SHA、版本和渠道选择；使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。
+2. `package-exe`、`package-msix` 并行消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 要求选中的包全部生成成功。
+3. 所选包全部成功后，八组共享项目测试只运行一轮，内部并行。两路渠道验收均等待全部八组成功；失败或跳过时不开始安装。
+4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，分别使用全新的 GitHub-hosted Windows VM。每路内部顺序执行：冒烟并卸载清理 → 独立重装同一产物 → 扩展 UI 并卸载清理。两渠道可并行，同一渠道内冒烟和 UI 串行。
+5. `Summarize-PipelineTests.ps1` 校验选中渠道的子流程结果及原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。必需阶段失败、跳过或证据缺失均阻塞；两个工作流的 UI 也必须通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
+6. Pre-merge 在 PR head 回写 `pre-merge-check`。Pre-release 验收通过后仅在 main 提交一次产品版本，再将该 main 合回 dev，原子推送两分支后并行创建 GitHub EXE 草稿和选中的 Partner Center 草稿，最后汇总两者结果。
 
-1. 创建以 `dev` 为目标的功能或修复 PR。
-2. 选择 **Actions → Pre-merge Check → Run workflow**，输入 PR 编号。
-3. 检查通过后合入 `dev`。
-4. 创建 `dev → main` PR，选择一个版本标签，手动运行 **Pre-merge Check**。
-5. 检查通过后合入 `main`。
-6. 选择 **Actions → Pre-release → Run workflow**，输入该已合并 PR 的编号。
-7. 下载并验证发布草稿中的产物，再手动发布。
+子流程固定只有一个 `windows-latest` job，并拒绝非 GitHub-hosted runner，因此两路调用使用不同 Windows VM 和桌面；不要求或承诺云端物理宿主不同。同一台自托管 Windows 上的两个 runner 进程不满足隔离要求。每路内冒烟和 UI 使用独立安装/配置，顺序执行；冒烟清理失败时不启动 UI。需要活动且未锁定的 Default 桌面、Explorer、有效显示器、安装/证书信任所需提升权限、运行库和预置模型。桌面不可用必须明确跳过并阻止门禁，不能放宽检测。
 
-Run workflow 表单中选择的分支决定使用哪一份工作流定义。输入的 PR 决定被测试或发布的代码，不会用所选分支的 HEAD 替代。建议从默认分支运行。旧的 `ci-check-approval`、`publish-approval` 环境及部署审批已不再使用。
+EXE UI 使用 `Run-InstallerTests.ps1 -ExtendedUIReportPath ...`，自行安装后对已安装 Core 运行扩展 UI，继续完成生命周期并卸载。它不借用冒烟安装，也不以 Release 目录代替安装体验证。已有安装、AppId 和快捷方式保护仍然有效。
 
-工作流文件必须先进入默认分支，GitHub 才会显示手动运行入口。首次迁移时，需要管理员协调替换必需检查，避免 PR 等待已移除的检查。参阅 [GitHub 手动运行工作流说明](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)。
+MSIX 使用 `Run-MsixTests.ps1 -PackageArtifact ... -Mode Smoke|UI`，直接安装已有签名包，不重新构建。通过 AUMID 激活 Core，检查 Core/UI 包身份与正常退出，最后卸载并删除本轮证书信任。冒烟覆盖首次自动 UI、同包重装、保留/全新配置和内置壁纸；扩展 UI 在独立安装上执行。
 
-## Pre-merge Check
+MSIX 入口复用已有 x64 VC AppX 框架；仅可丢弃的 GitHub-hosted CI 在缺失时下载并安装微软签名的框架，本地入口要求提前准备。
 
-仅支持同一仓库内的 PR：
+`package.json` 绑定渠道、源码 SHA、身份/版本和包哈希。跨 job 只传公开证书，打包 job 删除不可导出的私钥。WAP 会分别签名上传包和侧载包：除 `AppxSignature.p7x`、`AppxMetadata/CodeIntegrity.cat` 外，全部应用载荷必须一致；两个包各自保留哈希。正式身份只允许在可丢弃的 GitHub-hosted CI 上验收，并需本轮新建注册的归属证据；本地日常商店安装保护不放宽。
 
-- 目标为 `main`：来源必须为 `dev`，且四个版本标签中必须恰好选择一个。
-- 目标为 `dev`：允许来自 `main`、`dev` 以外的功能或修复分支，不要求版本标签。
-- 其他目标分支和 fork PR 会被拒绝。
+## PR 和版本规则
 
-每次手动运行都会读取当前来源、标签、PR head 和目标分支，并核验 GitHub 的合并快照是否匹配双方当前提交。所有构建与测试均使用该固定快照。
+Pre-merge 支持同仓功能/修复分支进入 `dev`，以及 `dev → main`。后者必须恰好有一个 `version:major`、`version:minor`、`version:build`、`version:revision`。运行前验证合并快照，回写成功前再次核对 PR head/base/版本/商店标签；变化后需手动重跑。
 
-共享构建后，八个项目测试任务并行运行；通过后独立运行两个任务：
+Pre-release 仅接受最新合并的同仓 `dev → main` PR。其 head 必须有对应 PR、版本标签及商店渠道选择的成功检查，且 `main` 仍指向该合并提交。运行期间修改渠道、版本或插件标签会阻止版本写入和草稿。旧格式的成功状态需要重新运行 Pre-merge 更新。
 
-1. **Installer Smoke** 编译 ISS，英文安装，启动真实 Core/UI，保存配置和壁纸，并验证正常退出。同包选择中文覆盖安装，验证原配置的语言/偏好/壁纸保留，以及全新配置的中文初始化；每次启动均须正常退出，最后执行真实卸载。保留包体/程序哈希、快捷方式、注册和残留检查。
-2. **Real UI Acceptance** 在独立 runner 上使用 Release 输出运行扩展测试，自行拉起真实 Core/UI/播放器并隔离配置、清理会话，不借用冒烟测试的安装包或安装目录。失败为非阻塞警告；无桌面时明确记录 UI 跳过。
+四个版本标签递增产品 `AssemblyVersion` 对应位置并将右侧归零。`update-plugins` 或 `update-plugin-ui/playerweb/scrsaver/ml/shaders` 保留产品版本及既有插件包/tag 兼容格式，跳过产品版本同步；选择商店渠道时仍生成完整 MSIX。
 
-有桌面时操作安装、覆盖安装和卸载向导。无桌面时保留静默安装/卸载诊断，但启动/配置检查被跳过将导致两个工作流的冒烟门禁失败；强制清理不能算正常退出。
+发布元数据从正式发布、草稿和组件清单分配 `YYMMRxx` 构建号；草稿占用的号码仍保留，每月上限 R99。所有 GitHub 发布继续附带独立 `app_comp_manifest.json`。旧发布无清单时可以先完整发布建立基线；仅插件发布要求已有正式清单。
 
-必需阶段失败会阻止后续阶段，并继续收集报告。项目测试或安装必需阶段的报告缺失、为空、失败、中止或异常仍导致最终检查失败；扩展 UI 失败为非阻塞警告，保留原始错误。七个常规测试项目分别保留各自的 Cobertura 覆盖率报告。
+Store 包版本独立于 `AssemblyVersion`：`2611R02` 映射为 `1.2611.2.0`。产品第四段或仅插件更新也会递增 Store 包版本，满足首段非零、末段为零的规则。构建前和创建草稿前均核对商店已发布版本；如商店版本更高则失败，不能静默降级或复用。参阅[微软版本规则](https://learn.microsoft.com/windows/apps/publish/publish-your-app/msix/app-package-requirements)。
 
-八个项目任务共用 `test/actions/run-project` 和 `test/Run-ProjectTests.ps1`。`test/TestReportSupport.ps1` 负责项目与报告映射，`test/Summarize-TestResults.ps1` 生成汇总。项目任务和汇总使用同一套 TRX 校验逻辑。
+版本同步仅在 `main` 修改版本字段并创建版本提交，再通过 `--no-ff` 将更新后的 `main` 合入最新 `dev`。`dev` 保留自身开发历史，同时接收同一个 main 版本提交及 main 独有改动。本地两条提交历史准备成功后才原子推送 `main`、`dev`，不强推或绕过保护。文本冲突块采用 main（`-X theirs`）；仍未解决的冲突路径按 main 的文件版本或删除状态处理。dev 中不冲突的改动保留，包括同一文本文件内其他不冲突的块，不将整个 dev 文件树覆盖成 main。Git 操作失败时撤销本轮待提交合并；推送拒绝仍不推进两条远端分支，并阻止草稿。重跑复用 main 版本提交，已完成的合并不重复创建；`RELEASE_PAT` 需要符合仓库规则的写入权限。
 
-`build-output` 保留仓库根目录下的 `src/` 布局和两个测试宿主。冒烟使用该构建打包，独立 UI 直接运行 Release 程序，不重复构建。两份报告分别验证；宿主或清理失败时以真实 UI 入口结果为准，不因报告已写为通过而隐藏失败。
+## 分开的发布草稿
 
-产物传输使用 `actions/upload-artifact@v7.0.2`、`actions/download-artifact@v8.0.2`，均内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`。这与 Web 播放器脚本测试选择的 Node 版本互相独立。上传继续使用 ZIP 及 `overwrite: true`，下载继续解压，并默认拒绝摘要不匹配的产物。参阅上游[上传版本说明](https://github.com/actions/upload-artifact/releases/tag/v7.0.2)、[下载版本说明](https://github.com/actions/download-artifact/releases/tag/v8.0.2)。修改工作流 action 版本后需新建 **Run workflow**，旧流程的重跑保留原工作流版本。
+GitHub 保留原 EXE/插件的发布 tag 和更新资产，不额外创建 MSIX 专属 GitHub Release，保持现有客户端更新选择逻辑。草稿不会自动公开或标为 latest。
 
-SDK 配置和 NuGet 缓存使用 `actions/setup-dotnet@v6.1.0`、`actions/cache@v6.1.0` 及更新后的 Node.js 24 依赖；请求的 .NET SDK 仍为 `8.0.x`，缓存键和目录不变。`download-artifact@v8.0.2` 解压 ZIP 时仍可能输出 `DEP0005`（`Buffer()`），包括 Smoke 和 UI job。这是[上游已知问题](https://github.com/actions/download-artifact/issues/484)，[修复 PR](https://github.com/actions/download-artifact/pull/490) 尚未合并。继续保留摘要校验及正常解压，不屏蔽 Node 警告，也不引用未合并的 action 构建。
+有 `channel:msstore` 时，`Invoke-StoreDraft.ps1` 创建/更新 Partner Center MSIX 提交，保留商品介绍、价格、声明及其他架构，替换原 x64 包并上传已验证的 Store 包。保留 `targetPublishMode=Manual`、`status=PendingCommit`，不会调用提交、请求认证或上架接口。上传成功不等于认证通过。
 
-原始报告使用 `test-results-*`，汇总报告使用 `test-summary-*`，因此下载原始报告时不会包含之前的汇总。上传设置 `overwrite: true`，支持在同一次运行中重跑任务。汇总读取各项目指定的报告路径，不递归收集其他包中的报告。
+重试只复用同仓库、同 workflow run、同源码 SHA/包哈希所拥有的未提交草稿。其他运行、人工草稿或已提交草稿均拒绝修改，更不会删除。如果创建成功但未写入归属标记，需要显式处理该待提交草稿后再重试。API 创建的提交应继续通过 API 管理，微软文档提示不要转到 Partner Center 编辑同一提交。参阅[商店 API 前置条件](https://learn.microsoft.com/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services)。
 
-默认排除分类为 `Integration` 的 ML 测试。勾选 **Also run real model inference tests** 可纳入这些测试。常规 ML 测试需要模型文件，文件缺失时明确跳过，不下载模型；这与可选的 UI ModelInference 用例不同，后者缺少模型会失败。本地运行常规模型集成测试：
+## 补充检查与版本标签
+
+Pre-merge 默认排除分类为 `Integration` 的 ML 测试，勾选 **Also run real model inference tests** 可纳入；Pre-release 始终包含。常规 ML 测试需要预先准备模型，不下载模型，文件缺失时记录跳过；选中的测试存在跳过会阻塞工作流。完整 UI 的 ModelInference 用例缺少模型时直接失败。本地运行常规模型集成测试：
 
 ```powershell
 dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --filter "TestCategory=Integration" --settings src/test.runsettings
@@ -81,68 +79,39 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 独立插件更新使用 `update-plugins` 或 `update-plugin-ui/playerweb/scrsaver/ml/shaders`，保留既有插件构建号和兼容客户端的标签格式。带有插件更新标签时，产品版本保持不变，也不创建产品版本同步提交。`dev → main` PR 仍需恰好选择一个四段版本标签。
 
-## Pre-release
+产品版本同步仅修改 `src/VirtualPaper/VirtualPaper.csproj` 中的 `AssemblyVersion`、`InnoSetup/setup.iss` 中的 `MyAppVersion`/`MyAppVersionText`，以及 `README.md` 的版本徽章。`.sln` 没有产品版本，`app_comp_manifest.json` 是生成产物。main 的版本提交合回 dev，不再单独生成 dev 版本提交；下一次 dev 合入 main 时沿用这段共同的发布历史。
 
-仅接受同一仓库内已合并的 `dev → main` PR。其 head 必须有与该 PR 及当前版本标签对应的成功 `pre-merge-check` 状态，且 `main` 仍指向该 PR 的合并提交。未合并、过旧、未经检查或标签不正确的 PR 均会被拒绝。
+组件清单仅生成一次，供发布附件和插件补丁复用，并通过 `GITHUB_TOKEN` 获取；网络、权限、下载或解析错误会停止发布。历史发布缺少清单时，可通过完整发布建立基线；插件补丁必须有有效的已发布基线，已有清单损坏时不得退回无基线处理。完整发布更新所有随包插件构建号，插件发布仅更新选定项。月内序号达到 R99 后停止，新月份重新开始，构建机器时钟落后于历史编号时也会报错。
 
-1. 根据固定合并提交中的 `AssemblyVersion` 和所选标签计算目标产品版本。插件更新保留产品版本。读取已发布组件清单、历史发布标题及插件标签，分配下一个 `YYMMRxx` 构建号；草稿占用的号码也予以保留。构建前检查目标标签和发布是否冲突。
-2. 编译前临时更新 `VirtualPaper.csproj`，打包前临时更新 `InnoSetup/setup.iss`，使二进制文件和安装包使用目标版本。
-3. 对新构建复用 Pre-merge Check 的八个项目任务/action：产物检查加七个常规测试项目。发布包含 ML 集成测试及 Web 播放器脚本检查，测试任务不重新构建应用。
-4. 编译 ISS 并执行必需安装冒烟，通过后生成可选插件补丁。独立的 `test-ui-operation` 对发布构建运行完整真实 UI。`summarize-tests` 下载两类报告，通过 `Summarize-TestResults.ps1 -RequireFullAcceptance -AllowUIFailure -UIJobResult <结果>` 校验：冒烟/项目失败、报告缺失或跳过仍阻塞，仅独立 UI 失败或跳过不阻塞并明确报告。
-5. 同步版本前再次检查标签和发布冲突。常规发布仅在 `main` 上修改以下字段并生成一个版本提交，再把该 `main` 合并到最新 `dev`。两个分支均在本地准备完成后，通过 `git push --atomic` 一起推送。合并冲突会终止同步；任一推送被拒绝，两个远端分支均不前进：
-   - `src/VirtualPaper/VirtualPaper.csproj`：`AssemblyVersion`
-   - `InnoSetup/setup.iss`：`MyAppVersion`、`MyAppVersionText`
-   - `README.md`：发布版本徽章
-6. 根据 PR 描述创建发布草稿。每次发布都包含安装包和完整的 `app_comp_manifest.json`，插件发布还包含补丁包。标签指向同步后的 `main` 提交；插件更新则指向原始合并提交。最终发布仍需手动执行。
-
-阶段为 `prepare-metadata → build-release → 并行项目测试 → package-release + test-ui-operation → summarize-tests → sync-versions → draft-release`。打包/冒烟与可选 UI 独立运行；同步版本和生成草稿必须同时满足打包成功及汇总通过。插件发布沿用相同门禁但跳过产品版本同步。安装冒烟和选中的发布项目测试不允许跳过，仅独立 UI 可失败或跳过。
-
-一份保留仓库根目录布局的构建产物包含应用/插件输出、全部项目测试及两个测试宿主。并行测试和打包下载同一份构建，只有应用输出进入安装包。组件清单仅生成一次，供发布附件和插件补丁共用。锁屏、修改注册表的 UI 用例及真实空闲屏保测试仍按既有策略排除。
-
-组件清单通过 `GITHUB_TOKEN` 认证获取。网络、权限、下载或解析错误都会停止发布。常规发布会为所有随包插件分配新构建号；插件发布仅更新选定插件，其他条目沿用上一个已发布清单。
-
-如果历史发布没有清单，例如未记录构建号的 `v0.5.2.0`，可通过一次完整发布建立基线。所有随包插件使用新构建号，不猜测旧插件版本。历史标题和标签中的构建号仍占用相应号码。没有历史号码时，从当月 `R01` 开始分配。插件补丁必须有有效的基线清单。已有清单损坏时，不会退回到无基线处理路径。
-
-月内序号固定为两位，达到 `R99` 后停止，避免旧客户端通过字符串比较将 `R100` 误判为更早版本。新月份从 `R01` 开始。构建机器的时钟早于历史编号时也会报错。
-
-版本同步将 `main` 的完整发布历史合回 `dev`，保留打包期间新增到 `dev` 的业务代码和文档。允许时直接快进，否则由 Git 生成合并提交，不再在 `dev` 上单独生成版本提交。冲突时中止合并且不推送，状态未变时重跑不会重复生成提交。远端并发更新导致无法快进推送、版本字段不符合预期或推送权限不足，都会阻止同步和草稿创建，不改写远端历史。`.sln` 不包含产品版本，无需修改。`app_comp_manifest.json` 是生成产物。
-
-若同步成功但创建草稿失败，请在原运行记录中选择 **Re-run failed jobs**。因为 `main` 已前进，重新启动整个工作流会被阻止，以免再次递增版本。同一次运行的产物可覆盖之前上传的内容。清单、发布包和发布测试汇总保留 30 天；构建输出和原始测试报告保留 7 天。
-
-已有标签或不兼容的发布会阻止继续。中断的草稿上传仅在标签、标题和目标提交一致时允许续传。远端检查与写入不是同一个原子事务；准备期间不要手动创建同名标签或发布该草稿。不存在自动强制回滚，也没有单独的手动回滚工作流。
+若版本同步或一个草稿已成功，而后续步骤失败，应在原运行选择 **Re-run failed jobs**。匹配的 GitHub/Store 草稿可续传；不自动回滚外部状态。版本同步已推进 `main` 后，不要重新启动整个工作流。
 
 ## 仓库配置
 
-预处理后的内置壁纸放在 [`resources/BuiltInWallpapers`](../../resources/BuiltInWallpapers/README.zh-CN.md)。解决方案构建将其复制到 Core 输出的 `BuiltInWallpapers/`，共享构建产物及完整 ISS 安装包使用同一份资源。安装程序向已保存的 `BuiltInWallpapersDir` 添加缺失壁纸目录；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，已有目录保持不变。设置页的单一目录入口迁移两个目录并保存两个路径。仅插件更新不部署这些资源；安装验收也通过隔离数据目录验证此步骤。
+带 `channel:msstore` 运行 Pre-release 前补齐以下配置。缺失时准备阶段失败，不构建、不写版本、不创建草稿。Pre-merge 无需这些配置，使用每轮唯一的测试身份。
 
-这些设置必须在 GitHub 上配置，修改本地 YAML 不会改变远端分支规则：
+| 名称 | 类型 | 内容 |
+| --- | --- | --- |
+| `MSSTORE_APPLICATION_ID` | Repository variable | 产品 Store ID |
+| `MSSTORE_IDENTITY_NAME` | Repository variable | Package/Identity/Name |
+| `MSSTORE_PUBLISHER` | Repository variable | Package/Identity/Publisher |
+| `MSSTORE_PUBLISHER_DISPLAY_NAME` | Repository variable | PublisherDisplayName |
+| `MSSTORE_TENANT_ID` | Repository variable | Entra 租户 GUID |
+| `MSSTORE_CLIENT_ID` | Repository variable | 关联应用 GUID |
+| `MSSTORE_CLIENT_SECRET` | Repository secret | 具有 Partner Center Manager 权限的应用密钥 |
 
 - 为 `main` 要求 PR 和 `pre-merge-check` 状态。若 `dev` 也应仅允许 PR，请配置相同保护。若允许直接推送到 `dev`，推送不会触发这些手动工作流；Pre-merge Check 仍要求一个未合并的 PR。
 - 删除 `Check Source Branch`、`ci-check/pre-publish-tests` 等过时的必需检查，新工作流不再提供这些状态。
 - 可考虑要求 PR 分支与目标分支保持最新，目标分支变化后重新运行检查。
-- `RELEASE_PAT` 必须允许版本同步机器人在仓库规则下更新 `main` 和 `dev`。`dev` 有新开发提交时需要允许合并提交；若启用线性历史限制，应为机器人设置适当豁免或调整该规则。权限不足时同步失败，工作流不会通过强制推送绕过保护。
+- `RELEASE_PAT` 必须允许版本同步机器人在仓库规则下更新 `main` 和 `dev`。`dev` 需要允许 main 合回产生的合并提交；若启用线性历史限制，应为机器人设置适当豁免或调整该规则。权限不足时同步失败，工作流不会通过强制推送绕过保护。
 - 一次性创建四个固定的 `version:*` 标签。
 - 修改本地工作流不会删除远端 `release`、`bugfix` 等旧分支。确认没有未合并工作后再单独清理。
 
-## 本地校验
+先预留产品名，并在 Partner Center 完成包含年龄评级的初始提交配置，才能使用提交 API；产品创建仍由人工完成。真正送审前还需完成 WACK、干净机普通用户运行库验证、跨版本升级等商店要求；创建自动草稿不代表这些验收完成。
 
-本地执行对应的完整测试、打包及安装验收：
+保留四个 `version:*` 标签，并添加 `channel:msstore`。分支规则要求 `pre-merge-check`，旧检查名称另行移除。修改本地文件不会远端创建标签或修改保护；工作流运行期间不要手动创建同名 tag 或发布草稿。
 
-```powershell
-# 管理员 PowerShell 7.2+，干净的 Windows 测试安装环境：
-pwsh -NoProfile -File test/Run-Tests.ps1
-# 同时选择常规 ML 项目的集成类别：
-pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
-```
+## 报告和本地验证
 
-本地链路使用工作区代码，不校验 PR、不回写状态、不同步版本或创建草稿。完成构建、并行项目测试、ISS 打包与冒烟卸载后，再对 Release 输出运行独立扩展 UI，不下载缺失模型。冒烟失败/跳过及本地 UI 失败仍阻塞；CI 仅在 UI job 与汇总显式允许 UI 失败。
+原始报告使用 `test-results-*`，汇总使用 `test-summary-*`/`release-test-summary`。JSON/Markdown 记录渠道结果、源码 SHA，包清单记录版本和哈希。`store-draft.json` 记录提交 ID、上传包/安装包哈希与 `Committed=false`，不包含 token 或 SAS URL。包/草稿/汇总保留 30 天，构建/原始报告保留 7 天；上传支持覆盖重试，下载保留摘要校验。
 
-环境要求、单项入口和报告路径见[测试说明](../../test/README.zh-CN.md)，AI 使用方式见[仓库测试 skill](../../.agents/skills/virtualpaper-testing/SKILL.md)。修改测试行为时，应同步更新这些说明及其中英文版本。
-
-只校验工作流与脚本契约，不安装、不操作 UI：
-
-```powershell
-pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1
-```
-
-该命令校验工作流依赖、共用测试入口、TRX 和覆盖率检查、重试报告隔离、UI 环境跳过、安装包报告、发布元数据和版本同步契约。它使用隔离 Git 仓库和模拟的 GitHub 响应，不会安装应用、锁定会话、修改注册表或向远端推送。
+运行 `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` 验证 DAG（打包 → 全部共享项目测试 → 渠道子流程）、固定 hosted VM 隔离、冒烟/UI 顺序、严格报告失败/跳过/缺失、包载荷、版本同步、插件包，以及商店 HTTP 模拟和重试契约。它不安装应用，也不连接 Partner Center/GitHub。完整本地入口仍为 EXE 的 `test/Run-Tests.ps1` 和 MSIX 的 `test/Run-MsixTests.ps1`，详见[测试说明](../../test/README.zh-CN.md)。

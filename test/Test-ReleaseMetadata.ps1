@@ -216,7 +216,8 @@ try {
         & ([scriptblock]::Create((Get-StepBody 'Write component manifest')))
         $sourceHash = (Get-FileHash "$env:RELEASE_BIN_DIR/app_comp_manifest.json").Hash
         Assert-Equal (Get-FileHash app_comp_manifest.json).Hash $sourceHash 'Standalone manifest equals installed manifest'
-        $packageStep = [scriptblock]::Create((Get-StepBody 'Build plugin package'))
+        $packageScript = Join-Path $PSScriptRoot '../.github/scripts/New-PluginPackage.ps1'
+        $packageStep = { & $packageScript -PayloadRoot $env:RELEASE_BIN_DIR -BuildNumber $env:BUILD_NUMBER -UpdatePlugins $env:UPDATE_PLUGINS -OutputDirectory $PWD.Path }
         & $packageStep
         # A package-job retry must replace its own zip without rebuilding the application.
         & $packageStep
@@ -233,7 +234,7 @@ try {
         Expand-Archive "extracted-patch/$zipName" extracted-plugin
         Assert-Equal ([IO.File]::ReadAllText((Join-Path $fixture 'extracted-plugin/UI/UI.dll'))) 'fixture UI payload' 'Plugin folder layout preserved'
         $env:UPDATE_PLUGINS = 'Unknown'
-        Assert-Throws { & $packageStep } 'Missing plugin directory'
+        Assert-Throws { & $packageStep } 'Invalid plugin'
         $env:UPDATE_PLUGINS = ''
         Assert-Throws { & $packageStep } 'at least one plugin'
     } finally {

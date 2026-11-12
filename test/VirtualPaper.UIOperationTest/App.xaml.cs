@@ -36,6 +36,8 @@ public partial class App : Application {
             new UiTestCase("Application.WallpaperLibrary.ImportApplyCloseDelete", WallpaperLibraryTests.ImportApplyCloseDeleteAsync),
             new UiTestCase("Application.WallpaperLibrary.ImportMultipleFormatsAndReopen", BuiltInWallpaperTests.ImportMultipleAsync),
             new UiTestCase("Application.WallpaperLibrary.BuiltInsApplyRenderAndClose", BuiltInWallpaperTests.ApplyBuiltInsAsync),
+            new UiTestCase("Application.WallpaperLibrary.OrganizeAndReopen", LibraryOrganizationTests.RunAsync),
+            new UiTestCase("Application.EffectPresetManager.CreateCopyDeleteAndReopen", EffectPresetManagerTests.RunAsync),
             new UiTestCase("Application.ScreenSaver.SettingsAndWhitelist", ScreenSaverTests.SettingsAndWhitelistAsync),
             new UiTestCase("Application.ScreenFit.PreviewCancelApplyAndReopen", ScreenFitTests.PreviewCancelApplyAndReopenAsync),
             new UiTestCase("Application.WallpaperEffects.EditRestoreSaveAndReopen", WallpaperEffectsTests.EditRestoreSaveAndReopenAsync),

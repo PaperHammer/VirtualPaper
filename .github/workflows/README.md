@@ -11,6 +11,8 @@ Both entry workflows are manual `workflow_dispatch` only; `package-acceptance.ym
 
 ## Build and acceptance
 
+The shared real UI suite also registers library organization and effect-preset manager cases (see the [test inventory](../../test/README.md#wallpaper-library)). Standard/extended selection includes both; adding them does not change channel isolation or no-skip gates. Local source/compile validation is separate from executing those UI cases.
+
 Shared stages use the same display names in both entry workflows, including `Build Release` and `Test Summary`. All run blocks default to PowerShell (`pwsh`) on both Windows and Ubuntu, including package barriers and summaries.
 
 1. Validate the PR and freeze its source SHA/version/channel selection. Build the complete Release solution once with Visual Studio MSBuild and the solution's Any CPU mappings, including both test hosts.

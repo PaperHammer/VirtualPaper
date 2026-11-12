@@ -218,6 +218,7 @@
                                 TextChanged="OnFilterChanged"/>
 
                             <DropDownButton x:Name="LibraryTypeFilter"
+                                AutomationProperties.AutomationId="Library.Filters"
                                 Grid.Column="1" Style="{StaticResource LibraryDropDownStyle}"
                                 Width="140">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -479,7 +480,8 @@
                                     <MenuFlyoutSeparator/>
                                     <MenuFlyoutItem AutomationProperties.AutomationId="Library.ScreenFit"
                                         Click="ScreenFit_Click" l:Uids.Uid="Ui_ScreenFit_Menu"/>
-                                    <MenuFlyoutItem Click="ManageEffectPresets_Click" l:Uids.Uid="Ui_EffectPreset_Manage"/>
+                                    <MenuFlyoutItem AutomationProperties.AutomationId="Library.EffectPresets"
+                                        Click="ManageEffectPresets_Click" l:Uids.Uid="Ui_EffectPreset_Manage"/>
                                 </MenuFlyout>
                             </Button.Flyout>
                         </Button>

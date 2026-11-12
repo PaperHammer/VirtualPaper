@@ -131,7 +131,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 默认总超时为 180 秒，`-Suite Extended` 为 900 秒。可按需将 `-TimeoutSeconds` 设置为 30 至 900。报告旁的 `.artifacts` 目录会保留隔离设置和 Core/UI 日志，临时运行目录会被清理。
 
-标准测试集包含 20 个用例。扩展测试集共 23 个用例，在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。内置 3D 壁纸用例需要构建中的 Depth Anything 模型来校验缓存键，但不需要重新推理。扩展集的 Real-ESRGAN 和 Depth Anything 模型也必须预先安装；缺失模型会使验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
+标准测试集包含 22 个用例。扩展测试集共 25 个用例，在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。内置 3D 壁纸用例需要构建中的 Depth Anything 模型来校验缓存键，但不需要重新推理。扩展集的 Real-ESRGAN 和 Depth Anything 模型也必须预先安装；缺失模型会使验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
 
 ### 没有可用桌面的机器
 
@@ -196,6 +196,8 @@ Core 测试通过隔离的本地 HTTP 服务验证单／多文件下载的字节
 每项都修改真实控件，通过 Core RPC 和持久化 JSON 确认，再重新打开 UI 核验。这验证设置持久化，不模拟电池或 RDP 状态，也不验证真实壁纸暂停、静音行为。
 
 ### 壁纸库
+
+`Application.WallpaperLibrary.OrganizeAndReopen` 通过真实导入生成两张图片，核对右键收藏、卡片状态和持久化结果，使用 Enter 提交作者／标签并保存尚未提交的标签输入，检查标题／描述、默认位置保持、收藏与标签组合筛选、搜索和 UI 重开；媒体哈希必须不变。`Application.EffectPresetManager.CreateCopyDeleteAndReopen` 打开正式预设管理器，检查内置项保护、未修改／已修改草稿、创建与默认参数、独立复制、删除取消／确认、关闭丢弃修改，以及重开后保存项。这两条新增用例需要授权后执行真实 UI；编译通过不代表 UI 验收通过。
 
 `Application.WallpaperLibrary.ImportApplyCloseDelete`：
 

@@ -129,6 +129,19 @@ internal static class ApplicationUi {
             "Could not send the complete context-menu key sequence.");
     }
 
+    public static void CommitToken(nint ownerWindow, AutomationElement input, string value) {
+        using var foreground = Foreground(ownerWindow);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the token editor");
+        SetText(input, value);
+        input.SetFocus();
+        Check(GetForegroundWindow() == ownerWindow, "The token editor lost focus before Enter");
+        var keys = new NativeInput[] {
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x0D } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x0D, Flags = 2 } } }
+        };
+        Check(SendInput((uint)keys.Length, keys, Marshal.SizeOf<NativeInput>()) == keys.Length, "Could not commit the token with Enter");
+    }
+
     public static void OpenPointerContextMenu(nint ownerWindow, AutomationElement element) => ClickPointer(ownerWindow, element, 0x0008, 0x0010);
 
     public static void ClickPointerElement(nint ownerWindow, AutomationElement element) {

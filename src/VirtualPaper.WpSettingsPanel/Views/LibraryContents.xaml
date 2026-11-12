@@ -216,6 +216,7 @@
                     Opacity="0" IsHitTestVisible="False" Loaded="CardActions_Loaded" Unloaded="CardActions_Unloaded">
                     <StackPanel.RenderTransform><TranslateTransform X="48"/></StackPanel.RenderTransform>
                     <ToggleButton x:Name="FavoriteButton" Style="{StaticResource CardFavoriteButtonStyle}"
+                        AutomationProperties.AutomationId="Library.Card.Favorite"
                         IsEnabled="False" IsTabStop="False"
                         Loaded="FavoriteButton_Loaded" Unloaded="FavoriteButton_Unloaded"
                         DataContextChanged="FavoriteButton_DataContextChanged" Click="FavoriteButton_Click">
@@ -238,10 +239,10 @@
         <MenuFlyout x:Key="WallpaperContextFlyout"
             ShowMode="Transient"
             Opening="WallpaperContextFlyout_Opening">
-            <MenuFlyoutItem Tag="AddFavorite" l:Uids.Uid="Ui_WpLib_AddFavorite" Click="ContextMenu_Click">
+            <MenuFlyoutItem Tag="AddFavorite" AutomationProperties.AutomationId="Library.Item.AddFavorite" l:Uids.Uid="Ui_WpLib_AddFavorite" Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE734;"/></MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
-            <MenuFlyoutItem Tag="RemoveFavorite" l:Uids.Uid="Ui_WpLib_RemoveFavorite" Click="ContextMenu_Click">
+            <MenuFlyoutItem Tag="RemoveFavorite" AutomationProperties.AutomationId="Library.Item.RemoveFavorite" l:Uids.Uid="Ui_WpLib_RemoveFavorite" Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE735;"/></MenuFlyoutItem.Icon>
             </MenuFlyoutItem>
             <MenuFlyoutItem Tag="EditTags" l:Uids.Uid="Ui_WpLib_EditTags" Click="ContextMenu_Click">
@@ -267,6 +268,7 @@
             </MenuFlyoutItem>
             <MenuFlyoutItem
                 Tag="Edit"
+                AutomationProperties.AutomationId="Library.Item.EditInfo"
                 l:Uids.Uid="Ui_WpLib_EditInfo"
                 Click="ContextMenu_Click">
                 <MenuFlyoutItem.Icon>

@@ -131,7 +131,7 @@ Use `-ReportPath` to specify a new JSON report path; the default is in the syste
 
 The default overall timeout is 180 seconds, or 900 seconds for `-Suite Extended`. Set `-TimeoutSeconds` to a value from 30 to 900 as needed. The report's adjacent `.artifacts` directory retains isolated settings and Core/UI logs; temporary runtime directories are cleaned up.
 
-The standard suite contains 20 cases; prepared 3D playback needs the bundled Depth Anything model to validate its cache key, without running inference. The extended suite contains 23 cases, adding real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
+The standard suite contains 22 cases; prepared 3D playback needs the bundled Depth Anything model to validate its cache key, without running inference. The extended suite contains 25 cases, adding real model inference and queue cancellation, 12 generations of UI open/close and screen-saver page notifications, and depth inference with rendered-frame pause/resume checks. Its Real-ESRGAN and Depth Anything models must already be installed; missing models fail the extended acceptance rather than silently reducing coverage. CI runs this extended suite. Real idle screen-saver testing is still opt-in; session locking and registry modifications remain excluded.
 
 ### Machines without a usable desktop
 
@@ -196,6 +196,8 @@ Reopening waits for the real window to become ready. If the OS reports process e
 Each real control is changed, confirmed through Core RPC and persisted JSON, and checked again after reopening UI. This tests settings persistence, not simulated battery/RDP states or actual wallpaper pause/mute behavior.
 
 ### Wallpaper library
+
+`Application.WallpaperLibrary.OrganizeAndReopen` imports two real images, checks context-menu favorite changes against the card and persisted state, commits author/tag tokens with Enter, saves pending tag text, and checks title/description, stable default order, combined favorite/tag filters, search and UI reopening. Media hashes must remain unchanged. `Application.EffectPresetManager.CreateCopyDeleteAndReopen` opens the production manager and checks built-in protection, untouched versus dirty drafts, creation/default parameters, an independent copy, delete cancellation/confirmation, discarded edits on close and saved entries after reopening. These added cases require authorized real UI execution; compiling them does not establish a UI pass.
 
 `Application.WallpaperLibrary.ImportApplyCloseDelete`:
 

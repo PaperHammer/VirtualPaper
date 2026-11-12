@@ -11,6 +11,8 @@
 
 ## 构建和验收
 
+共享真实 UI 测试集新增壁纸整理与效果预设管理用例，详见[测试清单](../../test/README.zh-CN.md#壁纸库)。标准／扩展测试集均包含两项，渠道隔离和禁止跳过的门禁保持不变。本地源码／编译检查与实际执行 UI 用例分别记录。
+
 两个主入口中相同阶段使用一致的显示名称，包括 `Build Release` 和 `Test Summary`。 Windows 和 Ubuntu 的 run 块均默认使用 PowerShell（`pwsh`），包括打包门禁和汇总。
 
 1. 校验 PR，固定源码 SHA、版本和渠道选择；使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。

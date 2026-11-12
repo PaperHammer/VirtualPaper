@@ -2139,4 +2139,6 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>硬件加速</value></data>
   <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>允许主界面中受支持的功能使用 GPU 加速。下次启动主界面时生效。</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>重新启动主界面后，此更改将生效。</value></data>
+  <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU 加速</value></data>
+  <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>已回退到 CPU</value></data>
 </root>

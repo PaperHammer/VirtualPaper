@@ -2132,4 +2132,6 @@ Se não funcionar, reinicie o Windows. Algumas versões de prévia do Windows 10
   <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Aceleração de hardware</value></data>
   <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Usar a GPU nos recursos compatíveis da interface principal. As alterações entram em vigor na próxima inicialização da interface.</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Reinicie a interface principal para aplicar esta alteração.</value></data>
+  <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>Aceleração por GPU</value></data>
+  <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>Processamento pela CPU</value></data>
 </root>

@@ -9,7 +9,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.20.0" />
+		<PackageReference Include="Microsoft.ML.OnnxRuntime.DirectML" Version="1.20.0" />
 		<PackageReference Include="OpenCvSharp4" Version="4.10.0.20241108" />
 		<PackageReference Include="OpenCvSharp4.Extensions" Version="4.10.0.20241108" />
 		<PackageReference Include="OpenCvSharp4.runtime.win" Version="4.10.0.20241108" />
@@ -30,6 +30,11 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\VirtualPaper.Common\VirtualPaper.Common.csproj" />
+	</ItemGroup>
+
+	<!-- DirectML's package targets copy only for explicit architectures. AnyCPU test hosts use x64. -->
+	<ItemGroup Condition="('$(PlatformTarget)' == '' or '$(PlatformTarget)' == 'AnyCPU') and '$(Prefer32Bit)' != 'true'">
+		<None Include="$(Microsoft_AI_DirectML_Bin_Dir_Windows_x64)\DirectML.dll" Link="DirectML.dll" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 	<ItemGroup>

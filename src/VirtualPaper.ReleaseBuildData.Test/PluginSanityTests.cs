@@ -68,6 +68,14 @@ namespace VirtualPaper.ReleaseBuildData.Test {
                 Path.Combine(PluginsDir, "UI", "VirtualPaper.ML.dll"), "ML dll");
         }
 
+        [TestMethod]
+        [TestCategory("ReleaseBuild")]
+        [DataRow("onnxruntime.dll")]
+        [DataRow("DirectML.dll")]
+        public void Plugin_UI_InferenceRuntime_Exists(string name) {
+            ReleaseBuildSanityTests.AssertFileExists(Path.Combine(PluginsDir, "UI", name), $"Inference native runtime [{name}]");
+        }
+
         // ── UI Plugin StaticImg 子目录 ────────────────────────────────────────
 
         [TestMethod]

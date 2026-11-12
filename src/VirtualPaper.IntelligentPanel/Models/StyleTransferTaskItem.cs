@@ -116,6 +116,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
             OnPropertyChanged(nameof(StyleName));
             OnPropertyChanged(nameof(StatusText));
             RefreshPreservation();
+            RefreshBackend();
         }
 
         protected override void NotifyCommandsCanExecuteChanged() {

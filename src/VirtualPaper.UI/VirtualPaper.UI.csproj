@@ -26,7 +26,7 @@
 	<!-- 排除 ONNX Runtime 重复的原生 DLL（在 MSIX payload 重复检测之前从 PackagingOutputs 移除 NuGet 缓存副本） -->
 	<Target Name="RemoveDuplicateOnnxRuntimeDlls" BeforeTargets="_ComputeAppxPackagePayload" AfterTargets="GetPackagingOutputs">
 		<ItemGroup>
-			<PackagingOutputs Remove="@(PackagingOutputs)" Condition="('%(Filename)%(Extension)' == 'onnxruntime.dll' or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll') and $([System.String]::new('%(FullPath)').Contains('.nuget'))" />
+			<PackagingOutputs Remove="@(PackagingOutputs)" Condition="('%(Filename)%(Extension)' == 'onnxruntime.dll' or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll' or '%(Filename)%(Extension)' == 'DirectML.dll') and $([System.String]::new('%(FullPath)').Contains('.nuget'))" />
 		</ItemGroup>
 	</Target>
 

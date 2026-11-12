@@ -2139,4 +2139,6 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Hardware acceleration</value></data>
   <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Allow supported features in the main interface to use GPU acceleration. Changes take effect the next time the interface starts.</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Restart the main interface to apply this change.</value></data>
+  <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU acceleration</value></data>
+  <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>CPU fallback</value></data>
 </root>

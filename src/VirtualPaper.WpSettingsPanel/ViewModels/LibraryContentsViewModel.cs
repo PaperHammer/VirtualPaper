@@ -319,7 +319,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         private static Task<string> SetDepthPathAsync(IWpBasicData data, CancellationToken token) =>
             DepthMapCache.GetOrCreateAsync(data.FilePath, data.FolderPath,
-                () => AppServiceLocator.Services.GetRequiredService<IDepthEstimate>(), token);
+                AppServiceLocator.Services.GetRequiredService<IDepthEstimateFactory>().Create, token);
 
         internal async Task ApplyToLockBGAsync(IWpBasicData data) {
             var ctx = ArcPageContextManager.GetContext<WpSettings>();

@@ -2132,4 +2132,6 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Аппаратное ускорение</value></data>
   <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Использовать GPU для поддерживаемых функций основного интерфейса. Изменения вступят в силу при следующем запуске интерфейса.</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Перезапустите основной интерфейс, чтобы применить это изменение.</value></data>
+  <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>Ускорение GPU</value></data>
+  <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>Переход на ЦП</value></data>
 </root>

@@ -95,38 +95,43 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 string tmpOutPath_style = Path.Combine(tempDir, $"styled{ext}");
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
-                await Task.Run(() => {
-                    ct.ThrowIfCancellationRequested();
+                var adain = AppServiceLocator.Services.GetRequiredService<IStyleTransfer>();
+                var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
+                using (taskItem.ObserveInference(adain)) {
+                    await Task.Run(() => {
+                        ct.ThrowIfCancellationRequested();
 
-                    var adain = AppServiceLocator.Services.GetRequiredService<IStyleTransfer>();
-                    adain.LoadModel();
+                        adain.LoadModel();
 
-                    ct.ThrowIfCancellationRequested();
+                        ct.ThrowIfCancellationRequested();
 
-                    adain.RunAndSave(
-                        data.SourceFilePath,
-                        data.StyleFilePath,
-                        tmpOutPath_style,
-                        ct: ct);
+                        adain.RunAndSave(
+                            data.SourceFilePath,
+                            data.StyleFilePath,
+                            tmpOutPath_style,
+                            ct: ct);
+                    }, ct);
+                }
 
-                    ct.ThrowIfCancellationRequested();
+                using (taskItem.ObserveInference(superResolution)) {
+                    await Task.Run(() => {
+                        ct.ThrowIfCancellationRequested();
+                        superResolution.LoadModel();
 
-                    var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
-                    superResolution.LoadModel();
+                        ct.ThrowIfCancellationRequested();
 
-                    ct.ThrowIfCancellationRequested();
+                        superResolution.RunAndSave(
+                            tmpOutPath_style,
+                            tmpOutPath_realesrgan,
+                            (uint)data.Width,
+                            (uint)data.Height,
+                            ct);
 
-                    superResolution.RunAndSave(
-                        tmpOutPath_style,
-                        tmpOutPath_realesrgan,
-                        (uint)data.Width,
-                        (uint)data.Height,
-                        ct);
+                        ct.ThrowIfCancellationRequested();
 
-                    ct.ThrowIfCancellationRequested();
-
-                    data.SetResultAsync(tmpOutPath_realesrgan).Wait();
-                }, ct);
+                        data.SetResultAsync(tmpOutPath_realesrgan).Wait();
+                    }, ct);
+                }
 
                 ct.ThrowIfCancellationRequested();
 

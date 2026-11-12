@@ -2132,4 +2132,6 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>ハードウェア アクセラレーション</value></data>
   <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>メイン画面の対応機能で GPU アクセラレーションを使用します。次回メイン画面を起動したときに反映されます。</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>この変更を反映するには、メイン画面を再起動してください。</value></data>
+  <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU アクセラレーション</value></data>
+  <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>CPU 処理に切り替え済み</value></data>
 </root>

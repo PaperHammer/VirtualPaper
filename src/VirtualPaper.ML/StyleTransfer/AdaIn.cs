@@ -4,15 +4,22 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 
 namespace VirtualPaper.ML.StyleTransfer {
-    public class AdaIn : IStyleTransfer {
+    public class AdaIn : InferenceModel, IStyleTransfer {
         public string ModelPath { get; private set; } = null!;
 
-        public AdaIn() { }
+        public AdaIn() : this(new InferenceDevicePolicy()) { }
+        public AdaIn(InferenceDevicePolicy policy) : base(policy) { }
 
         public void LoadModel(string? path = null) {
+            lock (_loadLock) LoadModelCore(path);
+        }
+
+        private void LoadModelCore(string? path) {
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
             if (_isLoaded) {
                 ArcLog.GetLogger<AdaIn>().Info("Model already loaded, skipping.");
                 return;
@@ -26,16 +33,21 @@ namespace VirtualPaper.ML.StyleTransfer {
             if (!File.Exists(ModelPath))
                 throw new FileNotFoundException($"Model file not found: {ModelPath}");
 
+            bool supportsGpu = !DevicePolicy.AllowGpu || AdaInModelCompatibility.SupportsDirectML(ModelPath);
+            if (!supportsGpu)
+                ArcLog.GetLogger<AdaIn>().Info("This AdaIN model/runtime combination uses CPU because its DirectML Reshape path is incompatible.");
             _session?.Dispose();
-            using var options = new SessionOptions();
-            options.EnableCpuMemArena = false;
-            options.EnableMemoryPattern = false;
-            // options.AppendExecutionProvider_CUDA();
-            _session = new InferenceSession(ModelPath, options);
-            ArcLog.GetLogger<AdaIn>().Info($"Model version: {_session.ModelMetadata.Version}");
-
-            _outputNames = _session.OutputMetadata.Keys.ToList();
-            _isLoaded = true;
+            var session = new OnnxInferenceSession(ModelPath, () => new SessionOptions {
+                EnableCpuMemArena = false,
+                EnableMemoryPattern = false
+            }, DevicePolicy, ReportInferenceState, supportsGpu);
+            try {
+                _outputNames = session.OutputMetadata.Keys.ToList();
+                ArcLog.GetLogger<AdaIn>().Info($"Model version: {session.ModelMetadata.Version}");
+                _session = session;
+                _isLoaded = true;
+            }
+            catch { session.Dispose(); throw; }
         }
 
         public string RunAndSave(
@@ -46,6 +58,15 @@ namespace VirtualPaper.ML.StyleTransfer {
             int contentSize = 512,
             int styleSize = 512,
             CancellationToken ct = default) {
+
+            ct.ThrowIfCancellationRequested();
+            var session = _session ?? throw new InvalidOperationException("ONNX Session is not initialized.");
+            return session.Execute(() => RunAndSaveCore(contentImagePath, styleImagePath,
+                outputFilePath, alpha, contentSize, styleSize, ct), ct);
+        }
+
+        private string RunAndSaveCore(string contentImagePath, string styleImagePath, string outputFilePath,
+            float alpha, int contentSize, int styleSize, CancellationToken ct) {
 
             ct.ThrowIfCancellationRequested();
 
@@ -243,13 +264,15 @@ namespace VirtualPaper.ML.StyleTransfer {
         private bool _isDisposed;
 
         protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
-                if (disposing) {
-                    _session?.Dispose();
-                    _session = null;
-                    _isLoaded = false;
+            lock (_loadLock) {
+                if (!_isDisposed) {
+                    if (disposing) {
+                        _session?.Dispose();
+                        _session = null;
+                        _isLoaded = false;
+                    }
+                    _isDisposed = true;
                 }
-                _isDisposed = true;
             }
         }
 
@@ -261,7 +284,8 @@ namespace VirtualPaper.ML.StyleTransfer {
         #endregion
 
         // 单例实例字段，仅 LoadModel 写入，之后只读
-        private InferenceSession? _session;
+        private readonly object _loadLock = new();
+        private OnnxInferenceSession? _session;
         private IReadOnlyList<string> _outputNames = [];
         private volatile bool _isLoaded;
     }

@@ -101,6 +101,11 @@
                                                     FontSize="14"
                                                     FontWeight="SemiBold"
                                                     Foreground="{x:Bind StatusColor, Mode=OneWay, Converter={StaticResource ByteArrayToBrushConverter}}"/>
+                                                <TextBlock AutomationProperties.AutomationId="Intelligent.Task.Backend"
+                                                    Text="{x:Bind BackendText, Mode=OneWay}" FontSize="12"
+                                                    TextWrapping="Wrap" MaxWidth="240"
+                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                    Visibility="{x:Bind HasBackendInfo, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
                                                 <Border CornerRadius="4" Padding="6 2" HorizontalAlignment="Left"
                                                     Background="{ThemeResource SubtleFillColorSecondaryBrush}"
                                                     Visibility="{x:Bind IsCompleted, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">

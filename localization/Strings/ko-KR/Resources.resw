@@ -2132,4 +2132,6 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>하드웨어 가속</value></data>
   <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>기본 화면에서 지원되는 기능에 GPU 가속을 사용합니다. 다음에 기본 화면을 시작할 때 적용됩니다.</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>이 변경 사항을 적용하려면 기본 화면을 다시 시작하세요.</value></data>
+  <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU 가속</value></data>
+  <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>CPU 처리로 전환됨</value></data>
 </root>

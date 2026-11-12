@@ -2,6 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.IntelligentPanel.Services;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
@@ -22,6 +25,26 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public abstract bool IsProcessing { get; }
         public abstract bool IsCompleted { get; }
         protected abstract void NotifyCommandsCanExecuteChanged();
+
+        // 关闭硬件加速时不增加状态项；多阶段任务一旦发生回退，完成后仍保留说明。
+        public bool HasBackendInfo => _hasBackendInfo;
+        public string BackendText => !_hasBackendInfo ? string.Empty : LanguageUtil.GetI18n(
+            _usedCpuFallback ? Constants.I18n.Intelligent_Backend_CpuFallback : Constants.I18n.Intelligent_Backend_Gpu);
+
+        internal IDisposable? ObserveInference(object model) => model is IInferenceStatusSource source
+            ? new InferenceStatusSubscription(source, UpdateBackend, action => CrossThreadInvoker.InvokeOnUIThread(action)) : null;
+
+        private void UpdateBackend(InferenceState state) {
+            if (!state.AccelerationRequested || state.Device == InferenceDevice.Uninitialized) return;
+            bool fallback = _usedCpuFallback || state.IsCpuFallback;
+            if (_hasBackendInfo && fallback == _usedCpuFallback) return;
+            _hasBackendInfo = true;
+            _usedCpuFallback = fallback;
+            OnPropertyChanged(nameof(HasBackendInfo));
+            RefreshBackend();
+        }
+
+        internal void RefreshBackend() => OnPropertyChanged(nameof(BackendText));
 
         // 记录本次任务是否成功导出或入库过；后续操作取消、失败时保留已有成功标记。
         public bool IsExported { get; private set; }
@@ -71,5 +94,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
             OnPropertyChanged(nameof(IsTemporaryResult));
             OnPropertyChanged(nameof(PreservationText));
         }
+
+        private bool _hasBackendInfo;
+        private bool _usedCpuFallback;
     }
 }

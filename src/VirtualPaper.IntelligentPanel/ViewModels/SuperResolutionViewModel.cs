@@ -93,25 +93,27 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 string ext = Path.GetExtension(data.SourceFilePath);
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
-                await Task.Run(() => {
-                    ct.ThrowIfCancellationRequested();
+                var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
+                using (taskItem.ObserveInference(superResolution)) {
+                    await Task.Run(() => {
+                        ct.ThrowIfCancellationRequested();
 
-                    var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
-                    superResolution.LoadModel();
+                        superResolution.LoadModel();
 
-                    ct.ThrowIfCancellationRequested();
+                        ct.ThrowIfCancellationRequested();
 
-                    superResolution.RunAndSave(
-                        data.SourceFilePath,
-                        tmpOutPath_realesrgan,
-                        (uint)data.TargetWidth,
-                        (uint)data.TargetHeight,
-                        ct);
+                        superResolution.RunAndSave(
+                            data.SourceFilePath,
+                            tmpOutPath_realesrgan,
+                            (uint)data.TargetWidth,
+                            (uint)data.TargetHeight,
+                            ct);
 
-                    ct.ThrowIfCancellationRequested();
+                        ct.ThrowIfCancellationRequested();
 
-                    data.SetResult(tmpOutPath_realesrgan);
-                }, ct);
+                        data.SetResult(tmpOutPath_realesrgan);
+                    }, ct);
+                }
 
                 ct.ThrowIfCancellationRequested();
 

@@ -23,6 +23,7 @@ using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.ML.StyleTransfer;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution;
@@ -133,6 +134,8 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
                 .AddSingleton(services => new UiHardwareAccelerationPolicy(
                     services.GetRequiredService<IUserSettingsClient>().Settings.UiHardwareAccelerationEnabled))
+                .AddSingleton(services => new InferenceDevicePolicies(
+                    services.GetRequiredService<UiHardwareAccelerationPolicy>().IsEnabled))
                 .AddSingleton<UiWebViewEnvironment>()
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
@@ -150,9 +153,12 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
                 .AddSingleton<IPipeServerFactory, NamedPipeServerFactory>()
 
-                .AddTransient<IDepthEstimate, DepthAnythingV2>()
-                .AddSingleton<IStyleTransfer, AdaIn>()
-                .AddSingleton<ISuperResolution, Realesrgan>()
+                .AddSingleton<IDepthEstimateFactory>(services => new DepthEstimateFactory(
+                    services.GetRequiredService<InferenceDevicePolicies>().DepthEstimate))
+                .AddSingleton<IStyleTransfer>(services => new AdaIn(
+                    services.GetRequiredService<InferenceDevicePolicies>().StyleTransfer))
+                .AddSingleton<ISuperResolution>(services => new Realesrgan(
+                    services.GetRequiredService<InferenceDevicePolicies>().SuperResolution))
 
                 .AddTransient<Workloads.Creation.StaticImg.MainPage>()
                 .AddTransient<Workloads.Creation.WebBackdrop.MainPage>()

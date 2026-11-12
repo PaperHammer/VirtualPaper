@@ -144,8 +144,18 @@ try {
     $runnerDirectory = Join-Path $runnerRoot 'test'
     New-Item -ItemType Directory -Path $runnerDirectory -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Run-ProjectTests.ps1'), (Join-Path $PSScriptRoot 'TestReportSupport.ps1') -Destination $runnerDirectory
+    [IO.File]::WriteAllText((Join-Path $runnerDirectory 'Test-LocalizationResourceSupport.ps1'), @'
+param([string]$PayloadDirectory)
+$global:ReportLocalizationCalls++
+if ($PayloadDirectory -ne $env:RELEASE_BIN_DIR) { throw 'Artifact localization used a different payload.' }
+if ($global:ReportLocalizationMode -eq 'fail') { throw 'Expected localization failure.' }
+'@)
+    $global:ReportLocalizationCalls = 0
+    $global:ReportLocalizationMode = 'pass'
+    $global:ReportDotnetCalls = 0
     $global:ReportTestMode = 'pass'
     function dotnet {
+        $global:ReportDotnetCalls++
         $global:ReportTestArguments = @($args)
         $global:ReportTestBin = $env:RELEASE_BIN_DIR
         $global:LASTEXITCODE = if ($global:ReportTestMode -eq 'exit-failure') { 9 } else { 0 }
@@ -168,6 +178,12 @@ try {
     & $runner -JobId test-ml -IncludeMLIntegration
     Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--filter') 'Explicit ML integration must not be filtered out.'
     & $runner -JobId test-artifacts
+    Assert-ReviewCondition ($global:ReportLocalizationCalls -eq 1) 'Artifacts must validate actual localization before running tests.'
+    $dotnetCalls = $global:ReportDotnetCalls
+    $global:ReportLocalizationMode = 'fail'
+    Assert-ReportThrows { & $runner -JobId test-artifacts -ResultsDirectory 'TestResults/BadLocalization' } 'Incomplete localization must block artifact tests.'
+    Assert-ReviewCondition ($global:ReportDotnetCalls -eq $dotnetCalls -and -not (Test-Path (Join-Path $runnerRoot 'TestResults/BadLocalization/release-build-tests.trx'))) 'Invalid package localization must fail before producing a passing TRX.'
+    $global:ReportLocalizationMode = 'pass'
     Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--settings' -and $global:ReportTestBin -eq (Join-Path $runnerRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0')) 'Artifact checks need the build directory and no coverage collector.'
     foreach ($case in @(@('exit-failure', 'test-shader'), @('missing-report', 'test-images'), @('failed-report', 'test-web-backdrop'))) {
         $global:ReportTestMode = $case[0]
@@ -177,7 +193,7 @@ try {
     Write-Host '[OK] TRX validity, report isolation on retry, per-project coverage, explicit UI skips and shared runner failure propagation.'
 } finally {
     Remove-Item Function:\dotnet -ErrorAction SilentlyContinue
-    Remove-Variable ReportTestArguments, ReportTestMode, ReportTestBin -Scope Global -ErrorAction SilentlyContinue
+    Remove-Variable ReportTestArguments, ReportTestMode, ReportTestBin, ReportLocalizationCalls, ReportLocalizationMode, ReportDotnetCalls -Scope Global -ErrorAction SilentlyContinue
     $env:GITHUB_OUTPUT = $oldOutput; $env:GITHUB_STEP_SUMMARY = $oldSummary
     $resolved = [IO.Path]::GetFullPath($fixture)
     if ([IO.Path]::GetDirectoryName($resolved) -ne $resultsRoot) { throw 'Unsafe report test cleanup path.' }

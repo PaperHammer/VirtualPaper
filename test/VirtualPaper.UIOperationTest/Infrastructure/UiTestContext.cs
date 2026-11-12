@@ -13,6 +13,7 @@ internal sealed class UiTestContext : IDisposable {
     private readonly Window _window;
     private Page? _page;
     private Exception? _unhandled;
+    private Windows.Graphics.SizeInt32? _initialWindowSize;
     public string Root { get; } = Path.Combine(Path.GetTempPath(), "VirtualPaper.UIOperationTest", Guid.NewGuid().ToString("N"));
     public Dictionary<string, object?> Evidence { get; } = [];
 
@@ -60,6 +61,16 @@ internal sealed class UiTestContext : IDisposable {
         finally { CompositionTarget.Rendering -= OnRendering; }
     }
 
+    public async Task ResizeAsync(int width, int height) {
+        _initialWindowSize ??= _window.AppWindow.Size;
+        double scale = _page?.XamlRoot?.RasterizationScale ?? 1;
+        var size = new Windows.Graphics.SizeInt32((int)Math.Ceiling(width * scale), (int)Math.Ceiling(height * scale));
+        _window.AppWindow.Resize(size);
+        await WaitAsync(() => _window.AppWindow.Size.Width == size.Width && _window.AppWindow.Size.Height == size.Height,
+            "Resize owned layout window");
+        await WaitForLayoutAsync();
+    }
+
     public void SaveFailureSnapshot(string name) {
         string path = Path.Combine(VirtualPaper.Common.Constants.CommonPaths.LogDir, "UIOperation", name + ".png");
         WindowSnapshot.Save(WinRT.Interop.WindowNative.GetWindowHandle(_window), path);
@@ -95,6 +106,7 @@ internal sealed class UiTestContext : IDisposable {
         try {
             (_page as IDisposable)?.Dispose();
             _window.Content = null;
+            if (_initialWindowSize is { } size) _window.AppWindow.Resize(size);
             if (_unhandled != null) throw new InvalidOperationException("Unhandled UI exception", _unhandled);
         }
         finally {

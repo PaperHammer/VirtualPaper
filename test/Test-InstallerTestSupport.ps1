@@ -1,5 +1,13 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/InstallerTestSupport.ps1"
+foreach ($row in @(@('english','chinese','en-US','zh-CN'), @('chinese','english','zh-CN','en-US'), @('french','english','fr-FR','en-US'))) {
+    $sequence = Get-InstallerLanguageSequence $row[0]
+    if ($sequence.First -cne $row[0] -or $sequence.Second -cne $row[1] -or
+        $sequence.FirstApplication -cne $row[2] -or $sequence.SecondApplication -cne $row[3]) { throw 'Installer language sequence differs from its expected initialization/preservation contract.' }
+}
+$rejectedSequence = $false
+try { $null = Get-InstallerLanguageSequence 'unsupported' } catch { $rejectedSequence = $true }
+if (-not $rejectedSequence) { throw 'Unsupported wizard acceptance language was accepted.' }
 foreach ($language in @('english', 'en-US', 'en')) {
     if ((Get-InstallerApplicationLanguage $language) -cne 'en-US') { throw 'English installer marker compatibility failed.' }
 }

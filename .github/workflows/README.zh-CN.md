@@ -117,3 +117,5 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 运行 `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` 验证 DAG（打包 → 全部共享项目测试 → 渠道子流程）、固定 hosted VM 隔离、冒烟/UI 顺序、严格报告失败/跳过/缺失、包载荷、版本同步、插件包，以及商店 HTTP 模拟和重试契约。它不安装应用，也不连接 Partner Center/GitHub。完整本地入口仍为 EXE 的 `test/Run-Tests.ps1` 和 MSIX 的 `test/Run-MsixTests.ps1`，详见[测试说明](../../test/README.zh-CN.md)。
 
 该入口同时运行语言生成契约：清单／key／占位符一致性，UI/Core/Common/安装器/MSIX 输出，临时第三语种，过期输出检测和源目录保护。两个渠道共用[语言清单与文案](../../localization/README.zh-CN.md)。包体检查核验实际应用翻译及 MSIX 语种声明，不能用框架卫星资源目录代替产品翻译覆盖。
+
+资源载荷契约还拒绝不完整／过期的 UI 字典及缺失的 Core/Common 资源；产物 runner 在运行 TRX 测试前检查真实 Release 资源，已安装 EXE 与最终 MSIX 使用同一严格校验。真实 UI 用例遍历全部语种，并增加德／法／俄语布局样本。法语安装为本地／手动可选入口，不改变 CI 必需的默认中英文冒烟顺序。

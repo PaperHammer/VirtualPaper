@@ -8,6 +8,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIOperationTest.Infrastructure;
+using VirtualPaper.TestSupport;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
 namespace VirtualPaper.UIOperationTest.Cases;
@@ -78,6 +79,7 @@ internal static class ModelInferenceTests {
         }), "Real model result completed", TimeSpan.FromMinutes(6));
         context.Evidence["InferenceMilliseconds"] = timer.ElapsedMilliseconds;
         await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_Temporary);
+        await VerifyLocalizedCloseDialogsAsync(context, ui, root);
         // Ticking the suppression box and returning must neither save the
         // preference nor discard the temporary result. The next close asks again.
         await Task.Run(() => {
@@ -206,5 +208,31 @@ internal static class ModelInferenceTests {
         }
         throw new TimeoutException($"Intelligent task row not found: {path}");
     }
+    private static async Task VerifyLocalizedCloseDialogsAsync(UiTestContext context, Process ui, AutomationElement root) {
+        foreach (string locale in new[] { "de-DE", "fr-FR", "ru-RU" }) {
+            await ApplicationUi.SelectLanguageAsync(root, locale);
+            string expected = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "Intelligent_Close_DontRemind");
+            await Task.Run(() => {
+                Check(ui.CloseMainWindow(), "UI rejected the localized close request");
+                var dialog = ApplicationUi.Find(root, "Intelligent.Close.Dialog", visible: true);
+                var checkbox = ApplicationUi.Find(root, "Intelligent.Close.DontRemind", visible: true);
+                var bounds = dialog.Current.BoundingRectangle;
+                Check(root.Current.BoundingRectangle.Contains(bounds), "Localized close dialog extends beyond the window");
+                Check(bounds.Contains(checkbox.Current.BoundingRectangle), "Localized reminder checkbox is clipped");
+                Check(checkbox.Current.Name == expected || checkbox.FindAll(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text))
+                    .Cast<AutomationElement>().Any(text => text.Current.Name == expected && !text.Current.IsOffscreen),
+                    "Localized reminder label is missing");
+                foreach (string button in new[] { "PrimaryButton", "SecondaryButton" })
+                    Check(bounds.Contains(ApplicationUi.DialogButton(root, button).Current.BoundingRectangle), "Localized close action is clipped");
+                ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "PrimaryButton"));
+                ApplicationUi.WaitUntilGone(root, "Intelligent.Close.Dialog");
+                Check(!ui.HasExited, "Returning from localized close discarded the task session");
+            });
+        }
+        await ApplicationUi.SelectLanguageAsync(root, "en-US");
+        context.Evidence["LocalizedCloseDialogSamples"] = new[] { "de-DE", "fr-FR", "ru-RU" };
+    }
+
     private static string Status(AutomationElement root, string path) => ApplicationUi.Find(Row(root, path), "Intelligent.Task.Status").Current.Name;
 }

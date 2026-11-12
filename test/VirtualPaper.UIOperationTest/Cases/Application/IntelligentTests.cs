@@ -66,6 +66,7 @@ internal static class IntelligentTests {
             CancelTask(root);
         });
         context.Evidence["InputValidationAndCancellationVerified"] = true;
+        await VerifyLocalizedFormsAsync(context, ui, root);
         await session.CloseUiAsync();
         ui = await session.OpenUiAsync();
         await Task.Run(() => {
@@ -91,6 +92,40 @@ internal static class IntelligentTests {
     private static void OpenTask(AutomationElement root) {
         ApplicationUi.Invoke(ApplicationUi.Find(root, "Intelligent.AddTask"));
         ApplicationUi.Find(root, "Intelligent.Task.Cancel", visible: true);
+    }
+
+    private static async Task VerifyLocalizedFormsAsync(UiTestContext context, System.Diagnostics.Process ui, AutomationElement root) {
+        var initial = await Task.Run(() => root.Current.BoundingRectangle);
+        var samples = new List<object>();
+        foreach (string locale in new[] { "de-DE", "fr-FR", "ru-RU" }) {
+            await ApplicationUi.SelectLanguageAsync(root, locale);
+            foreach (int width in new[] { 1440, 800 }) {
+                await Task.Run(() => ApplicationUi.ResizeOwnedWindow(ui.MainWindowHandle, width, 850));
+                foreach (string tab in new[] { "Intelligent.Tab.StyleTransfer", "Intelligent.Tab.SuperResolution" }) {
+                    await Task.Run(() => {
+                        ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Intelligent"));
+                        ApplicationUi.Select(ApplicationUi.Find(root, tab));
+                        OpenTask(root);
+                    });
+                    await AppProcessSession.WaitAsync(() => Task.Run(() => {
+                        var bounds = root.Current.BoundingRectangle;
+                        var cancel = ApplicationUi.Find(root, "Intelligent.Task.Cancel", visible: true).Current.BoundingRectangle;
+                        var confirm = ApplicationUi.Find(root, "Intelligent.Task.Confirm", visible: true, enabled: false).Current.BoundingRectangle;
+                        return cancel.Width >= 100 && confirm.Width >= 100 && bounds.Contains(cancel) && bounds.Contains(confirm)
+                            && Math.Abs(cancel.Top - confirm.Top) < 2 && cancel.Right <= confirm.Left;
+                    }), "Localized task footer " + locale);
+                    await Task.Run(() => CancelTask(root));
+                    samples.Add(new { Locale = locale, Width = width, Tab = tab });
+                }
+            }
+        }
+        await ApplicationUi.SelectLanguageAsync(root, "en-US");
+        await Task.Run(() => {
+            // UIA bounds are physical pixels; restore the original outer size directly.
+            ApplicationUi.ResizeOwnedWindow(ui.MainWindowHandle, (int)initial.Width, (int)initial.Height, physicalPixels: true);
+            ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Intelligent"));
+        });
+        context.Evidence["LocalizedFormFooterSamples"] = samples;
     }
 
     private static void CancelTask(AutomationElement root) {

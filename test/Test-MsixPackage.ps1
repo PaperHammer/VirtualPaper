@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot '../.github/scripts/MsixResources.ps1')
 . (Join-Path $PSScriptRoot '../localization/LanguageCatalog.ps1')
+. (Join-Path $PSScriptRoot 'LocalizationResourceSupport.ps1')
 $languageCatalog = Get-LanguageCatalog
 $package = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $PackagePath).Path)
 try {
@@ -51,9 +52,10 @@ try {
     }
     $declaredLanguages = @($manifest.Package.Resources.Resource | ForEach-Object Language)
     Assert-PackageLanguageDeclarations $declaredLanguages $languageCatalog
-    foreach ($locale in $languageCatalog.Languages.Code) {
-        $translations = Read-PackageText "Plugins/UI/VirtualPaper.UIComponent/Strings/$locale/Resources.resw"
-        if ($translations -notmatch 'name="Ui_') { throw "Missing generated XAML translations for $locale." }
+    Assert-PackageLocalization {
+        param($path)
+        Assert-PackageFile $path
+        $files[$path].Open()
     }
     Assert-PackageFile 'Plugins/UI/PLAYER_Web/default.html'
     Assert-PackageFile 'Plugins/ScrSaver/Players/Web/default.html'

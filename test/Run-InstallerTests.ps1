@@ -4,16 +4,18 @@ param(
     [Parameter(Mandatory)][string] $InstallerPath,
     [string] $ReportPath = 'TestResults/Installer/installer-results.json',
     [string] $ExtendedUIReportPath,
-    [ValidateSet('english', 'chinese')][string] $InstallerLanguage = 'english',
+    [ValidateSet('english', 'chinese', 'french')][string] $InstallerLanguage = 'english',
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
     [ValidateRange(10, 600)][int] $TimeoutSeconds = 240,
     [switch] $NoBuild
 )
 $ErrorActionPreference = 'Stop'
 $InstallerLanguage = $InstallerLanguage.ToLowerInvariant()
-$reinstallLanguage = if ($InstallerLanguage -eq 'english') { 'chinese' } else { 'english' }
 . "$PSScriptRoot/InstallerTestSupport.ps1"
+$languageSequence = Get-InstallerLanguageSequence $InstallerLanguage
+$reinstallLanguage = $languageSequence.Second
 . "$PSScriptRoot/BuiltInWallpaperTestSupport.ps1"
+. "$PSScriptRoot/LocalizationResourceSupport.ps1"
 if (-not $IsWindows) { throw 'Installer lifecycle tests require Windows.' }
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $InstallerPath = (Resolve-Path -LiteralPath $InstallerPath).Path
@@ -83,6 +85,7 @@ function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall,
 }
 
 function Assert-InstalledApplication([string] $Language) {
+    Assert-PackageLocalization { param($path) [IO.File]::OpenRead((Join-Path $installDir $path)) }
     $languageMarker = Join-Path $installDir 'installer-language.txt'
     if (-not (Test-Path -LiteralPath $languageMarker) -or
         (Get-InstallerApplicationLanguage ([IO.File]::ReadAllText($languageMarker).Trim())) -cne (Get-InstallerApplicationLanguage $Language)) {
@@ -165,8 +168,8 @@ function Invoke-ApplicationProbe([string] $Stage, [string] $DataRoot, [string] $
     }
 }
 
-$firstAppLanguage = if ($InstallerLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
-$secondAppLanguage = if ($reinstallLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
+$firstAppLanguage = $languageSequence.FirstApplication
+$secondAppLanguage = $languageSequence.SecondApplication
 try {
     $report = Invoke-InstallerLifecycle -Install {
         Invoke-InstallPackage $InstallerLanguage 'install'

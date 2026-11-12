@@ -131,7 +131,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 默认总超时为 180 秒，`-Suite Extended` 为 900 秒。可按需将 `-TimeoutSeconds` 设置为 30 至 900。报告旁的 `.artifacts` 目录会保留隔离设置和 Core/UI 日志，临时运行目录会被清理。
 
-标准测试集包含 19 个用例。扩展测试集在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。内置 3D 壁纸用例需要构建中的 Depth Anything 模型来校验缓存键，但不需要重新推理。扩展集的 Real-ESRGAN 和 Depth Anything 模型也必须预先安装；缺失模型会使验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
+标准测试集包含 20 个用例。扩展测试集共 23 个用例，在此基础上增加真实模型推理与队列取消、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。内置 3D 壁纸用例需要构建中的 Depth Anything 模型来校验缓存键，但不需要重新推理。扩展集的 Real-ESRGAN 和 Depth Anything 模型也必须预先安装；缺失模型会使验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
 
 ### 没有可用桌面的机器
 
@@ -147,7 +147,11 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 源文案只维护在 `localization/Strings` 中；正常构建解决方案时，根据共用语言清单及映射生成 UI/Core/Common 资源。包体测试使用内嵌源文案与映射快照，逐一核验清单内语种的包内生成 key 及 value，不依赖资源注释。修改方法及单独生成、校验命令见[语言资源说明](../localization/README.zh-CN.md)。
 
-`Localization.LiveText.RefreshAndPreserveState` 在正式组件上往返切换中英文，检查画笔名称、预设风格名称、无名称时的提示和队列任务文字，同时检查画笔参数、风格选择、输入路径和自定义名称保持不变。
+`Localization.LiveText.RefreshAndPreserveState` 在正式组件上遍历清单内全部语种，最后恢复英文；预期文案独立读取目标语种资源，不以当前 localizer 的结果自证。检查画笔名称、预设风格、无名称提示、队列文字及窗口标题，并保留画笔参数、风格选择、输入路径和自定义名称。`Application.GeneralSettings.SaveLanguageThemeAndReopen` 还通过真实设置界面、Core RPC、JSON、UI 进程不变、完整导航悬浮提示及新增语种重开检查持久化和热切换。
+
+`Localization.LongText.IntelligentLayouts` 在德语、法语和俄语下，用亮／暗主题和宽／窄窗口检查正式介绍页、两种新建任务表单及完成任务卡片；断言预览比例、图文相对位置、表单上下排列、控件边界、按钮点击面积、操作保持同一行及文字未截断，并恢复测试宿主窗口大小。这些用例需授权后实际运行；编译通过不代表视觉验收通过。显示／文本缩放仍需下述桌面检查。
+
+真实智能配置用例还会在这三种语言、两种宽度下检查正式遮罩和底部按钮；现有扩展推理用例利用同一个真实推理结果，分别打开三种语言的关闭提醒，检查文字、复选框及操作按钮边界，取消关闭并保留会话，最后恢复英文，不重复进行推理。
 
 桌面排版验收还应切换德语、法语和俄语，缩放窗口，并检查较高显示／文本缩放下的表现。重点包括侧栏文字、两种介绍页和智能任务表单、风格库、任务操作按钮及关闭提醒。侧栏保持紧凑，文字可读，悬停可查看完整名称；介绍页预览保持原比例，宽页面图文左右排列，窄页面上下居中排列。任务卡片的信息、状态和按钮始终排在同一行；窗口变窄时对长文件路径使用省略号，不将操作按钮移到下一行。长文案可换行，窄窗口下表单上下排列，正文可滚动且底部按钮保持可见。项目单测和资源完整性检查不代表视觉验收通过；仅在允许占用前台时执行这项检查。
 
@@ -409,7 +413,7 @@ CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，�
 3. 通过 Core 正式 ShowUI RPC 打开原配置，验证原英文、偏好及壁纸文件/UID 保留；另用空配置验证中文初始化。每次均须正常退出。
 4. 前面失败仍尝试真实卸载，检查进程、文件、快捷方式和注册残留；强制清理只是恢复，不能算正常退出通过。
 
-版本 3 `InstallerSmoke` 报告包含 Install、Open、Reinstall、VerifyPreserved、OpenFresh、Uninstall。两个工作流均要求**全部通过且无跳过**。无桌面时可保留静默安装/覆盖安装/卸载诊断，但启动/配置跳过会导致冒烟失败。`-InstallerLanguage chinese` 可反转语言顺序。
+版本 3 `InstallerSmoke` 报告包含 Install、Open、Reinstall、VerifyPreserved、OpenFresh、Uninstall。两个工作流均要求**全部通过且无跳过**。无桌面时可保留静默安装/覆盖安装/卸载诊断，但启动/配置跳过会导致冒烟失败。`-InstallerLanguage chinese` 可反转语言顺序。可选 `-InstallerLanguage french` 验证法语初始化、英文覆盖安装、保留原法语配置和数据、全新配置初始化英文，继续要求真实向导及全部生命周期阶段；CI 默认仍为英文→中文。
 
 冒烟会真实修改安装文件、系统卸载注册及快捷方式，须在干净 CI 或明确准备好的本地管理员会话执行；保留已有安装/AppId/快捷方式保护及用户数据。它与禁止持久系统设置操作的独立 UI 用例分开。
 
@@ -436,7 +440,9 @@ CI 使用 `Summarize-PipelineTests.ps1`：共享 TRX/覆盖率、选中的包、
 
 源文案和语言清单位于 [`localization`](../localization/README.zh-CN.md)。`Test-LocalizationResources.ps1` 随工作流契约运行，不操作 UI 或安装程序。Core 单测覆盖语言匹配、旧／新安装标记、首启首选语言顺序、升级保留及中性／卫星资源回退；产物测试逐项比对清单内语种和内嵌文案快照，MSIX 包体校验同时检查语种声明与实际翻译文件。
 
-EXE/MSIX 启动探针从目标语种资源读取“通用”页签的预期文字，不依赖测试宿主的界面语言。产物测试将这段共用读取逻辑与各语种内嵌源文案逐项比对。这不代表 EXE 冒烟已扩展到中英文以外的安装顺序，也不代表各语种视觉验收通过。
+EXE/MSIX 启动探针从目标语种资源读取“通用”页签的预期文字，不依赖测试宿主的界面语言；产物测试将共用读取逻辑与各语种内嵌源文案比对。法语作为可选代表验收入口，不代表全部语种的安装向导已经验收。
+
+`LocalizationResourceSupport.ps1` 逐项校验源文案／XAML 属性及 Core、Common 的中性和卫星资源，包括 UI 内 Common 副本；它在产物测试前、EXE 安装／覆盖安装后及最终 MSIX ZIP 条目上运行。`Test-LocalizationResourceSupport.ps1` 覆盖缺文件、缺失／过期文案、重复 XML key 和退役属性；`-PayloadDirectory <Release-bin>` 还读取实际构建 DLL，并检查正常／损坏的归档夹具，全程不安装、不操作 UI。Core 单测另覆盖安装语言标记被独占锁定后，按系统首选语言回退并持久化的行为。
 
 内置壁纸文件夹维护在 [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.zh-CN.md)。构建时带入 Core 输出，安装器读取 `BuiltInWallpapersDir`；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，添加缺失文件夹并保留已有目录及用户修改。安装验收向安装程序传递隔离数据目录，不写入日常壁纸库。Core 和 UI 逻辑测试覆盖旧配置默认值、独立路径经 RPC 保存及重启恢复、双目录扫描/删除、预览配置落盘、单一入口下的双目录迁移、索引刷新及失败时保留原数据。
 

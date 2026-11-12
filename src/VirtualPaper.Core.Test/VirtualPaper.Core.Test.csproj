@@ -10,6 +10,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Compile Include="..\..\test\VirtualPaper.InstallerTest\InstallerWizardText.cs" Link="TestSupport\InstallerWizardText.cs" />
+		<Compile Include="..\..\test\VirtualPaper.InstallerTest\InstallerOptions.cs" Link="TestSupport\InstallerOptions.cs" />
 		<PackageReference Include="Moq" Version="4.20.72" />
 	</ItemGroup>
 

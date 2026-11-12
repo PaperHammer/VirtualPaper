@@ -14,13 +14,18 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.PlayerWeb.Core.WebView.Windows;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIOperationTest.Infrastructure;
+using VirtualPaper.TestSupport;
 using Workloads.Creation.StaticImg.Views.Tools;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
 namespace VirtualPaper.UIOperationTest.Cases;
 
 internal static class LocalizationTests {
+    private static string[] Languages => [.. SupportedLanguages.Languages.Select(language => language.Codes[0]), "en-US"];
+    private static string Expected(string language, string key) => LocalizedTestStrings.Read(AppContext.BaseDirectory, language, key);
+
     public static async Task RefreshAndPreserveStateAsync(UiTestContext context) {
+        var regionalCulture = System.Globalization.CultureInfo.CurrentCulture;
         using var services = new ServiceCollection()
             .AddSingleton<StyleTransferAddTaskViewModel>()
             .AddSingleton<StyleTranferViewModel>()
@@ -36,9 +41,9 @@ internal static class LocalizationTests {
             var selectedBrush = brush.SelectedBrush;
             var dropdown = Descendants<DropDownButton>(brush).Single();
             var label = (TextBlock)dropdown.Content;
-            foreach (string language in new[] { "zh-CN", "en-US" }) {
+            foreach (string language in Languages) {
                 await LanguageUtil.SetLanguageAsync(language);
-                await context.WaitAsync(() => label.Text == LanguageUtil.GetI18n(Constants.I18n.Project_StaticImg_Text_Paintbrush),
+                await context.WaitAsync(() => label.Text == Expected(language, Constants.I18n.Project_StaticImg_Text_Paintbrush),
                     "Translate the selected brush");
                 var flyout = (Flyout)dropdown.Flyout;
                 flyout.ShowAt(dropdown);
@@ -61,23 +66,23 @@ internal static class LocalizationTests {
             WallpaperLibraryTests.WriteImage(source);
             viewModel.SourceFilePath = source;
             viewModel.UpdateCardComponentUI();
-            foreach (string language in new[] { "zh-CN", "en-US" }) {
+            foreach (string language in Languages) {
                 await LanguageUtil.SetLanguageAsync(language);
                 await context.WaitAsync(() => Descendants<TextBlock>(addTask).Any(text => text.Name == "styleName" && text.Text == selectedStyle.Name),
                     "Translate the selected preset style");
-                Check(options.All(style => style.Name == LanguageUtil.GetI18n(style.NameKey!)), "A preset name retained the previous language");
+                Check(options.All(style => style.Name == Expected(language, style.NameKey!)), "A preset name retained the previous language");
                 Check(ReferenceEquals(selectedStyle, viewModel.SelectedStyle) && viewModel.IsNextEnable
                     && viewModel.SourceFilePath.EndsWith("source.png", StringComparison.Ordinal), "Language change reset task inputs");
-                Check(viewModel.NextStepBtnText == LanguageUtil.GetI18n(Constants.I18n.Text_Confirm), "Task action retained the previous language");
+                Check(viewModel.NextStepBtnText == Expected(language, Constants.I18n.Text_Confirm), "Task action retained the previous language");
             }
             // A missing name must use a live prompt without overwriting a real name.
             viewModel.SelectedStyle = new StyleOptionItem();
-            foreach (string language in new[] { "zh-CN", "en-US" }) {
+            foreach (string language in Languages) {
                 await LanguageUtil.SetLanguageAsync(language);
                 await context.WaitAsync(() => Descendants<TextBlock>(addTask).Any(text =>
                     text.Name == "styleNameFallback"
                     && text.Visibility == Visibility.Visible
-                    && text.Text == LanguageUtil.GetI18n(Constants.I18n.Intelligent_Task_Style_Img_Import)), "Translate the unnamed style prompt");
+                    && text.Text == Expected(language, Constants.I18n.Intelligent_Task_Style_Img_Import)), "Translate the unnamed style prompt");
             }
             context.Evidence["PresetNamesAndAddTaskFallbackUpdated"] = true;
 
@@ -96,13 +101,13 @@ internal static class LocalizationTests {
             await context.WaitAsync(() => taskPageUnloaded, "Unload the task page before switching language");
             await context.WaitAsync(() => Descendants<Expander>(tasks).Count() == 3);
             foreach (var expander in Descendants<Expander>(tasks)) expander.IsExpanded = true;
-            foreach (string language in new[] { "zh-CN", "en-US" }) {
+            foreach (string language in Languages) {
                 await LanguageUtil.SetLanguageAsync(language);
                 await context.WaitAsync(() => Descendants<TextBlock>(tasks).Any(text => text.Text == preset.StyleName)
                     && Descendants<TextBlock>(tasks).Any(text => text.Name == "styleNameFallback"
-                        && text.Text == LanguageUtil.GetI18n(Constants.I18n.Intelligent_Task_Style_Img_Import)
+                        && text.Text == Expected(language, Constants.I18n.Intelligent_Task_Style_Img_Import)
                         && text.Visibility == Visibility.Visible), "Translate queued styles and the unnamed style prompt");
-                Check(preset.StyleName == LanguageUtil.GetI18n(Constants.I18n.Intelligent_Style_Type_Anime), "Queued preset retained its old name");
+                Check(preset.StyleName == Expected(language, Constants.I18n.Intelligent_Style_Type_Anime), "Queued preset retained its old name");
                 Check(custom.StyleName == "My custom style" && queue.Tasks.Count == 3, "Language change modified custom task data");
                 Check(options[0].Name == detachedPresetName, "An unloaded task page retained its language event subscription");
             }
@@ -119,14 +124,17 @@ internal static class LocalizationTests {
             try {
                 Check(details.Title == LanguageUtil.GetI18n(Constants.I18n.PlayerWeb_DetailsWindowTitle), "Details title was not initialized");
                 await context.WaitAsync(() => adjust.Title.StartsWith("My wallpaper", StringComparison.Ordinal), "Load wallpaper title");
-                foreach (string language in new[] { "zh-CN", "en-US" }) {
+                foreach (string language in Languages) {
                     await LanguageUtil.SetLanguageAsync(language);
-                    Check(adjust.Title == $"My wallpaper ({LanguageUtil.GetI18n(Constants.I18n.Text_Adjust)})"
+                    Check(adjust.Title == $"My wallpaper ({Expected(language, Constants.I18n.Text_Adjust)})"
                         && adjust.ContentHost.Title == adjust.Title, "Adjust title was not translated or lost the wallpaper name");
-                    Check(details.Title == LanguageUtil.GetI18n(Constants.I18n.PlayerWeb_DetailsWindowTitle)
-                        && details.ContentHost.Title == LanguageUtil.GetI18n(Constants.I18n.Text_Details), "Details title was not translated");
+                    Check(details.Title == Expected(language, Constants.I18n.PlayerWeb_DetailsWindowTitle)
+                        && details.ContentHost.Title == Expected(language, Constants.I18n.Text_Details), "Details title was not translated");
                 }
                 context.Evidence["WindowTitlesUpdated"] = true;
+                context.Evidence["CatalogLanguagesVerified"] = SupportedLanguages.Languages.Select(language => language.Codes[0]).ToArray();
+                Check(System.Globalization.CultureInfo.CurrentCulture.Name == regionalCulture.Name,
+                    "Changing UI language replaced regional date/number formatting");
             }
             finally {
                 details.Close();

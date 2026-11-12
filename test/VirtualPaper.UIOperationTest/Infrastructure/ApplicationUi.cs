@@ -1,11 +1,31 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Automation;
+using VirtualPaper.Common;
+using VirtualPaper.TestSupport;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
 namespace VirtualPaper.UIOperationTest.Infrastructure;
 
 internal static class ApplicationUi {
+    public static async Task SelectLanguageAsync(AutomationElement root, string locale) {
+        var language = SupportedLanguages.Languages.Single(item => item.Codes[0] == locale);
+        string expected = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "AppSettings_SelBarItem1_General");
+        await Task.Run(() => {
+            Select(Find(root, "App.Navigation.Settings"));
+            SelectComboIndex(Find(root, "Settings.General.Language"), SupportedLanguages.Languages.IndexOf(language), SupportedLanguages.Languages.Count);
+        });
+        await AppProcessSession.WaitAsync(() => Task.Run(() => Find(root, "Settings.Tab.General").Current.Name == expected
+            && Find(root, "Settings.General.Language").Current.IsEnabled), "Live language " + locale);
+    }
+
+    public static void ResizeOwnedWindow(nint window, int width, int height, bool physicalPixels = false) {
+        double scale = physicalPixels ? 1 : GetDpiForWindow(window) / 96d;
+        Check(scale > 0 && SetWindowPos(window, 0, 0, 0, (int)Math.Ceiling(width * scale), (int)Math.Ceiling(height * scale), 6),
+            "Could not resize the owned application window");
+    }
+
+    [DllImport("user32.dll")] private static extern uint GetDpiForWindow(nint window);
     public static IDisposable Foreground(nint window) => new ForegroundLease(window);
 
     public static async Task ActivateOwnedWindowAsync(nint window) {
@@ -48,6 +68,36 @@ internal static class ApplicationUi {
     public static void Expand(AutomationElement element) {
         BringIntoView(element);
         ((ExpandCollapsePattern)element.GetCurrentPattern(ExpandCollapsePattern.Pattern)).Expand();
+    }
+
+    public static async Task VerifyToolTipAsync(nint ownerWindow, AutomationElement element, string expected) {
+        using var foreground = Foreground(ownerWindow);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate tooltip owner");
+        var bounds = element.Current.BoundingRectangle;
+        var point = new NativePoint { X = (int)(bounds.Left + bounds.Width / 2), Y = (int)(bounds.Top + bounds.Height / 2) };
+        Check(GetAncestor(WindowFromPoint(point), 2) == ownerWindow, "The tooltip target is covered by another window");
+        Check(GetCursorPos(out var previous) && SetCursorPos(point.X, point.Y), "Could not hover the owned tooltip target");
+        try {
+            int processId = element.Current.ProcessId;
+            await AppProcessSession.WaitAsync(() => Task.Run(() => {
+                try {
+                    var windows = AutomationElement.RootElement.FindAll(TreeScope.Children,
+                        new PropertyCondition(AutomationElement.ProcessIdProperty, processId)).Cast<AutomationElement>();
+                    foreach (var window in windows) {
+                        IEnumerable<AutomationElement> tips = window.Current.ControlType == ControlType.ToolTip ? [window] : window.FindAll(TreeScope.Descendants,
+                            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ToolTip)).Cast<AutomationElement>();
+                        foreach (var tip in tips.Where(tip => !tip.Current.IsOffscreen)) {
+                            if (tip.Current.Name == expected || tip.FindAll(TreeScope.Descendants,
+                                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text)).Cast<AutomationElement>()
+                                .Any(text => text.Current.Name == expected)) return true;
+                        }
+                    }
+                }
+                catch (ElementNotAvailableException) { } // A previous language's tooltip may close during enumeration.
+                return false;
+            }), "Localized navigation tooltip: " + expected);
+        }
+        finally { SetCursorPos(previous.X, previous.Y); }
     }
 
     public static void SetText(AutomationElement element, string value) {

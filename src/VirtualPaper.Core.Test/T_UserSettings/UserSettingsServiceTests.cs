@@ -260,6 +260,25 @@ namespace VirtualPaper.Core.Test.T_UserSettings {
         }
 
         [TestMethod]
+        public void LockedInstallerMarker_UsesSystemPreferencesAndPersistsLanguage() {
+            string marker = Path.GetTempFileName();
+            try {
+                File.WriteAllText(marker, "english");
+                _mockJsonSaver.Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                    .Throws(new FileNotFoundException());
+                using var locked = new FileStream(marker, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+                var service = new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object, _ => { }, marker,
+                    ["unsupported", "fr-CA", "en-US"]);
+
+                Assert.AreEqual("fr-FR", service.Settings.Language);
+                _mockJsonSaver.Verify(s => s.Save(It.IsAny<string>(),
+                    It.Is<ISettings>(settings => settings.Language == "fr-FR"), It.IsAny<JsonSerializerContext>()), Times.Once);
+            }
+            finally { File.Delete(marker); }
+        }
+
+        [TestMethod]
         [DataRow("en-GB", "en-US")]
         [DataRow("en-us", "en-US")]
         [DataRow("zh-Hant", "zh-TW")]

@@ -1,6 +1,7 @@
 using System.Windows.Automation;
 using Empty = Google.Protobuf.WellKnownTypes.Empty;
 using VirtualPaper.Common;
+using VirtualPaper.TestSupport;
 using VirtualPaper.UIOperationTest.Infrastructure;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
@@ -89,6 +90,26 @@ internal static class GeneralSettingsTests {
         await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
             json["Language"]?.GetValue<string>() == "en-US" && json["IsAutoStart"]?.GetValue<bool>() == false);
         Check(!ui.HasExited && ui.Id == languageUiId, "Changing back to English restarted the UI process");
+        // Traverse the complete advertised catalog in one real application session.
+        // Read expected strings independently of the host's current localizer.
+        foreach (var language in SupportedLanguages.Languages) {
+            string locale = language.Codes[0];
+            await ApplicationUi.SelectLanguageAsync(root, locale);
+            await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json => json["Language"]?.GetValue<string>() == locale);
+            Check((await session.Settings.GetSettingsAsync(new Empty())).Language == locale, "Core did not retain " + locale);
+            Check(!ui.HasExited && ui.Id == languageUiId, "Catalog language switch restarted the UI");
+            await Task.Run(() => Check(ApplicationUi.SelectedLabel(ApplicationUi.Find(root, "Settings.General.Language")) == language.Language,
+                "Language selector lost its selected value"));
+            string expectedTooltip = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "SidebarIntelligentFullName");
+            await Task.Run(() => ApplicationUi.VerifyToolTipAsync(ui.MainWindowHandle,
+                ApplicationUi.Find(root, "App.Navigation.Intelligent"), expectedTooltip));
+        }
+        string finalLanguage = SupportedLanguages.Languages[^1].Codes[0];
+        await session.CloseUiAsync();
+        ui = await session.OpenUiAsync();
+        await Task.Run(() => Check(ApplicationUi.Find(OpenGeneral(ui.MainWindowHandle), "Settings.Tab.General").Current.Name ==
+            LocalizedTestStrings.Read(AppContext.BaseDirectory, finalLanguage, "AppSettings_SelBarItem1_General"),
+            "Reopened UI did not load the saved additional language"));
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["Theme"] = nameof(AppTheme.Dark);
@@ -96,6 +117,9 @@ internal static class GeneralSettingsTests {
         context.Evidence["ChineseLanguageAndReopenedResourcesVerified"] = true;
         context.Evidence["CoreAutomaticallyRestartedUiForBackdrop"] = true;
         context.Evidence["LanguageUpdatedWithoutUiRestart"] = true;
+        context.Evidence["CatalogLanguagesVerified"] = SupportedLanguages.Languages.Select(language => language.Codes[0]).ToArray();
+        context.Evidence["FullNavigationTooltipsVerified"] = true;
+        context.Evidence["AdditionalLanguageReopened"] = finalLanguage;
         context.Evidence["AutoStartOsRegistrationTested"] = false;
         context.Evidence["BackdropPixelsAndAboutImageDecodeVerified"] = false;
     }

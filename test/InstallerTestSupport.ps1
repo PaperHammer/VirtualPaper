@@ -8,6 +8,12 @@ function Get-InstallerApplicationLanguage([string]$Language) {
     if ($matches.Count -ne 1) { throw "Unsupported installer language: $Language" }
     return $matches[0].Code
 }
+function Get-InstallerLanguageSequence([string]$Language) {
+    $first = $Language.ToLowerInvariant()
+    if ($first -cnotin @('english', 'chinese', 'french')) { throw "Unsupported wizard acceptance language: $Language" }
+    $second = if ($first -ceq 'english') { 'chinese' } else { 'english' }
+    return @{ First = $first; Second = $second; FirstApplication = Get-InstallerApplicationLanguage $first; SecondApplication = Get-InstallerApplicationLanguage $second }
+}
 function Get-InstallerAppId([string]$SetupScriptPath) {
     $setupScript = Get-Content -LiteralPath $SetupScriptPath -Raw
     $appId = [regex]::Match($setupScript, '(?m)^#define AppId "\{\{([0-9A-Fa-f-]+)\}"').Groups[1].Value

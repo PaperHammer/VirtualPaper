@@ -2134,4 +2134,7 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Перезапустите основной интерфейс, чтобы применить это изменение.</value></data>
   <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>Ускорение GPU</value></data>
   <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>Переход на ЦП</value></data>
+  <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>Обработка на ЦП</value></data>
+  <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
+  <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Переход на ЦП</value></data>
 </root>

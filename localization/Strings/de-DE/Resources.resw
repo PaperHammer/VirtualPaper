@@ -2134,4 +2134,7 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Starten Sie die Hauptoberfläche neu, um diese Änderung anzuwenden.</value></data>
   <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU-Beschleunigung</value></data>
   <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>Auf CPU zurückgefallen</value></data>
+  <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU-Verarbeitung</value></data>
+  <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
+  <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Auf CPU zurückgefallen</value></data>
 </root>

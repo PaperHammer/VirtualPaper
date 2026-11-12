@@ -2134,4 +2134,7 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>이 변경 사항을 적용하려면 기본 화면을 다시 시작하세요.</value></data>
   <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU 가속</value></data>
   <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>CPU 처리로 전환됨</value></data>
+  <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU 처리</value></data>
+  <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
+  <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · CPU 처리로 전환됨</value></data>
 </root>

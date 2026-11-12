@@ -33,7 +33,7 @@ namespace VirtualPaper.ML.StyleTransfer {
             if (!File.Exists(ModelPath))
                 throw new FileNotFoundException($"Model file not found: {ModelPath}");
 
-            bool supportsGpu = !DevicePolicy.AllowGpu || AdaInModelCompatibility.SupportsDirectML(ModelPath);
+            bool supportsGpu = !DevicePolicy.CanUseGpu || AdaInModelCompatibility.SupportsDirectML(ModelPath);
             if (!supportsGpu)
                 ArcLog.GetLogger<AdaIn>().Info("This AdaIN model/runtime combination uses CPU because its DirectML Reshape path is incompatible.");
             _session?.Dispose();

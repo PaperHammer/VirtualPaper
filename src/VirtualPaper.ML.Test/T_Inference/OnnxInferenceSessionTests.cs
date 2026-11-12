@@ -37,7 +37,20 @@ public class OnnxInferenceSessionTests {
         }, default);
         CollectionAssert.AreEqual(new[] { 2f, -3f }, actual);
         CollectionAssert.AreEqual(new[] { false }, attempts);
-        Assert.AreEqual(new(false, InferenceDevice.Cpu, false), state);
+        Assert.AreEqual(new(false, InferenceDevice.Cpu, InferenceSelectionReason.HardwareAccelerationDisabled), state);
+    }
+
+    [TestMethod]
+    [DataRow(InferenceDevicePreference.CpuPreferred, false)]
+    [DataRow(InferenceDevicePreference.GpuPreferred, true)]
+    public void SelectedSession_IsReusedAcrossOperations_WithoutRecreatingTheBackend(InferenceDevicePreference preference, bool gpuExpected) {
+        var creates = new List<bool>();
+        var states = new List<InferenceState>();
+        using var session = new OnnxInferenceSession(new(true, preference), gpu => { creates.Add(gpu); return CpuSession(); }, states.Add);
+        for (int index = 0; index < 3; index++) Assert.AreEqual(index, session.Execute(() => index, default));
+        CollectionAssert.AreEqual(new[] { gpuExpected }, creates);
+        Assert.HasCount(1, states, "Reused sessions must not reselect or reinitialize a backend for every image.");
+        Assert.AreEqual(gpuExpected ? InferenceSelectionReason.GpuPreferred : InferenceSelectionReason.CpuPreferred, states[0].Reason);
     }
 
     [TestMethod]
@@ -45,11 +58,12 @@ public class OnnxInferenceSessionTests {
         var policies = new InferenceDevicePolicies(true);
         var attempts = new List<bool>();
         InferenceSession Create(bool gpu) { attempts.Add(gpu); if (gpu) throw DeviceRemoved(); return CpuSession(); }
-        using (var first = new OnnxInferenceSession(policies.DepthEstimate, Create, _ => { })) Assert.IsFalse(first.IsGpu);
-        using (var next = new OnnxInferenceSession(policies.DepthEstimate, Create, _ => { })) Assert.IsFalse(next.IsGpu);
+        using (var first = new OnnxInferenceSession(policies.SuperResolution, Create, _ => { })) Assert.IsFalse(first.IsGpu);
+        using (var next = new OnnxInferenceSession(policies.SuperResolution, Create, _ => { })) Assert.IsFalse(next.IsGpu);
         CollectionAssert.AreEqual(new[] { true, false, false }, attempts);
-        Assert.IsTrue(policies.SuperResolution.CanUseGpu);
-        Assert.IsTrue(policies.StyleTransfer.CanUseGpu);
+        Assert.IsFalse(policies.SuperResolution.CanUseGpu);
+        Assert.AreEqual(InferenceSelectionReason.CpuPreferred, policies.StyleTransfer.SelectDevice().Reason);
+        Assert.AreEqual(InferenceSelectionReason.CpuPreferred, policies.DepthEstimate.SelectDevice().Reason);
     }
 
     [TestMethod]
@@ -63,7 +77,7 @@ public class OnnxInferenceSessionTests {
         Assert.AreEqual(2, runs);
         Assert.AreEqual(7, session.Execute(() => 7, default));
         CollectionAssert.AreEqual(new[] { true, false }, attempts);
-        CollectionAssert.AreEqual(new[] { new InferenceState(true, InferenceDevice.DirectML, false), new(true, InferenceDevice.Cpu, true) }, states);
+        CollectionAssert.AreEqual(new[] { new InferenceState(true, InferenceDevice.DirectML, InferenceSelectionReason.GpuPreferred), new(true, InferenceDevice.Cpu, InferenceSelectionReason.GpuFailed) }, states);
     }
 
     [TestMethod]
@@ -85,7 +99,7 @@ public class OnnxInferenceSessionTests {
         using var session = new OnnxInferenceSession(new(true), _ => CpuSession(), value => state = value);
         Assert.AreEqual(42, session.Execute(() => { if (++runs == 1) throw failure; return 42; }, default));
         Assert.AreEqual(2, runs);
-        Assert.AreEqual(new(true, InferenceDevice.Cpu, true), state);
+        Assert.AreEqual(new(true, InferenceDevice.Cpu, InferenceSelectionReason.GpuFailed), state);
     }
 
     [TestMethod]
@@ -167,14 +181,16 @@ public class OnnxInferenceSessionTests {
     }
 
     [TestMethod]
-    [DataRow(false)]
-    [DataRow(true)]
-    public async Task CpuOnly_RetainsConcurrentOperations_WithoutAttemptingGpu(bool accelerationRequested) {
+    [DataRow(false, true, InferenceDevicePreference.GpuPreferred, InferenceSelectionReason.HardwareAccelerationDisabled)]
+    [DataRow(true, false, InferenceDevicePreference.GpuPreferred, InferenceSelectionReason.ModelUnsupported)]
+    [DataRow(true, true, InferenceDevicePreference.CpuPreferred, InferenceSelectionReason.CpuPreferred)]
+    public async Task CpuOnly_RetainsConcurrentOperations_WithoutAttemptingGpu(bool enabled, bool supported,
+        InferenceDevicePreference preference, InferenceSelectionReason reason) {
         var attempts = new List<bool>();
-        var policy = new InferenceDevicePolicy(accelerationRequested);
+        var policy = new InferenceDevicePolicy(enabled, preference);
         InferenceState? state = null;
         using var session = new OnnxInferenceSession(policy, gpu => { attempts.Add(gpu); return CpuSession(); }, value => state = value,
-            supportsGpu: !accelerationRequested);
+            supportsGpu: supported);
         using var entered = new CountdownEvent(2);
         using var release = new ManualResetEventSlim();
         var tasks = Enumerable.Range(0, 2).Select(_ => Task.Run(() => session.Execute(() => {
@@ -184,8 +200,10 @@ public class OnnxInferenceSessionTests {
         finally { release.Set(); }
         CollectionAssert.AreEqual(new[] { 1, 1 }, await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(5)));
         CollectionAssert.AreEqual(new[] { false }, attempts);
-        Assert.AreEqual(new(accelerationRequested, InferenceDevice.Cpu, accelerationRequested), state);
-        Assert.AreEqual(accelerationRequested, policy.CanUseGpu, "A model capability limit must not disable other model/runtime combinations.");
+        Assert.AreEqual(new(enabled, InferenceDevice.Cpu, reason), state);
+        Assert.IsFalse(state!.IsCpuFallback);
+        Assert.AreEqual(enabled && preference == InferenceDevicePreference.GpuPreferred, policy.CanUseGpu,
+            "A model capability limit must not disable other model/runtime combinations.");
     }
 
     [TestMethod]

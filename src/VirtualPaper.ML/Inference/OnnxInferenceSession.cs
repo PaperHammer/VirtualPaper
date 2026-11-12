@@ -32,18 +32,20 @@ internal sealed class OnnxInferenceSession : IDisposable {
         _policy = policy;
         _create = create;
         _report = report;
-        // 已知仅支持 CPU 的模型保留原 CPU 并发，不进入 GPU 会话切换的互斥流程。
-        _serialize = policy.AllowGpu && supportsGpu;
-        if (supportsGpu && policy.CanUseGpu) {
+        var selection = policy.SelectDevice(supportsGpu);
+        // 初始选择 CPU 的会话保留原并发；GPU 故障回退仍与执行互斥。
+        _serialize = selection.Device == InferenceDevice.DirectML || selection.IsCpuFallback;
+        if (selection.Device == InferenceDevice.DirectML) {
             InferenceSession? accelerated = null;
             try { accelerated = create(true); }
             catch (Exception ex) when (GpuInferenceFailure.IsDeviceFailure(ex)) {
                 policy.DisableGpu();
+                selection = policy.SelectDevice(supportsGpu);
                 ArcLog.GetLogger<OnnxInferenceSession>().Warn($"GPU initialization failed; using CPU: {ex.Message}");
             }
-            if (accelerated != null) { SetSession(accelerated, gpu: true); return; }
+            if (accelerated != null) { SetSession(accelerated, selection); return; }
         }
-        SetSession(create(false), gpu: false);
+        SetSession(create(false), selection);
     }
 
     internal InferenceSession Native => _session ?? throw new ObjectDisposedException(nameof(OnnxInferenceSession));
@@ -71,7 +73,7 @@ internal sealed class OnnxInferenceSession : IDisposable {
                 ArcLog.GetLogger<OnnxInferenceSession>().Warn($"GPU execution failed; retrying this operation once on CPU: {ex.Message}");
                 _session?.Dispose();
                 _session = null;
-                SetSession(_create(false), gpu: false);
+                SetSession(_create(false), _policy.SelectDevice());
                 ct.ThrowIfCancellationRequested();
                 return operation();
             }
@@ -79,11 +81,11 @@ internal sealed class OnnxInferenceSession : IDisposable {
         finally { _gate.Release(); }
     }
 
-    private void SetSession(InferenceSession session, bool gpu) {
+    private void SetSession(InferenceSession session, InferenceState state) {
         _session = session;
-        _isGpu = gpu;
-        ArcLog.GetLogger<OnnxInferenceSession>().Info($"Inference backend: {(gpu ? "DirectML GPU" : "CPU")}");
-        try { _report(new(_policy.AllowGpu, gpu ? InferenceDevice.DirectML : InferenceDevice.Cpu, _policy.AllowGpu && !gpu)); }
+        _isGpu = state.Device == InferenceDevice.DirectML;
+        ArcLog.GetLogger<OnnxInferenceSession>().Info($"Inference backend: {state.Device}; selection: {state.Reason}");
+        try { _report(state); }
         catch { session.Dispose(); _session = null; throw; }
     }
 

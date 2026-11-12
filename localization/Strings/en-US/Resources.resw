@@ -2141,4 +2141,7 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Restart the main interface to apply this change.</value></data>
   <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU acceleration</value></data>
   <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>CPU fallback</value></data>
+  <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU processing</value></data>
+  <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
+  <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · CPU fallback</value></data>
 </root>

@@ -18,7 +18,7 @@ public class DepthEstimateFactoryTests {
         GC.Collect(); GC.WaitForPendingFinalizers(); GC.Collect();
         Assert.IsTrue(references.All(reference => !reference.IsAlive), "Short-lived models must not remain rooted in the DI disposal list.");
         using var next = factory.Create();
-        Assert.IsTrue(((IInferenceStatusSource)next).InferenceState.AccelerationRequested);
+        Assert.IsTrue(((IInferenceStatusSource)next).InferenceState.HardwareAccelerationEnabled);
         Assert.Throws<FileNotFoundException>(() => next.LoadModel(Path.Combine(Path.GetTempPath(), Guid.NewGuid() + ".onnx")));
         GC.KeepAlive(services);
     }

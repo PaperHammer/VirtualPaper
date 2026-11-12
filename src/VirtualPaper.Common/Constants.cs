@@ -292,6 +292,9 @@ namespace VirtualPaper.Common {
             public const string Intelligent_Style_Type_OutlineDrawing = nameof(Intelligent_Style_Type_OutlineDrawing);
             public const string Intelligent_Style_Type_Ukiyoe = nameof(Intelligent_Style_Type_Ukiyoe);
             public const string Intelligent_Backend_Gpu = nameof(Intelligent_Backend_Gpu);
+            public const string Intelligent_Backend_Cpu = nameof(Intelligent_Backend_Cpu);
+            public const string Intelligent_Backend_Mixed = nameof(Intelligent_Backend_Mixed);
+            public const string Intelligent_Backend_MixedCpuFallback = nameof(Intelligent_Backend_MixedCpuFallback);
             public const string Intelligent_Backend_CpuFallback = nameof(Intelligent_Backend_CpuFallback);
             public const string Intelligent_Result_Temporary = nameof(Intelligent_Result_Temporary);
             public const string Intelligent_Result_Exported = nameof(Intelligent_Result_Exported);

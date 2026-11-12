@@ -2,7 +2,18 @@ namespace VirtualPaper.ML.Inference;
 
 public enum InferenceDevice { Uninitialized, Cpu, DirectML }
 
-public sealed record InferenceState(bool AccelerationRequested, InferenceDevice Device, bool IsCpuFallback);
+public enum InferenceSelectionReason {
+    None,
+    HardwareAccelerationDisabled,
+    CpuPreferred,
+    ModelUnsupported,
+    GpuPreferred,
+    GpuFailed
+}
+
+public sealed record InferenceState(bool HardwareAccelerationEnabled, InferenceDevice Device, InferenceSelectionReason Reason) {
+    public bool IsCpuFallback => Device == InferenceDevice.Cpu && Reason == InferenceSelectionReason.GpuFailed;
+}
 
 public interface IInferenceStatusSource {
     InferenceState InferenceState { get; }
@@ -13,7 +24,7 @@ public abstract class InferenceModel : IInferenceStatusSource {
     protected InferenceModel(InferenceDevicePolicy policy) {
         ArgumentNullException.ThrowIfNull(policy);
         DevicePolicy = policy;
-        _inferenceState = new(policy.AllowGpu, InferenceDevice.Uninitialized, false);
+        _inferenceState = new(policy.HardwareAccelerationEnabled, InferenceDevice.Uninitialized, InferenceSelectionReason.None);
     }
 
     protected InferenceDevicePolicy DevicePolicy { get; }

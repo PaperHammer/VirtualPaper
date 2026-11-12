@@ -26,19 +26,25 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public abstract bool IsCompleted { get; }
         protected abstract void NotifyCommandsCanExecuteChanged();
 
-        // 关闭硬件加速时不增加状态项；多阶段任务一旦发生回退，完成后仍保留说明。
+        // 关闭硬件加速时隐藏设备状态；多阶段任务累计设备，并保留故障回退记录。
         public bool HasBackendInfo => _hasBackendInfo;
         public string BackendText => !_hasBackendInfo ? string.Empty : LanguageUtil.GetI18n(
-            _usedCpuFallback ? Constants.I18n.Intelligent_Backend_CpuFallback : Constants.I18n.Intelligent_Backend_Gpu);
+            _usedCpu && _usedGpu ? (_usedCpuFallback ? Constants.I18n.Intelligent_Backend_MixedCpuFallback : Constants.I18n.Intelligent_Backend_Mixed) :
+            _usedCpuFallback ? Constants.I18n.Intelligent_Backend_CpuFallback :
+            _usedCpu ? Constants.I18n.Intelligent_Backend_Cpu : Constants.I18n.Intelligent_Backend_Gpu);
 
         internal IDisposable? ObserveInference(object model) => model is IInferenceStatusSource source
             ? new InferenceStatusSubscription(source, UpdateBackend, action => CrossThreadInvoker.InvokeOnUIThread(action)) : null;
 
         private void UpdateBackend(InferenceState state) {
-            if (!state.AccelerationRequested || state.Device == InferenceDevice.Uninitialized) return;
+            if (!state.HardwareAccelerationEnabled || state.Device == InferenceDevice.Uninitialized) return;
+            bool cpu = _usedCpu || state.Device == InferenceDevice.Cpu;
+            bool gpu = _usedGpu || state.Device == InferenceDevice.DirectML;
             bool fallback = _usedCpuFallback || state.IsCpuFallback;
-            if (_hasBackendInfo && fallback == _usedCpuFallback) return;
+            if (_hasBackendInfo && cpu == _usedCpu && gpu == _usedGpu && fallback == _usedCpuFallback) return;
             _hasBackendInfo = true;
+            _usedCpu = cpu;
+            _usedGpu = gpu;
             _usedCpuFallback = fallback;
             OnPropertyChanged(nameof(HasBackendInfo));
             RefreshBackend();
@@ -96,6 +102,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
         }
 
         private bool _hasBackendInfo;
+        private bool _usedCpu;
+        private bool _usedGpu;
         private bool _usedCpuFallback;
     }
 }

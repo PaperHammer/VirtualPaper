@@ -2134,4 +2134,7 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Redémarrez l’interface principale pour appliquer cette modification.</value></data>
   <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>Accélération GPU</value></data>
   <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>Repli sur le processeur</value></data>
+  <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>Traitement CPU</value></data>
+  <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
+  <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Repli sur le processeur</value></data>
 </root>

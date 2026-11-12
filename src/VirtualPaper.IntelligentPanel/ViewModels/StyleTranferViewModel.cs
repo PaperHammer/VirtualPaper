@@ -78,7 +78,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             catch (OperationCanceledException) {
                 // 还没拿到信号量就被取消了（排队中删除），无需 Release
                 taskItem.Status = TaskStatus.Canceled;
-                CleanupAfterCancel(taskItem, tempDir);
+                CleanupTaskFiles(taskItem, tempDir);
                 return;
             }
 
@@ -137,10 +137,11 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
             catch (OperationCanceledException) {
                 taskItem.Status = TaskStatus.Canceled;
-                CleanupAfterCancel(taskItem, tempDir);
+                CleanupTaskFiles(taskItem, tempDir);
                 GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
+                CleanupTaskFiles(taskItem, tempDir);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
                 taskItem.Status = TaskStatus.Faulted;
@@ -153,7 +154,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         /// <summary>
         /// 任务被取消后的清理工作
         /// </summary>
-        private static void CleanupAfterCancel(StyleTransferTaskItem taskItem, string? tempDir) {
+        private static void CleanupTaskFiles(StyleTransferTaskItem taskItem, string? tempDir) {
             if (tempDir != null) {
                 try {
                     if (Directory.Exists(tempDir)) {

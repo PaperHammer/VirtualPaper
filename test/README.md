@@ -151,6 +151,10 @@ Core tests use an isolated loopback HTTP server for single/batch download bytes 
 
 Image project tests use offscreen Win2D canvases to verify multi-layer VPD save/reopen, pixel bytes, visibility/order, selected-layer and palette data, v1 encoding preservation and v2 upgrades. They exercise incremental business/layer saves, locked destinations, unchanged originals/caches and staging cleanup, recovered layers saved to a new file, and preserving the unsaved state after a failed write. Layer deletion and rotation are undone/redone and then saved/reopened. No editor window or file picker is opened.
 
+### Task execution and Web file workflows
+
+Headless UI-logic tests run the production style-transfer and super-resolution queues with controlled model engines and real image outputs. They check concurrency limits, queued/running cancellation, disposal, failure cleanup and successful work after a failure. They do not establish real model quality or hardware compatibility. Web tests exercise actual file/directory copy and move, collisions, interrupted imports, manifest/tree synchronization and locked recovery followed by retry. A loopback preview server is tested through real HTTP and WebSocket clients for file responses, request failures, live-reload notifications, stop and restart; no browser or foreground window is opened.
+
 ### Live language changes
 
 Source translations live only in `localization/Strings`; the normal solution build generates UI/Core/Common resources from the shared language catalog and mappings. Artifact tests use embedded source and mapping snapshots to validate every catalog locale's packaged generated keys and values without relying on resource comments. See [localization resources](../localization/README.md) for editing and standalone generation/check commands.

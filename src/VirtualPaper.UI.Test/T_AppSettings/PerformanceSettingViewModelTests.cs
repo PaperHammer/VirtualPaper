@@ -24,10 +24,11 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _settings.SetupProperty(s => s.RemoteDesktop, AppWpRunRulesEnum.Silence);
             _settings.SetupProperty(s => s.StatuMechanism, StatuMechanismEnum.Per);
             _settings.SetupProperty(s => s.IsAudioOnlyOnDesktop, false);
+            _settings.SetupProperty(s => s.UiHardwareAccelerationEnabled, true);
 
             _userSettingsClient.Setup(u => u.Settings).Returns(_settings.Object);
 
-            _vm = new PerformanceSettingViewModel(_userSettingsClient.Object);
+            _vm = new PerformanceSettingViewModel(_userSettingsClient.Object, new UiHardwareAccelerationPolicy(true));
         }
 
         // ── AppWpRunRulesEnum setter 参数化测试 ───────────────────────
@@ -137,6 +138,46 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         }
 
         // ── 辅助方法 ─────────────────────────────────────────────────
+
+        [TestMethod]
+        public void HardwareAcceleration_ChangesPreferenceWithoutChangingStartupPolicy_AndCanRevert() {
+            var policy = new UiHardwareAccelerationPolicy(true);
+            var viewModel = new PerformanceSettingViewModel(_userSettingsClient.Object, policy);
+            var notifications = new List<string?>();
+            viewModel.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+            Assert.IsFalse(viewModel.IsUiRestartRequired);
+
+            viewModel.UiHardwareAccelerationEnabled = false;
+            Assert.IsFalse(_settings.Object.UiHardwareAccelerationEnabled);
+            Assert.IsTrue(viewModel.IsUiRestartRequired);
+            Assert.IsTrue(policy.IsEnabled);
+            Assert.DoesNotContain("--disable-gpu", policy.WebView2BrowserArguments.Split(' '));
+            Assert.Contains(nameof(viewModel.IsUiRestartRequired), notifications);
+
+            viewModel.UiHardwareAccelerationEnabled = true;
+            Assert.IsFalse(viewModel.IsUiRestartRequired);
+            _userSettingsClient.Verify(client => client.SaveAsync<ISettings>(), Times.Exactly(2));
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_SameValue_DoesNotSaveOrRequireRestart() {
+            _vm.UiHardwareAccelerationEnabled = true;
+            Assert.IsFalse(_vm.IsUiRestartRequired);
+            _userSettingsClient.Verify(client => client.SaveAsync<ISettings>(), Times.Never);
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_NewStartupUsesSavedChoice_AndReturningToEnabledRequiresRestart() {
+            _vm.UiHardwareAccelerationEnabled = false;
+            var policy = new UiHardwareAccelerationPolicy(_settings.Object.UiHardwareAccelerationEnabled);
+            var reopened = new PerformanceSettingViewModel(_userSettingsClient.Object, policy);
+            Assert.IsFalse(reopened.IsUiRestartRequired);
+            Assert.Contains("--disable-gpu", policy.WebView2BrowserArguments.Split(' '));
+
+            reopened.UiHardwareAccelerationEnabled = true;
+            Assert.IsTrue(reopened.IsUiRestartRequired);
+            Assert.IsFalse(policy.IsEnabled);
+        }
 
         private static void SetVmProperty(object vm, string propName, int value) {
             var prop = vm.GetType().GetProperty(propName);

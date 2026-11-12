@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
@@ -11,6 +12,7 @@ using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.PlayerWeb.Core.Utils;
 using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Theme;
@@ -107,8 +109,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
 
         private async Task InitializeWebViewAsync() {
             try {
-                Directory.CreateDirectory(Constants.CommonPaths.TempWebView2Dir);
-                var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
+                var env = await AppServiceLocator.Services.GetRequiredService<UiWebViewEnvironment>().CreateAsync();
                 await monacoWebView.EnsureCoreWebView2Async(env);
 
 #if DEBUG
@@ -540,9 +541,6 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         private const int MaxSelectedCharacterCount = int.MaxValue / 2;
         private static readonly JsonSerializerOptions _jsonSerializerOptions = new() {
             PropertyNameCaseInsensitive = true
-        };
-        private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
         };
 
         private string GetFallbackHtml() {

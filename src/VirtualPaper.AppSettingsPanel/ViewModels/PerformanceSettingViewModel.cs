@@ -7,6 +7,19 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class PerformanceSettingViewModel : ObservableObject {
+        public bool UiHardwareAccelerationEnabled {
+            get => _userSettingsClient.Settings.UiHardwareAccelerationEnabled;
+            set {
+                if (UiHardwareAccelerationEnabled == value) return;
+                _userSettingsClient.Settings.UiHardwareAccelerationEnabled = value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsUiRestartRequired));
+            }
+        }
+
+        public bool IsUiRestartRequired => UiHardwareAccelerationEnabled != _startupPolicy.IsEnabled;
+
         public List<string>? PlayStatus { get; set; }
         public List<string>? StatuMechanisms { get; set; }       
 
@@ -109,8 +122,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         public PerformanceSettingViewModel(
-            IUserSettingsClient userSettingsClient) {
+            IUserSettingsClient userSettingsClient, UiHardwareAccelerationPolicy startupPolicy) {
             _userSettingsClient = userSettingsClient;
+            _startupPolicy = startupPolicy;
             InitText();
             InitCollections();
             InitContent();
@@ -153,5 +167,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private string _statuMechanism_per = string.Empty;
         private string _statuMechanism_all = string.Empty;
         private readonly IUserSettingsClient _userSettingsClient;
+        private readonly UiHardwareAccelerationPolicy _startupPolicy;
     }
 }

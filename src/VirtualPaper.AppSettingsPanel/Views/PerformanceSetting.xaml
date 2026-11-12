@@ -12,6 +12,29 @@
 
     <ScrollView>
         <StackPanel Margin="16 12 16 16" Spacing="16" Orientation="Vertical">
+            <StackPanel Spacing="8">
+                <Grid MinHeight="90" Padding="20 16" ColumnSpacing="20"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
+                    CornerRadius="12" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <FontIcon Glyph="&#xE7F4;" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock l:Uids.Uid="Ui_Settings_Performance_HardwareAcceleration" TextWrapping="Wrap"/>
+                        <TextBlock l:Uids.Uid="Ui_Settings_Performance_HardwareAccelerationExplain" TextWrapping="Wrap"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="2" VerticalAlignment="Center" OffContent="" OnContent=""
+                        IsOn="{x:Bind _viewModel.UiHardwareAccelerationEnabled, Mode=TwoWay}"
+                        AutomationProperties.AutomationId="Settings.Performance.HardwareAcceleration"
+                        l:Uids.Uid="Ui_Settings_Performance_HardwareAccelerationToggle"/>
+                </Grid>
+                <InfoBar IsOpen="{x:Bind _viewModel.IsUiRestartRequired, Mode=OneWay}" IsClosable="False"
+                    Severity="Informational" l:Uids.Uid="Ui_Settings_Performance_HardwareAccelerationRestart"
+                    AutomationProperties.AutomationId="Settings.Performance.HardwareAccelerationRestart"/>
+            </StackPanel>
+
             <StackPanel x:Name="Play" Spacing="8" Orientation="Vertical">
                 <TextBlock x:Name="PlayHeader"
                     Margin="0"

@@ -205,6 +205,25 @@ public class UserSettingServerTests {
         return items[0];
     }
 
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
+    public async Task UiHardwareAcceleration_SetAndGet_PersistsWithoutRestartingUi(bool enabled) {
+        var fixture = new ServerFixture();
+        fixture.Settings.UiHardwareAccelerationEnabled = !enabled;
+        var request = await fixture.Server.GetSettings(new Empty(), null!);
+        request.UiHardwareAccelerationEnabled = enabled;
+
+        await fixture.Server.SetSettings(request, null!);
+        var response = await fixture.Server.GetSettings(new Empty(), null!);
+
+        Assert.IsTrue(response.HasUiHardwareAccelerationEnabled);
+        Assert.AreEqual(enabled, response.UiHardwareAccelerationEnabled);
+        Assert.AreEqual(enabled, fixture.Settings.UiHardwareAccelerationEnabled);
+        fixture.UserSettings.Verify(service => service.Save<ISettings>(), Times.Once);
+        fixture.UiRunner.Verify(service => service.RestartUIAsync(), Times.Never);
+    }
+
     private sealed class ServerFixture {
         public Settings Settings { get; } = new();
         public List<IRecentUsed> RecentUseds { get; } = [];

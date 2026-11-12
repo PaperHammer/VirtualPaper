@@ -2136,4 +2136,7 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>应用程序正在运行，是否关闭？</value></data>
   <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>无法保存应用的初始语言。</value></data>
   <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper 更新</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>硬件加速</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>允许主界面中受支持的功能使用 GPU 加速。下次启动主界面时生效。</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>重新启动主界面后，此更改将生效。</value></data>
 </root>

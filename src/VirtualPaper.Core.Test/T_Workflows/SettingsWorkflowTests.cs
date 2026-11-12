@@ -15,6 +15,39 @@ namespace VirtualPaper.Core.Test.T_Workflows;
 [TestCategory("Workflow")]
 public class SettingsWorkflowTests {
     [TestMethod]
+    [Timeout(30000)]
+    public async Task UiHardwareAcceleration_LegacyProfileAndClient_PreserveSavedPreferenceAcrossRestart() {
+        using var environment = new WorkflowEnvironment();
+        File.WriteAllText(Constants.CommonPaths.UserSettingsPath, "{\"WallpaperWaitTime\":73}");
+        environment.StartSettingsServer();
+        using (var client = new UserSettingsClient(environment.CreateChannel())) {
+            Assert.IsTrue(client.Settings.UiHardwareAccelerationEnabled);
+            client.Settings.UiHardwareAccelerationEnabled = false;
+            await client.SaveAsync<ISettings>();
+            Assert.IsFalse(JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!["UiHardwareAccelerationEnabled"]!.GetValue<bool>());
+
+            var legacyClient = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
+            var request = await legacyClient.GetSettingsAsync(new Empty());
+            request.ClearUiHardwareAccelerationEnabled();
+            request.WallpaperWaitTime = 74;
+            await legacyClient.SetSettingsAsync(request);
+            await client.LoadAsync<ISettings>();
+            Assert.IsFalse(client.Settings.UiHardwareAccelerationEnabled);
+        }
+
+        environment.StartSettingsServer();
+        using var restarted = new UserSettingsClient(environment.CreateChannel());
+        Assert.IsFalse(restarted.Settings.UiHardwareAccelerationEnabled);
+        Assert.AreEqual(74, restarted.Settings.WallpaperWaitTime);
+        restarted.Settings.UiHardwareAccelerationEnabled = true;
+        await restarted.SaveAsync<ISettings>();
+        await restarted.LoadAsync<ISettings>();
+        Assert.IsTrue(restarted.Settings.UiHardwareAccelerationEnabled);
+        Assert.IsTrue(JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!["UiHardwareAccelerationEnabled"]!.GetValue<bool>());
+        environment.UiRunner.Verify(runner => runner.RestartUIAsync(), Times.Never);
+    }
+
+    [TestMethod]
     public async Task BuiltInLibrary_LegacyProfileGetsSavedDefault_AndExplicitPathSurvivesRestartAndLegacyClient() {
         using var environment = new WorkflowEnvironment();
         string userDirectory = Path.Combine(environment.Root, "moved library", "wallpapers");

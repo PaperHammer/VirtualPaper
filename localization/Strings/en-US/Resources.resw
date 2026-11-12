@@ -2136,4 +2136,7 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>Application is running, do you want to close it?</value></data>
   <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>Could not save the initial application language.</value></data>
   <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper Updater</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Hardware acceleration</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Allow supported features in the main interface to use GPU acceleration. Changes take effect the next time the interface starts.</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Restart the main interface to apply this change.</value></data>
 </root>

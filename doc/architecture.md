@@ -53,6 +53,12 @@ UI / Panels / Workloads
 
 管理 UI 注册多个 `IProjectFileLoader`：图片、设计文件和 Web 项目加载器，再由 `ProjectFileLoaderRegistry` 选择。文件加载器负责把磁盘文件转换为工作区可消费的项目；运行时工厂负责创建实际编辑界面，两者职责不同。
 
+## 主 UI 硬件加速策略
+
+`UiHardwareAccelerationEnabled` 默认开启，通过现有设置服务持久化。RPC 使用可选字段：旧响应缺少字段时按开启处理，旧客户端保存时省略字段则保留服务端已有值。`VirtualPaper.UI` 启动后创建唯一的 `UiHardwareAccelerationPolicy`，固定本次 UI 会话的偏好；性能页只更新保存值，并在它与启动值不同时提示下次启动主界面生效。
+
+`UiWebViewEnvironment` 统一创建 UI 使用的 WebView2 环境并复用同一分区的初始化任务。UI 数据目录位于原 WebView2 根目录的 `UI/GPU` 或 `UI/Software` 下，Markdown 预览再使用独立子分区。软件模式增加 `--disable-gpu` 启动参数；按模式隔离目录可以避免重开 UI 时旧浏览器进程尚未退出造成选项冲突。桌面播放器与屏保不消费 UI 策略，继续使用原有目录。这里目前仅接入 UI WebView；AI 推理和绘画设备将在各自模块后续接入同一策略。
+
 ## 文件变化与保存
 
 共享的 `VirtualPaper.Common.Utils.ProjectSystem` 提供文件系统监听和文档状态跟踪。WebBackdrop 在其上增加 `ProjectFileManager`：

@@ -2129,4 +2129,7 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>アプリは実行中です。終了しますか？</value></data>
   <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>初回起動時の言語を保存できませんでした。</value></data>
   <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper アップデーター</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>ハードウェア アクセラレーション</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>メイン画面の対応機能で GPU アクセラレーションを使用します。次回メイン画面を起動したときに反映されます。</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>この変更を反映するには、メイン画面を再起動してください。</value></data>
 </root>

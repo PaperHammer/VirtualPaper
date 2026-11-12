@@ -2129,4 +2129,7 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>L'application est en cours d'exécution. La fermer ?</value></data>
   <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>Impossible d'enregistrer la langue du premier démarrage.</value></data>
   <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper – Mise à jour</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Accélération matérielle</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Utiliser le GPU pour les fonctions compatibles de l’interface principale. Les modifications prendront effet au prochain démarrage de l’interface.</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Redémarrez l’interface principale pour appliquer cette modification.</value></data>
 </root>

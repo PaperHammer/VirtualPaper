@@ -144,6 +144,7 @@ message Grpc_SettingsData {
     optional bool navigation_animations_enabled = 31;
     optional bool remind_unpreserved_intelligent_results = 32;
     optional string built_in_wallpapers_dir = 33;
+    optional bool ui_hardware_acceleration_enabled = 34;
 }
 
 message Grpc_AppRulesSettings {

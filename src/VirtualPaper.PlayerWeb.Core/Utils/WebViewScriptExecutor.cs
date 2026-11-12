@@ -5,9 +5,12 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.PlayerWeb.Core.Utils {
     public sealed partial class WebViewScriptExecutor : IDisposable {
@@ -126,7 +129,10 @@ namespace VirtualPaper.PlayerWeb.Core.Utils {
             try {
                 if (_coreReady) return; // double-check
                 if (_webView!.CoreWebView2 == null) {
-                    await _webView.EnsureCoreWebView2Async();
+                    var environment = await AppServiceLocator.Services.GetRequiredService<UiWebViewEnvironment>()
+                        .CreateAsync().WaitAsync(_stopToken);
+                    _stopToken.ThrowIfCancellationRequested();
+                    await _webView.EnsureCoreWebView2Async(environment);
                 }
                 _stopToken.ThrowIfCancellationRequested();
                 _coreReady = true;

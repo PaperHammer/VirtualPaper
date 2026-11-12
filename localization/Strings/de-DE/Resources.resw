@@ -2129,4 +2129,7 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>Die Anwendung läuft. Möchten Sie sie schließen?</value></data>
   <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>Die Sprache für den ersten Start konnte nicht gespeichert werden.</value></data>
   <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper – Aktualisierung</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Hardwarebeschleunigung</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Unterstützte Funktionen der Hauptoberfläche mit der GPU beschleunigen. Änderungen werden beim nächsten Start der Oberfläche wirksam.</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Starten Sie die Hauptoberfläche neu, um diese Änderung anzuwenden.</value></data>
 </root>

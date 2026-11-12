@@ -429,4 +429,8 @@
   <Resource Name="Ui_EffectPreset_Selector.Header" Source="EffectPreset_Selector" />
   <Resource Name="Ui_EffectPreset_TrialHint.Text" Source="EffectPreset_TrialHint" />
   <Resource Name="Ui_EffectPreset_CancelTrial.Content" Source="EffectPreset_CancelTrial" />
+  <Resource Name="Ui_Settings_Performance_HardwareAcceleration.Text" Source="Settings_Performance_HardwareAcceleration" />
+  <Resource Name="Ui_Settings_Performance_HardwareAccelerationExplain.Text" Source="Settings_Performance_HardwareAccelerationExplain" />
+  <Resource Name="Ui_Settings_Performance_HardwareAccelerationToggle.AutomationProperties.Name" Source="Settings_Performance_HardwareAcceleration" />
+  <Resource Name="Ui_Settings_Performance_HardwareAccelerationRestart.Message" Source="Settings_Performance_HardwareAccelerationRestart" />
 </Resources>

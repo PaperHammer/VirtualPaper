@@ -2129,4 +2129,7 @@ Se não funcionar, reinicie o Windows. Algumas versões de prévia do Windows 10
   <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>O aplicativo está em execução. Deseja fechá-lo?</value></data>
   <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>Não foi possível salvar o idioma da primeira inicialização.</value></data>
   <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper – Atualização</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Aceleração de hardware</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Usar a GPU nos recursos compatíveis da interface principal. As alterações entram em vigor na próxima inicialização da interface.</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Reinicie a interface principal para aplicar esta alteração.</value></data>
 </root>

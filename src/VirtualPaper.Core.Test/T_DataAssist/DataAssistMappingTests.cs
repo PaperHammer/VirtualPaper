@@ -326,6 +326,33 @@ public class DataAssistMappingTests {
     [TestMethod]
     [DataRow(true)]
     [DataRow(false)]
+    public void UiHardwareAcceleration_JsonAndWireRoundtrip_PreserveExplicitValue(bool enabled) {
+        var settings = MakeSettings();
+        settings.UiHardwareAccelerationEnabled = enabled;
+        string json = System.Text.Json.JsonSerializer.Serialize(settings, SettingsContext.Default.Settings);
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(json, SettingsContext.Default.Settings)!;
+        var request = DataAssist.SettingsToGrpc(loaded);
+        var wire = Grpc_SettingsData.Parser.ParseFrom(Google.Protobuf.MessageExtensions.ToByteArray(request));
+
+        Assert.IsTrue(wire.HasUiHardwareAccelerationEnabled);
+        Assert.AreEqual(enabled, DataAssist.GrpcToSettings(wire).UiHardwareAccelerationEnabled);
+    }
+
+    [TestMethod]
+    public void UiHardwareAcceleration_OlderJsonAndWire_DefaultToEnabled() {
+        var settings = System.Text.Json.JsonSerializer.Deserialize("{}", SettingsContext.Default.Settings)!;
+        var request = DataAssist.SettingsToGrpc(MakeSettings());
+        request.ClearUiHardwareAccelerationEnabled();
+        var wire = Grpc_SettingsData.Parser.ParseFrom(Google.Protobuf.MessageExtensions.ToByteArray(request));
+
+        Assert.IsTrue(settings.UiHardwareAccelerationEnabled);
+        Assert.IsFalse(wire.HasUiHardwareAccelerationEnabled);
+        Assert.IsTrue(DataAssist.GrpcToSettings(wire).UiHardwareAccelerationEnabled);
+    }
+
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
     public void IntelligentReminder_JsonAndGrpc_PreservePreferenceAndLegacyDefault(bool enabled) {
         var settings = MakeSettings();
         settings.RemindUnpreservedIntelligentResults = enabled;

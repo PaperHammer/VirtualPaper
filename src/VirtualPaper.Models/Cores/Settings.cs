@@ -26,6 +26,7 @@ namespace VirtualPaper.Models.Cores {
         public bool IsAutoStart { get; set; }
         public bool IsFirstRun { get; set; }
         public bool NavigationAnimationsEnabled { get; set; } = true;
+        public bool UiHardwareAccelerationEnabled { get; set; } = true;
         public bool RemindUnpreservedIntelligentResults { get; set; } = true;
         #endregion
 

@@ -99,6 +99,7 @@ namespace VirtualPaper.UI {
             SetupUnhandledExceptionLogging();
 
             _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
+            _ = AppServiceLocator.Services.GetRequiredService<UiHardwareAccelerationPolicy>();
         }
 
         private ServiceProvider ConfigureServices() {
@@ -129,6 +130,9 @@ namespace VirtualPaper.UI {
 
                 .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
+                .AddSingleton(services => new UiHardwareAccelerationPolicy(
+                    services.GetRequiredService<IUserSettingsClient>().Settings.UiHardwareAccelerationEnabled))
+                .AddSingleton<UiWebViewEnvironment>()
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()

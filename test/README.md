@@ -191,7 +191,9 @@ Reopening waits for the real window to become ready. If the OS reports process e
 
 ### Performance settings
 
-`Application.PerformanceSettings.SaveAndReopen` checks seven settings: playback policies for fullscreen, focus, battery, power saving, and Remote Desktop; multi-monitor detection; and desktop-only audio.
+The main-interface hardware acceleration preference is covered by JSON/protobuf compatibility tests, real named-pipe settings save/reload/restart tests, and headless checks of the immutable UI startup policy and GPU/software WebView2 profile separation. Older clients that omit the optional field must preserve a saved disabled preference. Changing it saves the preference and shows a restart notice without restarting UI or changing the active policy. UI WebViews use dedicated profiles; desktop players and screen savers retain their existing profiles. Native WebView initialization, software rendering and the new toggle's real interaction still require authorized UI acceptance. GPU inference, AI processing modes and drawing-device adaptation are separate work.
+
+`Application.PerformanceSettings.SaveAndReopen` checks eight settings: playback policies for fullscreen, focus, battery, power saving, and Remote Desktop; multi-monitor detection; desktop-only audio; and main-interface hardware acceleration. The hardware case also checks that reverting the preference clears the restart notice, saving does not restart UI, and reopening captures the saved startup policy. These added assertions have not yet been run in real UI acceptance.
 
 Each real control is changed, confirmed through Core RPC and persisted JSON, and checked again after reopening UI. This tests settings persistence, not simulated battery/RDP states or actual wallpaper pause/mute behavior.
 

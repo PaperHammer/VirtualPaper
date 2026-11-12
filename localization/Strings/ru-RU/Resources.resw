@@ -2129,4 +2129,7 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>Приложение запущено. Закрыть его?</value></data>
   <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>Не удалось сохранить язык первого запуска.</value></data>
   <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper — Обновление</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>Аппаратное ускорение</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>Использовать GPU для поддерживаемых функций основного интерфейса. Изменения вступят в силу при следующем запуске интерфейса.</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>Перезапустите основной интерфейс, чтобы применить это изменение.</value></data>
 </root>

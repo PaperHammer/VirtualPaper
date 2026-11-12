@@ -4,6 +4,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
@@ -11,6 +12,7 @@ using VirtualPaper.Common.Events;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Runtime.PlayerWeb;
 using VirtualPaper.Common.Utils;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.Players;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.ThreadContext;
@@ -297,7 +299,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
 
         #region webview2 event
         private async Task InitializeWebViewAsync() {
-            var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, Constants.CommonPaths.TempWebView2Dir, _environmentOptions);
+            var env = await AppServiceLocator.Services.GetRequiredService<UiWebViewEnvironment>().CreateAsync();
             _lifetimeToken.ThrowIfCancellationRequested();
             await Webview2.EnsureCoreWebView2Async(env);
             _lifetimeToken.ThrowIfCancellationRequested();
@@ -532,9 +534,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Pages {
         private bool _unloaded;
         private bool _initializing;
         private ArcWindow? _ownerWindow;
-        private static readonly CoreWebView2EnvironmentOptions _environmentOptions = new() {
-            AdditionalBrowserArguments = "--disk-cache-size=1 --autoplay-policy=no-user-gesture-required"
-        };
         private PreviewServer? _shellServer;
         private readonly List<PreviewServer> _resourceServers = [];
     }

@@ -29,6 +29,23 @@ internal static class PerformanceSettingsTests {
         var labels = new Dictionary<string, string>();
         var ui = await session.OpenUiAsync();
         var root = await Task.Run(() => OpenPerformance(ui));
+        Check(initial.HasUiHardwareAccelerationEnabled && initial.UiHardwareAccelerationEnabled, "Hardware acceleration did not start enabled");
+        await Task.Run(() => {
+            Check(!RestartNoticeVisible(root), "Unchanged hardware setting requires a restart");
+            var toggle = (TogglePattern)ApplicationUi.Find(root, "Settings.Performance.HardwareAcceleration").GetCurrentPattern(TogglePattern.Pattern);
+            Check(toggle.Current.ToggleState == ToggleState.On, "Hardware control did not load the enabled preference");
+            toggle.Toggle();
+        });
+        await WaitHardwarePreferenceAsync(session, false);
+        await AppProcessSession.WaitAsync(() => Task.Run(() => RestartNoticeVisible(root)), "Hardware setting restart notice");
+        await Task.Run(() => ((TogglePattern)ApplicationUi.Find(root, "Settings.Performance.HardwareAcceleration").GetCurrentPattern(TogglePattern.Pattern)).Toggle());
+        await WaitHardwarePreferenceAsync(session, true);
+        await AppProcessSession.WaitAsync(() => Task.Run(() => !RestartNoticeVisible(root)), "Reverting hardware setting clears restart notice");
+        await Task.Run(() => ((TogglePattern)ApplicationUi.Find(root, "Settings.Performance.HardwareAcceleration").GetCurrentPattern(TogglePattern.Pattern)).Toggle());
+        await WaitHardwarePreferenceAsync(session, false);
+        await AppProcessSession.WaitAsync(() => Task.Run(() => RestartNoticeVisible(root)), "Restored pending hardware setting");
+        ui.Refresh();
+        Check(!ui.HasExited && session.UiIds.Distinct().Count() == 1, "Saving hardware preference restarted the UI");
         foreach (var rule in Rules) {
             labels[rule.Id] = await Task.Run(() => ApplicationUi.SelectComboIndex(
                 ApplicationUi.Find(root, "Settings.Performance." + rule.Id), expected[rule.Id], rule.Count));
@@ -46,7 +63,8 @@ internal static class PerformanceSettingsTests {
             new Empty(), deadline: DateTime.UtcNow.AddSeconds(1))).IsAudioOnlyOnDesktop, "Persist audio policy in Core");
 
         var saved = await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json =>
-            json["IsAudioOnlyOnDesktop"]?.GetValue<bool>() == true && Rules.All(rule =>
+            json["UiHardwareAccelerationEnabled"]?.GetValue<bool>() == false
+            && json["IsAudioOnlyOnDesktop"]?.GetValue<bool>() == true && Rules.All(rule =>
                 json[rule.JsonProperty]?.GetValue<string>() == Enum.GetName(rule.JsonEnum ?? typeof(AppWpRunRulesEnum), expected[rule.Id])));
         foreach (var rule in Rules)
             Check(saved[rule.JsonProperty]!.GetValue<string>() == Enum.GetName(rule.JsonEnum ?? typeof(AppWpRunRulesEnum), expected[rule.Id]),
@@ -56,6 +74,9 @@ internal static class PerformanceSettingsTests {
         ui = await session.OpenUiAsync();
         await Task.Run(() => {
             var reopened = OpenPerformance(ui);
+            Check(((TogglePattern)ApplicationUi.Find(reopened, "Settings.Performance.HardwareAcceleration").GetCurrentPattern(TogglePattern.Pattern)).Current.ToggleState == ToggleState.Off,
+                "Reopened UI did not restore hardware acceleration preference");
+            Check(!RestartNoticeVisible(reopened), "Reopened UI did not capture the new startup policy");
             foreach (var rule in Rules) {
                 var combo = ApplicationUi.Find(reopened, "Settings.Performance." + rule.Id);
                 Check(ApplicationUi.SelectedLabel(combo) == labels[rule.Id], $"Reopened UI did not restore {rule.Id}");
@@ -70,8 +91,17 @@ internal static class PerformanceSettingsTests {
         context.Evidence["SavedRules"] = Rules.ToDictionary(rule => rule.JsonProperty,
             rule => Enum.GetName(rule.JsonEnum ?? typeof(AppWpRunRulesEnum), expected[rule.Id]));
         context.Evidence["AudioOnlyOnDesktop"] = true;
-        context.Evidence["ReopenedControlsVerified"] = 7;
+        context.Evidence["ReopenedControlsVerified"] = 8;
+        context.Evidence["HardwarePreferencePendingRestartRevertAndReopenVerified"] = true;
     }
+
+    private static Task WaitHardwarePreferenceAsync(AppProcessSession session, bool enabled) => AppProcessSession.WaitAsync(async () =>
+        (await session.Settings.GetSettingsAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(1))).UiHardwareAccelerationEnabled == enabled,
+        "Persist hardware acceleration " + enabled);
+
+    private static bool RestartNoticeVisible(AutomationElement root) => root.FindAll(TreeScope.Descendants,
+        new PropertyCondition(AutomationElement.AutomationIdProperty, "Settings.Performance.HardwareAccelerationRestart"))
+        .Cast<AutomationElement>().Any(element => !element.Current.IsOffscreen && element.Current.BoundingRectangle.Height > 0);
 
     private static AutomationElement OpenPerformance(Process ui) {
         var root = AutomationElement.FromHandle(ui.MainWindowHandle);

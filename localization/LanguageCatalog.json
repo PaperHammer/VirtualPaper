@@ -1,0 +1,83 @@
+{
+  "DefaultLanguage": "en-US",
+  "Languages": [
+    {
+      "Code": "zh-CN",
+      "Name": "简体中文(zh-CN)",
+      "Aliases": [
+        "zh-Hans",
+        "zh-SG",
+        "zh"
+      ],
+      "InstallerName": "chinese",
+      "InstallerMessagesFile": "Languages\\ChineseSimplified.isl"
+    },
+    {
+      "Code": "en-US",
+      "Name": "English(en-US)",
+      "Aliases": [
+        "en",
+        "en-Latn"
+      ],
+      "InstallerName": "english",
+      "InstallerMessagesFile": "compiler:Default.isl",
+      "InstallerLicenseFile": "License\\LICENSE.txt"
+    },
+    {
+      "Code": "zh-TW",
+      "Name": "繁體中文(zh-TW)",
+      "Aliases": ["zh-Hant", "zh-HK", "zh-MO"],
+      "InstallerName": "traditionalchinese",
+      "InstallerMessagesFile": "Languages\\ChineseTraditional.isl"
+    },
+    {
+      "Code": "ja-JP",
+      "Name": "日本語(ja-JP)",
+      "Aliases": ["ja", "ja-Jpan"],
+      "InstallerName": "japanese",
+      "InstallerMessagesFile": "compiler:Languages\\Japanese.isl"
+    },
+    {
+      "Code": "ko-KR",
+      "Name": "한국어(ko-KR)",
+      "Aliases": ["ko", "ko-Kore"],
+      "InstallerName": "korean",
+      "InstallerMessagesFile": "compiler:Languages\\Korean.isl"
+    },
+    {
+      "Code": "de-DE",
+      "Name": "Deutsch(de-DE)",
+      "Aliases": ["de", "de-Latn"],
+      "InstallerName": "german",
+      "InstallerMessagesFile": "compiler:Languages\\German.isl"
+    },
+    {
+      "Code": "fr-FR",
+      "Name": "Français(fr-FR)",
+      "Aliases": ["fr", "fr-Latn"],
+      "InstallerName": "french",
+      "InstallerMessagesFile": "compiler:Languages\\French.isl"
+    },
+    {
+      "Code": "es-ES",
+      "Name": "Español(es-ES)",
+      "Aliases": ["es", "es-Latn"],
+      "InstallerName": "spanish",
+      "InstallerMessagesFile": "compiler:Languages\\Spanish.isl"
+    },
+    {
+      "Code": "pt-BR",
+      "Name": "Português (Brasil)(pt-BR)",
+      "Aliases": ["pt", "pt-Latn"],
+      "InstallerName": "brazilianportuguese",
+      "InstallerMessagesFile": "compiler:Languages\\BrazilianPortuguese.isl"
+    },
+    {
+      "Code": "ru-RU",
+      "Name": "Русский(ru-RU)",
+      "Aliases": ["ru", "ru-Cyrl"],
+      "InstallerName": "russian",
+      "InstallerMessagesFile": "compiler:Languages\\Russian.isl"
+    }
+  ]
+}

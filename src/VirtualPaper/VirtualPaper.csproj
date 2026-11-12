@@ -14,6 +14,11 @@
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	</PropertyGroup>
+	<PropertyGroup>
+		<LocalizationResourceKind>Core</LocalizationResourceKind>
+		<LocalizationResourceFolder>Properties</LocalizationResourceFolder>
+	</PropertyGroup>
+	<Import Project="..\..\localization\Localization.targets" />
 
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
@@ -134,13 +139,6 @@
 			<AutoGen>True</AutoGen>
 			<DependentUpon>lang.resx</DependentUpon>
 		</Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Update="Properties\lang.resx">
-			<Generator>PublicResXFileCodeGenerator</Generator>
-			<LastGenOutput>lang.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
 	</ItemGroup>
 
 </Project>

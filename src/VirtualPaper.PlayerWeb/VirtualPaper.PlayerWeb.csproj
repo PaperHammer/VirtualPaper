@@ -44,7 +44,6 @@
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
-		<DefaultLanguage>zh-CN</DefaultLanguage>
 		<ApplicationIcon>virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>
 

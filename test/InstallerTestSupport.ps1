@@ -1,5 +1,13 @@
 # Lifecycle/report contracts can be tested without installing anything.
 . (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
+. (Join-Path $PSScriptRoot '../localization/LanguageCatalog.ps1')
+function Get-InstallerApplicationLanguage([string]$Language) {
+    $matches = @((Get-LanguageCatalog).Languages | Where-Object {
+        $_.Code -ieq $Language -or $_.InstallerName -ieq $Language -or $_.Aliases -icontains $Language
+    })
+    if ($matches.Count -ne 1) { throw "Unsupported installer language: $Language" }
+    return $matches[0].Code
+}
 function Get-InstallerAppId([string]$SetupScriptPath) {
     $setupScript = Get-Content -LiteralPath $SetupScriptPath -Raw
     $appId = [regex]::Match($setupScript, '(?m)^#define AppId "\{\{([0-9A-Fa-f-]+)\}"').Groups[1].Value

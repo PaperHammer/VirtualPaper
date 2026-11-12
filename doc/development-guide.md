@@ -45,7 +45,7 @@ pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 
 单项开发可在完整 Release 构建后运行 `test/Run-ProjectTests.ps1 -JobId test-core`，或通过 `test/Run-UIOperationTests.ps1 -Configuration Release -Module GeneralSettings` 测试一个真实 UI 模块。真实 WinUI 宿主位于独立的 `test` 目录，不使用 `dotnet test` 启动。无可用桌面时真实 UI 明确跳过，不视为 UI 验收通过。
 
-准确的项目清单、模块范围、模型要求、结果判定和报告路径见[测试说明](../test/README.zh-CN.md)。AI 请阅读 [AGENTS.md](../AGENTS.md) 和[仓库测试 skill](../.agents/skills/virtualpaper-testing/SKILL.md)。两条 CI 流程均为手动触发，详细规则见[工作流说明](../.github/workflows/README.zh-CN.md)。
+准确的项目清单、模块范围、模型要求、结果判定和报告路径见[测试说明](../test/README.zh-CN.md)。AI 请阅读 [AGENTS.md](../AGENTS.md) 和[仓库测试 skill](../.agents/skills/testing/SKILL.md)。两条 CI 流程均为手动触发，详细规则见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 ## 推荐阅读顺序
 

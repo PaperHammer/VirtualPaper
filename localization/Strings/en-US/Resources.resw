@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -1336,6 +1336,9 @@ The following words cannot be used as usernames:
   <data name="SidebarIntelligent" xml:space="preserve">
     <value>Intelli</value>
   </data>
+  <data name="SidebarIntelligentFullName" xml:space="preserve">
+    <value>AI tools</value>
+  </data>
   <data name="Intelligent_SelBarItem1_StyleTranfer" xml:space="preserve">
     <value>Stylize</value>
   </data>
@@ -2037,4 +2040,100 @@ The following words cannot be used as usernames:
   <data name="EffectPreset_Type_RImage3D" xml:space="preserve"><value>3D image</value></data>
   <data name="EffectPreset_Type_RVideo" xml:space="preserve"><value>Video</value></data>
   <data name="EffectPreset_Type_RWeb" xml:space="preserve"><value>Web</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Downloading" xml:space="preserve"><value>Pause</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Installing" xml:space="preserve"><value>Installing...</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Paused" xml:space="preserve"><value>Resume</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Ready" xml:space="preserve"><value>Download</value></data>
+  <data name="Core_AppUpdater_SpeedText_Ready" xml:space="preserve"><value>Remaining time</value></data>
+  <data name="Core_AppUpdater_StatusText_Completed" xml:space="preserve"><value>Download complete!</value></data>
+  <data name="Core_AppUpdater_StatusText_DownloadFailed" xml:space="preserve"><value>Unable to access, please check network or try again.</value></data>
+  <data name="Core_AppUpdater_StatusText_Downloading" xml:space="preserve"><value>Downloading...</value></data>
+  <data name="Core_AppUpdater_StatusText_Installed" xml:space="preserve"><value>Installation complete!</value></data>
+  <data name="Core_AppUpdater_StatusText_Installing" xml:space="preserve"><value>Installing updates...</value></data>
+  <data name="Core_AppUpdater_StatusText_Paused" xml:space="preserve"><value>Download paused</value></data>
+  <data name="Core_AppUpdater_StatusText_Ready" xml:space="preserve"><value>Preparing to download...</value></data>
+  <data name="Core_AppUpdater_StatusText_VerifyFailed" xml:space="preserve"><value>File verification failed, please try downloading again</value></data>
+  <data name="Core_AppUpdater_StatusText_Verifying" xml:space="preserve"><value>Verifying resource integrity...</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve"><value>The installation is not yet complete. Are you sure you want to exit?</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve"><value>The current update is downloading. Are you sure you want to interrupt and close it?</value></data>
+  <data name="Core_AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve"><value>Update failed; please try downloading the installer manual update from the following address:
+https://github.com/PaperHammer/VirtualPaper/releases</value></data>
+  <data name="Core_AppUpdater_Update_TitleCancelQuestion" xml:space="preserve"><value>Updating</value></data>
+  <data name="Core_Common_TextCancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Core_Common_TextClose" xml:space="preserve"><value>Close</value></data>
+  <data name="Core_Common_TextConfirm" xml:space="preserve"><value>Confirm</value></data>
+  <data name="Core_Common_TextError" xml:space="preserve"><value>Error</value></data>
+  <data name="Core_Common_TextRetry" xml:space="preserve"><value>Retry</value></data>
+  <data name="Core_Find_New_Verison" xml:space="preserve"><value>Find a newer version!</value></data>
+  <data name="Core_Find_New_Version_Restart" xml:space="preserve"><value>Component update available!</value></data>
+  <data name="Core_Systray_TextCloseAllWallpapers" xml:space="preserve"><value>Close all wallpapers</value></data>
+  <data name="Core_Systray_TextDEBubble" xml:space="preserve"><value>Bubble</value></data>
+  <data name="Core_Systray_TextDENone" xml:space="preserve"><value>N/A</value></data>
+  <data name="Core_Systray_TextDynamicEffect" xml:space="preserve"><value>Animation</value></data>
+  <data name="Core_Systray_TextExit" xml:space="preserve"><value>Exit</value></data>
+  <data name="Core_Systray_TextIsOnScrSaver" xml:space="preserve"><value>Enable screensaver</value></data>
+  <data name="Core_Systray_TextIsRunningLock" xml:space="preserve"><value>Show login screen when restoring</value></data>
+  <data name="Core_Systray_TextOpenApp" xml:space="preserve"><value>Open the main UI</value></data>
+  <data name="Core_Systray_TextOpenScrSaverSet" xml:space="preserve"><value>Screensaver</value></data>
+  <data name="Core_Systray_TextPauseWallpapers" xml:space="preserve"><value>Pause all wallpapers</value></data>
+  <data name="Core_Systray_TextReportBug" xml:space="preserve"><value>Report bug</value></data>
+  <data name="Core_UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve"><value>An error occurred, try restarting the program to fix the problem. If this happens more than once, please report the bug or contact the developer and re-download</value></data>
+  <data name="Core_Virtual_Paper_isRunning" xml:space="preserve"><value>Virtual Paper is running in the background</value></data>
+  <data name="Core_Virtual_Paper_isRunning_Greetings" xml:space="preserve"><value>Have a great day!</value></data>
+  <data name="Core_WndProcMsg_DescExplorerCrash" xml:space="preserve"><value>A serious error has occurred
+Windows Explorer restarted twice in the last 30 seconds!This could be a conflict between Virtual Paper and Windows or other desktop personalization software.To avoid more problems, all wallpapers have been terminated.</value></data>
+  <data name="Core_WndProcMsg_TitleAppName" xml:space="preserve"><value>Virtual Paper</value></data>
+  <data name="Core_WpControl_TextFileNotFound" xml:space="preserve"><value>Unable to find target file</value></data>
+  <data name="Core_WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve"><value>A few settings are required for it to work:
+1. Press Win + R to open the operation.
+2. Enter SystemPropertiesPerformance.exe in "Run" and click "OK" to open the performance options.
+3. Enable/check "Animation controls and elements within the window" (uncheck if already checked) and apply.
+4. Close the window by clicking Apply and then OK.
+If it still doesn't work, shut down and restart or reboot the system.(Doesn't work in some Windows 10 preview versions)</value></data>
+  <data name="Core_PluginsUpdate_InvalidInfo" xml:space="preserve"><value>Invalid update info</value></data>
+  <data name="Core_PluginsUpdate_Starting" xml:space="preserve"><value>Starting update...</value></data>
+  <data name="Core_PluginsUpdate_Completed" xml:space="preserve"><value>Update completed. UI will restart.</value></data>
+  <data name="Core_PluginsUpdate_Failed" xml:space="preserve"><value>Update failed: {0}</value></data>
+  <data name="Core_PluginsUpdate_Stage_Downloading" xml:space="preserve"><value>Downloading plugins...</value></data>
+  <data name="Core_PluginsUpdate_Stage_BackingUp" xml:space="preserve"><value>Backing up current plugins...</value></data>
+  <data name="Core_PluginsUpdate_Stage_Replacing" xml:space="preserve"><value>Replacing plugin files...</value></data>
+  <data name="Core_PluginsUpdate_Stage_Completed" xml:space="preserve"><value>Completed</value></data>
+  <data name="Core_PluginsUpdate_Stage_Failed" xml:space="preserve"><value>Failed</value></data>
+  <data name="Core_PluginsUpdate_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Core_PluginsUpdate_PostponeTip" xml:space="preserve"><value>Update ready. Close the main window to apply.</value></data>
+  <data name="Core_InstallerUpdate_PostponeTip" xml:space="preserve"><value>Installer ready. Installation will start after fully exiting the application.</value></data>
+  <data name="Core_PluginUpdate_Title_Updating" xml:space="preserve"><value>Updating components...</value></data>
+  <data name="Core_PluginUpdate_Title_Completed" xml:space="preserve"><value>Update completed</value></data>
+  <data name="Core_PluginUpdate_Title_Failed" xml:space="preserve"><value>Update failed</value></data>
+  <data name="Core_PluginUpdate_Preparing" xml:space="preserve"><value>Preparing...</value></data>
+  <data name="Core_PluginUpdate_ReplacedPlugin" xml:space="preserve"><value>Replaced {0}</value></data>
+  <data name="Core_Startup_AutoStartDisabledByUser" xml:space="preserve"><value>You have disabled Virtual Paper from running when you sign in. To enable it again, open Startup apps in Task Manager.</value></data>
+  <data name="Core_Startup_AppDataCreateFailedTitle" xml:space="preserve"><value>Unable to create the app data directory. Virtual Paper will exit.</value></data>
+  <data name="Core_Startup_CoreRuntimeFailed" xml:space="preserve"><value>Core runtime initialization failed. Please restart or reinstall Virtual Paper.
+{0}</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Title" xml:space="preserve"><value>Stop downloading the update?</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Content" xml:space="preserve"><value>The update is downloading. Stop the download and close the update window?</value></data>
+  <data name="Core_AppUpdater_Close_StopDownload" xml:space="preserve"><value>Stop download and close</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Title" xml:space="preserve"><value>Discard this download?</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Content" xml:space="preserve"><value>The update download is paused. Discard this download and close the update window?</value></data>
+  <data name="Core_AppUpdater_Close_DiscardDownload" xml:space="preserve"><value>Discard download and close</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Title" xml:space="preserve"><value>Stop verifying the update?</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Content" xml:space="preserve"><value>The update files are being verified. Stop verification and close the update window?</value></data>
+  <data name="Core_AppUpdater_Close_StopVerification" xml:space="preserve"><value>Stop verification and close</value></data>
+  <data name="Core_AppUpdater_Close_Title" xml:space="preserve"><value>Close the update window?</value></data>
+  <data name="Core_AppUpdater_Close_Content" xml:space="preserve"><value>Close the update window?</value></data>
+  <data name="Core_AppUpdater_Close_Window" xml:space="preserve"><value>Close window</value></data>
+  <data name="Core_AppUpdater_Close_DownloadFailed_Content" xml:space="preserve"><value>The update download failed. You can close this window and try updating again later.</value></data>
+  <data name="Core_AppUpdater_Close_VerifyFailed_Content" xml:space="preserve"><value>Update file verification failed. You can close this window and download the update again later.</value></data>
+  <data name="Core_AppUpdater_Close_BackToUpdate" xml:space="preserve"><value>Back to update</value></data>
+  <data name="Core_AppUpdater_UpdateReady_Title" xml:space="preserve"><value>Update ready</value></data>
+  <data name="Core_Common_TextGotIt" xml:space="preserve"><value>Got it</value></data>
+  <data name="Common_FileAccess_Message" xml:space="preserve"><value>An error occurred while {1} the file “{0}”. Check the file integrity and permissions.</value></data>
+  <data name="Common_FileAccess_Read" xml:space="preserve"><value>reading</value></data>
+  <data name="Common_FileAccess_Write" xml:space="preserve"><value>writing</value></data>
+  <data name="Common_FileAccess_Access" xml:space="preserve"><value>accessing</value></data>
+  <data name="Installer_DeleteEverythigMsgBox" xml:space="preserve"><value>Do you want to delete user settings?</value></data>
+  <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>Application is running, do you want to close it?</value></data>
+  <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>Could not save the initial application language.</value></data>
+  <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper Updater</value></data>
 </root>

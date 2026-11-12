@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Globalization;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
 using Windows.Storage;
@@ -14,6 +15,7 @@ namespace VirtualPaper.UIComponent.Utils {
         public static event EventHandler? LanguageUpdated;
 
         public static async Task SetLanguageAsync(string lang) {
+            lang = SupportedLanguages.GetLanguage(lang).Codes[0];
             await Localizer.Get().SetLanguage(lang);
             SetInstance(lang);
             LanguageUpdated?.Invoke(null, EventArgs.Empty);
@@ -24,6 +26,7 @@ namespace VirtualPaper.UIComponent.Utils {
 
         // ref: https://github.com/AndrewKeepCoding/WinUI3Localizer
         public static async Task InitializeLocalizerForUnpackaged(string lang) {
+            lang = SupportedLanguages.GetLanguage(lang).Codes[0];
             // Initialize a "Strings" folder in the executables folder.
             string stringsFolderPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, Constants.ModuleName.UIComponent, "Strings");
             StorageFolder stringsFolder = await StorageFolder.GetFolderFromPathAsync(stringsFolderPath);
@@ -31,7 +34,7 @@ namespace VirtualPaper.UIComponent.Utils {
             ILocalizer localizer = await new LocalizerBuilder()
                 .AddStringResourcesFolderForLanguageDictionaries(stringsFolderPath)
                 .SetOptions(options => {
-                    options.DefaultLanguage = lang;
+                    options.DefaultLanguage = SupportedLanguages.DefaultLanguage;
                 })
                 .Build();
             await localizer.SetLanguage(lang);
@@ -39,6 +42,7 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         public static async Task InitializeLocalizerForPackaged(string lang) {
+            lang = SupportedLanguages.GetLanguage(lang).Codes[0];
             // Initialize a "Strings" folder in the "LocalFolder" for the packaged app.
             StorageFolder localFolder = ApplicationData.Current.LocalFolder;
             StorageFolder stringsFolder = await localFolder.CreateFolderAsync(
@@ -47,13 +51,14 @@ namespace VirtualPaper.UIComponent.Utils {
 
             // Refresh bundled translations; LocalFolder survives application upgrades.
             string resourceFileName = "Resources.resw";
-            await RefreshStringResourceFileAsync(stringsFolder, "zh-CN", resourceFileName);
-            await RefreshStringResourceFileAsync(stringsFolder, "en-US", resourceFileName);
+            foreach (var language in SupportedLanguages.Languages) {
+                await RefreshStringResourceFileAsync(stringsFolder, language.Codes[0], resourceFileName);
+            }
 
             ILocalizer localizer = await new LocalizerBuilder()
                 .AddStringResourcesFolderForLanguageDictionaries(stringsFolder.Path)
                 .SetOptions(options => {
-                    options.DefaultLanguage = lang;
+                    options.DefaultLanguage = SupportedLanguages.DefaultLanguage;
                 })
                 .Build();
             await localizer.SetLanguage(lang);
@@ -77,6 +82,8 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         private static void SetInstance(string lang) {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(lang);
+            CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.CurrentUICulture;
             CurrentLanguage = lang;
             LocalizerInstance = Localizer.Get();
         }

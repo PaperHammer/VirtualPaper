@@ -4,6 +4,7 @@ using System.Windows.Automation;
 using Google.Protobuf.WellKnownTypes;
 using VirtualPaper.Common;
 using VirtualPaper.Models.Cores;
+using VirtualPaper.TestSupport;
 using VirtualPaper.UIOperationTest.Infrastructure;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
@@ -31,11 +32,13 @@ internal static class MsixProfileTests {
             Check(settings.WallpaperDir == baseline["WallpaperDir"]!.GetValue<string>(), "Reinstall changed the saved library.");
         }
         bool expectedNavigation = prepare || baseline!["NavigationAnimationsEnabled"]!.GetValue<bool>();
+        string expectedTab = LocalizedTestStrings.Read(AppContext.BaseDirectory,
+            settings.Language, "AppSettings_SelBarItem1_General");
         await Task.Run(() => {
             var window = AutomationElement.FromHandle(ui.MainWindowHandle);
             ApplicationUi.Select(ApplicationUi.Find(window, "App.Navigation.Settings"));
             Check(ApplicationUi.Find(window, "Settings.Tab.General").Current.Name ==
-                (settings.Language == "zh-CN" ? "通用" : "General"), "The installed first-run/profile UI is not localized.");
+                expectedTab, "The installed first-run/profile UI is not localized.");
             var control = ApplicationUi.Find(window, "Settings.General.NavigationAnimations");
             ApplicationUi.BringIntoView(control);
             var toggle = (TogglePattern)control.GetCurrentPattern(TogglePattern.Pattern);

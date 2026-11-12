@@ -17,11 +17,11 @@ VirtualPaper is a Windows wallpaper application built with .NET 8, WPF, WinUI 3 
 
 Read [developer documentation](doc/README.md) for architecture and module details. Read source implementations when deciding behavior; generated output is not the source of truth.
 
-Maintain translations only in `src/VirtualPaper.UIComponent/Strings/<locale>/Resources.resw`; add XAML property mappings in `Localization/XamlResources.xml`. Normal builds generate complete resources under `obj`. Do not hand-edit or commit generated `Ui_...` translations. See the [localization guide](src/VirtualPaper.UIComponent/Localization/README.md) for generation and packaged validation.
+Maintain translations only in `localization/Strings/<locale>/Resources.resw` and supported-language metadata in `localization/LanguageCatalog.json`. The shared generator produces UI resources, Core/Common resx, installer messages and MSIX declarations; outputs remain under `obj`. Keep XAML property mappings in `src/VirtualPaper.UIComponent/Localization/XamlResources.xml` and other consumer mappings in `localization/ResourceMappings.xml`. Do not hand-edit generated translations. See the [localization guide](localization/README.md). Language matching preserves the writing system and tries ordered system preferences before English fallback; existing user choices take priority over installer markers. Direct ISS compilation runs generation automatically.
 
 ## Test skill and entry points
 
-For requests to run, select, extend or diagnose tests, read the repository skill at [.agents/skills/virtualpaper-testing/SKILL.md](.agents/skills/virtualpaper-testing/SKILL.md). Follow its linked guides only for the relevant test layer. Agents without skill discovery can read that file directly.
+For requests to run, select, extend or diagnose tests, read the repository skill at [.agents/skills/testing/SKILL.md](.agents/skills/testing/SKILL.md). Follow its linked guides only for the relevant test layer. Agents without skill discovery can read that file directly.
 
 - Complete local acceptance: `pwsh -NoProfile -File test/Run-Tests.ps1` from an elevated PowerShell on a clean Windows test installation.
 - Focused project tests: `test/Run-ProjectTests.ps1` after a complete Release solution build.

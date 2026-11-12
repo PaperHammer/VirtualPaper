@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -1336,6 +1336,9 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="SidebarIntelligent" xml:space="preserve">
     <value>智能</value>
   </data>
+  <data name="SidebarIntelligentFullName" xml:space="preserve">
+    <value>智能工具</value>
+  </data>
   <data name="Intelligent_SelBarItem1_StyleTranfer" xml:space="preserve">
     <value>风格化</value>
   </data>
@@ -2037,4 +2040,100 @@ Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，
   <data name="EffectPreset_Type_RImage3D" xml:space="preserve"><value>3D 图片</value></data>
   <data name="EffectPreset_Type_RVideo" xml:space="preserve"><value>视频</value></data>
   <data name="EffectPreset_Type_RWeb" xml:space="preserve"><value>网页</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Downloading" xml:space="preserve"><value>暂停</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Installing" xml:space="preserve"><value>安装中...</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Paused" xml:space="preserve"><value>继续</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Ready" xml:space="preserve"><value>下载</value></data>
+  <data name="Core_AppUpdater_SpeedText_Ready" xml:space="preserve"><value>剩余时间</value></data>
+  <data name="Core_AppUpdater_StatusText_Completed" xml:space="preserve"><value>下载完成！</value></data>
+  <data name="Core_AppUpdater_StatusText_DownloadFailed" xml:space="preserve"><value>无法访问资源，尝试检查网络后重试</value></data>
+  <data name="Core_AppUpdater_StatusText_Downloading" xml:space="preserve"><value>正在下载...</value></data>
+  <data name="Core_AppUpdater_StatusText_Installed" xml:space="preserve"><value>安装完成！</value></data>
+  <data name="Core_AppUpdater_StatusText_Installing" xml:space="preserve"><value>正在安装更新...</value></data>
+  <data name="Core_AppUpdater_StatusText_Paused" xml:space="preserve"><value>下载已暂停</value></data>
+  <data name="Core_AppUpdater_StatusText_Ready" xml:space="preserve"><value>准备下载...</value></data>
+  <data name="Core_AppUpdater_StatusText_VerifyFailed" xml:space="preserve"><value>文件校验失败，请重试下载</value></data>
+  <data name="Core_AppUpdater_StatusText_Verifying" xml:space="preserve"><value>校验资源完整性...</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve"><value>尚未完成安装，确定要退出吗？</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve"><value>当前更新正在下载中，是否确认中断并关闭？</value></data>
+  <data name="Core_AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve"><value>更新失败；请尝试从以下地址下载安装程序手动更新:
+https://github.com/PaperHammer/VirtualPaper/releases</value></data>
+  <data name="Core_AppUpdater_Update_TitleCancelQuestion" xml:space="preserve"><value>正在进行更新</value></data>
+  <data name="Core_Common_TextCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Core_Common_TextClose" xml:space="preserve"><value>关闭</value></data>
+  <data name="Core_Common_TextConfirm" xml:space="preserve"><value>确认</value></data>
+  <data name="Core_Common_TextError" xml:space="preserve"><value>错误</value></data>
+  <data name="Core_Common_TextRetry" xml:space="preserve"><value>重试</value></data>
+  <data name="Core_Find_New_Verison" xml:space="preserve"><value>发现新版本！</value></data>
+  <data name="Core_Find_New_Version_Restart" xml:space="preserve"><value>发现组件更新！</value></data>
+  <data name="Core_Systray_TextCloseAllWallpapers" xml:space="preserve"><value>关闭所有壁纸</value></data>
+  <data name="Core_Systray_TextDEBubble" xml:space="preserve"><value>气泡</value></data>
+  <data name="Core_Systray_TextDENone" xml:space="preserve"><value>无</value></data>
+  <data name="Core_Systray_TextDynamicEffect" xml:space="preserve"><value>动态效果</value></data>
+  <data name="Core_Systray_TextExit" xml:space="preserve"><value>退出</value></data>
+  <data name="Core_Systray_TextIsOnScrSaver" xml:space="preserve"><value>启用屏保</value></data>
+  <data name="Core_Systray_TextIsRunningLock" xml:space="preserve"><value>恢复时显示登录界面</value></data>
+  <data name="Core_Systray_TextOpenApp" xml:space="preserve"><value>打开主界面</value></data>
+  <data name="Core_Systray_TextOpenScrSaverSet" xml:space="preserve"><value>屏幕保护</value></data>
+  <data name="Core_Systray_TextPauseWallpapers" xml:space="preserve"><value>暂停所有壁纸</value></data>
+  <data name="Core_Systray_TextReportBug" xml:space="preserve"><value>报告漏洞</value></data>
+  <data name="Core_UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve"><value>发生错误，尝试重启程序以解决问题。若多次发生，请上报错误或联系开发者，并重新下载</value></data>
+  <data name="Core_Virtual_Paper_isRunning" xml:space="preserve"><value>Virtual Paper 正在后台运行</value></data>
+  <data name="Core_Virtual_Paper_isRunning_Greetings" xml:space="preserve"><value>愿你有美好的一天！</value></data>
+  <data name="Core_WndProcMsg_DescExplorerCrash" xml:space="preserve"><value>发生严重错误!
+Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virtual Paper 与 Windows 或者其他桌面个性化软件之间出现冲突。为避免更多问题，已将所有壁纸终止。</value></data>
+  <data name="Core_WndProcMsg_TitleAppName" xml:space="preserve"><value>Virtual Paper</value></data>
+  <data name="Core_WpControl_TextFileNotFound" xml:space="preserve"><value>无法找到目标文件</value></data>
+  <data name="Core_WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve"><value>需要进行一些设置才能正常运行:
+1. 按Win+R键，打开运行。
+2. 在 "运行 "中输入SystemPropertiesPerformance.exe，点击 "确定"，打开性能选项。
+3. 启用/勾选 "窗口内的动画控件和元素"（如果已经勾选，则取消勾选）并应用。
+4. 点击 "应用"，然后按 "确定"，关闭该窗口。
+如果还是不行，关闭并重新启动或重启系统。(在某些 Windows 10 预览版本中不工作)</value></data>
+  <data name="Core_PluginsUpdate_InvalidInfo" xml:space="preserve"><value>更新信息无效</value></data>
+  <data name="Core_PluginsUpdate_Starting" xml:space="preserve"><value>正在开始更新...</value></data>
+  <data name="Core_PluginsUpdate_Completed" xml:space="preserve"><value>更新完成，UI 即将重启</value></data>
+  <data name="Core_PluginsUpdate_Failed" xml:space="preserve"><value>更新失败：{0}</value></data>
+  <data name="Core_PluginsUpdate_Stage_Downloading" xml:space="preserve"><value>正在下载组件...</value></data>
+  <data name="Core_PluginsUpdate_Stage_BackingUp" xml:space="preserve"><value>正在备份当前组件...</value></data>
+  <data name="Core_PluginsUpdate_Stage_Replacing" xml:space="preserve"><value>正在替换组件文件...</value></data>
+  <data name="Core_PluginsUpdate_Stage_Completed" xml:space="preserve"><value>已完成</value></data>
+  <data name="Core_PluginsUpdate_Stage_Failed" xml:space="preserve"><value>失败</value></data>
+  <data name="Core_PluginsUpdate_Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="Core_PluginsUpdate_PostponeTip" xml:space="preserve"><value>更新已就绪，关闭主窗口以触发更新</value></data>
+  <data name="Core_InstallerUpdate_PostponeTip" xml:space="preserve"><value>安装包已就绪，完全退出应用后触发安装</value></data>
+  <data name="Core_PluginUpdate_Title_Updating" xml:space="preserve"><value>正在更新组件...</value></data>
+  <data name="Core_PluginUpdate_Title_Completed" xml:space="preserve"><value>更新完成</value></data>
+  <data name="Core_PluginUpdate_Title_Failed" xml:space="preserve"><value>更新失败</value></data>
+  <data name="Core_PluginUpdate_Preparing" xml:space="preserve"><value>准备中...</value></data>
+  <data name="Core_PluginUpdate_ReplacedPlugin" xml:space="preserve"><value>已替换 {0}</value></data>
+  <data name="Core_Startup_AutoStartDisabledByUser" xml:space="preserve"><value>你已禁止 Virtual Paper 在登录时自动运行。如需重新启用，请前往任务管理器的“启动应用”页面。</value></data>
+  <data name="Core_Startup_AppDataCreateFailedTitle" xml:space="preserve"><value>无法创建应用数据目录，Virtual Paper 即将退出</value></data>
+  <data name="Core_Startup_CoreRuntimeFailed" xml:space="preserve"><value>核心运行时初始化失败，请重启或重新安装 Virtual Paper。
+{0}</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Title" xml:space="preserve"><value>停止更新下载？</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Content" xml:space="preserve"><value>更新正在下载中。是否停止下载并关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_StopDownload" xml:space="preserve"><value>停止下载并关闭</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Title" xml:space="preserve"><value>放弃本次下载？</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Content" xml:space="preserve"><value>更新下载已暂停。是否放弃本次下载并关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_DiscardDownload" xml:space="preserve"><value>放弃下载并关闭</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Title" xml:space="preserve"><value>停止更新校验？</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Content" xml:space="preserve"><value>正在校验更新文件。是否停止校验并关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_StopVerification" xml:space="preserve"><value>停止校验并关闭</value></data>
+  <data name="Core_AppUpdater_Close_Title" xml:space="preserve"><value>关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_Content" xml:space="preserve"><value>是否关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_Window" xml:space="preserve"><value>关闭窗口</value></data>
+  <data name="Core_AppUpdater_Close_DownloadFailed_Content" xml:space="preserve"><value>更新下载失败。关闭窗口后，可以稍后重新尝试更新。</value></data>
+  <data name="Core_AppUpdater_Close_VerifyFailed_Content" xml:space="preserve"><value>更新文件校验失败。关闭窗口后，可以稍后重新下载更新。</value></data>
+  <data name="Core_AppUpdater_Close_BackToUpdate" xml:space="preserve"><value>返回更新</value></data>
+  <data name="Core_AppUpdater_UpdateReady_Title" xml:space="preserve"><value>更新已准备就绪</value></data>
+  <data name="Core_Common_TextGotIt" xml:space="preserve"><value>知道了</value></data>
+  <data name="Common_FileAccess_Message" xml:space="preserve"><value>对文件“{0}”执行{1}操作时发生错误，请检查文件完整性及相关权限。</value></data>
+  <data name="Common_FileAccess_Read" xml:space="preserve"><value>读取</value></data>
+  <data name="Common_FileAccess_Write" xml:space="preserve"><value>写入</value></data>
+  <data name="Common_FileAccess_Access" xml:space="preserve"><value>访问</value></data>
+  <data name="Installer_DeleteEverythigMsgBox" xml:space="preserve"><value>是否删除用户配置信息？</value></data>
+  <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>应用程序正在运行，是否关闭？</value></data>
+  <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>无法保存应用的初始语言。</value></data>
+  <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper 更新</value></data>
 </root>

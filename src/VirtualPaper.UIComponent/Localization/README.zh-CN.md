@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-每种语言的文案只维护在 `../Strings/<locale>/Resources.resw` 中。这些源 key 供 `LanguageUtil.GetI18n` 使用，不要在源文件中添加 `Ui_...` 条目。
+每种语言的文案只维护在 [`localization/Strings`](../../../localization/Strings) 中。语言清单、Core/Common 资源、安装器提示及 MSIX 声明见[共用资源指南](../../../localization/README.zh-CN.md)。不要在源文件中添加 `Ui_...` 条目。
 
 `XamlResources.xml` 统一描述 XAML 属性资源与源 key 的映射，不区分语言：
 
@@ -32,6 +32,6 @@ powershell -NoProfile -File src/VirtualPaper.UIComponent/Localization/Generate-R
 
 ## 包体校验
 
-`test-artifacts` 用测试程序集内嵌的映射快照核验包内完整语言资源：所有映射必须存在、生成文案必须等于源文案、生成属性数量必须与映射数量一致。运行包只需要生成后的资源文件。生成的 `Source:` 注释仅用于阅读，测试不再依赖注释。
+`test-artifacts` 用测试程序集内嵌的源文案及映射快照逐项核验清单内每种语言：所有源 key 和映射必须存在、文案必须等于源文案、生成属性数量必须与映射数量一致。运行包只需要生成后的资源文件。
 
 这些检查覆盖生成和打包。语言即时切换仍由真实 WinUI 语言用例验证，资源校验不能替代真实交互验收。

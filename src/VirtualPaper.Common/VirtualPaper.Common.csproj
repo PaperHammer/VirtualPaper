@@ -7,6 +7,14 @@
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 	</PropertyGroup>
+	<PropertyGroup>
+		<LocalizationResourceKind>Common</LocalizationResourceKind>
+		<LocalizationResourceFolder>Resources</LocalizationResourceFolder>
+	</PropertyGroup>
+	<Import Project="..\..\localization\Localization.targets" />
+	<ItemGroup>
+		<EmbeddedResource Include="..\..\localization\LanguageCatalog.json" LogicalName="VirtualPaper.LanguageCatalog.json" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">

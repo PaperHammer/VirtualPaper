@@ -115,3 +115,5 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 原始报告使用 `test-results-*`，汇总使用 `test-summary-*`/`release-test-summary`。JSON/Markdown 记录渠道结果、源码 SHA，包清单记录版本和哈希。`store-draft.json` 记录提交 ID、上传包/安装包哈希与 `Committed=false`，不包含 token 或 SAS URL。包/草稿/汇总保留 30 天，构建/原始报告保留 7 天；上传支持覆盖重试，下载保留摘要校验。
 
 运行 `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` 验证 DAG（打包 → 全部共享项目测试 → 渠道子流程）、固定 hosted VM 隔离、冒烟/UI 顺序、严格报告失败/跳过/缺失、包载荷、版本同步、插件包，以及商店 HTTP 模拟和重试契约。它不安装应用，也不连接 Partner Center/GitHub。完整本地入口仍为 EXE 的 `test/Run-Tests.ps1` 和 MSIX 的 `test/Run-MsixTests.ps1`，详见[测试说明](../../test/README.zh-CN.md)。
+
+该入口同时运行语言生成契约：清单／key／占位符一致性，UI/Core/Common/安装器/MSIX 输出，临时第三语种，过期输出检测和源目录保护。两个渠道共用[语言清单与文案](../../localization/README.zh-CN.md)。包体检查核验实际应用翻译及 MSIX 语种声明，不能用框架卫星资源目录代替产品翻译覆盖。

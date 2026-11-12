@@ -85,7 +85,7 @@ function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall,
 function Assert-InstalledApplication([string] $Language) {
     $languageMarker = Join-Path $installDir 'installer-language.txt'
     if (-not (Test-Path -LiteralPath $languageMarker) -or
-        [IO.File]::ReadAllText($languageMarker).Trim() -cne $Language) {
+        (Get-InstallerApplicationLanguage ([IO.File]::ReadAllText($languageMarker).Trim())) -cne (Get-InstallerApplicationLanguage $Language)) {
         throw 'The installed language marker does not match the selected installer language.'
     }
     if (@(Get-ChildItem -LiteralPath $installDir -Directory -Recurse -Filter '*.WebView2').Count) {

@@ -10,7 +10,6 @@
     <ProjectGuid>{59C1E2F2-04C6-4C39-A26D-7C26B30D9630}</ProjectGuid>
     <TargetPlatformVersion>10.0.26100.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
-    <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
     <AppxAutoIncrementPackageRevision>false</AppxAutoIncrementPackageRevision>
     <AppxBundle>Never</AppxBundle>
@@ -31,7 +30,8 @@
     <AppxManifest Include="$(MsixGeneratedManifest)" />
     <!-- Consume already published files; never rebuild projects with WAP's platform overrides. -->
     <!-- Only relocated root PRI files participate in the package resource merge. -->
-    <Content Include="$(MsixPayloadDirectory)\**\*" Exclude="$(MsixPayloadDirectory)\Plugins\UI\*.pri">
+    <Content Include="$(MsixPayloadDirectory)\**\*"
+             Exclude="$(MsixPayloadDirectory)\Plugins\UI\*.pri;$(MsixPayloadDirectory)\**\*.WebView2\**;$(MsixPayloadDirectory)\**\installer-language.txt;$(MsixPayloadDirectory)\**\*.pdb">
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
       <TargetPath>%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
       <!-- Payload files are loaded by path. PRI contents are merged separately;
@@ -55,7 +55,11 @@
     <Error Condition="'$(Platform)' != 'x64'" Text="VirtualPaper MSIX currently supports x64 only." />
     <Error Condition="!Exists('$(MsixPayloadDirectory)\VirtualPaper.exe')" Text="Run .github/scripts/Build-Msix.ps1 to publish the Core-first payload before packaging." />
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(MsixGeneratedManifest)'))" />
-    <Copy SourceFiles="$(MSBuildProjectDirectory)\Package.appxmanifest" DestinationFiles="$(MsixGeneratedManifest)" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\localization\Generate-Resources.ps1&quot; -Target Manifest -OutputRoot &quot;$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization&quot;" />
+    <XmlPeek XmlInputPath="$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization\Languages.props" Query="/Project/PropertyGroup/DefaultLanguage/text()">
+      <Output TaskParameter="Result" PropertyName="DefaultLanguage" />
+    </XmlPeek>
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization\Package.appxmanifest" DestinationFiles="$(MsixGeneratedManifest)" />
     <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Name" Value="$(MsixIdentityName)" />
     <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Publisher" Value="$(MsixPublisher)" />
     <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Version" Value="$(MsixPackageVersion)" />

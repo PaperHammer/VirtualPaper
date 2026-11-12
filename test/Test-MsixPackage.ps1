@@ -4,6 +4,8 @@ param([Parameter(Mandatory)][string] $PackagePath)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot '../.github/scripts/MsixResources.ps1')
+. (Join-Path $PSScriptRoot '../localization/LanguageCatalog.ps1')
+$languageCatalog = Get-LanguageCatalog
 $package = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $PackagePath).Path)
 try {
     $files = @{}
@@ -47,7 +49,9 @@ try {
         $runtime = Read-PackageText "$directory$name.runtimeconfig.json" | ConvertFrom-Json
         if (-not $runtime.runtimeOptions.PSObject.Properties['includedFrameworks']) { throw "$name is not self-contained." }
     }
-    foreach ($locale in @('zh-CN', 'en-US')) {
+    $declaredLanguages = @($manifest.Package.Resources.Resource | ForEach-Object Language)
+    Assert-PackageLanguageDeclarations $declaredLanguages $languageCatalog
+    foreach ($locale in $languageCatalog.Languages.Code) {
         $translations = Read-PackageText "Plugins/UI/VirtualPaper.UIComponent/Strings/$locale/Resources.resw"
         if ($translations -notmatch 'name="Ui_') { throw "Missing generated XAML translations for $locale." }
     }

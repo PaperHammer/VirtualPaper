@@ -1,0 +1,2132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppSettings_SelBarItem1_General" xml:space="preserve">
+    <value>일반</value>
+  </data>
+  <data name="AppSettings_SelBarItem2_Performance" xml:space="preserve">
+    <value>성능</value>
+  </data>
+  <data name="AppSettings_SelBarItem3_System" xml:space="preserve">
+    <value>시스템</value>
+  </data>
+  <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
+    <value>기타</value>
+  </data>
+  <data name="Text_Close" xml:space="preserve">
+    <value>닫기</value>
+  </data>
+  <data name="Text_Detect" xml:space="preserve">
+    <value>감지</value>
+  </data>
+  <data name="Text_Identify" xml:space="preserve">
+    <value>식별</value>
+  </data>
+  <data name="Effect_Help_Parallax" xml:space="preserve">
+    <value>바탕 화면에 포커스가 있을 때 마우스 움직임에 따라 배경 화면에 시차 효과를 적용합니다.</value>
+  </data>
+  <data name="Effect_Help_Scaling" xml:space="preserve">
+    <value>늘이기: 가로 세로 비율을 유지하지 않고 표시 영역을 채웁니다. 비율이 다르면 이미지가 늘어납니다.
+
+맞춤: 가로 세로 비율을 유지하며 전체 이미지를 표시합니다. 비율이 다르면 여백이 생깁니다.
+
+채우기: 가로 세로 비율을 유지하며 표시 영역을 채웁니다. 넘치는 부분은 잘립니다.
+
+원본 크기: 원래 크기를 유지합니다.
+
+축소만: 원본 크기와 맞춤 중 더 작은 크기를 사용합니다.</value>
+  </data>
+  <data name="Dialog_Content_ApplyError" xml:space="preserve">
+    <value>배경 화면을 적용하지 못했습니다. 다시 시도하세요.</value>
+  </data>
+  <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
+    <value>사용 가능한 모니터 수:</value>
+  </data>
+  <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
+    <value>지원 형식:
+    애니메이션: .gif .apng
+    이미지: .jpg .jpeg .bmp .png
+    동영상: .mp4 .webm
+
+가져올 수 없는 파일: </value>
+  </data>
+  <data name="Dialog_Content_Import_NeedUpdate" xml:space="preserve">
+    <value>새 기능을 사용할 수 있도록 배경 화면 데이터를 업데이트할 수 있습니다. 업데이트할까요?</value>
+  </data>
+  <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
+    <value>이 배경 화면과 관련 파일을 라이브러리에서 삭제합니다. 이 작업은 취소할 수 없습니다.</value>
+  </data>
+  <data name="Dialog_Content_LibraryDeleteMany" xml:space="preserve">
+    <value>선택한 배경 화면과 관련 파일을 라이브러리에서 삭제합니다. 이 작업은 취소할 수 없습니다.</value>
+  </data>
+  <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
+    <value>지원 형식:
+    애니메이션: .gif
+    이미지: .jpg .jpeg .bmp .png</value>
+  </data>
+  <data name="Dialog_Content_WpIsUsing" xml:space="preserve">
+    <value>배경 화면으로 사용 중인 파일은 삭제할 수 없습니다.</value>
+  </data>
+  <data name="Dialog_Title_CreateType" xml:space="preserve">
+    <value>배경 화면 실행 방식 선택</value>
+  </data>
+  <data name="Dialog_Title_Prompt" xml:space="preserve">
+    <value>안내</value>
+  </data>
+  <data name="Dialog_Title_LibraryDelete" xml:space="preserve">
+    <value>배경 화면을 삭제할까요?</value>
+  </data>
+  <data name="Dialog_Title_LibraryDeleteMany" xml:space="preserve">
+    <value>배경 화면 {0}개를 삭제할까요?</value>
+  </data>
+  <data name="Dialog_Title_LibraryUpgrade" xml:space="preserve">
+    <value>배경 화면 데이터를 업그레이드할까요?</value>
+  </data>
+  <data name="Dialog_Title_RecentProjectMissing" xml:space="preserve">
+    <value>없는 프로젝트 항목을 제거할까요?</value>
+  </data>
+  <data name="Text_Create" xml:space="preserve">
+    <value>만들기</value>
+  </data>
+  <data name="Text_RemoveRecord" xml:space="preserve">
+    <value>항목 제거</value>
+  </data>
+  <data name="Text_Rename" xml:space="preserve">
+    <value>이름 바꾸기</value>
+  </data>
+  <data name="Text_Upgrade" xml:space="preserve">
+    <value>업그레이드</value>
+  </data>
+  <data name="InfobarMsg_Cancel" xml:space="preserve">
+    <value>작업이 취소되었습니다.</value>
+  </data>
+  <data name="InfobarMsg_Err" xml:space="preserve">
+    <value>오류가 발생했습니다.</value>
+  </data>
+  <data name="InfobarMsg_Success" xml:space="preserve">
+    <value>완료</value>
+  </data>
+  <data name="AppUpdater_UpdateFailedMessage" xml:space="preserve">
+    <value>업데이트하지 못했습니다. 다시 시도하거나 전체 설치 프로그램을 다운로드하세요.</value>
+  </data>
+  <data name="Settings_General_Version_Plugins" xml:space="preserve">
+    <value>플러그인 버전</value>
+  </data>
+  <data name="PluginsUpdate_InvalidInfo" xml:space="preserve">
+    <value>업데이트 정보가 잘못되었습니다.</value>
+  </data>
+  <data name="PluginsUpdate_Starting" xml:space="preserve">
+    <value>업데이트 시작 중…</value>
+  </data>
+  <data name="PluginsUpdate_Completed" xml:space="preserve">
+    <value>업데이트가 완료되었습니다. 인터페이스를 다시 시작합니다.</value>
+  </data>
+  <data name="PluginsUpdate_Failed" xml:space="preserve">
+    <value>업데이트 실패: {0}</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Downloading" xml:space="preserve">
+    <value>플러그인 다운로드 중…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>현재 플러그인 백업 중…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Replacing" xml:space="preserve">
+    <value>플러그인 파일 교체 중…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Completed" xml:space="preserve">
+    <value>완료됨</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Failed" xml:space="preserve">
+    <value>실패</value>
+  </data>
+  <data name="PluginsUpdate_Close" xml:space="preserve">
+    <value>닫기</value>
+  </data>
+  <data name="Text_Apply" xml:space="preserve">
+    <value>적용</value>
+  </data>
+  <data name="Text_ApplyToLockBG" xml:space="preserve">
+    <value>잠금 화면으로 설정</value>
+  </data>
+  <data name="Text_RemoveFromLib" xml:space="preserve">
+    <value>삭제</value>
+  </data>
+  <data name="WpLib_SelectAll" xml:space="preserve">
+    <value>모두 선택</value>
+  </data>
+  <data name="WpLib_InvertSelection" xml:space="preserve">
+    <value>선택 반전</value>
+  </data>
+  <data name="WpLib_SelectedCount" xml:space="preserve">
+    <value>{0}개 선택됨</value>
+  </data>
+  <data name="WpLib_AddWallpaper" xml:space="preserve">
+    <value>배경 화면 추가</value>
+  </data>
+  <data name="WpLib_SelectItems" xml:space="preserve">
+    <value>배경 화면 선택</value>
+  </data>
+  <data name="WpLib_DisplayControls" xml:space="preserve">
+    <value>화면 제어</value>
+  </data>
+  <data name="Text_ShowOnDisk" xml:space="preserve">
+    <value>탐색기에서 열기</value>
+  </data>
+  <data name="Text_UpdateConfig" xml:space="preserve">
+    <value>기본 정보 업데이트</value>
+  </data>
+  <data name="ScreenSaver_Add" xml:space="preserve">
+    <value>앱 추가</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>화면 보호기 동적 효과</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>정지 이미지를 화면 보호기 배경으로 사용할 때 권장합니다.</value>
+  </data>
+  <data name="ScreenSaver_RunningLock" xml:space="preserve">
+    <value>다시 시작할 때 로그인 화면 표시</value>
+  </data>
+  <data name="ScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>기기 데이터 보호를 위해 이 옵션을 켜는 것이 좋습니다.</value>
+  </data>
+  <data name="ScreenSaver_SeekFromList" xml:space="preserve">
+    <value>앱 검색</value>
+  </data>
+  <data name="ScreenSaver_Server" xml:space="preserve">
+    <value>화면 보호기 사용</value>
+  </data>
+  <data name="ScreenSaver_ServerExplain" xml:space="preserve">
+    <value>기본 디스플레이의 배경 화면을 화면 보호기 배경으로 사용합니다.</value>
+  </data>
+  <data name="ScreenSaver_WaitingTime" xml:space="preserve">
+    <value>대기 시간(분)</value>
+  </data>
+  <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>이 목록의 앱이 포그라운드에 있으면 화면 보호기를 시작하지 않습니다.</value>
+  </data>
+  <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>앱 허용 목록</value>
+  </data>
+  <data name="ScreenSaver__effectBubble" xml:space="preserve">
+    <value>비눗방울</value>
+  </data>
+  <data name="ScreenSaver__effectNone" xml:space="preserve">
+    <value>없음</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
+    <value>저장 경로</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorageExplain" xml:space="preserve">
+    <value>저장 폴더를 변경하면 모든 내용을 새 폴더로 복사합니다.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip" xml:space="preserve">
+    <value>폴더 변경</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip" xml:space="preserve">
+    <value>폴더 열기</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguage" xml:space="preserve">
+    <value>언어 설정</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
+    <value>언어 변경 사항은 즉시 적용됩니다.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
+    <value>배경 재질</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
+    <value>배경 재질을 변경하려면 인터페이스를 다시 시작해야 합니다.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink" xml:space="preserve">
+    <value>아크릴</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink" xml:space="preserve">
+    <value>마이카</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppTheme" xml:space="preserve">
+    <value>앱 테마</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeExplain" xml:space="preserve">
+    <value>테마를 변경하려면 인터페이스를 다시 시작해야 합니다.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeHyperlink" xml:space="preserve">
+    <value>Windows 테마 설정</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
+    <value>Windows 시작 시 자동 실행</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
+    <value>시작 시 Virtual Paper를 자동으로 실행하고 배경 화면 설정을 복원합니다.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdAcrylic" xml:space="preserve">
+    <value>아크릴</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdDefault" xml:space="preserve">
+    <value>기본값</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdMica" xml:space="preserve">
+    <value>마이카</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeDark" xml:space="preserve">
+    <value>어둡게</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeFollowSystem" xml:space="preserve">
+    <value>시스템 설정 따르기</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeLight" xml:space="preserve">
+    <value>밝게</value>
+  </data>
+  <data name="Settings_General_Text_AppearanceAndAction" xml:space="preserve">
+    <value>모양 및 동작</value>
+  </data>
+  <data name="Settings_General_Text_Version" xml:space="preserve">
+    <value>버전</value>
+  </data>
+  <data name="Settings_General_Version_Download" xml:space="preserve">
+    <value>지금 다운로드</value>
+  </data>
+  <data name="Settings_General_Version_DownloadCancel" xml:space="preserve">
+    <value>취소</value>
+  </data>
+  <data name="Settings_General_Version_DownloadStart" xml:space="preserve">
+    <value>다운로드</value>
+  </data>
+  <data name="Settings_General_Version_FindNew" xml:space="preserve">
+    <value>새 버전이 있습니다.</value>
+  </data>
+  <data name="Settings_General_Version_Install" xml:space="preserve">
+    <value>설치</value>
+  </data>
+  <data name="Settings_General_Version_LastCheckDate" xml:space="preserve">
+    <value>마지막 확인:</value>
+  </data>
+  <data name="Settings_General_Version_MsStore" xml:space="preserve">
+    <value>Microsoft Store 버전</value>
+  </data>
+  <data name="Settings_General_Version_NewVersionDownLoadedTitle" xml:space="preserve">
+    <value>다운로드 완료</value>
+  </data>
+  <data name="Settings_General_Version_Release_Notes" xml:space="preserve">
+    <value>릴리스 정보</value>
+  </data>
+  <data name="Settings_General_Version_SeeNews" xml:space="preserve">
+    <value>새로운 기능 보기</value>
+  </data>
+  <data name="Settings_General_Version_UpdateCheck" xml:space="preserve">
+    <value>업데이트 확인</value>
+  </data>
+  <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
+    <value>업데이트하지 못했습니다. 네트워크 연결을 확인하세요.</value>
+  </data>
+  <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
+    <value>최신 버전입니다!</value>
+  </data>
+  <data name="Settings_Others_About_Basic" xml:space="preserve">
+    <value>다운로드해 주셔서 감사합니다!
+Virtual Paper는 Windows 10 이상에서 배경 화면 관리와 바탕 화면 꾸미기 기능을 제공하는 무료 경량 앱입니다. 문제가 발생하면 알려 주세요.
+제작자: PaperHammer</value>
+  </data>
+  <data name="Settings_Others_More_Document" xml:space="preserve">
+    <value>문서</value>
+  </data>
+  <data name="Settings_Others_More_DocumentExplain" xml:space="preserve">
+    <value>설명서 및 도움말</value>
+  </data>
+  <data name="Settings_Others_More_ReportBug" xml:space="preserve">
+    <value>취약점 및 버그 신고</value>
+  </data>
+  <data name="Settings_Others_More_ReportBugExplain" xml:space="preserve">
+    <value>문제를 신고하고 앱 개선에 참여해 주세요.</value>
+  </data>
+  <data name="Settings_Others_More_RequestFunc" xml:space="preserve">
+    <value>새 기능 요청</value>
+  </data>
+  <data name="Settings_Others_More_RequestFuncExplain" xml:space="preserve">
+    <value>아이디어를 공유하고 앱 개선에 참여해 주세요.</value>
+  </data>
+  <data name="Settings_Others_More_SourceCode" xml:space="preserve">
+    <value>GitHub 저장소</value>
+  </data>
+  <data name="Settings_Others_More_SourceCodeExplain" xml:space="preserve">
+    <value>별표로 응원하기</value>
+  </data>
+  <data name="Settings_Others_Text_About" xml:space="preserve">
+    <value>정보</value>
+  </data>
+  <data name="Settings_Others_Text_More" xml:space="preserve">
+    <value>더 보기</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPoweredn" xml:space="preserve">
+    <value>배터리 사용 시</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPowerednExplain" xml:space="preserve">
+    <value>전원이 연결되지 않았을 때의 배경 화면 동작</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSaving" xml:space="preserve">
+    <value>절전 모드</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSavingExplain" xml:space="preserve">
+    <value>Windows 절전 모드가 켜져 있을 때의 배경 화면 동작</value>
+  </data>
+  <data name="Settings_Perforemance_Play_Audio" xml:space="preserve">
+    <value>바탕 화면에 포커스가 있을 때만 소리 재생</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocus" xml:space="preserve">
+    <value>현재 앱이 전체 화면일 때</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocusExplain" xml:space="preserve">
+    <value>현재 앱이 전체 화면일 때의 배경 화면 동작</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreen" xml:space="preserve">
+    <value>다른 앱이 전체 화면일 때</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreenExplain" xml:space="preserve">
+    <value>다른 앱이나 게임이 전체 화면일 때의 배경 화면 동작</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_KeepRun" xml:space="preserve">
+    <value>계속 실행</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Pause" xml:space="preserve">
+    <value>일시 정지</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Silence" xml:space="preserve">
+    <value>음소거</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktop" xml:space="preserve">
+    <value>원격 데스크톱</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktopExplain" xml:space="preserve">
+    <value>원격 데스크톱 연결 중 배경 화면 동작</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanism" xml:space="preserve">
+    <value>적용 범위</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForAll" xml:space="preserve">
+    <value>전체: 한 화면의 앱이 규칙을 실행하면 모든 화면의 배경 화면 상태를 변경합니다.</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForPer" xml:space="preserve">
+    <value>개별: 규칙이 실행된 화면의 배경 화면 상태만 변경합니다.</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_all" xml:space="preserve">
+    <value>전체</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_per" xml:space="preserve">
+    <value>개별</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Laptop" xml:space="preserve">
+    <value>노트북</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Play" xml:space="preserve">
+    <value>재생</value>
+  </data>
+  <data name="Settings_Perforemance_Text_System" xml:space="preserve">
+    <value>시스템</value>
+  </data>
+  <data name="Settings_System_Developer_Debug" xml:space="preserve">
+    <value>디버거</value>
+  </data>
+  <data name="Settings_System_Developer_DebugExplain" xml:space="preserve">
+    <value>앱 실행 중 자세한 작업 정보를 표시합니다.</value>
+  </data>
+  <data name="Settings_System_Developer_Log" xml:space="preserve">
+    <value>로그</value>
+  </data>
+  <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
+    <value>진단 보고서 만들기</value>
+  </data>
+  <data name="Settings_System_Text_Debug" xml:space="preserve">
+    <value>열기</value>
+  </data>
+  <data name="Settings_System_Text_Developer" xml:space="preserve">
+    <value>개발자</value>
+  </data>
+  <data name="SidebarAccount" xml:space="preserve">
+    <value>계정</value>
+  </data>
+  <data name="SidebarAppSettings" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="SidebarGallery" xml:space="preserve">
+    <value>갤러리</value>
+  </data>
+  <data name="SidebarProject" xml:space="preserve">
+    <value>프로젝트</value>
+  </data>
+  <data name="SidebarRepository" xml:space="preserve">
+    <value>저장소</value>
+  </data>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>조정</value>
+  </data>
+  <data name="Text_Cancel" xml:space="preserve">
+    <value>취소</value>
+  </data>
+  <data name="Text_Confirm" xml:space="preserve">
+    <value>확인</value>
+  </data>
+  <data name="Text_Delete" xml:space="preserve">
+    <value>삭제</value>
+  </data>
+  <data name="Text_Loading" xml:space="preserve">
+    <value>데이터를 불러오는 중입니다. 잠시 기다려 주세요.</value>
+  </data>
+  <data name="Text_Restore" xml:space="preserve">
+    <value>복원</value>
+  </data>
+  <data name="Text_WpArrange" xml:space="preserve">
+    <value>배경 화면 배치</value>
+  </data>
+  <data name="WpArrange_Duplicate" xml:space="preserve">
+    <value>복제</value>
+  </data>
+  <data name="WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>다른 디스플레이에도 기본 디스플레이와 같은 배경 화면을 표시합니다.</value>
+  </data>
+  <data name="WpArrange_Expand" xml:space="preserve">
+    <value>확장</value>
+  </data>
+  <data name="WpArrange_ExpandExplain" xml:space="preserve">
+    <value>기본 디스플레이의 배경 화면을 모든 디스플레이에 걸쳐 표시합니다.</value>
+  </data>
+  <data name="WpArrange_Per" xml:space="preserve">
+    <value>개별</value>
+  </data>
+  <data name="WpArrange_PerExplain" xml:space="preserve">
+    <value>각 모니터의 배경 화면을 개별적으로 표시합니다.</value>
+  </data>
+  <data name="Text_AspectRatio" xml:space="preserve">
+    <value>가로 세로 비율:</value>
+  </data>
+  <data name="Text_Details" xml:space="preserve">
+    <value>자세히</value>
+  </data>
+  <data name="Text_FileExtension" xml:space="preserve">
+    <value>파일 형식:</value>
+  </data>
+  <data name="Text_FileSize" xml:space="preserve">
+    <value>파일 크기:</value>
+  </data>
+  <data name="Text_Resolution" xml:space="preserve">
+    <value>해상도:</value>
+  </data>
+  <data name="Text_Type" xml:space="preserve">
+    <value>배경 화면 유형:</value>
+  </data>
+  <data name="Text_EffectConfig" xml:space="preserve">
+    <value>사용자 지정 설정</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
+    <value>더 사실적인 시차 효과를 구현하지만 시스템 자원을 많이 사용합니다.</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Title" xml:space="preserve">
+    <value>AI 모델 기반 3D 배경 화면</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Explain" xml:space="preserve">
+    <value>적당한 자원 사용량으로 유사 3D 시차 효과를 구현합니다.</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
+    <value>일반 배경 화면</value>
+  </data>
+  <data name="WpLib_TypeFilter_All" xml:space="preserve">
+    <value>필터</value>
+  </data>
+  <data name="WpLib_TypeFilterHeading" xml:space="preserve"><value>유형</value></data>
+  <data name="WpLib_CardType_Image" xml:space="preserve"><value>이미지</value></data>
+  <data name="WpLib_CardType_Gif" xml:space="preserve"><value>GIF</value></data>
+  <data name="WpLib_CardType_Web" xml:space="preserve"><value>Web</value></data>
+  <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
+    <value>이미지</value>
+  </data>
+  <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
+    <value>움직이는 이미지</value>
+  </data>
+  <data name="WpLib_TypeFilter_Video" xml:space="preserve">
+    <value>동영상</value>
+  </data>
+  <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
+    <value>Web</value>
+  </data>
+  <data name="WpLib_Search_Placeholder" xml:space="preserve">
+    <value>배경 화면 검색…</value>
+  </data>
+  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
+    <value>라이브러리 내용</value>
+  </data>
+  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
+    <value>화면 보호기</value>
+  </data>
+  <data name="Text_Edit_Desc" xml:space="preserve">
+    <value>설명:</value>
+  </data>
+  <data name="Text_Edit_Tags" xml:space="preserve">
+    <value>태그:</value>
+  </data>
+  <data name="Text_Edit_Title" xml:space="preserve">
+    <value>제목:</value>
+  </data>
+  <data name="Text_Edit" xml:space="preserve">
+    <value>편집</value>
+  </data>
+  <data name="Text_Preview" xml:space="preserve">
+    <value>미리 보기</value>
+  </data>
+  <data name="Text_Off" xml:space="preserve">
+    <value>끔</value>
+  </data>
+  <data name="Text_On" xml:space="preserve">
+    <value>켬</value>
+  </data>
+  <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
+    <value>저장 폴더를 앱 데이터의 루트 폴더로 설정할 수 없습니다.</value>
+  </data>
+  <data name="Text_VersionInfo" xml:space="preserve">
+    <value>버전:</value>
+  </data>
+  <data name="InfobarMsg_ImportErr" xml:space="preserve">
+    <value>파일 가져오기 오류</value>
+  </data>
+  <data name="Text_FileUsing" xml:space="preserve">
+    <value>현재 파일이 배경 화면으로 사용 중입니다. 배경 화면을 닫고 다시 시도하세요.</value>
+  </data>
+  <data name="Project_RecentUsed" xml:space="preserve">
+    <value>최근 사용한 프로젝트 열기</value>
+  </data>
+  <data name="Project_SearchRecentUsed" xml:space="preserve">
+    <value>최근 항목 검색</value>
+  </data>
+  <data name="Project_StartUp" xml:space="preserve">
+    <value>시작하기</value>
+  </data>
+  <data name="Project_StartUp_OpenFile" xml:space="preserve">
+    <value>파일 열기 (F)</value>
+  </data>
+  <data name="Project_StartUp_OpenFile_Desc" xml:space="preserve">
+    <value>지원 파일 열기</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder_Desc" xml:space="preserve">
+    <value>폴더에서 지원되는 파일을 찾아보거나 편집합니다.</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd" xml:space="preserve">
+    <value>디자인 열기 (V)</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd_Desc" xml:space="preserve">
+    <value>로컬 .vpd 파일 열기</value>
+  </data>
+  <data name="Project_StartUp_NewVpd" xml:space="preserve">
+    <value>새 디자인 만들기</value>
+  </data>
+  <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
+    <value>프로젝트 템플릿을 선택하여 시작</value>
+  </data>
+  <data name="Project_ContinueWithoutFile" xml:space="preserve">
+    <value>파일 없이 계속 (W)</value>
+  </data>
+  <data name="Project_DeployNewDraft" xml:space="preserve">
+    <value>새 디자인 설정</value>
+  </data>
+  <data name="Project_DeployNewDraft_Create" xml:space="preserve">
+    <value>만들기 (N)</value>
+  </data>
+  <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
+    <value>이전</value>
+  </data>
+  <data name="Project_NewDraftName" xml:space="preserve">
+    <value>디자인 이름 (J)</value>
+  </data>
+  <data name="Project_NewDraftName_Placeholder" xml:space="preserve">
+    <value>디자인 이름 입력</value>
+  </data>
+  <data name="Project_NewDraftPosition" xml:space="preserve">
+    <value>위치</value>
+  </data>
+  <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
+    <value>폴더 찾아보기</value>
+  </data>
+  <data name="Project_DeployNewDraft_Desc" xml:space="preserve">
+    <value>디자인을 만들 폴더:</value>
+  </data>
+  <data name="Project_NewName_InvalidTip" xml:space="preserve">
+    <value>이름이 비어 있거나 잘못되었습니다(최대 30자).</value>
+  </data>
+  <data name="WebBackdrop_FileTree_FilterPlaceholder" xml:space="preserve">
+    <value>파일 필터링…</value>
+  </data>
+  <data name="Project_NewPosition_InvalidTip" xml:space="preserve">
+    <value>위치가 비어 있거나 잘못되었습니다(최대 200자).</value>
+  </data>
+  <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
+    <value>다음</value>
+  </data>
+  <data name="Project_SearchTemplate" xml:space="preserve">
+    <value>프로젝트 템플릿 검색</value>
+  </data>
+  <data name="Project_TemplateConfig" xml:space="preserve">
+    <value>새 프로젝트 만들기</value>
+  </data>
+  <data name="Project_NewProjectName" xml:space="preserve">
+    <value>프로젝트 이름</value>
+  </data>
+  <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
+    <value>프로젝트 이름 입력</value>
+  </data>
+  <data name="DirExsits" xml:space="preserve">
+    <value>유사한 경로가 이미 존재합니다.</value>
+  </data>
+  <data name="Draft_SI_LayerLocked" xml:space="preserve">
+    <value>선택한 레이어가 잠겨 있어 편집할 수 없습니다.</value>
+  </data>
+  <data name="Draft_Canvas_DefaultName" xml:space="preserve">
+    <value>캔버스</value>
+  </data>
+  <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
+    <value>프로젝트에 문제가 있습니다. 다시 불러오세요.</value>
+  </data>
+  <data name="SIG_Text_AddLayer" xml:space="preserve">
+    <value>새 레이어 만들기</value>
+  </data>
+  <data name="SIG_Text_DeleteLayer" xml:space="preserve">
+    <value>레이어 삭제</value>
+  </data>
+  <data name="SIG_Text_RenameLayer" xml:space="preserve">
+    <value>레이어 이름 바꾸기</value>
+  </data>
+  <data name="SIG_Text_CopyLayer" xml:space="preserve">
+    <value>레이어 복사</value>
+  </data>
+  <data name="RenameDialog_Text_AfterChange" xml:space="preserve">
+    <value>변경 후:</value>
+  </data>
+  <data name="RenameDialog_Text_BeforeChange" xml:space="preserve">
+    <value>변경 전:</value>
+  </data>
+  <data name="Dialog_Title_Rename" xml:space="preserve">
+    <value>이름 바꾸기</value>
+  </data>
+  <data name="Project_CannotDelete_OnlyCanvas" xml:space="preserve">
+    <value>유일한 레이어는 삭제할 수 없습니다.</value>
+  </data>
+  <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
+    <value>레이어 저장 실패: </value>
+  </data>
+  <data name="Project_STI_LayerLoadFailed" xml:space="preserve">
+    <value>레이어 불러오기 실패: </value>
+  </data>
+  <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
+    <value>사용자 지정 색에 추가</value>
+  </data>
+  <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
+    <value>캔버스 너비와 높이는 1~{0}픽셀(현재 GPU 제한)이어야 합니다. {1} × {2}(으)로 복원했습니다.</value>
+  </data>
+  <data name="Account_Email_InvalidTip" xml:space="preserve">
+    <value>이메일 주소 형식이 올바르지 않습니다.</value>
+  </data>
+  <data name="Account_Pwd_InvalidTip" xml:space="preserve">
+    <value>비밀번호는 8~32자이며 다음을 각각 하나 이상 포함해야 합니다:
+대문자, 소문자, 숫자, 특수 문자</value>
+  </data>
+  <data name="Account_LoginWithAccount" xml:space="preserve">
+    <value>계정에 로그인</value>
+  </data>
+  <data name="Account_EmailText" xml:space="preserve">
+    <value>이메일</value>
+  </data>
+  <data name="Account_EmailTextWithColon" xml:space="preserve">
+    <value>이메일:</value>
+  </data>
+  <data name="Account_PwdText" xml:space="preserve">
+    <value>비밀번호</value>
+  </data>
+  <data name="Account_PwdTextWithColon" xml:space="preserve">
+    <value>비밀번호:</value>
+  </data>
+  <data name="Account_RegisterWithEmail" xml:space="preserve">
+    <value>새 계정 등록</value>
+  </data>
+  <data name="Account_ConfirmPwdText" xml:space="preserve">
+    <value>비밀번호 확인</value>
+  </data>
+  <data name="Account_ConfirmPwdTextWithColon" xml:space="preserve">
+    <value>확인:</value>
+  </data>
+  <data name="Account_CodeText" xml:space="preserve">
+    <value>인증 코드</value>
+  </data>
+  <data name="Account_CodeTextWithColon" xml:space="preserve">
+    <value>인증 코드:</value>
+  </data>
+  <data name="Account_UsernameText" xml:space="preserve">
+    <value>사용자 이름</value>
+  </data>
+  <data name="Account_UsernameTextWithColon" xml:space="preserve">
+    <value>사용자 이름:</value>
+  </data>
+  <data name="Account_LoginText" xml:space="preserve">
+    <value>로그인</value>
+  </data>
+  <data name="Account_RegisterText" xml:space="preserve">
+    <value>등록</value>
+  </data>
+  <data name="Account_BackText" xml:space="preserve">
+    <value>뒤로</value>
+  </data>
+  <data name="Account_RequestCodeText" xml:space="preserve">
+    <value>요청</value>
+  </data>
+  <data name="Server_Success" xml:space="preserve">
+    <value>작업이 완료되었습니다.</value>
+  </data>
+  <data name="Server_InnerError" xml:space="preserve">
+    <value>서버 내부 오류입니다. 나중에 다시 시도하세요.</value>
+  </data>
+  <data name="Server_EmailFormatIllegal" xml:space="preserve">
+    <value>이메일 형식이 올바르지 않습니다.</value>
+  </data>
+  <data name="Server_EmailOccupied" xml:space="preserve">
+    <value>이미 사용 중인 이메일 주소입니다.</value>
+  </data>
+  <data name="Server_UsernameFormatIllegal" xml:space="preserve">
+    <value>사용자 이름 형식이 올바르지 않습니다.</value>
+  </data>
+  <data name="Server_UsernameOccupied" xml:space="preserve">
+    <value>이미 사용 중인 사용자 이름입니다.</value>
+  </data>
+  <data name="Server_PasswordFormatIllegal" xml:space="preserve">
+    <value>비밀번호 형식이 올바르지 않습니다.</value>
+  </data>
+  <data name="Server_ConfirmPasswordIllegal" xml:space="preserve">
+    <value>입력한 두 비밀번호가 일치하지 않습니다.</value>
+  </data>
+  <data name="Server_UsernameNotFindOrPasswordError" xml:space="preserve">
+    <value>사용자가 없거나 비밀번호가 올바르지 않습니다.</value>
+  </data>
+  <data name="Server_SecurityCodeError" xml:space="preserve">
+    <value>인증 코드가 잘못되었거나 만료되었습니다.</value>
+  </data>
+  <data name="Server_PotentialRisks" xml:space="preserve">
+    <value>잠재적 위험이 감지되어 작업이 중단되었습니다.</value>
+  </data>
+  <data name="Server_Inaccessible" xml:space="preserve">
+    <value>이 콘텐츠에 접근할 수 없습니다.</value>
+  </data>
+  <data name="Account_Username_InvalidTip" xml:space="preserve">
+    <value>사용자 이름은 3~20자이며 다음 문자를 사용할 수 있습니다:
+영문자, 숫자(0~9), 밑줄(_), 마침표(.), 하이픈(-), 대부분의 유니코드 문자.
+마침표나 하이픈으로 시작하거나 끝날 수 없습니다.
+사용할 수 없는 이름: admin, root, test, guest, user, system</value>
+  </data>
+  <data name="Server_CannotAccess" xml:space="preserve">
+    <value>서버에 연결할 수 없습니다.</value>
+  </data>
+  <data name="Account_ConfirmPwd_InvalidTip" xml:space="preserve">
+    <value>기존 비밀번호와 일치하지 않습니다.</value>
+  </data>
+  <data name="Account_SelBarItem1_Cloud" xml:space="preserve">
+    <value>클라우드</value>
+  </data>
+  <data name="Account_SelBarItem2_Star" xml:space="preserve">
+    <value>즐겨찾기</value>
+  </data>
+  <data name="Account_SelBarItem3_Upload" xml:space="preserve">
+    <value>업로드</value>
+  </data>
+  <data name="InnerErr" xml:space="preserve">
+    <value>클라이언트 내부 오류</value>
+  </data>
+  <data name="Account_DefaultSign" xml:space="preserve">
+    <value>아직 항목이 없습니다.</value>
+  </data>
+  <data name="Account_AvatarDesc" xml:space="preserve">
+    <value>사진을 추가하여 계정을 꾸며 보세요. 프로필 사진은 이 계정을 사용하는 앱에 표시됩니다.</value>
+  </data>
+  <data name="Account_ChangeAvatar" xml:space="preserve">
+    <value>프로필 사진 변경</value>
+  </data>
+  <data name="Account_Username" xml:space="preserve">
+    <value>사용자 이름</value>
+  </data>
+  <data name="Account_Sign" xml:space="preserve">
+    <value>소개</value>
+  </data>
+  <data name="Account_UserAccount" xml:space="preserve">
+    <value>계정</value>
+  </data>
+  <data name="Account_PersonalInfo" xml:space="preserve">
+    <value>개인 정보</value>
+  </data>
+  <data name="Account_Email" xml:space="preserve">
+    <value>이메일</value>
+  </data>
+  <data name="Account_Sign_InvalidTip" xml:space="preserve">
+    <value>소개에 사용할 수 있는 문자:
+모든 언어의 문자, 숫자, 문장 부호, 특수 기호, 공백.
+길이는 0~100자입니다.</value>
+  </data>
+  <data name="Text_FileNotAccess" xml:space="preserve">
+    <value>파일을 분석하지 못했습니다. 파일이 올바른지 확인하세요.</value>
+  </data>
+  <data name="Text_FileSizeIllegal_5MB" xml:space="preserve">
+    <value>파일 크기가 올바르지 않습니다(5MB 이하).</value>
+  </data>
+  <data name="Account_Usersign_InvalidTip_Sim" xml:space="preserve">
+    <value>소개 형식이 올바르지 않습니다.</value>
+  </data>
+  <data name="Account_UpdateUserInfo_Fail" xml:space="preserve">
+    <value>정보를 업데이트하지 못했습니다. 나중에 다시 시도하세요.</value>
+  </data>
+  <data name="Account_Username_InvalidTip_Sim" xml:space="preserve">
+    <value>사용자 이름 형식이 올바르지 않습니다.</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>로그아웃</value>
+  </data>
+  <data name="MenuFlyout_Text_DetailAndEditInfo" xml:space="preserve">
+    <value>정보 및 편집</value>
+  </data>
+  <data name="MenuFlyout_Text_Downlaod" xml:space="preserve">
+    <value>다운로드</value>
+  </data>
+  <data name="App_UserNotLogin" xml:space="preserve">
+    <value>로그인 정보에 문제가 있습니다. 다시 로그인하세요.</value>
+  </data>
+  <data name="Text_DeleteFromServer" xml:space="preserve">
+    <value>클라우드에서 삭제</value>
+  </data>
+  <data name="Server_Account_Locked" xml:space="preserve">
+    <value>계정이 잠겼습니다. 관리자에게 문의하세요.</value>
+  </data>
+  <data name="Server_Authentication_Failed" xml:space="preserve">
+    <value>계정 인증에 실패했습니다. 다시 로그인하세요.</value>
+  </data>
+  <data name="SIG_CanvasSet_Header" xml:space="preserve">
+    <value>캔버스</value>
+  </data>
+  <data name="SIG_CanvasSet_AdjustSize" xml:space="preserve">
+    <value>캔버스 크기 변경</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelWidth" xml:space="preserve">
+    <value>너비(픽셀)</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelHeight" xml:space="preserve">
+    <value>높이(픽셀)</value>
+  </data>
+  <data name="SIG_CanvasSet_LockAspectRatio" xml:space="preserve">
+    <value>가로 세로 비율 고정</value>
+  </data>
+  <data name="SIG_CanvasSet_SacleContent" xml:space="preserve">
+    <value>캔버스 내용도 함께 확대/축소</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateAndFlip" xml:space="preserve">
+    <value>회전 및 뒤집기</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateLeftNinety" xml:space="preserve">
+    <value>왼쪽으로 90° 회전</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateRightNinety" xml:space="preserve">
+    <value>오른쪽으로 90° 회전</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipHorizon" xml:space="preserve">
+    <value>가로로 뒤집기</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
+    <value>세로로 뒤집기</value>
+  </data>
+  <data name="Project_SI_Text_Layer" xml:space="preserve">
+    <value>레이어</value>
+  </data>
+  <data name="Project_SI_Text_Copy" xml:space="preserve">
+    <value>복사</value>
+  </data>
+  <data name="Project_SI_Text_UnnamedLayer" xml:space="preserve">
+    <value>이름 없는 레이어</value>
+  </data>
+  <data name="Project_SI_FileNotFound" xml:space="preserve">
+    <value>파일이 없거나 이동되었습니다. 목록에서 제거할까요?</value>
+  </data>
+  <data name="SIG_Text_RemoveFromList" xml:space="preserve">
+    <value>목록에서 제거</value>
+  </data>
+  <data name="SIG_Text_CopyPath" xml:space="preserve">
+    <value>경로 복사</value>
+  </data>
+  <data name="Settings_General_Version_DownloadingTitle" xml:space="preserve">
+    <value>다운로드 중…</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedTitle" xml:space="preserve">
+    <value>다운로드 실패</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedMsg" xml:space="preserve">
+    <value>업데이트를 다운로드할 수 없습니다. 인터넷 연결을 확인하고 다시 시도하세요.</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedTitle" xml:space="preserve">
+    <value>파일 검증 실패</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedMsg" xml:space="preserve">
+    <value>업데이트 패키지가 손상되었을 수 있습니다. 다시 다운로드하세요.</value>
+  </data>
+  <data name="Settings_General_Version_DownLoadedMsg" xml:space="preserve">
+    <value>업데이트 준비가 완료되었습니다. '설치'를 눌러 시작하세요.</value>
+  </data>
+  <data name="Text_ApplyAndClose" xml:space="preserve">
+    <value>적용 후 닫기</value>
+  </data>
+  <data name="Webview_SelBarItem1_GeneralEffect" xml:space="preserve">
+    <value>일반 효과</value>
+  </data>
+  <data name="Webview_SelBarItem2_GeneralInfo" xml:space="preserve">
+    <value>기본 정보</value>
+  </data>
+  <data name="Text_FileInPreview" xml:space="preserve">
+    <value>현재 파일을 미리 보는 중입니다. 미리 보기를 닫고 다시 시도하세요.</value>
+  </data>
+  <data name="Details_Text_FileProperty" xml:space="preserve">
+    <value>파일 속성</value>
+  </data>
+  <data name="Webview_SelBarItem3_GeneralInfoEdit" xml:space="preserve">
+    <value>편집</value>
+  </data>
+  <data name="Text_Save" xml:space="preserve">
+    <value>저장</value>
+  </data>
+  <data name="RunningAsAdminWarning" xml:space="preserve">
+    <value>관리자 권한으로 실행하면 일부 기능을 사용하지 못할 수 있습니다.</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles" xml:space="preserve">
+    <value>파일 선택</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles_Explain" xml:space="preserve">
+    <value>지원 파일을 배경 화면 라이브러리에 추가</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolder" xml:space="preserve">
+    <value>폴더 선택</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolderExplain" xml:space="preserve">
+    <value>폴더의 모든 지원 파일을 배경 화면 라이브러리에 추가</value>
+  </data>
+  <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
+    <value>여기로 끌어서 추가</value>
+  </data>
+  <data name="Lib_NotAnyMore" xml:space="preserve">
+    <value>목록 끝</value>
+  </data>
+  <data name="Text_Drop_Files" xml:space="preserve">
+    <value>파일 놓기</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>배경 화면 추가</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Name" xml:space="preserve">
+    <value>정지 이미지</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
+    <value>그리기, 보정, 일반 이미지 처리에 적합한 픽셀 단위 비트맵 편집 모드입니다.</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Name" xml:space="preserve">
+    <value>웹 배경 화면</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Desc" xml:space="preserve">
+    <value>HTML/CSS/JS로 동적이고 상호작용하는 배경 화면을 만드는 웹 기술 기반 템플릿입니다.</value>
+  </data>
+  <data name="Project_Create_New" xml:space="preserve">
+    <value>새로 만들기</value>
+  </data>
+  <data name="Project_Open" xml:space="preserve">
+    <value>열기</value>
+  </data>
+  <data name="Project_Drops_Contains_Invalid_FIles" xml:space="preserve">
+    <value>지원하지 않는 형식의 파일을 자동으로 건너뛰었습니다.</value>
+  </data>
+  <data name="Project_FileSave_Failed" xml:space="preserve">
+    <value>파일 저장 실패: </value>
+  </data>
+  <data name="Project_FileLoad_Failed" xml:space="preserve">
+    <value>파일 불러오기 실패: </value>
+  </data>
+  <data name="Project_SI_Text_BackgroundLayer" xml:space="preserve">
+    <value>배경</value>
+  </data>
+  <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
+    <value>파일이 손상되었을 수 있습니다: </value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
+    <value>새로 만들기</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerCopy" xml:space="preserve">
+    <value>복사</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_FitView" xml:space="preserve">
+    <value>보기 영역에 맞춤</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomIn" xml:space="preserve">
+    <value>확대</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomOut" xml:space="preserve">
+    <value>축소</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Selection" xml:space="preserve">
+    <value>선택</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_PaintBrush" xml:space="preserve">
+    <value>브러시</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Fill" xml:space="preserve">
+    <value>채우기</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Eraser" xml:space="preserve">
+    <value>지우개</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Crop" xml:space="preserve">
+    <value>자르기</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
+    <value>캔버스</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Content" xml:space="preserve">
+    <value>에 저장하지 않은 변경 사항이 있습니다. 저장할까요?</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Title" xml:space="preserve">
+    <value>저장하지 않은 변경 사항</value>
+  </data>
+  <data name="Text_Unsave" xml:space="preserve">
+    <value>저장 안 함</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_File" xml:space="preserve">
+    <value>파일 (F)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_CreateNew" xml:space="preserve">
+    <value>새로 만들기</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_SaveAll" xml:space="preserve">
+    <value>모두 저장</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Exit" xml:space="preserve">
+    <value>종료</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Edit" xml:space="preserve">
+    <value>편집 (E)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Undo" xml:space="preserve">
+    <value>실행 취소</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Redo" xml:space="preserve">
+    <value>다시 실행</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
+    <value>도움말 (H)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
+    <value>정보</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
+    <value>설명서</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
+    <value>내보내기</value>
+  </data>
+  <data name="Project_Export_Success" xml:space="preserve">
+    <value>내보낸 위치:</value>
+  </data>
+  <data name="Project_Export_Failed" xml:space="preserve">
+    <value>내보내기 실패:</value>
+  </data>
+  <data name="Project_Export_PathNotBeNone" xml:space="preserve">
+    <value>내보내기 경로를 지정하세요.</value>
+  </data>
+  <data name="Project_Export_InternalError" xml:space="preserve">
+    <value>내부 오류가 발생했습니다. 앱을 다시 시작하세요.</value>
+  </data>
+  <data name="Project_StaticImg_Text_Palette" xml:space="preserve">
+    <value>팔레트</value>
+  </data>
+  <data name="Text_Complete" xml:space="preserve">
+    <value>완료</value>
+  </data>
+  <data name="Project_StaticImg_Text_Eraser" xml:space="preserve">
+    <value>지우개</value>
+  </data>
+  <data name="Project_StaticImg_Text_WidthPixel" xml:space="preserve">
+    <value>너비(픽셀)</value>
+  </data>
+  <data name="Project_StaticImg_Text_OpacityPercent" xml:space="preserve">
+    <value>불투명도(%)</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerSet" xml:space="preserve">
+    <value>레이어 그룹</value>
+  </data>
+  <data name="Project_StaticImg_Text_Paintbrush" xml:space="preserve">
+    <value>브러시</value>
+  </data>
+  <data name="Project_StaticImg_Text_PaintbrushBox" xml:space="preserve">
+    <value>브러시 목록</value>
+  </data>
+  <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
+    <value>두께(픽셀)</value>
+  </data>
+  <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
+    <value>파일 내용이 잘못되어 열 수 없습니다.</value>
+  </data>
+  <data name="Text_Save_As" xml:space="preserve">
+    <value>다른 이름으로 저장</value>
+  </data>
+  <data name="EffectPrefix_Saturation" xml:space="preserve">
+    <value>채도</value>
+  </data>
+  <data name="EffectPrefix_Brightness" xml:space="preserve">
+    <value>밝기</value>
+  </data>
+  <data name="EffectPrefix_Contrast" xml:space="preserve">
+    <value>대비</value>
+  </data>
+  <data name="EffectPrefix_Speed" xml:space="preserve">
+    <value>속도</value>
+  </data>
+  <data name="EffectPrefix_Volume" xml:space="preserve">
+    <value>볼륨</value>
+  </data>
+  <data name="EffectPrefix_Hue" xml:space="preserve">
+    <value>색조</value>
+  </data>
+  <data name="EffectPrefix_Scale_Way" xml:space="preserve">
+    <value>크기 조정 방식</value>
+  </data>
+  <data name="EffectPrefix_Parallax" xml:space="preserve">
+    <value>시차 효과</value>
+  </data>
+  <data name="EffectPrefix_Time_Perception" xml:space="preserve">
+    <value>시간에 따른 색감</value>
+  </data>
+  <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
+    <value>현재 위치를 기준으로 일출과 일몰 시간을 계산하고 낮, 해 질 녘, 밤에 맞게 배경 화면의 밝기와 색조를 조정하여 주변 자연광과 조화를 이룹니다.</value>
+  </data>
+  <data name="SidebarIntelligent" xml:space="preserve">
+    <value>AI 도구</value>
+  </data>
+  <data name="SidebarIntelligentFullName" xml:space="preserve">
+    <value>AI 도구</value>
+  </data>
+  <data name="Intelligent_SelBarItem1_StyleTranfer" xml:space="preserve">
+    <value>스타일 변환</value>
+  </data>
+  <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
+    <value>화질 개선</value>
+  </data>
+  <data name="Intelligent_Intro_Title" xml:space="preserve">
+    <value>이미지 스타일 변환</value>
+  </data>
+  <data name="Intelligent_Intro_Desc" xml:space="preserve">
+    <value>AI 모델로 한 이미지의 예술적 스타일을 다른 이미지에 적용합니다. 원본 이미지와 스타일 참조 이미지를 선택하면 원본 내용과 목표 스타일을 결합한 새 이미지를 만듭니다.</value>
+  </data>
+  <data name="Intelligent_Intro_Warning" xml:space="preserve">
+    <value>참고: 로컬 경량 모델이므로 입력 이미지를 축소한 뒤 처리하고 크기를 복원합니다. 결과에서 일부 세부 묘사가 손실될 수 있습니다.</value>
+  </data>
+  <data name="Intelligent_SR_Title" xml:space="preserve">
+    <value>이미지 화질 개선</value>
+  </data>
+  <data name="Intelligent_SR_Desc" xml:space="preserve">
+    <value>AI 초해상도로 이미지를 개선합니다.
+- 선명도 복원: 흐리거나 저화질인 이미지의 세부 묘사 복원
+- 확대: 원본 세부 묘사를 유지하며 해상도 향상</value>
+  </data>
+  <data name="Intelligent_SR_Warning" xml:space="preserve">
+    <value>참고: 처리 중 세부 묘사를 재구성하므로 원본과 차이가 있을 수 있습니다. 로컬 경량 모델이므로 시간이 걸릴 수 있습니다.</value>
+  </data>
+  <data name="Intelligent_AddTask" xml:space="preserve">
+    <value>작업이 추가되었습니다.</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img" xml:space="preserve">
+    <value>원본</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
+    <value>클릭하거나 끌어서 원본 이미지 가져오기</value>
+  </data>
+  <data name="Intelligent_Style_Lib" xml:space="preserve">
+    <value>스타일 라이브러리</value>
+  </data>
+  <data name="Intelligent_Style_Inner_Select" xml:space="preserve">
+    <value>기본 제공 스타일 선택</value>
+  </data>
+  <data name="Intelligent_Style_Type_Custom" xml:space="preserve">
+    <value>사용자 지정</value>
+  </data>
+  <data name="Intelligent_Task_Style_Img_Import" xml:space="preserve">
+    <value>클릭하거나 스타일 라이브러리에서 선택</value>
+  </data>
+  <data name="Intelligent_Style_Img_Desc" xml:space="preserve">
+    <value>스타일 이미지는 로컬 샘플링에만 사용하며 약 1MB를 권장합니다. 출력 해상도는 원본 이미지에 따라 달라집니다.</value>
+  </data>
+  <data name="Intelligent_Style_Type_Anime" xml:space="preserve">
+    <value>애니메이션</value>
+  </data>
+  <data name="Intelligent_Style_Type_Cartoon" xml:space="preserve">
+    <value>카툰</value>
+  </data>
+  <data name="Intelligent_Style_Type_Gongbi" xml:space="preserve">
+    <value>공필화</value>
+  </data>
+  <data name="Intelligent_Style_Type_Pencil" xml:space="preserve">
+    <value>연필</value>
+  </data>
+  <data name="Intelligent_Style_Type_Watercolor" xml:space="preserve">
+    <value>수채화</value>
+  </data>
+  <data name="Intelligent_Style_Type_InkWash" xml:space="preserve">
+    <value>수묵화</value>
+  </data>
+  <data name="Intelligent_Style_Type_OilPainting" xml:space="preserve">
+    <value>유화</value>
+  </data>
+  <data name="Intelligent_Style_Type_ColoredPencil" xml:space="preserve">
+    <value>색연필</value>
+  </data>
+  <data name="Intelligent_Style_Type_OutlineDrawing" xml:space="preserve">
+    <value>선화</value>
+  </data>
+  <data name="Intelligent_Style_Type_Ukiyoe" xml:space="preserve">
+    <value>우키요에</value>
+  </data>
+  <data name="Intelligent_Task_Style" xml:space="preserve">
+    <value>스타일</value>
+  </data>
+  <data name="Text_ImportLib" xml:space="preserve">
+    <value>라이브러리에 추가</value>
+  </data>
+  <data name="Text_Result" xml:space="preserve">
+    <value>결과</value>
+  </data>
+  <data name="Text_Task_Status_Created" xml:space="preserve">
+    <value>생성됨</value>
+  </data>
+  <data name="Text_Task_Status_Queue" xml:space="preserve">
+    <value>대기 중…</value>
+  </data>
+  <data name="Text_Task_Status_Processing" xml:space="preserve">
+    <value>처리 중…</value>
+  </data>
+  <data name="Text_Task_Status_Completed" xml:space="preserve">
+    <value>완료됨</value>
+  </data>
+  <data name="Text_Task_Status_Filed" xml:space="preserve">
+    <value>실패</value>
+  </data>
+  <data name="Text_Task_Status_Unknown" xml:space="preserve">
+    <value>알 수 없음</value>
+  </data>
+  <data name="Text_File_Not_Available" xml:space="preserve">
+    <value>원본 파일에 접근할 수 없거나 삭제되었습니다.</value>
+  </data>
+  <data name="Add_To_Lib_Success" xml:space="preserve">
+    <value>로컬 라이브러리에 추가했습니다.</value>
+  </data>
+  <data name="Intelligent_Enhance_Mode" xml:space="preserve">
+    <value>모드</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore" xml:space="preserve">
+    <value>화질 복원</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore_Desc" xml:space="preserve">
+    <value>원본 해상도를 유지하며 흐림, 노이즈, 압축 손상 제거</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution" xml:space="preserve">
+    <value>초해상도</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution_Desc" xml:space="preserve">
+    <value>미세한 세부 묘사를 개선하며 이미지 해상도 확대</value>
+  </data>
+  <data name="Intelligent_Enhance_Magnification" xml:space="preserve">
+    <value>확대 배율</value>
+  </data>
+  <data name="Intelligent_Enhance_Output" xml:space="preserve">
+    <value>출력 해상도: </value>
+  </data>
+  <data name="Intelligent_Enhance_Tip" xml:space="preserve">
+    <value>해상도는 충분하지만 화질이 낮으면 '화질 복원'을, 해상도가 낮으면 '초해상도'를 사용하세요.</value>
+  </data>
+  <data name="Text_Error_InvalidFile" xml:space="preserve">
+    <value>파일이 손상되었을 수 있어 사용할 수 없습니다.</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasEffect" xml:space="preserve">
+    <value>효과</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Adjust" xml:space="preserve">
+    <value>조정</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Color" xml:space="preserve">
+    <value>색상</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Special" xml:space="preserve">
+    <value>효과</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Blend" xml:space="preserve">
+    <value>혼합</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_GrayScale" xml:space="preserve">
+    <value>회색조</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Invert" xml:space="preserve">
+    <value>반전</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Exposure" xml:space="preserve">
+    <value>노출</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Brightness" xml:space="preserve">
+    <value>밝기</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Saturation" xml:space="preserve">
+    <value>채도</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Hue" xml:space="preserve">
+    <value>색조 회전</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Contrast" xml:space="preserve">
+    <value>대비</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Temperature" xml:space="preserve">
+    <value>색온도</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Highlights" xml:space="preserve">
+    <value>하이라이트 및 그림자</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sepia" xml:space="preserve">
+    <value>세피아</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Pixelate" xml:space="preserve">
+    <value>픽셀화</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Emboss" xml:space="preserve">
+    <value>엠보스</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Blur" xml:space="preserve">
+    <value>흐림</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sharpen" xml:space="preserve">
+    <value>선명하게</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Noise" xml:space="preserve">
+    <value>노이즈</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Vignette" xml:space="preserve">
+    <value>비네팅</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Glow" xml:space="preserve">
+    <value>글로우</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Bloom" xml:space="preserve">
+    <value>블룸</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Distort" xml:space="preserve">
+    <value>왜곡</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Multiply" xml:space="preserve">
+    <value>곱하기</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Screen" xml:space="preserve">
+    <value>스크린</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Overlay" xml:space="preserve">
+    <value>오버레이</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_SoftLight" xml:space="preserve">
+    <value>소프트 라이트</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Grayscale" xml:space="preserve">
+    <value>회색조</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Invert" xml:space="preserve">
+    <value>반전</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Exposure" xml:space="preserve">
+    <value>노출</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Brightness" xml:space="preserve">
+    <value>밝기</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Saturation" xml:space="preserve">
+    <value>채도</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Hue" xml:space="preserve">
+    <value>색조 회전</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Contrast" xml:space="preserve">
+    <value>대비</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Temperature" xml:space="preserve">
+    <value>색온도</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Highlights" xml:space="preserve">
+    <value>하이라이트 및 그림자</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sepia" xml:space="preserve">
+    <value>세피아</value>
+  </data>
+  <data name="Project_StaticImg_Effect_OilPaint" xml:space="preserve">
+    <value>유화</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sketch" xml:space="preserve">
+    <value>스케치</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Watercolor" xml:space="preserve">
+    <value>수채화</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pixelate" xml:space="preserve">
+    <value>픽셀화</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Emboss" xml:space="preserve">
+    <value>엠보스</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pointillism" xml:space="preserve">
+    <value>점묘화</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Crosshatch" xml:space="preserve">
+    <value>교차 해칭</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Cartoon" xml:space="preserve">
+    <value>카툰</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Blur" xml:space="preserve">
+    <value>흐림</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sharpen" xml:space="preserve">
+    <value>선명하게</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Noise" xml:space="preserve">
+    <value>노이즈</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Vignette" xml:space="preserve">
+    <value>비네팅</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Glow" xml:space="preserve">
+    <value>글로우</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Bloom" xml:space="preserve">
+    <value>블룸</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Distort" xml:space="preserve">
+    <value>왜곡</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Multiply" xml:space="preserve">
+    <value>곱하기</value>
+  </data>
+  <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
+    <value>소프트 라이트</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
+    <value>색상을 제거하고 회색조로 변환</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Invert" xml:space="preserve">
+    <value>모든 색상을 반전하여 네거티브 효과 적용</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Exposure" xml:space="preserve">
+    <value>이미지 전체 밝기 조정</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Brightness" xml:space="preserve">
+    <value>이미지 밝기 조정</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Saturation" xml:space="preserve">
+    <value>색상의 강도 조정</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Hue" xml:space="preserve">
+    <value>색조를 회전하여 전체 색감 변경</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Contrast" xml:space="preserve">
+    <value>밝은 부분과 어두운 부분의 차이 조정</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Temperature" xml:space="preserve">
+    <value>따뜻한 색감, 차가운 색감 및 색조 조정</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Highlights" xml:space="preserve">
+    <value>하이라이트와 그림자를 개별 조정</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sepia" xml:space="preserve">
+    <value>고전적인 갈색 빈티지 색감</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Pixelate" xml:space="preserve">
+    <value>이미지를 색상 블록 픽셀로 변환</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Emboss" xml:space="preserve">
+    <value>입체적인 엠보스 효과 적용</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Blur" xml:space="preserve">
+    <value>이미지를 부드럽게 하고 세부 묘사 감소</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sharpen" xml:space="preserve">
+    <value>가장자리와 세부 묘사를 선명하게</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Noise" xml:space="preserve">
+    <value>무작위 노이즈 질감 추가</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Vignette" xml:space="preserve">
+    <value>가장자리를 어둡게 하여 중앙 강조</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Glow" xml:space="preserve">
+    <value>밝은 부분에 빛나는 후광 추가</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Bloom" xml:space="preserve">
+    <value>하이라이트 주변에 부드러운 후광 생성</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Distort" xml:space="preserve">
+    <value>이미지를 액화하고 변형</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Multiply" xml:space="preserve">
+    <value>곱하기 혼합으로 어둡게</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Screen" xml:space="preserve">
+    <value>스크린 혼합으로 밝게</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Overlay" xml:space="preserve">
+    <value>오버레이 혼합으로 대비 강화</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
+    <value>소프트 라이트 혼합으로 부드러운 대비</value>
+  </data>
+  <data name="Settings_General_Version_InstallerReady" xml:space="preserve">
+    <value>설치 준비가 완료되었습니다. 클릭하여 설치하세요. 앱을 완전히 종료해야 하므로 작업을 저장하세요.</value>
+  </data>
+  <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
+    <value>플러그인 업데이트 준비가 완료되었습니다. 클릭하여 설치하세요. 기본 창을 닫아야 하므로 작업을 저장하세요.</value>
+  </data>
+  <data name="Text_NoPreview" xml:space="preserve">
+    <value>미리 보기 없음</value>
+  </data>
+  <data name="WebBackdrop_NewFile" xml:space="preserve"><value>새 파일</value></data>
+  <data name="WebBackdrop_NewFolder" xml:space="preserve"><value>새 폴더</value></data>
+  <data name="WebBackdrop_AddItems" xml:space="preserve"><value>항목 추가</value></data>
+  <data name="WebBackdrop_Cut" xml:space="preserve"><value>잘라내기</value></data>
+  <data name="WebBackdrop_Copy" xml:space="preserve"><value>복사</value></data>
+  <data name="WebBackdrop_Paste" xml:space="preserve"><value>붙여넣기</value></data>
+  <data name="WebBackdrop_CopyPath" xml:space="preserve"><value>경로 복사</value></data>
+  <data name="WebBackdrop_CopyRelativePath" xml:space="preserve"><value>상대 경로 복사</value></data>
+  <data name="WebBackdrop_Rename" xml:space="preserve"><value>이름 바꾸기…</value></data>
+  <data name="WebBackdrop_Delete" xml:space="preserve"><value>삭제</value></data>
+  <data name="WebBackdrop_RevealInExplorer" xml:space="preserve"><value>탐색기에 표시</value></data>
+  <data name="WebBackdrop_Save" xml:space="preserve"><value>저장</value></data>
+  <data name="WebBackdrop_SaveAs" xml:space="preserve"><value>다른 이름으로 저장…</value></data>
+  <data name="WebBackdrop_SearchInFiles" xml:space="preserve"><value>파일에서 검색</value></data>
+  <data name="WebBackdrop_MatchCase" xml:space="preserve"><value>대/소문자 구분</value></data>
+  <data name="WebBackdrop_MatchWholeWord" xml:space="preserve"><value>단어 단위로 검색</value></data>
+  <data name="WebBackdrop_SearchFilesByName" xml:space="preserve"><value>이름으로 파일 검색</value></data>
+  <data name="WebBackdrop_QuickOpenPlaceholder" xml:space="preserve"><value>이름으로 파일 검색 (Ctrl+P)</value></data>
+  <data name="WebBackdrop_ProjectInspector" xml:space="preserve"><value>프로젝트 검사기</value></data>
+  <data name="WebBackdrop_Wallpaper" xml:space="preserve"><value>배경 화면</value></data>
+  <data name="WebBackdrop_Title" xml:space="preserve"><value>제목</value></data>
+  <data name="WebBackdrop_Entry" xml:space="preserve"><value>진입점</value></data>
+  <data name="WebBackdrop_Current" xml:space="preserve"><value>현재</value></data>
+  <data name="WebBackdrop_NoItemSelected" xml:space="preserve"><value>선택한 항목이 없습니다.</value></data>
+  <data name="WebBackdrop_Name" xml:space="preserve"><value>이름</value></data>
+  <data name="WebBackdrop_Language" xml:space="preserve"><value>언어</value></data>
+  <data name="WebBackdrop_Type" xml:space="preserve"><value>유형</value></data>
+  <data name="WebBackdrop_Status" xml:space="preserve"><value>상태</value></data>
+  <data name="WebBackdrop_Size" xml:space="preserve"><value>크기</value></data>
+  <data name="WebBackdrop_Lines" xml:space="preserve"><value>줄 수</value></data>
+  <data name="WebBackdrop_Modified" xml:space="preserve"><value>수정됨</value></data>
+  <data name="WebBackdrop_RelativePath" xml:space="preserve"><value>상대 경로</value></data>
+  <data name="WebBackdrop_Image" xml:space="preserve"><value>이미지</value></data>
+  <data name="WebBackdrop_Unsupported" xml:space="preserve"><value>지원하지 않음</value></data>
+  <data name="WebBackdrop_Saved" xml:space="preserve"><value>저장됨</value></data>
+  <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>저장 안 됨</value></data>
+  <data name="WebBackdrop_Folder" xml:space="preserve"><value>폴더</value></data>
+  <data name="WebBackdrop_Problems" xml:space="preserve"><value>문제</value></data>
+  <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>이 파일 형식은 직접 열 수 없습니다.</value></data>
+  <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>파일을 선택하여 시작</value></data>
+  <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>파일 탐색기에서 파일을 열어 편집하고 미리 보세요.</value></data>
+  <data name="WebBackdrop_WallpaperTitle" xml:space="preserve"><value>배경 화면 제목</value></data>
+  <data name="WebBackdrop_Description" xml:space="preserve"><value>설명</value></data>
+  <data name="WebBackdrop_ShortDescription" xml:space="preserve"><value>짧은 설명</value></data>
+  <data name="WebBackdrop_Author" xml:space="preserve"><value>제작자</value></data>
+  <data name="WebBackdrop_AuthorName" xml:space="preserve"><value>제작자 이름</value></data>
+  <data name="WebBackdrop_Tags" xml:space="preserve"><value>태그(세미콜론으로 구분)</value></data>
+  <data name="WebBackdrop_EntryFile" xml:space="preserve"><value>진입 파일</value></data>
+  <data name="WebBackdrop_SaveProjectJson" xml:space="preserve"><value>project.json 저장</value></data>
+  <data name="WebBackdrop_Tabs2" xml:space="preserve"><value>탭: 2</value></data>
+  <data name="WebBackdrop_Tabs4" xml:space="preserve"><value>탭: 4</value></data>
+  <data name="WebBackdrop_Spaces2" xml:space="preserve"><value>공백: 2</value></data>
+  <data name="WebBackdrop_Spaces4" xml:space="preserve"><value>공백: 4</value></data>
+  <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>공백: 8</value></data>
+  <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>줄 {0}, 열 {1}</value></data>
+  <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>줄 {0}, 열 {1} ({2}{3} 선택됨)</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>파일을 열지 못했습니다: {0}
+파일이 손상되었거나 읽을 수 없습니다.
+{1}</value></data>
+  <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>파일을 저장할 수 없습니다: {0}
+불러오지 못했으며 손상되었을 수 있습니다. 닫은 뒤 다시 여세요.</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>파일 저장 실패: {0}
+{1}</value></data>
+  <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>모든 파일을 저장하지 못했습니다. 오류를 확인하고 다시 시도하세요.</value></data>
+  <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>프로젝트 폴더를 찾을 수 없습니다. 프로젝트 설정을 확인하세요.</value></data>
+  <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>저장하지 않은 변경 사항이 있는 파일 "{0}"이(가) 디스크에서 수정되었습니다.
+
+디스크 버전을 다시 불러오고 편집 내용을 버릴까요?</value></data>
+  <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>파일 충돌</value></data>
+  <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>디스크에서 다시 불러오기</value></data>
+  <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>내 변경 사항 유지</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>파일을 다시 불러오지 못했습니다: {0}
+파일이 손상되었거나 읽을 수 없습니다.
+{1}</value></data>
+  <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>프로젝트 파일을 저장하지 못해 가져오기를 중단했습니다.</value></data>
+  <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>프로젝트 파일을 저장하지 못해 내보내기를 중단했습니다.</value></data>
+  <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>배경 화면 라이브러리 패널을 사용할 수 없습니다.</value></data>
+  <data name="WebBackdrop_FailedParseProjectFile" xml:space="preserve"><value>프로젝트 파일 분석 실패: {0}
+{1}</value></data>
+  <data name="WebBackdrop_CannotSaveCorruptProject" xml:space="preserve"><value>프로젝트 파일을 저장할 수 없습니다: {0}
+파일이 손상되었습니다. 수정하기 전에 복구하거나 복원하세요.</value></data>
+  <data name="WebBackdrop_FullProjectArchive" xml:space="preserve"><value>전체 프로젝트 압축 파일 (.zip)</value></data>
+  <data name="WebBackdrop_WebWallpaperPackage" xml:space="preserve"><value>웹 배경 화면 패키지 (.zip)</value></data>
+  <data name="WebBackdrop_Find" xml:space="preserve"><value>찾기</value></data>
+  <data name="WebBackdrop_FindInFiles" xml:space="preserve"><value>파일에서 찾기</value></data>
+  <data name="WebBackdrop_Selection" xml:space="preserve"><value>선택 (S)</value></data>
+  <data name="WebBackdrop_GoBack" xml:space="preserve"><value>뒤로 이동</value></data>
+  <data name="WebBackdrop_GoForward" xml:space="preserve"><value>앞으로 이동</value></data>
+  <data name="WebBackdrop_CopyLineUp" xml:space="preserve"><value>줄을 위로 복사</value></data>
+  <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>줄을 아래로 복사</value></data>
+  <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>줄을 위로 이동</value></data>
+  <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>줄을 아래로 이동</value></data>
+  <data name="WebBackdrop_Debug" xml:space="preserve"><value>디버그</value></data>
+  <data name="WebBackdrop_Stop" xml:space="preserve"><value>중지</value></data>
+  <data name="WebBackdrop_Saving" xml:space="preserve"><value>저장 중…</value></data>
+  <data name="WebBackdrop_RecoveryMessage" xml:space="preserve"><value>이전의 비정상 종료로 저장하지 못한 편집 내용이 있습니다(파일 {0}개).
+복구할까요?</value></data>
+  <data name="WebBackdrop_RecoveryTitle" xml:space="preserve"><value>저장하지 않은 편집 복구</value></data>
+  <data name="WebBackdrop_Recover" xml:space="preserve"><value>복구</value></data>
+  <data name="WebBackdrop_DiscardEdits" xml:space="preserve"><value>편집 내용 버리기</value></data>
+  <data name="WebBackdrop_NoProblems" xml:space="preserve"><value>발견된 문제가 없습니다.</value></data>
+  <data name="WebBackdrop_NoOutput" xml:space="preserve"><value>출력이 없습니다.</value></data>
+  <data name="WebBackdrop_HiddenFiles" xml:space="preserve"><value>파일 {0}개가 더 있습니다.</value></data>
+  <data name="WebBackdrop_HiddenProblems" xml:space="preserve"><value>문제 {0}개가 더 있습니다.</value></data>
+  <data name="Text_PanelUnavailable" xml:space="preserve"><value>패널을 사용할 수 없습니다.</value></data>
+  <data name="Text_ResizeDataUnavailable" xml:space="preserve"><value>크기 조정 데이터를 사용할 수 없습니다.</value></data>
+  <data name="StaticImg_EffectParam_Intensity" xml:space="preserve"><value>강도</value></data>
+  <data name="StaticImg_EffectParam_Blur" xml:space="preserve"><value>흐림</value></data>
+  <data name="StaticImg_EffectParam_Hue" xml:space="preserve"><value>색조</value></data>
+  <data name="StaticImg_EffectParam_Angle" xml:space="preserve"><value>각도</value></data>
+  <data name="StaticImg_EffectParam_Opacity" xml:space="preserve"><value>불투명도</value></data>
+  <data name="StaticImg_EffectParam_Width" xml:space="preserve"><value>너비</value></data>
+  <data name="StaticImg_EffectParam_Height" xml:space="preserve"><value>높이</value></data>
+  <data name="StaticImg_EffectParam_Mode" xml:space="preserve"><value>모드</value></data>
+  <data name="StaticImg_EffectParam_Exposure" xml:space="preserve"><value>노출</value></data>
+  <data name="StaticImg_EffectParam_Brightness" xml:space="preserve"><value>밝기</value></data>
+  <data name="StaticImg_EffectParam_Saturation" xml:space="preserve"><value>채도</value></data>
+  <data name="StaticImg_EffectParam_Contrast" xml:space="preserve"><value>대비</value></data>
+  <data name="StaticImg_EffectParam_Vignette" xml:space="preserve"><value>비네팅</value></data>
+  <data name="StaticImg_EffectParam_Sharpen" xml:space="preserve"><value>선명하게</value></data>
+  <data name="StaticImg_EffectParam_Temperature" xml:space="preserve"><value>색온도</value></data>
+  <data name="StaticImg_EffectParam_Tint" xml:space="preserve"><value>색조</value></data>
+  <data name="StaticImg_EffectParam_Shadows" xml:space="preserve"><value>그림자</value></data>
+  <data name="StaticImg_EffectParam_Highlights" xml:space="preserve"><value>하이라이트</value></data>
+  <data name="StaticImg_EffectParam_Clarity" xml:space="preserve"><value>명료도</value></data>
+  <data name="StaticImg_EffectParam_MaskBlur" xml:space="preserve"><value>마스크 흐림</value></data>
+  <data name="StaticImg_EffectParam_Threshold" xml:space="preserve"><value>임계값</value></data>
+  <data name="StaticImg_EffectParam_Frequency" xml:space="preserve"><value>주파수</value></data>
+  <data name="StaticImg_EffectParam_Phase" xml:space="preserve"><value>위상</value></data>
+  <data name="StaticImg_EffectParam_Amplitude" xml:space="preserve"><value>진폭</value></data>
+  <data name="StaticImg_EffectParam_Spread" xml:space="preserve"><value>확산</value></data>
+  <data name="StaticImg_EffectParam_Radius" xml:space="preserve"><value>반경</value></data>
+  <data name="StaticImg_EffectParam_Pressure" xml:space="preserve"><value>필압</value></data>
+  <data name="StaticImg_EffectParam_Lightness" xml:space="preserve"><value>명도</value></data>
+  <data name="StaticImg_EffectParam_Density" xml:space="preserve"><value>밀도</value></data>
+  <data name="StaticImg_EffectParam_Scale" xml:space="preserve"><value>배율</value></data>
+  <data name="StaticImg_EffectParam_Tolerance" xml:space="preserve"><value>허용 오차</value></data>
+  <data name="StaticImg_EffectParam_Offset" xml:space="preserve"><value>오프셋</value></data>
+  <data name="StaticImg_EffectParam_Exponent" xml:space="preserve"><value>지수</value></data>
+  <data name="StaticImg_EffectParam_OffsetX" xml:space="preserve"><value>X 오프셋</value></data>
+  <data name="StaticImg_EffectParam_OffsetY" xml:space="preserve"><value>Y 오프셋</value></data>
+  <data name="StaticImg_EffectParam_Levels" xml:space="preserve"><value>레벨</value></data>
+  <data name="StaticImg_EffectParam_LevelsGreen" xml:space="preserve"><value>녹색 레벨</value></data>
+  <data name="StaticImg_EffectParam_BlackPoint" xml:space="preserve"><value>검은점</value></data>
+  <data name="StaticImg_EffectParam_WhitePoint" xml:space="preserve"><value>흰점</value></data>
+  <data name="StaticImg_EffectParam_InvertAlpha" xml:space="preserve"><value>알파 반전</value></data>
+  <data name="StaticImg_EffectParam_Feather" xml:space="preserve"><value>가장자리 페더</value></data>
+  <data name="StaticImg_EffectParam_OverlayEdges" xml:space="preserve"><value>가장자리 오버레이</value></data>
+  <data name="StaticImg_EffectParam_Previewing" xml:space="preserve"><value>미리 보는 중</value></data>
+  <data name="StaticImg_EffectParam_WidthPixels" xml:space="preserve"><value>너비(픽셀)</value></data>
+  <data name="StaticImg_EffectParam_HeightPixels" xml:space="preserve"><value>높이(픽셀)</value></data>
+  <data name="Text_Name" xml:space="preserve"><value>이름</value></data>
+  <data name="Text_More" xml:space="preserve"><value>더 보기</value></data>
+  <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Virtual Paper 웹 정보</value></data>
+  <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>웹 배경 화면 조정</value></data>
+  <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Monaco Editor 로딩 중…</value></data>
+  <data name="EffectPrefix_Atmosphere" xml:space="preserve">
+    <value>분위기 효과</value>
+  </data>
+  <data name="EffectPrefix_AtmosphereIntensity" xml:space="preserve">
+    <value>분위기 효과 강도</value>
+  </data>
+  <data name="Atmosphere_None" xml:space="preserve"><value>없음</value></data>
+  <data name="Atmosphere_Stardust" xml:space="preserve"><value>별가루</value></data>
+  <data name="Atmosphere_Snow" xml:space="preserve"><value>눈</value></data>
+  <data name="Atmosphere_Fireflies" xml:space="preserve"><value>반딧불이</value></data>
+  <data name="Atmosphere_Meteor" xml:space="preserve"><value>유성</value></data>
+  <data name="EffectPrefix_AtmosphereStyle" xml:space="preserve"><value>효과 스타일</value></data>
+  <data name="Atmosphere_Rain" xml:space="preserve"><value>비</value></data>
+  <data name="Atmosphere_Petals" xml:space="preserve"><value>꽃잎</value></data>
+  <data name="Atmosphere_Bokeh" xml:space="preserve"><value>보케</value></data>
+  <data name="AtmosphereStyle_Dust" xml:space="preserve"><value>빛 입자</value></data>
+  <data name="AtmosphereStyle_Stars" xml:space="preserve"><value>별빛 반짝임</value></data>
+  <data name="AtmosphereStyle_SnowDots" xml:space="preserve"><value>눈 알갱이</value></data>
+  <data name="AtmosphereStyle_Snowflakes" xml:space="preserve"><value>눈송이</value></data>
+  <data name="AtmosphereStyle_WarmFireflies" xml:space="preserve"><value>따뜻한 반딧불이</value></data>
+  <data name="AtmosphereStyle_BlueFireflies" xml:space="preserve"><value>푸른 반딧불이</value></data>
+  <data name="AtmosphereStyle_ShootingStars" xml:space="preserve"><value>유성우</value></data>
+  <data name="AtmosphereStyle_Comets" xml:space="preserve"><value>다채로운 혜성</value></data>
+  <data name="AtmosphereStyle_Drizzle" xml:space="preserve"><value>이슬비</value></data>
+  <data name="AtmosphereStyle_Downpour" xml:space="preserve"><value>폭우</value></data>
+  <data name="AtmosphereStyle_CherryBlossoms" xml:space="preserve"><value>벚꽃</value></data>
+  <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>장미 꽃잎</value></data>
+  <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>부드러운 빛</value></data>
+  <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>비눗방울</value></data>
+  <data name="EffectPrefix_ParallaxStrength" xml:space="preserve"><value>시차 효과 강도</value></data>
+  <data name="ParallaxStrength_Gentle" xml:space="preserve"><value>부드럽게</value></data>
+  <data name="ParallaxStrength_Standard" xml:space="preserve"><value>표준</value></data>
+  <data name="ParallaxStrength_Strong" xml:space="preserve"><value>강하게</value></data>
+  <data name="EffectPrefix_ParallaxAutoDrift" xml:space="preserve"><value>자동 이동</value></data>
+  <data name="Effect_Help_ParallaxAutoDrift" xml:space="preserve"><value>마우스 추적과 별개로 이미지를 천천히 자동 이동합니다. 시차 강도는 두 효과 모두에 적용됩니다.</value></data>
+  <data name="ParallaxMode_Mouse" xml:space="preserve"><value>마우스 따라가기</value></data>
+  <data name="ParallaxMode_Auto" xml:space="preserve"><value>자동 이동</value></data>
+  <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D 시차 효과</value></data>
+  <data name="ScreenFit_Title" xml:space="preserve"><value>이미지를 화면에 맞춤</value></data>
+  <data name="ScreenFit_SelectImage" xml:space="preserve"><value>이미지 선택</value></data>
+  <data name="ScreenFit_Monitor" xml:space="preserve"><value>대상 디스플레이</value></data>
+  <data name="ScreenFit_Mode" xml:space="preserve"><value>맞춤 방식</value></data>
+  <data name="ScreenFit_Contain" xml:space="preserve"><value>전체 이미지 표시(검은 여백)</value></data>
+  <data name="ScreenFit_Cover" xml:space="preserve"><value>화면 채우기(가운데 자르기)</value></data>
+  <data name="ScreenFit_Preview" xml:space="preserve"><value>바탕 화면 미리 보기</value></data>
+  <data name="ScreenFit_PreviewSample" xml:space="preserve"><value>샘플</value></data>
+  <data name="ScreenFit_Plan" xml:space="preserve"><value>원본: {0} × {1}, 표시 영역: 약 {2} × {3}(가운데).</value></data>
+  <data name="ScreenFit_Enhance" xml:space="preserve"><value>선택 사항: 이미지 화질 개선</value></data>
+  <data name="ScreenFit_EnhanceSize" xml:space="preserve"><value>개선된 사본: {0} × {1}. 원본 비율을 유지하며 최대 4배 확대합니다. 원본 파일은 변경되지 않습니다.</value></data>
+  <data name="ScreenFit_NoEnhancementNeeded" xml:space="preserve"><value>이 맞춤 방식에는 원본 해상도가 충분합니다.</value></data>
+  <data name="ScreenFit_ReadFailed" xml:space="preserve"><value>이미지를 읽을 수 없습니다. 올바른 정지 이미지를 선택하세요.</value></data>
+  <data name="ScreenFit_DisplayChanged" xml:space="preserve"><value>디스플레이나 배치가 변경되었습니다. 대화 상자를 닫고 다시 선택하세요.</value></data>
+  <data name="ScreenFit_Enhancing" xml:space="preserve"><value>이미지 개선 중입니다. '취소'를 누르면 중지합니다…</value></data>
+  <data name="ScreenFit_Applying" xml:space="preserve"><value>가져오기 및 적용 중…</value></data>
+  <data name="ScreenFit_Canceled" xml:space="preserve"><value>취소되었습니다. 대화 상자를 닫거나 개선 없이 다시 적용하세요.</value></data>
+  <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>화질 개선에 실패했습니다. 개선을 끄고 원본으로 다시 시도하세요.</value></data>
+  <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>배경 화면을 가져오거나 적용하지 못했습니다. 다시 시도하세요.</value></data>
+  <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>이 버전은 개별 디스플레이를 지원합니다. 화면 제어에서 '개별'로 전환한 뒤 이 도구를 다시 여세요.</value></data>
+  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>페이지 전환 애니메이션 사용</value></data>
+  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>페이지 전환 시 애니메이션을 표시합니다. Windows 접근성 설정의 애니메이션 효과도 켜져 있어야 합니다.</value></data>
+  <data name="ScreenSaver_Remove" xml:space="preserve"><value>허용 목록에서 제거</value></data>
+  <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>아직 추가된 앱이 없습니다.</value></data>
+  <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>앱을 추가하면 해당 앱이 포그라운드에 있는 동안 화면 보호기를 시작하지 않습니다.</value></data>
+  <data name="ScreenSaver_WhiteListNoResults" xml:space="preserve"><value>일치하는 앱이 없습니다.</value></data>
+  <data name="ScreenSaver_WhiteListNoResultsDescription" xml:space="preserve"><value>다른 앱 이름을 검색하거나 검색을 지우세요.</value></data>
+  <!-- Live XAML property resources. Plain keys above remain available to code. -->
+  <data name="Intelligent_Result_Temporary" xml:space="preserve"><value>임시 저장만</value></data>
+  <data name="Intelligent_Result_Exported" xml:space="preserve"><value>내보냄</value></data>
+  <data name="Intelligent_Result_Imported" xml:space="preserve"><value>라이브러리에 추가됨</value></data>
+  <data name="Intelligent_Result_ExportedAndImported" xml:space="preserve"><value>내보냄 · 라이브러리에 추가됨</value></data>
+  <data name="Intelligent_Close_Title" xml:space="preserve"><value>AI 작업을 닫을까요?</value></data>
+  <data name="Intelligent_Close_Active" xml:space="preserve"><value>대기, 처리 또는 저장 중인 작업이 {0}개 있습니다. 닫으면 완료되지 않은 작업이 중지됩니다.</value></data>
+  <data name="Intelligent_Close_Temporary" xml:space="preserve"><value>완료된 결과 {0}개를 내보내거나 라이브러리에 추가하지 않았습니다. 닫으면 작업 목록에서 복원할 수 없으며 임시 파일은 다음 앱 시작 시 삭제됩니다.</value></data>
+  <data name="Intelligent_Close_DontRemind" xml:space="preserve"><value>저장하지 않은 완료 결과에 대해 다시 알리지 않기</value></data>
+  <data name="Intelligent_Close_Return" xml:space="preserve"><value>작업으로 돌아가기</value></data>
+  <data name="Intelligent_Close_Confirm" xml:space="preserve"><value>그래도 닫기</value></data>
+  <data name="Intelligent_Remove_Title" xml:space="preserve"><value>임시 결과를 삭제할까요?</value></data>
+  <data name="Intelligent_Remove_Temporary" xml:space="preserve"><value>이 결과를 아직 내보내거나 라이브러리에 추가하지 않았습니다. 작업을 삭제하면 임시 결과도 삭제됩니다.</value></data>
+  <data name="Intelligent_Result_PreservationTooltip" xml:space="preserve"><value>닫은 뒤에도 결과를 유지하려면 내보내거나 라이브러리에 추가하세요.</value></data>
+  <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>저장하지 않은 AI 결과</value></data>
+  <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>내보내거나 라이브러리에 추가하지 않은 결과를 닫기 전에 알립니다. 미완료 작업은 항상 확인합니다.</value></data>
+  <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>저장하지 않은 AI 결과 알림</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>프로젝트 사본을 저장하지 못했습니다. 현재 프로젝트 밖의 빈 폴더를 선택하세요. 원본 파일은 변경되지 않았습니다.
+{0}</value></data>
+  <data name="WpLib_Favorites" xml:space="preserve"><value>즐겨찾기만</value></data>
+  <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>즐겨찾기 및 태그</value></data>
+  <data name="WpLib_FinishSelection" xml:space="preserve"><value>완료</value></data>
+  <data name="WpLib_SearchExplain" xml:space="preserve"><value>라이브러리의 제목, 설명, 제작자 및 태그 검색</value></data>
+  <data name="WpLib_SelectLoaded" xml:space="preserve"><value>불러온 배경 화면 모두 선택</value></data>
+  <data name="WpLib_Sort" xml:space="preserve"><value>배경 화면 정렬</value></data>
+  <data name="WpLib_SortLabel" xml:space="preserve"><value>정렬</value></data>
+  <data name="WpLib_SortNewest" xml:space="preserve"><value>최신순</value></data>
+  <data name="WpLib_SortOldest" xml:space="preserve"><value>오래된순</value></data>
+  <data name="WpLib_SortTitle" xml:space="preserve"><value>제목(오름차순)</value></data>
+  <data name="WpLib_SortAuthor" xml:space="preserve"><value>제작자(오름차순)</value></data>
+  <data name="WpLib_TagFilter" xml:space="preserve"><value>태그</value></data>
+  <data name="WpLib_TagSearchPlaceholder" xml:space="preserve"><value>태그를 입력하여 검색</value></data>
+  <data name="WpLib_ClearFilters" xml:space="preserve"><value>필터 지우기</value></data>
+  <data name="WpLib_Organize" xml:space="preserve"><value>선택한 배경 화면 정리</value></data>
+  <data name="WpLib_AddFavorite" xml:space="preserve"><value>즐겨찾기에 추가</value></data>
+  <data name="WpLib_RemoveFavorite" xml:space="preserve"><value>즐겨찾기에서 제거</value></data>
+  <data name="WpLib_EditTags" xml:space="preserve"><value>내 태그 편집</value></data>
+  <data name="WpLib_EditInfo" xml:space="preserve"><value>정보 편집</value></data>
+  <data name="WpLib_IncludedTags" xml:space="preserve"><value>배경 화면 기본 태그(읽기 전용): {0}</value></data>
+  <data name="WpLib_EditTitle" xml:space="preserve"><value>제목</value></data>
+  <data name="WpLib_EditDescription" xml:space="preserve"><value>설명</value></data>
+  <data name="WpLib_TitlePlaceholder" xml:space="preserve"><value>배경 화면 제목 입력</value></data>
+  <data name="WpLib_DescriptionPlaceholder" xml:space="preserve"><value>이 배경 화면의 설명 입력</value></data>
+  <data name="WpLib_EditAuthor" xml:space="preserve"><value>제작자</value></data>
+  <data name="WpLib_YourTags" xml:space="preserve"><value>내 태그</value></data>
+  <data name="WpLib_AuthorTokenPlaceholder" xml:space="preserve"><value>제작자를 입력하고 Enter</value></data>
+  <data name="WpLib_TagTokenPlaceholder" xml:space="preserve"><value>태그를 입력하고 Enter</value></data>
+  <data name="WpLib_RemoveToken" xml:space="preserve"><value>항목 제거</value></data>
+  <data name="WpLib_TagsPlaceholder" xml:space="preserve"><value>태그를 쉼표나 세미콜론으로 구분</value></data>
+  <data name="WpLib_TagsExplain" xml:space="preserve"><value>내 태그는 검색과 필터에 사용됩니다. 원래 배경 화면 태그는 변경되지 않습니다.</value></data>
+  <data name="WpLib_TagMode" xml:space="preserve"><value>선택한 배경 화면에 적용</value></data>
+  <data name="WpLib_TagsAdd" xml:space="preserve"><value>태그 추가</value></data>
+  <data name="WpLib_TagsRemove" xml:space="preserve"><value>태그 제거</value></data>
+  <data name="WpLib_TagsReplace" xml:space="preserve"><value>내 태그 바꾸기</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>배경 화면이 없습니다. 배경 화면을 추가하거나 필터를 변경하세요.</value></data>
+  <data name="EffectPreset_Title" xml:space="preserve"><value>효과 프리셋</value></data>
+  <data name="EffectPreset_More" xml:space="preserve"><value>라이브러리 추가 작업</value></data>
+  <data name="EffectPreset_Manage" xml:space="preserve"><value>효과 프리셋…</value></data>
+  <data name="EffectPreset_ManagerHint" xml:space="preserve"><value>저장은 프리셋을 보관합니다. 배경 화면의 효과 패널에서 적용하세요.</value></data>
+  <data name="EffectPreset_List" xml:space="preserve"><value>프리셋</value></data>
+  <data name="EffectPreset_UnsavedHint" xml:space="preserve"><value>변경 사항을 유지하려면 저장하세요. 프리셋을 전환하거나 닫으면 변경 사항이 사라집니다.</value></data>
+  <data name="EffectPreset_ReadOnly" xml:space="preserve"><value>기본 제공 · 읽기 전용</value></data>
+  <data name="EffectPreset_ReadOnlyHint" xml:space="preserve"><value>기본 제공 프리셋은 읽기 전용입니다. '선택 항목에서 새로 만들기'로 편집 가능한 사본을 만드세요.</value></data>
+  <data name="EffectPreset_Name" xml:space="preserve"><value>프리셋 이름</value></data>
+  <data name="EffectPreset_Type" xml:space="preserve"><value>배경 화면 유형</value></data>
+  <data name="EffectPreset_TypeHint" xml:space="preserve"><value>이 프리셋이 지원하는 배경 화면 유형입니다. 유형을 선택해도 프리셋이 적용되지는 않습니다.</value></data>
+  <data name="EffectPreset_Source" xml:space="preserve"><value>배경 화면</value></data>
+  <data name="EffectPreset_SelectWallpaper" xml:space="preserve"><value>배경 화면 선택</value></data>
+  <data name="EffectPreset_SourceSearch" xml:space="preserve"><value>이름 또는 제작자 검색</value></data>
+  <data name="EffectPreset_SourceEmpty" xml:space="preserve"><value>일치하는 배경 화면이 없습니다.</value></data>
+  <data name="EffectPreset_SourceConfig" xml:space="preserve"><value>저장된 효과</value></data>
+  <data name="EffectPreset_FromWallpaper" xml:space="preserve"><value>배경 화면에서 만들기</value></data>
+  <data name="EffectPreset_New" xml:space="preserve"><value>새로 만들기(기본값)</value></data>
+  <data name="EffectPreset_Copy" xml:space="preserve"><value>선택 항목에서 새로 만들기</value></data>
+  <data name="EffectPreset_CopyHint" xml:space="preserve"><value>선택한 프리셋에서 새 이름과 ID를 가진 편집 가능한 사본을 만듭니다.</value></data>
+  <data name="EffectPreset_Delete" xml:space="preserve"><value>삭제</value></data>
+  <data name="EffectPreset_Discard" xml:space="preserve"><value>편집 내용 버리기</value></data>
+  <data name="EffectPreset_NewName" xml:space="preserve"><value>새 프리셋</value></data>
+  <data name="EffectPreset_CopySuffix" xml:space="preserve"><value> (복사본)</value></data>
+  <data name="EffectPreset_User" xml:space="preserve"><value>사용자 프리셋</value></data>
+  <data name="EffectPreset_Actions" xml:space="preserve"><value>프리셋 추가 작업</value></data>
+  <data name="EffectPreset_NameHint" xml:space="preserve"><value>프리셋 이름 입력</value></data>
+  <data name="EffectPreset_SourceHint" xml:space="preserve"><value>배경 화면을 선택하고 저장된 효과로 프리셋을 만듭니다.</value></data>
+  <data name="EffectPreset_BuiltIn" xml:space="preserve"><value>기본 제공</value></data>
+  <data name="EffectPreset_Draft" xml:space="preserve"><value>새 프리셋 · 저장 안 됨</value></data>
+  <data name="EffectPreset_Modified" xml:space="preserve"><value>저장하지 않은 변경 사항</value></data>
+  <data name="EffectPreset_Save" xml:space="preserve"><value>프리셋 저장</value></data>
+  <data name="EffectPreset_UseSource" xml:space="preserve"><value>프리셋 만들기</value></data>
+  <data name="EffectPreset_Saving" xml:space="preserve"><value>변경 사항 저장 중…</value></data>
+  <data name="EffectPreset_DeleteConfirm" xml:space="preserve"><value>이 프리셋을 삭제할까요? 이미 이 효과를 사용하는 배경 화면의 설정은 유지됩니다.</value></data>
+  <data name="EffectPreset_NoSource" xml:space="preserve"><value>이 배경 화면에는 저장된 효과가 없습니다. 효과 설정을 한 번 저장하거나 새 프리셋으로 시작하세요.</value></data>
+  <data name="EffectPreset_DuplicateName" xml:space="preserve"><value>같은 이름의 사용자 프리셋이 이미 있습니다. 다른 이름을 선택하세요.</value></data>
+  <data name="EffectPreset_LoadError" xml:space="preserve"><value>효과 프리셋을 불러오지 못했습니다. 저장된 데이터는 변경되지 않았습니다.</value></data>
+  <data name="EffectPreset_SaveError" xml:space="preserve"><value>효과 프리셋을 저장하지 못했습니다. 이름과 저장 권한을 확인하고 다시 시도하세요.</value></data>
+  <data name="EffectPreset_ApplyError" xml:space="preserve"><value>프리셋을 적용하지 못했습니다. 배경 화면 유형과 효과 값을 확인하세요.</value></data>
+  <data name="EffectPreset_Selector" xml:space="preserve"><value>효과 프리셋</value></data>
+  <data name="EffectPreset_TrialHint" xml:space="preserve"><value>여기서 프리셋을 미리 보세요. '적용 후 닫기'를 누르면 이 배경 화면에 효과를 저장합니다.</value></data>
+  <data name="EffectPreset_CancelTrial" xml:space="preserve"><value>프리셋 미리 보기 취소</value></data>
+  <data name="EffectPreset_Custom" xml:space="preserve"><value>사용자 지정 설정</value></data>
+  <data name="EffectPreset_Default" xml:space="preserve"><value>기본 효과</value></data>
+  <data name="EffectPreset_Natural" xml:space="preserve"><value>자연스럽게</value></data>
+  <data name="EffectPreset_Soft" xml:space="preserve"><value>부드러운 색감</value></data>
+  <data name="EffectPreset_Snow" xml:space="preserve"><value>가벼운 눈</value></data>
+  <data name="EffectPreset_Stardust" xml:space="preserve"><value>별가루</value></data>
+  <data name="EffectPreset_Type_RUnknown" xml:space="preserve"><value>모든 배경 화면 유형</value></data>
+  <data name="EffectPreset_Type_RImage" xml:space="preserve"><value>이미지 / GIF</value></data>
+  <data name="EffectPreset_Type_RImage3D" xml:space="preserve"><value>3D 이미지</value></data>
+  <data name="EffectPreset_Type_RVideo" xml:space="preserve"><value>동영상</value></data>
+  <data name="EffectPreset_Type_RWeb" xml:space="preserve"><value>Web</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Downloading" xml:space="preserve"><value>일시 정지</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Installing" xml:space="preserve"><value>설치 중…</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Paused" xml:space="preserve"><value>다시 시작</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Ready" xml:space="preserve"><value>다운로드</value></data>
+  <data name="Core_AppUpdater_SpeedText_Ready" xml:space="preserve"><value>남은 시간</value></data>
+  <data name="Core_AppUpdater_StatusText_Completed" xml:space="preserve"><value>다운로드가 완료되었습니다!</value></data>
+  <data name="Core_AppUpdater_StatusText_DownloadFailed" xml:space="preserve"><value>접근할 수 없습니다. 네트워크를 확인하거나 다시 시도하세요.</value></data>
+  <data name="Core_AppUpdater_StatusText_Downloading" xml:space="preserve"><value>다운로드 중…</value></data>
+  <data name="Core_AppUpdater_StatusText_Installed" xml:space="preserve"><value>설치가 완료되었습니다!</value></data>
+  <data name="Core_AppUpdater_StatusText_Installing" xml:space="preserve"><value>업데이트 설치 중…</value></data>
+  <data name="Core_AppUpdater_StatusText_Paused" xml:space="preserve"><value>다운로드 일시 정지됨</value></data>
+  <data name="Core_AppUpdater_StatusText_Ready" xml:space="preserve"><value>다운로드 준비 중…</value></data>
+  <data name="Core_AppUpdater_StatusText_VerifyFailed" xml:space="preserve"><value>파일 검증에 실패했습니다. 다시 다운로드하세요.</value></data>
+  <data name="Core_AppUpdater_StatusText_Verifying" xml:space="preserve"><value>리소스 무결성 검증 중…</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve"><value>설치가 아직 완료되지 않았습니다. 종료할까요?</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve"><value>업데이트를 다운로드 중입니다. 중단하고 닫을까요?</value></data>
+  <data name="Core_AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve"><value>업데이트에 실패했습니다. 아래 주소에서 설치 프로그램을 다운로드하여 수동으로 업데이트하세요:
+https://github.com/PaperHammer/VirtualPaper/releases</value></data>
+  <data name="Core_AppUpdater_Update_TitleCancelQuestion" xml:space="preserve"><value>업데이트 중</value></data>
+  <data name="Core_Common_TextCancel" xml:space="preserve"><value>취소</value></data>
+  <data name="Core_Common_TextClose" xml:space="preserve"><value>닫기</value></data>
+  <data name="Core_Common_TextConfirm" xml:space="preserve"><value>확인</value></data>
+  <data name="Core_Common_TextError" xml:space="preserve"><value>오류</value></data>
+  <data name="Core_Common_TextRetry" xml:space="preserve"><value>다시 시도</value></data>
+  <data name="Core_Find_New_Verison" xml:space="preserve"><value>새 버전이 있습니다!</value></data>
+  <data name="Core_Find_New_Version_Restart" xml:space="preserve"><value>구성 요소 업데이트가 있습니다!</value></data>
+  <data name="Core_Systray_TextCloseAllWallpapers" xml:space="preserve"><value>모든 배경 화면 닫기</value></data>
+  <data name="Core_Systray_TextDEBubble" xml:space="preserve"><value>비눗방울</value></data>
+  <data name="Core_Systray_TextDENone" xml:space="preserve"><value>해당 없음</value></data>
+  <data name="Core_Systray_TextDynamicEffect" xml:space="preserve"><value>애니메이션</value></data>
+  <data name="Core_Systray_TextExit" xml:space="preserve"><value>종료</value></data>
+  <data name="Core_Systray_TextIsOnScrSaver" xml:space="preserve"><value>화면 보호기 사용</value></data>
+  <data name="Core_Systray_TextIsRunningLock" xml:space="preserve"><value>다시 시작할 때 로그인 화면 표시</value></data>
+  <data name="Core_Systray_TextOpenApp" xml:space="preserve"><value>기본 화면 열기</value></data>
+  <data name="Core_Systray_TextOpenScrSaverSet" xml:space="preserve"><value>화면 보호기</value></data>
+  <data name="Core_Systray_TextPauseWallpapers" xml:space="preserve"><value>모든 배경 화면 일시 정지</value></data>
+  <data name="Core_Systray_TextReportBug" xml:space="preserve"><value>버그 신고</value></data>
+  <data name="Core_UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve"><value>오류가 발생했습니다. 앱을 다시 시작하세요. 반복되면 버그를 신고하거나 개발자에게 문의하고 다시 다운로드하세요.</value></data>
+  <data name="Core_Virtual_Paper_isRunning" xml:space="preserve"><value>Virtual Paper가 백그라운드에서 실행 중입니다.</value></data>
+  <data name="Core_Virtual_Paper_isRunning_Greetings" xml:space="preserve"><value>좋은 하루 보내세요!</value></data>
+  <data name="Core_WndProcMsg_DescExplorerCrash" xml:space="preserve"><value>심각한 오류가 발생했습니다.
+최근 30초 동안 Windows 탐색기가 두 번 다시 시작되었습니다. Virtual Paper와 Windows 또는 다른 바탕 화면 꾸미기 앱 간의 충돌일 수 있습니다. 추가 문제를 방지하기 위해 모든 배경 화면을 종료했습니다.</value></data>
+  <data name="Core_WndProcMsg_TitleAppName" xml:space="preserve"><value>Virtual Paper</value></data>
+  <data name="Core_WpControl_TextFileNotFound" xml:space="preserve"><value>대상 파일을 찾을 수 없습니다.</value></data>
+  <data name="Core_WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve"><value>다음 설정이 필요합니다:
+1. Win + R로 실행 창을 여세요.
+2. SystemPropertiesPerformance.exe를 입력하고 확인을 누르세요.
+3. '창의 제어 및 요소에 애니메이션 효과 주기'를 켜고 적용하세요. 이미 켜져 있으면 꺼 보세요.
+4. 적용과 확인을 눌러 창을 닫으세요.
+해결되지 않으면 Windows를 다시 시작하세요. 일부 Windows 10 미리 보기 버전에서는 작동하지 않습니다.</value></data>
+  <data name="Core_PluginsUpdate_InvalidInfo" xml:space="preserve"><value>업데이트 정보가 잘못되었습니다.</value></data>
+  <data name="Core_PluginsUpdate_Starting" xml:space="preserve"><value>업데이트 시작 중…</value></data>
+  <data name="Core_PluginsUpdate_Completed" xml:space="preserve"><value>업데이트가 완료되었습니다. 인터페이스를 다시 시작합니다.</value></data>
+  <data name="Core_PluginsUpdate_Failed" xml:space="preserve"><value>업데이트 실패: {0}</value></data>
+  <data name="Core_PluginsUpdate_Stage_Downloading" xml:space="preserve"><value>플러그인 다운로드 중…</value></data>
+  <data name="Core_PluginsUpdate_Stage_BackingUp" xml:space="preserve"><value>현재 플러그인 백업 중…</value></data>
+  <data name="Core_PluginsUpdate_Stage_Replacing" xml:space="preserve"><value>플러그인 파일 교체 중…</value></data>
+  <data name="Core_PluginsUpdate_Stage_Completed" xml:space="preserve"><value>완료됨</value></data>
+  <data name="Core_PluginsUpdate_Stage_Failed" xml:space="preserve"><value>실패</value></data>
+  <data name="Core_PluginsUpdate_Close" xml:space="preserve"><value>닫기</value></data>
+  <data name="Core_PluginsUpdate_PostponeTip" xml:space="preserve"><value>업데이트가 준비되었습니다. 기본 창을 닫으면 적용됩니다.</value></data>
+  <data name="Core_InstallerUpdate_PostponeTip" xml:space="preserve"><value>설치 준비가 완료되었습니다. 앱을 완전히 종료하면 설치를 시작합니다.</value></data>
+  <data name="Core_PluginUpdate_Title_Updating" xml:space="preserve"><value>구성 요소 업데이트 중…</value></data>
+  <data name="Core_PluginUpdate_Title_Completed" xml:space="preserve"><value>업데이트 완료</value></data>
+  <data name="Core_PluginUpdate_Title_Failed" xml:space="preserve"><value>업데이트 실패</value></data>
+  <data name="Core_PluginUpdate_Preparing" xml:space="preserve"><value>준비 중…</value></data>
+  <data name="Core_PluginUpdate_ReplacedPlugin" xml:space="preserve"><value>{0} 교체됨</value></data>
+  <data name="Core_Startup_AutoStartDisabledByUser" xml:space="preserve"><value>로그인 시 Virtual Paper 실행이 비활성화되어 있습니다. 다시 켜려면 작업 관리자의 시작 앱을 여세요.</value></data>
+  <data name="Core_Startup_AppDataCreateFailedTitle" xml:space="preserve"><value>앱 데이터 폴더를 만들 수 없습니다. Virtual Paper를 종료합니다.</value></data>
+  <data name="Core_Startup_CoreRuntimeFailed" xml:space="preserve"><value>핵심 런타임 초기화에 실패했습니다. Virtual Paper를 다시 시작하거나 재설치하세요.
+{0}</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Title" xml:space="preserve"><value>업데이트 다운로드를 중지할까요?</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Content" xml:space="preserve"><value>업데이트를 다운로드 중입니다. 다운로드를 중지하고 업데이트 창을 닫을까요?</value></data>
+  <data name="Core_AppUpdater_Close_StopDownload" xml:space="preserve"><value>다운로드 중지 후 닫기</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Title" xml:space="preserve"><value>다운로드를 버릴까요?</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Content" xml:space="preserve"><value>다운로드가 일시 정지되었습니다. 다운로드를 버리고 업데이트 창을 닫을까요?</value></data>
+  <data name="Core_AppUpdater_Close_DiscardDownload" xml:space="preserve"><value>다운로드 버리고 닫기</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Title" xml:space="preserve"><value>업데이트 검증을 중지할까요?</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Content" xml:space="preserve"><value>업데이트 파일을 검증 중입니다. 검증을 중지하고 업데이트 창을 닫을까요?</value></data>
+  <data name="Core_AppUpdater_Close_StopVerification" xml:space="preserve"><value>검증 중지 후 닫기</value></data>
+  <data name="Core_AppUpdater_Close_Title" xml:space="preserve"><value>업데이트 창을 닫을까요?</value></data>
+  <data name="Core_AppUpdater_Close_Content" xml:space="preserve"><value>업데이트 창을 닫을까요?</value></data>
+  <data name="Core_AppUpdater_Close_Window" xml:space="preserve"><value>창 닫기</value></data>
+  <data name="Core_AppUpdater_Close_DownloadFailed_Content" xml:space="preserve"><value>업데이트 다운로드에 실패했습니다. 이 창을 닫고 나중에 다시 시도할 수 있습니다.</value></data>
+  <data name="Core_AppUpdater_Close_VerifyFailed_Content" xml:space="preserve"><value>업데이트 파일 검증에 실패했습니다. 이 창을 닫고 나중에 다시 다운로드할 수 있습니다.</value></data>
+  <data name="Core_AppUpdater_Close_BackToUpdate" xml:space="preserve"><value>업데이트로 돌아가기</value></data>
+  <data name="Core_AppUpdater_UpdateReady_Title" xml:space="preserve"><value>업데이트 준비 완료</value></data>
+  <data name="Core_Common_TextGotIt" xml:space="preserve"><value>확인</value></data>
+  <data name="Common_FileAccess_Message" xml:space="preserve"><value>파일 "{0}" {1} 중 오류가 발생했습니다. 파일 무결성과 권한을 확인하세요.</value></data>
+  <data name="Common_FileAccess_Read" xml:space="preserve"><value>읽기</value></data>
+  <data name="Common_FileAccess_Write" xml:space="preserve"><value>쓰기</value></data>
+  <data name="Common_FileAccess_Access" xml:space="preserve"><value>접근</value></data>
+  <data name="Installer_DeleteEverythigMsgBox" xml:space="preserve"><value>사용자 설정을 삭제할까요?</value></data>
+  <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>앱이 실행 중입니다. 종료할까요?</value></data>
+  <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>최초 실행 언어를 저장하지 못했습니다.</value></data>
+  <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper 업데이트</value></data>
+</root>

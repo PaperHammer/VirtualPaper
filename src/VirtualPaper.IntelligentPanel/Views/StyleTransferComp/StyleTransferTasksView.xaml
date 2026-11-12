@@ -51,7 +51,7 @@
                                         <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
 
-                                    <Grid Padding="0 18">
+                                    <Grid Padding="0,12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
@@ -59,33 +59,33 @@
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel VerticalAlignment="Center" Spacing="8">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Grid ColumnSpacing="8"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                                 <TextBlock 
                                                     l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Text"
                                                     FontSize="14" 
-                                                    Width="60"/>
-                                                <TextBlock
+                                                    MaxWidth="160" TextWrapping="Wrap"/>
+                                                <TextBlock Grid.Column="1"
                                                     Text="{x:Bind SourceFilePath}"
                                                     FontSize="14"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     TextTrimming="CharacterEllipsis"
                                                     MaxLines="1"
                                                     VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                            </Grid>
 
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Grid ColumnSpacing="8"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                                 <TextBlock
                                                     l:Uids.Uid="Ui_Intelligent_Task_Style_Text"
                                                     FontSize="14"
-                                                    Width="60"/>
-                                                <TextBlock
+                                                    MaxWidth="160" TextWrapping="Wrap"/>
+                                                <TextBlock Grid.Column="1"
                                                     Text="{x:Bind StyleName, Mode=OneWay}"
                                                     FontSize="14"
                                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                     TextTrimming="CharacterEllipsis"
                                                     MaxLines="1"
                                                     VerticalAlignment="Center"/>
-                                            </StackPanel>
+                                            </Grid>
                                         </StackPanel>
 
                                         <StackPanel
@@ -96,6 +96,7 @@
                                             <StackPanel Spacing="6">
                                                 <TextBlock
                                                     Text="{x:Bind StatusText, Mode=OneWay}"
+                                                    TextWrapping="Wrap" MaxWidth="240"
                                                     FontSize="14"
                                                     FontWeight="SemiBold"
                                                     Foreground="{x:Bind StatusColor, Mode=OneWay, Converter={StaticResource ByteArrayToBrushConverter}}"/>
@@ -104,46 +105,44 @@
                                                     Visibility="{x:Bind IsCompleted, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                                                     <TextBlock AutomationProperties.AutomationId="Intelligent.Task.Preservation"
                                                         Text="{x:Bind PreservationText, Mode=OneWay}" FontSize="12"
+                                                        TextWrapping="Wrap" MaxWidth="240"
                                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                                         l:Uids.Uid="Ui_Intelligent_Result_PreservationTooltip"/>
                                                 </Border>
                                             </StackPanel>
                                         </StackPanel>
 
-                                        <StackPanel
-                                            Grid.Column="2"
-                                            Orientation="Horizontal"
-                                            Spacing="6"
-                                            VerticalAlignment="Center">
+                                        <Grid Grid.Column="2"
+                                            HorizontalAlignment="Right" VerticalAlignment="Center" ColumnSpacing="6">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                                            <input:ArcButton Command="{x:Bind PreviewCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock l:Uids.Uid="Ui_Text_Preview_Text" FontSize="14"/>
-                                                </StackPanel>
+                                            <input:ArcButton Command="{x:Bind PreviewCommand}"
+                                                Height="Auto" MinHeight="32" MinWidth="76" MaxWidth="220" Padding="12,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                                <TextBlock l:Uids.Uid="Ui_Text_Preview_Text" FontSize="14" TextWrapping="Wrap" TextAlignment="Center"/>
                                             </input:ArcButton>
 
-                                            <input:ArcButton Command="{x:Bind ImportCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock l:Uids.Uid="Ui_Text_ImportLib_Text" FontSize="14"/>
-                                                </StackPanel>
+                                            <input:ArcButton Grid.Column="1" Command="{x:Bind ImportCommand}"
+                                                Height="Auto" MinHeight="32" MinWidth="76" MaxWidth="220" Padding="12,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                                <TextBlock l:Uids.Uid="Ui_Text_ImportLib_Text" FontSize="14" TextWrapping="Wrap" TextAlignment="Center"/>
                                             </input:ArcButton>
 
-                                            <input:ArcButton Command="{x:Bind SaveCommand}">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock l:Uids.Uid="Ui_Text_Save_Text" FontSize="14"/>
-                                                </StackPanel>
+                                            <input:ArcButton Grid.Column="2" Command="{x:Bind SaveCommand}"
+                                                Height="Auto" MinHeight="32" MinWidth="76" MaxWidth="220" Padding="12,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center">
+                                                <TextBlock l:Uids.Uid="Ui_Text_Save_Text" FontSize="14" TextWrapping="Wrap" TextAlignment="Center"/>
                                             </input:ArcButton>
 
                                             <input:ArcButton
+                                                Grid.Column="3" Height="Auto" MinHeight="32" MinWidth="76" MaxWidth="220" Padding="12,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center"
                                                 Command="{x:Bind RemoveCommand}"
                                                 BorderBrush="#FFE0B0B0"
                                                 Background="#20FF4D6A"
                                                 Foreground="#FFD13438">
-                                                <StackPanel Orientation="Horizontal" Spacing="6">
-                                                    <TextBlock l:Uids.Uid="Ui_Text_Delete_Text" FontSize="14" Foreground="#FFD13438"/>
-                                                </StackPanel>
+                                                <TextBlock l:Uids.Uid="Ui_Text_Delete_Text" FontSize="14" Foreground="#FFD13438" TextWrapping="Wrap" TextAlignment="Center"/>
                                             </input:ArcButton>
-                                        </StackPanel>
+                                        </Grid>
                                     </Grid>
 
                                     <ProgressBar

@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\LocalizedTestStrings.cs" Link="Support\LocalizedTestStrings.cs" />
     <ProjectReference Include="..\..\src\VirtualPaper.Common\VirtualPaper.Common.csproj" />
     <ProjectReference Include="..\..\src\VirtualPaper.Grpc.Service\VirtualPaper.Grpc.Service.csproj" />
     <PackageReference Include="GrpcDotNetNamedPipes" Version="3.0.0" />

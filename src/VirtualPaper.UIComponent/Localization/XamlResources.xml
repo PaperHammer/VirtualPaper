@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- XAML property key -> source string key. Translations live only in Strings/<locale>/Resources.resw. -->
+<!-- XAML property key -> source string key. Translations live in localization/Strings/<locale>/Resources.resw. -->
 <Resources>
   <Resource Name="Ui_Add_To_Lib_AddWallpaperDrop_Text.Text" Source="Add_To_Lib_AddWallpaperDrop" />
   <Resource Name="Ui_Add_To_Lib_DragDropFile_Text.Text" Source="Add_To_Lib_DragDropFile" />
@@ -191,6 +191,7 @@
   <Resource Name="Ui_Settings_System_Developer_Log_Text.Text" Source="Settings_System_Developer_Log" />
   <Resource Name="Ui_Settings_System_Text_Debug_Content.Content" Source="Settings_System_Text_Debug" />
   <Resource Name="Ui_Settings_System_Text_Developer_Text.Text" Source="Settings_System_Text_Developer" />
+  <Resource Name="Ui_SidebarIntelligent_FullName.ToolTipService.ToolTip" Source="SidebarIntelligentFullName" />
   <Resource Name="Ui_SidebarIntelligent_Text.Text" Source="SidebarIntelligent" />
   <Resource Name="Ui_SidebarProject_Text.Text" Source="SidebarProject" />
   <Resource Name="Ui_SidebarRepository_Text.Text" Source="SidebarRepository" />

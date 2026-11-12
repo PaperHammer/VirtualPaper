@@ -1,0 +1,2132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppSettings_SelBarItem1_General" xml:space="preserve">
+    <value>Общие</value>
+  </data>
+  <data name="AppSettings_SelBarItem2_Performance" xml:space="preserve">
+    <value>Производительность</value>
+  </data>
+  <data name="AppSettings_SelBarItem3_System" xml:space="preserve">
+    <value>Система</value>
+  </data>
+  <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
+    <value>Другое</value>
+  </data>
+  <data name="Text_Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="Text_Detect" xml:space="preserve">
+    <value>Обнаружить</value>
+  </data>
+  <data name="Text_Identify" xml:space="preserve">
+    <value>Определить</value>
+  </data>
+  <data name="Effect_Help_Parallax" xml:space="preserve">
+    <value>Когда рабочий стол в фокусе, обои следуют за движением мыши, создавая эффект параллакса.</value>
+  </data>
+  <data name="Effect_Help_Scaling" xml:space="preserve">
+    <value>Растянуть: заполняет всю область без сохранения пропорций. При несовпадении пропорций изображение искажается.
+
+Вписать: показывает изображение целиком с сохранением пропорций. По краям могут появиться поля.
+
+Заполнить: заполняет область с сохранением пропорций. Выступающие части обрезаются.
+
+Исходный размер: сохраняет исходные размеры.
+
+Только уменьшать: выбирает меньший размер из вариантов «Исходный размер» и «Вписать».</value>
+  </data>
+  <data name="Dialog_Content_ApplyError" xml:space="preserve">
+    <value>Не удалось применить обои. Повторите попытку.</value>
+  </data>
+  <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
+    <value>Доступно мониторов:</value>
+  </data>
+  <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
+    <value>Поддерживаемые форматы:
+    Анимация: .gif .apng
+    Изображения: .jpg .jpeg .bmp .png
+    Видео: .mp4 .webm
+
+Не удаётся импортировать файл: </value>
+  </data>
+  <data name="Dialog_Content_Import_NeedUpdate" xml:space="preserve">
+    <value>Данные обоев можно обновить для поддержки новых функций. Обновить?</value>
+  </data>
+  <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
+    <value>Обои и их файлы будут удалены из библиотеки. Это действие нельзя отменить.</value>
+  </data>
+  <data name="Dialog_Content_LibraryDeleteMany" xml:space="preserve">
+    <value>Выбранные обои и их файлы будут удалены из библиотеки. Это действие нельзя отменить.</value>
+  </data>
+  <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
+    <value>Поддерживаемые форматы:
+    Анимация: .gif
+    Изображения: .jpg .jpeg .bmp .png</value>
+  </data>
+  <data name="Dialog_Content_WpIsUsing" xml:space="preserve">
+    <value>Файл используется как обои и не может быть удалён.</value>
+  </data>
+  <data name="Dialog_Title_CreateType" xml:space="preserve">
+    <value>Выберите режим обоев</value>
+  </data>
+  <data name="Dialog_Title_Prompt" xml:space="preserve">
+    <value>Уведомление</value>
+  </data>
+  <data name="Dialog_Title_LibraryDelete" xml:space="preserve">
+    <value>Удалить обои?</value>
+  </data>
+  <data name="Dialog_Title_LibraryDeleteMany" xml:space="preserve">
+    <value>Удалить эти обои ({0})?</value>
+  </data>
+  <data name="Dialog_Title_LibraryUpgrade" xml:space="preserve">
+    <value>Обновить данные обоев?</value>
+  </data>
+  <data name="Dialog_Title_RecentProjectMissing" xml:space="preserve">
+    <value>Удалить запись об отсутствующем проекте?</value>
+  </data>
+  <data name="Text_Create" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="Text_RemoveRecord" xml:space="preserve">
+    <value>Удалить запись</value>
+  </data>
+  <data name="Text_Rename" xml:space="preserve">
+    <value>Переименовать</value>
+  </data>
+  <data name="Text_Upgrade" xml:space="preserve">
+    <value>Обновить</value>
+  </data>
+  <data name="InfobarMsg_Cancel" xml:space="preserve">
+    <value>Операция отменена.</value>
+  </data>
+  <data name="InfobarMsg_Err" xml:space="preserve">
+    <value>Произошла ошибка.</value>
+  </data>
+  <data name="InfobarMsg_Success" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="AppUpdater_UpdateFailedMessage" xml:space="preserve">
+    <value>Не удалось обновить. Повторите попытку или скачайте полный установщик.</value>
+  </data>
+  <data name="Settings_General_Version_Plugins" xml:space="preserve">
+    <value>Версия плагинов</value>
+  </data>
+  <data name="PluginsUpdate_InvalidInfo" xml:space="preserve">
+    <value>Недопустимые сведения об обновлении</value>
+  </data>
+  <data name="PluginsUpdate_Starting" xml:space="preserve">
+    <value>Запуск обновления…</value>
+  </data>
+  <data name="PluginsUpdate_Completed" xml:space="preserve">
+    <value>Обновление завершено. Интерфейс будет перезапущен.</value>
+  </data>
+  <data name="PluginsUpdate_Failed" xml:space="preserve">
+    <value>Ошибка обновления: {0}</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Downloading" xml:space="preserve">
+    <value>Загрузка плагинов…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>Резервное копирование текущих плагинов…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Replacing" xml:space="preserve">
+    <value>Замена файлов плагинов…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Completed" xml:space="preserve">
+    <value>Завершено</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Failed" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="PluginsUpdate_Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="Text_Apply" xml:space="preserve">
+    <value>Применить</value>
+  </data>
+  <data name="Text_ApplyToLockBG" xml:space="preserve">
+    <value>Установить на экран блокировки</value>
+  </data>
+  <data name="Text_RemoveFromLib" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="WpLib_SelectAll" xml:space="preserve">
+    <value>Выбрать всё</value>
+  </data>
+  <data name="WpLib_InvertSelection" xml:space="preserve">
+    <value>Инвертировать выбор</value>
+  </data>
+  <data name="WpLib_SelectedCount" xml:space="preserve">
+    <value>Выбрано: {0}</value>
+  </data>
+  <data name="WpLib_AddWallpaper" xml:space="preserve">
+    <value>Добавить обои</value>
+  </data>
+  <data name="WpLib_SelectItems" xml:space="preserve">
+    <value>Выбрать обои</value>
+  </data>
+  <data name="WpLib_DisplayControls" xml:space="preserve">
+    <value>Управление экранами</value>
+  </data>
+  <data name="Text_ShowOnDisk" xml:space="preserve">
+    <value>Открыть в проводнике</value>
+  </data>
+  <data name="Text_UpdateConfig" xml:space="preserve">
+    <value>Обновить основные сведения</value>
+  </data>
+  <data name="ScreenSaver_Add" xml:space="preserve">
+    <value>Добавить приложение</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>Анимация заставки</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>Рекомендуется при использовании неподвижного изображения в качестве фона заставки.</value>
+  </data>
+  <data name="ScreenSaver_RunningLock" xml:space="preserve">
+    <value>Показывать экран входа при возобновлении</value>
+  </data>
+  <data name="ScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>Рекомендуется включить эту настройку для защиты данных устройства.</value>
+  </data>
+  <data name="ScreenSaver_SeekFromList" xml:space="preserve">
+    <value>Поиск приложений</value>
+  </data>
+  <data name="ScreenSaver_Server" xml:space="preserve">
+    <value>Включить заставку</value>
+  </data>
+  <data name="ScreenSaver_ServerExplain" xml:space="preserve">
+    <value>Использовать обои основного монитора в качестве фона заставки.</value>
+  </data>
+  <data name="ScreenSaver_WaitingTime" xml:space="preserve">
+    <value>Время бездействия (минуты)</value>
+  </data>
+  <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>Заставка не запускается, пока приложение из этого списка находится на переднем плане.</value>
+  </data>
+  <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>Список исключений приложений</value>
+  </data>
+  <data name="ScreenSaver__effectBubble" xml:space="preserve">
+    <value>Пузыри</value>
+  </data>
+  <data name="ScreenSaver__effectNone" xml:space="preserve">
+    <value>Нет</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
+    <value>Папка хранения</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorageExplain" xml:space="preserve">
+    <value>При смене папки всё содержимое копируется в новую папку.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip" xml:space="preserve">
+    <value>Изменить папку</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip" xml:space="preserve">
+    <value>Открыть папку</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguage" xml:space="preserve">
+    <value>Настройки языка</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
+    <value>Изменения языка применяются сразу.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
+    <value>Материал интерфейса</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
+    <value>После смены материала фона требуется перезапуск интерфейса.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink" xml:space="preserve">
+    <value>Акрил</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink" xml:space="preserve">
+    <value>Слюда</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppTheme" xml:space="preserve">
+    <value>Тема приложения</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeExplain" xml:space="preserve">
+    <value>После смены темы требуется перезапуск интерфейса.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeHyperlink" xml:space="preserve">
+    <value>Настройки темы Windows</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
+    <value>Запускать вместе с Windows</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
+    <value>Virtual Paper запускается автоматически и восстанавливает настройки обоев.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdAcrylic" xml:space="preserve">
+    <value>Акрил</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdDefault" xml:space="preserve">
+    <value>По умолчанию</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdMica" xml:space="preserve">
+    <value>Слюда</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeDark" xml:space="preserve">
+    <value>Тёмная</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeFollowSystem" xml:space="preserve">
+    <value>Как в системе</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeLight" xml:space="preserve">
+    <value>Светлая</value>
+  </data>
+  <data name="Settings_General_Text_AppearanceAndAction" xml:space="preserve">
+    <value>Внешний вид и поведение</value>
+  </data>
+  <data name="Settings_General_Text_Version" xml:space="preserve">
+    <value>Версия</value>
+  </data>
+  <data name="Settings_General_Version_Download" xml:space="preserve">
+    <value>Скачать сейчас</value>
+  </data>
+  <data name="Settings_General_Version_DownloadCancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="Settings_General_Version_DownloadStart" xml:space="preserve">
+    <value>Скачать</value>
+  </data>
+  <data name="Settings_General_Version_FindNew" xml:space="preserve">
+    <value>Доступна новая версия</value>
+  </data>
+  <data name="Settings_General_Version_Install" xml:space="preserve">
+    <value>Установить</value>
+  </data>
+  <data name="Settings_General_Version_LastCheckDate" xml:space="preserve">
+    <value>Последняя проверка:</value>
+  </data>
+  <data name="Settings_General_Version_MsStore" xml:space="preserve">
+    <value>Версия Microsoft Store</value>
+  </data>
+  <data name="Settings_General_Version_NewVersionDownLoadedTitle" xml:space="preserve">
+    <value>Загрузка завершена</value>
+  </data>
+  <data name="Settings_General_Version_Release_Notes" xml:space="preserve">
+    <value>Примечания к выпуску</value>
+  </data>
+  <data name="Settings_General_Version_SeeNews" xml:space="preserve">
+    <value>Что нового</value>
+  </data>
+  <data name="Settings_General_Version_UpdateCheck" xml:space="preserve">
+    <value>Проверить обновления</value>
+  </data>
+  <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
+    <value>Не удалось обновить. Проверьте подключение к сети.</value>
+  </data>
+  <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
+    <value>Установлена последняя версия!</value>
+  </data>
+  <data name="Settings_Others_About_Basic" xml:space="preserve">
+    <value>Спасибо за загрузку приложения!
+Virtual Paper — бесплатное и лёгкое приложение для Windows 10 и новее, предназначенное для управления обоями и настройки рабочего стола. Сообщите нам, если обнаружите проблему.
+Автор: PaperHammer</value>
+  </data>
+  <data name="Settings_Others_More_Document" xml:space="preserve">
+    <value>Документация</value>
+  </data>
+  <data name="Settings_Others_More_DocumentExplain" xml:space="preserve">
+    <value>Руководства и справка</value>
+  </data>
+  <data name="Settings_Others_More_ReportBug" xml:space="preserve">
+    <value>Сообщить об уязвимости или ошибке</value>
+  </data>
+  <data name="Settings_Others_More_ReportBugExplain" xml:space="preserve">
+    <value>Сообщайте о проблемах и помогайте улучшать приложение.</value>
+  </data>
+  <data name="Settings_Others_More_RequestFunc" xml:space="preserve">
+    <value>Предложить функцию</value>
+  </data>
+  <data name="Settings_Others_More_RequestFuncExplain" xml:space="preserve">
+    <value>Делитесь идеями и помогайте улучшать приложение.</value>
+  </data>
+  <data name="Settings_Others_More_SourceCode" xml:space="preserve">
+    <value>Репозитории GitHub</value>
+  </data>
+  <data name="Settings_Others_More_SourceCodeExplain" xml:space="preserve">
+    <value>Поддержать проект звездой</value>
+  </data>
+  <data name="Settings_Others_Text_About" xml:space="preserve">
+    <value>О приложении</value>
+  </data>
+  <data name="Settings_Others_Text_More" xml:space="preserve">
+    <value>Ещё</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPoweredn" xml:space="preserve">
+    <value>При работе от батареи</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPowerednExplain" xml:space="preserve">
+    <value>Поведение обоев при отключении питания</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSaving" xml:space="preserve">
+    <value>Энергосбережение</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSavingExplain" xml:space="preserve">
+    <value>Поведение обоев в режиме энергосбережения Windows</value>
+  </data>
+  <data name="Settings_Perforemance_Play_Audio" xml:space="preserve">
+    <value>Воспроизводить звук только при фокусе на рабочем столе</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocus" xml:space="preserve">
+    <value>Активное приложение в полноэкранном режиме</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocusExplain" xml:space="preserve">
+    <value>Поведение обоев, когда активное приложение работает в полноэкранном режиме</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreen" xml:space="preserve">
+    <value>Другие приложения в полноэкранном режиме</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreenExplain" xml:space="preserve">
+    <value>Поведение обоев, когда другие приложения или игры работают в полноэкранном режиме</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_KeepRun" xml:space="preserve">
+    <value>Продолжать работу</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Pause" xml:space="preserve">
+    <value>Приостановить</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Silence" xml:space="preserve">
+    <value>Отключить звук</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktop" xml:space="preserve">
+    <value>Удалённый рабочий стол</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktopExplain" xml:space="preserve">
+    <value>Поведение обоев при подключении к удалённому рабочему столу</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanism" xml:space="preserve">
+    <value>Область действия правил</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForAll" xml:space="preserve">
+    <value>Все: правило, сработавшее на одном мониторе, меняет состояние обоев на всех мониторах.</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForPer" xml:space="preserve">
+    <value>Отдельно: меняет состояние обоев только на мониторе, где сработало правило.</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_all" xml:space="preserve">
+    <value>Все</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_per" xml:space="preserve">
+    <value>Отдельно</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Laptop" xml:space="preserve">
+    <value>Ноутбук</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Play" xml:space="preserve">
+    <value>Воспроизвести</value>
+  </data>
+  <data name="Settings_Perforemance_Text_System" xml:space="preserve">
+    <value>Система</value>
+  </data>
+  <data name="Settings_System_Developer_Debug" xml:space="preserve">
+    <value>Отладчик</value>
+  </data>
+  <data name="Settings_System_Developer_DebugExplain" xml:space="preserve">
+    <value>Показывает подробные сведения об операциях во время работы приложения.</value>
+  </data>
+  <data name="Settings_System_Developer_Log" xml:space="preserve">
+    <value>Журнал</value>
+  </data>
+  <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
+    <value>Создать диагностический отчёт</value>
+  </data>
+  <data name="Settings_System_Text_Debug" xml:space="preserve">
+    <value>Открыть</value>
+  </data>
+  <data name="Settings_System_Text_Developer" xml:space="preserve">
+    <value>Для разработчиков</value>
+  </data>
+  <data name="SidebarAccount" xml:space="preserve">
+    <value>Учётная запись</value>
+  </data>
+  <data name="SidebarAppSettings" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="SidebarGallery" xml:space="preserve">
+    <value>Галерея</value>
+  </data>
+  <data name="SidebarProject" xml:space="preserve">
+    <value>Проект</value>
+  </data>
+  <data name="SidebarRepository" xml:space="preserve">
+    <value>Репозиторий</value>
+  </data>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>Настроить</value>
+  </data>
+  <data name="Text_Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="Text_Confirm" xml:space="preserve">
+    <value>Подтвердить</value>
+  </data>
+  <data name="Text_Delete" xml:space="preserve">
+    <value>Удалить</value>
+  </data>
+  <data name="Text_Loading" xml:space="preserve">
+    <value>Загрузка данных. Подождите.</value>
+  </data>
+  <data name="Text_Restore" xml:space="preserve">
+    <value>Восстановить</value>
+  </data>
+  <data name="Text_WpArrange" xml:space="preserve">
+    <value>Расположение обоев</value>
+  </data>
+  <data name="WpArrange_Duplicate" xml:space="preserve">
+    <value>Дублировать</value>
+  </data>
+  <data name="WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>На остальных мониторах отображаются те же обои, что и на основном.</value>
+  </data>
+  <data name="WpArrange_Expand" xml:space="preserve">
+    <value>Расширить</value>
+  </data>
+  <data name="WpArrange_ExpandExplain" xml:space="preserve">
+    <value>Растягивает обои основного монитора на все мониторы.</value>
+  </data>
+  <data name="WpArrange_Per" xml:space="preserve">
+    <value>Отдельно</value>
+  </data>
+  <data name="WpArrange_PerExplain" xml:space="preserve">
+    <value>На каждом мониторе отображаются отдельные обои.</value>
+  </data>
+  <data name="Text_AspectRatio" xml:space="preserve">
+    <value>Соотношение сторон:</value>
+  </data>
+  <data name="Text_Details" xml:space="preserve">
+    <value>Сведения</value>
+  </data>
+  <data name="Text_FileExtension" xml:space="preserve">
+    <value>Тип файла:</value>
+  </data>
+  <data name="Text_FileSize" xml:space="preserve">
+    <value>Размер файла:</value>
+  </data>
+  <data name="Text_Resolution" xml:space="preserve">
+    <value>Разрешение:</value>
+  </data>
+  <data name="Text_Type" xml:space="preserve">
+    <value>Тип обоев:</value>
+  </data>
+  <data name="Text_EffectConfig" xml:space="preserve">
+    <value>Доступные настройки</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
+    <value>Более реалистичный эффект параллакса с повышенным расходом ресурсов.</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Title" xml:space="preserve">
+    <value>3D-обои на основе модели ИИ</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Explain" xml:space="preserve">
+    <value>Эффект псевдо-3D-параллакса с умеренным расходом ресурсов.</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
+    <value>Обычные обои</value>
+  </data>
+  <data name="WpLib_TypeFilter_All" xml:space="preserve">
+    <value>Фильтры</value>
+  </data>
+  <data name="WpLib_TypeFilterHeading" xml:space="preserve"><value>Тип</value></data>
+  <data name="WpLib_CardType_Image" xml:space="preserve"><value>Изображение</value></data>
+  <data name="WpLib_CardType_Gif" xml:space="preserve"><value>GIF</value></data>
+  <data name="WpLib_CardType_Web" xml:space="preserve"><value>Web</value></data>
+  <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
+    <value>Изображение</value>
+  </data>
+  <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
+    <value>Анимированное изображение</value>
+  </data>
+  <data name="WpLib_TypeFilter_Video" xml:space="preserve">
+    <value>Видео</value>
+  </data>
+  <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
+    <value>Web</value>
+  </data>
+  <data name="WpLib_Search_Placeholder" xml:space="preserve">
+    <value>Поиск обоев…</value>
+  </data>
+  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
+    <value>Содержимое библиотеки</value>
+  </data>
+  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
+    <value>Заставка</value>
+  </data>
+  <data name="Text_Edit_Desc" xml:space="preserve">
+    <value>Описание:</value>
+  </data>
+  <data name="Text_Edit_Tags" xml:space="preserve">
+    <value>Теги:</value>
+  </data>
+  <data name="Text_Edit_Title" xml:space="preserve">
+    <value>Название:</value>
+  </data>
+  <data name="Text_Edit" xml:space="preserve">
+    <value>Редактировать</value>
+  </data>
+  <data name="Text_Preview" xml:space="preserve">
+    <value>Предпросмотр</value>
+  </data>
+  <data name="Text_Off" xml:space="preserve">
+    <value>Выкл.</value>
+  </data>
+  <data name="Text_On" xml:space="preserve">
+    <value>Вкл.</value>
+  </data>
+  <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
+    <value>Корневая папка данных приложения не может использоваться для хранения обоев.</value>
+  </data>
+  <data name="Text_VersionInfo" xml:space="preserve">
+    <value>Версия:</value>
+  </data>
+  <data name="InfobarMsg_ImportErr" xml:space="preserve">
+    <value>Ошибка импорта файла</value>
+  </data>
+  <data name="Text_FileUsing" xml:space="preserve">
+    <value>Файл используется как обои. Закройте обои и повторите попытку.</value>
+  </data>
+  <data name="Project_RecentUsed" xml:space="preserve">
+    <value>Открыть недавний проект</value>
+  </data>
+  <data name="Project_SearchRecentUsed" xml:space="preserve">
+    <value>Поиск недавних элементов</value>
+  </data>
+  <data name="Project_StartUp" xml:space="preserve">
+    <value>Начало работы</value>
+  </data>
+  <data name="Project_StartUp_OpenFile" xml:space="preserve">
+    <value>Открыть файлы (F)</value>
+  </data>
+  <data name="Project_StartUp_OpenFile_Desc" xml:space="preserve">
+    <value>Открыть поддерживаемые файлы</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder_Desc" xml:space="preserve">
+    <value>Просмотр и редактирование поддерживаемых файлов в папке.</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd" xml:space="preserve">
+    <value>Открыть дизайн (V)</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd_Desc" xml:space="preserve">
+    <value>Открыть локальный файл .vpd</value>
+  </data>
+  <data name="Project_StartUp_NewVpd" xml:space="preserve">
+    <value>Создать дизайн</value>
+  </data>
+  <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
+    <value>Выберите шаблон проекта, чтобы начать</value>
+  </data>
+  <data name="Project_ContinueWithoutFile" xml:space="preserve">
+    <value>Продолжить без файлов (W)</value>
+  </data>
+  <data name="Project_DeployNewDraft" xml:space="preserve">
+    <value>Настроить новый дизайн</value>
+  </data>
+  <data name="Project_DeployNewDraft_Create" xml:space="preserve">
+    <value>Создать (N)</value>
+  </data>
+  <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="Project_NewDraftName" xml:space="preserve">
+    <value>Название дизайна (J)</value>
+  </data>
+  <data name="Project_NewDraftName_Placeholder" xml:space="preserve">
+    <value>Введите название дизайна</value>
+  </data>
+  <data name="Project_NewDraftPosition" xml:space="preserve">
+    <value>Положение</value>
+  </data>
+  <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
+    <value>Выбрать папку</value>
+  </data>
+  <data name="Project_DeployNewDraft_Desc" xml:space="preserve">
+    <value>Дизайн будет создан в папке:</value>
+  </data>
+  <data name="Project_NewName_InvalidTip" xml:space="preserve">
+    <value>Название пустое или недопустимое (не более 30 символов).</value>
+  </data>
+  <data name="WebBackdrop_FileTree_FilterPlaceholder" xml:space="preserve">
+    <value>Фильтр файлов…</value>
+  </data>
+  <data name="Project_NewPosition_InvalidTip" xml:space="preserve">
+    <value>Путь пустой или недопустимый (не более 200 символов).</value>
+  </data>
+  <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
+    <value>Далее</value>
+  </data>
+  <data name="Project_SearchTemplate" xml:space="preserve">
+    <value>Поиск шаблона проекта</value>
+  </data>
+  <data name="Project_TemplateConfig" xml:space="preserve">
+    <value>Создать проект</value>
+  </data>
+  <data name="Project_NewProjectName" xml:space="preserve">
+    <value>Название проекта</value>
+  </data>
+  <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
+    <value>Введите название проекта</value>
+  </data>
+  <data name="DirExsits" xml:space="preserve">
+    <value>Похожий путь уже существует.</value>
+  </data>
+  <data name="Draft_SI_LayerLocked" xml:space="preserve">
+    <value>Выбранный слой заблокирован и недоступен для редактирования.</value>
+  </data>
+  <data name="Draft_Canvas_DefaultName" xml:space="preserve">
+    <value>Холст</value>
+  </data>
+  <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
+    <value>В проекте возникла ошибка. Попробуйте перезагрузить его.</value>
+  </data>
+  <data name="SIG_Text_AddLayer" xml:space="preserve">
+    <value>Создать слой</value>
+  </data>
+  <data name="SIG_Text_DeleteLayer" xml:space="preserve">
+    <value>Удалить слой</value>
+  </data>
+  <data name="SIG_Text_RenameLayer" xml:space="preserve">
+    <value>Переименовать слой</value>
+  </data>
+  <data name="SIG_Text_CopyLayer" xml:space="preserve">
+    <value>Копировать слой</value>
+  </data>
+  <data name="RenameDialog_Text_AfterChange" xml:space="preserve">
+    <value>После:</value>
+  </data>
+  <data name="RenameDialog_Text_BeforeChange" xml:space="preserve">
+    <value>До:</value>
+  </data>
+  <data name="Dialog_Title_Rename" xml:space="preserve">
+    <value>Переименовать</value>
+  </data>
+  <data name="Project_CannotDelete_OnlyCanvas" xml:space="preserve">
+    <value>Нельзя удалить единственный слой.</value>
+  </data>
+  <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить слой: </value>
+  </data>
+  <data name="Project_STI_LayerLoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить слой: </value>
+  </data>
+  <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
+    <value>Добавить в пользовательские цвета</value>
+  </data>
+  <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
+    <value>Ширина и высота должны быть от 1 до {0} пикселей (ограничение текущего GPU). Восстановлен размер {1} × {2}.</value>
+  </data>
+  <data name="Account_Email_InvalidTip" xml:space="preserve">
+    <value>Неверный формат адреса электронной почты.</value>
+  </data>
+  <data name="Account_Pwd_InvalidTip" xml:space="preserve">
+    <value>Пароль должен содержать от 8 до 32 символов, включая как минимум:
+одну заглавную букву, одну строчную букву, одну цифру и один специальный символ</value>
+  </data>
+  <data name="Account_LoginWithAccount" xml:space="preserve">
+    <value>Войти в учётную запись</value>
+  </data>
+  <data name="Account_EmailText" xml:space="preserve">
+    <value>Электронная почта</value>
+  </data>
+  <data name="Account_EmailTextWithColon" xml:space="preserve">
+    <value>Электронная почта:</value>
+  </data>
+  <data name="Account_PwdText" xml:space="preserve">
+    <value>Пароль</value>
+  </data>
+  <data name="Account_PwdTextWithColon" xml:space="preserve">
+    <value>Пароль:</value>
+  </data>
+  <data name="Account_RegisterWithEmail" xml:space="preserve">
+    <value>Создать учётную запись</value>
+  </data>
+  <data name="Account_ConfirmPwdText" xml:space="preserve">
+    <value>Подтвердите пароль</value>
+  </data>
+  <data name="Account_ConfirmPwdTextWithColon" xml:space="preserve">
+    <value>Подтверждение:</value>
+  </data>
+  <data name="Account_CodeText" xml:space="preserve">
+    <value>Код подтверждения</value>
+  </data>
+  <data name="Account_CodeTextWithColon" xml:space="preserve">
+    <value>Код подтверждения:</value>
+  </data>
+  <data name="Account_UsernameText" xml:space="preserve">
+    <value>Имя пользователя</value>
+  </data>
+  <data name="Account_UsernameTextWithColon" xml:space="preserve">
+    <value>Имя пользователя:</value>
+  </data>
+  <data name="Account_LoginText" xml:space="preserve">
+    <value>Войти</value>
+  </data>
+  <data name="Account_RegisterText" xml:space="preserve">
+    <value>Зарегистрироваться</value>
+  </data>
+  <data name="Account_BackText" xml:space="preserve">
+    <value>Назад</value>
+  </data>
+  <data name="Account_RequestCodeText" xml:space="preserve">
+    <value>Запросить</value>
+  </data>
+  <data name="Server_Success" xml:space="preserve">
+    <value>Операция выполнена</value>
+  </data>
+  <data name="Server_InnerError" xml:space="preserve">
+    <value>Внутренняя ошибка сервера. Повторите попытку позже.</value>
+  </data>
+  <data name="Server_EmailFormatIllegal" xml:space="preserve">
+    <value>Неверный формат электронной почты</value>
+  </data>
+  <data name="Server_EmailOccupied" xml:space="preserve">
+    <value>Этот адрес электронной почты уже используется.</value>
+  </data>
+  <data name="Server_UsernameFormatIllegal" xml:space="preserve">
+    <value>Неверный формат имени пользователя.</value>
+  </data>
+  <data name="Server_UsernameOccupied" xml:space="preserve">
+    <value>Это имя пользователя уже занято.</value>
+  </data>
+  <data name="Server_PasswordFormatIllegal" xml:space="preserve">
+    <value>Неверный формат пароля.</value>
+  </data>
+  <data name="Server_ConfirmPasswordIllegal" xml:space="preserve">
+    <value>Введённые пароли не совпадают.</value>
+  </data>
+  <data name="Server_UsernameNotFindOrPasswordError" xml:space="preserve">
+    <value>Пользователь не существует или пароль неверен.</value>
+  </data>
+  <data name="Server_SecurityCodeError" xml:space="preserve">
+    <value>Код подтверждения неверен или срок его действия истёк.</value>
+  </data>
+  <data name="Server_PotentialRisks" xml:space="preserve">
+    <value>Операция остановлена из-за возможного риска.</value>
+  </data>
+  <data name="Server_Inaccessible" xml:space="preserve">
+    <value>Нет доступа к этому содержимому.</value>
+  </data>
+  <data name="Account_Username_InvalidTip" xml:space="preserve">
+    <value>Имя пользователя должно содержать от 3 до 20 символов. Допустимы:
+буквы, цифры (0–9), подчёркивание (_), точка (.), дефис (-) и большинство символов Unicode.
+Точка и дефис не могут стоять в начале или конце.
+Запрещённые имена: admin, root, test, guest, user, system</value>
+  </data>
+  <data name="Server_CannotAccess" xml:space="preserve">
+    <value>Не удаётся подключиться к серверу.</value>
+  </data>
+  <data name="Account_ConfirmPwd_InvalidTip" xml:space="preserve">
+    <value>Не совпадает с текущим паролем.</value>
+  </data>
+  <data name="Account_SelBarItem1_Cloud" xml:space="preserve">
+    <value>Облако</value>
+  </data>
+  <data name="Account_SelBarItem2_Star" xml:space="preserve">
+    <value>Избранное</value>
+  </data>
+  <data name="Account_SelBarItem3_Upload" xml:space="preserve">
+    <value>Загрузить</value>
+  </data>
+  <data name="InnerErr" xml:space="preserve">
+    <value>Внутренняя ошибка клиента</value>
+  </data>
+  <data name="Account_DefaultSign" xml:space="preserve">
+    <value>Пока нет записей</value>
+  </data>
+  <data name="Account_AvatarDesc" xml:space="preserve">
+    <value>Добавьте фотографию профиля. Она будет отображаться в приложениях, использующих вашу учётную запись.</value>
+  </data>
+  <data name="Account_ChangeAvatar" xml:space="preserve">
+    <value>Изменить фото профиля</value>
+  </data>
+  <data name="Account_Username" xml:space="preserve">
+    <value>Имя пользователя</value>
+  </data>
+  <data name="Account_Sign" xml:space="preserve">
+    <value>Подпись</value>
+  </data>
+  <data name="Account_UserAccount" xml:space="preserve">
+    <value>Учётная запись</value>
+  </data>
+  <data name="Account_PersonalInfo" xml:space="preserve">
+    <value>Личные данные</value>
+  </data>
+  <data name="Account_Email" xml:space="preserve">
+    <value>Электронная почта</value>
+  </data>
+  <data name="Account_Sign_InvalidTip" xml:space="preserve">
+    <value>Допустимые символы подписи:
+буквы любого языка, цифры, знаки препинания, специальные символы и пробелы.
+Длина: от 0 до 100 символов.</value>
+  </data>
+  <data name="Text_FileNotAccess" xml:space="preserve">
+    <value>Не удалось обработать файл. Проверьте его корректность.</value>
+  </data>
+  <data name="Text_FileSizeIllegal_5MB" xml:space="preserve">
+    <value>Недопустимый размер файла (не более 5 МБ).</value>
+  </data>
+  <data name="Account_Usersign_InvalidTip_Sim" xml:space="preserve">
+    <value>Неверный формат подписи.</value>
+  </data>
+  <data name="Account_UpdateUserInfo_Fail" xml:space="preserve">
+    <value>Не удалось обновить данные. Повторите попытку позже.</value>
+  </data>
+  <data name="Account_Username_InvalidTip_Sim" xml:space="preserve">
+    <value>Неверный формат имени пользователя.</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>Выйти из учётной записи</value>
+  </data>
+  <data name="MenuFlyout_Text_DetailAndEditInfo" xml:space="preserve">
+    <value>Сведения и редактирование</value>
+  </data>
+  <data name="MenuFlyout_Text_Downlaod" xml:space="preserve">
+    <value>Скачать</value>
+  </data>
+  <data name="App_UserNotLogin" xml:space="preserve">
+    <value>Некорректные данные входа. Войдите снова.</value>
+  </data>
+  <data name="Text_DeleteFromServer" xml:space="preserve">
+    <value>Удалить из облака</value>
+  </data>
+  <data name="Server_Account_Locked" xml:space="preserve">
+    <value>Учётная запись заблокирована. Обратитесь к администратору.</value>
+  </data>
+  <data name="Server_Authentication_Failed" xml:space="preserve">
+    <value>Не удалось подтвердить учётную запись. Войдите снова.</value>
+  </data>
+  <data name="SIG_CanvasSet_Header" xml:space="preserve">
+    <value>Холст</value>
+  </data>
+  <data name="SIG_CanvasSet_AdjustSize" xml:space="preserve">
+    <value>Изменить размер холста</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelWidth" xml:space="preserve">
+    <value>Ширина (пиксели)</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelHeight" xml:space="preserve">
+    <value>Высота (пиксели)</value>
+  </data>
+  <data name="SIG_CanvasSet_LockAspectRatio" xml:space="preserve">
+    <value>Сохранить пропорции</value>
+  </data>
+  <data name="SIG_CanvasSet_SacleContent" xml:space="preserve">
+    <value>Масштабировать содержимое холста</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateAndFlip" xml:space="preserve">
+    <value>Поворот и отражение</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateLeftNinety" xml:space="preserve">
+    <value>Повернуть на 90° влево</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateRightNinety" xml:space="preserve">
+    <value>Повернуть на 90° вправо</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipHorizon" xml:space="preserve">
+    <value>Отразить по горизонтали</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
+    <value>Отразить по вертикали</value>
+  </data>
+  <data name="Project_SI_Text_Layer" xml:space="preserve">
+    <value>Слой</value>
+  </data>
+  <data name="Project_SI_Text_Copy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="Project_SI_Text_UnnamedLayer" xml:space="preserve">
+    <value>Безымянный слой</value>
+  </data>
+  <data name="Project_SI_FileNotFound" xml:space="preserve">
+    <value>Файл отсутствует или перемещён. Удалить его из списка?</value>
+  </data>
+  <data name="SIG_Text_RemoveFromList" xml:space="preserve">
+    <value>Удалить из списка</value>
+  </data>
+  <data name="SIG_Text_CopyPath" xml:space="preserve">
+    <value>Копировать путь</value>
+  </data>
+  <data name="Settings_General_Version_DownloadingTitle" xml:space="preserve">
+    <value>Загрузка…</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedTitle" xml:space="preserve">
+    <value>Ошибка загрузки</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedMsg" xml:space="preserve">
+    <value>Не удаётся загрузить обновление. Проверьте подключение к интернету и повторите попытку.</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedTitle" xml:space="preserve">
+    <value>Ошибка проверки файла</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedMsg" xml:space="preserve">
+    <value>Пакет обновления может быть повреждён. Загрузите его снова.</value>
+  </data>
+  <data name="Settings_General_Version_DownLoadedMsg" xml:space="preserve">
+    <value>Обновление готово. Нажмите «Установить», чтобы начать.</value>
+  </data>
+  <data name="Text_ApplyAndClose" xml:space="preserve">
+    <value>Применить и закрыть</value>
+  </data>
+  <data name="Webview_SelBarItem1_GeneralEffect" xml:space="preserve">
+    <value>Общие эффекты</value>
+  </data>
+  <data name="Webview_SelBarItem2_GeneralInfo" xml:space="preserve">
+    <value>Основные сведения</value>
+  </data>
+  <data name="Text_FileInPreview" xml:space="preserve">
+    <value>Файл открыт в предпросмотре. Закройте предпросмотр и повторите попытку.</value>
+  </data>
+  <data name="Details_Text_FileProperty" xml:space="preserve">
+    <value>Свойства файла</value>
+  </data>
+  <data name="Webview_SelBarItem3_GeneralInfoEdit" xml:space="preserve">
+    <value>Редактировать</value>
+  </data>
+  <data name="Text_Save" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="RunningAsAdminWarning" xml:space="preserve">
+    <value>При запуске от имени администратора некоторые функции могут быть недоступны.</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles" xml:space="preserve">
+    <value>Выбрать файл</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles_Explain" xml:space="preserve">
+    <value>Добавить поддерживаемые файлы в библиотеку обоев</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolder" xml:space="preserve">
+    <value>Выбрать папку</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolderExplain" xml:space="preserve">
+    <value>Добавить все поддерживаемые файлы из папки в библиотеку</value>
+  </data>
+  <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
+    <value>Перетащите сюда для добавления</value>
+  </data>
+  <data name="Lib_NotAnyMore" xml:space="preserve">
+    <value>Конец списка</value>
+  </data>
+  <data name="Text_Drop_Files" xml:space="preserve">
+    <value>Перетащите файлы</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>Добавить обои</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Name" xml:space="preserve">
+    <value>Неподвижное изображение</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
+    <value>Пиксельное редактирование растровых изображений для рисования, ретуши и обработки фотографий.</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Name" xml:space="preserve">
+    <value>Веб-обои</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Desc" xml:space="preserve">
+    <value>Шаблон на основе веб-технологий для создания анимированных и интерактивных обоев на HTML/CSS/JS.</value>
+  </data>
+  <data name="Project_Create_New" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="Project_Open" xml:space="preserve">
+    <value>Открыть</value>
+  </data>
+  <data name="Project_Drops_Contains_Invalid_FIles" xml:space="preserve">
+    <value>Файл неподдерживаемого типа автоматически пропущен.</value>
+  </data>
+  <data name="Project_FileSave_Failed" xml:space="preserve">
+    <value>Не удалось сохранить файл: </value>
+  </data>
+  <data name="Project_FileLoad_Failed" xml:space="preserve">
+    <value>Не удалось загрузить файл: </value>
+  </data>
+  <data name="Project_SI_Text_BackgroundLayer" xml:space="preserve">
+    <value>Фон</value>
+  </data>
+  <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
+    <value>Возможно, файл повреждён: </value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerCopy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_FitView" xml:space="preserve">
+    <value>По размеру окна</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomIn" xml:space="preserve">
+    <value>Увеличить</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomOut" xml:space="preserve">
+    <value>Уменьшить</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Selection" xml:space="preserve">
+    <value>Выделение</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_PaintBrush" xml:space="preserve">
+    <value>Кисть</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Fill" xml:space="preserve">
+    <value>Заливка</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Eraser" xml:space="preserve">
+    <value>Ластик</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Crop" xml:space="preserve">
+    <value>Обрезать</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
+    <value>Холст</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Content" xml:space="preserve">
+    <value>содержит несохранённые изменения. Сохранить?</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Title" xml:space="preserve">
+    <value>Несохранённые изменения</value>
+  </data>
+  <data name="Text_Unsave" xml:space="preserve">
+    <value>Не сохранять</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_File" xml:space="preserve">
+    <value>Файл (F)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_CreateNew" xml:space="preserve">
+    <value>Создать</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_SaveAll" xml:space="preserve">
+    <value>Сохранить всё</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Exit" xml:space="preserve">
+    <value>Выход</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Edit" xml:space="preserve">
+    <value>Правка (E)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Undo" xml:space="preserve">
+    <value>Отменить</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Redo" xml:space="preserve">
+    <value>Повторить</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
+    <value>Справка (H)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
+    <value>О приложении</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
+    <value>Руководство</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
+    <value>Экспортировать</value>
+  </data>
+  <data name="Project_Export_Success" xml:space="preserve">
+    <value>Экспортировано в:</value>
+  </data>
+  <data name="Project_Export_Failed" xml:space="preserve">
+    <value>Ошибка экспорта:</value>
+  </data>
+  <data name="Project_Export_PathNotBeNone" xml:space="preserve">
+    <value>Путь экспорта не может быть пустым.</value>
+  </data>
+  <data name="Project_Export_InternalError" xml:space="preserve">
+    <value>Внутренняя ошибка. Попробуйте перезапустить приложение.</value>
+  </data>
+  <data name="Project_StaticImg_Text_Palette" xml:space="preserve">
+    <value>Палитра</value>
+  </data>
+  <data name="Text_Complete" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="Project_StaticImg_Text_Eraser" xml:space="preserve">
+    <value>Ластик</value>
+  </data>
+  <data name="Project_StaticImg_Text_WidthPixel" xml:space="preserve">
+    <value>Ширина (пиксели)</value>
+  </data>
+  <data name="Project_StaticImg_Text_OpacityPercent" xml:space="preserve">
+    <value>Непрозрачность (%)</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerSet" xml:space="preserve">
+    <value>Группа слоёв</value>
+  </data>
+  <data name="Project_StaticImg_Text_Paintbrush" xml:space="preserve">
+    <value>Кисть</value>
+  </data>
+  <data name="Project_StaticImg_Text_PaintbrushBox" xml:space="preserve">
+    <value>Выбор кистей</value>
+  </data>
+  <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
+    <value>Толщина (пиксели)</value>
+  </data>
+  <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
+    <value>Содержимое файла некорректно. Не удаётся его открыть.</value>
+  </data>
+  <data name="Text_Save_As" xml:space="preserve">
+    <value>Сохранить как</value>
+  </data>
+  <data name="EffectPrefix_Saturation" xml:space="preserve">
+    <value>Насыщенность</value>
+  </data>
+  <data name="EffectPrefix_Brightness" xml:space="preserve">
+    <value>Яркость</value>
+  </data>
+  <data name="EffectPrefix_Contrast" xml:space="preserve">
+    <value>Контраст</value>
+  </data>
+  <data name="EffectPrefix_Speed" xml:space="preserve">
+    <value>Скорость</value>
+  </data>
+  <data name="EffectPrefix_Volume" xml:space="preserve">
+    <value>Громкость</value>
+  </data>
+  <data name="EffectPrefix_Hue" xml:space="preserve">
+    <value>Цветовой тон</value>
+  </data>
+  <data name="EffectPrefix_Scale_Way" xml:space="preserve">
+    <value>Режим масштабирования</value>
+  </data>
+  <data name="EffectPrefix_Parallax" xml:space="preserve">
+    <value>Параллакс</value>
+  </data>
+  <data name="EffectPrefix_Time_Perception" xml:space="preserve">
+    <value>Адаптация ко времени суток</value>
+  </data>
+  <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
+    <value>Вычисляет восход и закат по вашему местоположению и адаптирует яркость и цветовые оттенки обоев к дневному свету, сумеркам и ночи.</value>
+  </data>
+  <data name="SidebarIntelligent" xml:space="preserve">
+    <value>ИИ</value>
+  </data>
+  <data name="SidebarIntelligentFullName" xml:space="preserve">
+    <value>Инструменты ИИ</value>
+  </data>
+  <data name="Intelligent_SelBarItem1_StyleTranfer" xml:space="preserve">
+    <value>Стилизация</value>
+  </data>
+  <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
+    <value>Улучшение</value>
+  </data>
+  <data name="Intelligent_Intro_Title" xml:space="preserve">
+    <value>Перенос стиля изображения</value>
+  </data>
+  <data name="Intelligent_Intro_Desc" xml:space="preserve">
+    <value>Переносит художественный стиль с одного изображения на другое с помощью ИИ. Выберите исходное изображение и образец стиля, чтобы создать изображение, сочетающее исходное содержимое и выбранный стиль.</value>
+  </data>
+  <data name="Intelligent_Intro_Warning" xml:space="preserve">
+    <value>Примечание: локальная облегчённая модель уменьшает изображения перед обработкой и восстанавливает размер после неё. Некоторые детали могут быть потеряны.</value>
+  </data>
+  <data name="Intelligent_SR_Title" xml:space="preserve">
+    <value>Улучшение изображения</value>
+  </data>
+  <data name="Intelligent_SR_Desc" xml:space="preserve">
+    <value>Улучшает изображения с помощью сверхразрешения ИИ.
+- Восстановление чёткости: возвращает детали размытым изображениям и изображениям низкого качества
+- Увеличение: повышает разрешение с сохранением исходных деталей</value>
+  </data>
+  <data name="Intelligent_SR_Warning" xml:space="preserve">
+    <value>Примечание: модель восстанавливает детали, поэтому результат может отличаться от оригинала. Обработка локальной облегчённой моделью может занять некоторое время.</value>
+  </data>
+  <data name="Intelligent_AddTask" xml:space="preserve">
+    <value>Задача добавлена</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img" xml:space="preserve">
+    <value>Оригинал</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
+    <value>Нажмите или перетащите исходное изображение</value>
+  </data>
+  <data name="Intelligent_Style_Lib" xml:space="preserve">
+    <value>Библиотека стилей</value>
+  </data>
+  <data name="Intelligent_Style_Inner_Select" xml:space="preserve">
+    <value>Выбрать встроенный стиль</value>
+  </data>
+  <data name="Intelligent_Style_Type_Custom" xml:space="preserve">
+    <value>Свой</value>
+  </data>
+  <data name="Intelligent_Task_Style_Img_Import" xml:space="preserve">
+    <value>Нажмите или выберите в библиотеке стилей</value>
+  </data>
+  <data name="Intelligent_Style_Img_Desc" xml:space="preserve">
+    <value>Образец стиля анализируется только локально. Рекомендуемый размер — около 1 МБ. Разрешение результата зависит от исходного изображения.</value>
+  </data>
+  <data name="Intelligent_Style_Type_Anime" xml:space="preserve">
+    <value>Аниме</value>
+  </data>
+  <data name="Intelligent_Style_Type_Cartoon" xml:space="preserve">
+    <value>Мультфильм</value>
+  </data>
+  <data name="Intelligent_Style_Type_Gongbi" xml:space="preserve">
+    <value>Гунби</value>
+  </data>
+  <data name="Intelligent_Style_Type_Pencil" xml:space="preserve">
+    <value>Карандаш</value>
+  </data>
+  <data name="Intelligent_Style_Type_Watercolor" xml:space="preserve">
+    <value>Акварель</value>
+  </data>
+  <data name="Intelligent_Style_Type_InkWash" xml:space="preserve">
+    <value>Тушь</value>
+  </data>
+  <data name="Intelligent_Style_Type_OilPainting" xml:space="preserve">
+    <value>Масляная живопись</value>
+  </data>
+  <data name="Intelligent_Style_Type_ColoredPencil" xml:space="preserve">
+    <value>Цветной карандаш</value>
+  </data>
+  <data name="Intelligent_Style_Type_OutlineDrawing" xml:space="preserve">
+    <value>Контурный рисунок</value>
+  </data>
+  <data name="Intelligent_Style_Type_Ukiyoe" xml:space="preserve">
+    <value>Укиё-э</value>
+  </data>
+  <data name="Intelligent_Task_Style" xml:space="preserve">
+    <value>Стиль</value>
+  </data>
+  <data name="Text_ImportLib" xml:space="preserve">
+    <value>Добавить в библиотеку</value>
+  </data>
+  <data name="Text_Result" xml:space="preserve">
+    <value>Результат</value>
+  </data>
+  <data name="Text_Task_Status_Created" xml:space="preserve">
+    <value>Создано</value>
+  </data>
+  <data name="Text_Task_Status_Queue" xml:space="preserve">
+    <value>Ожидание…</value>
+  </data>
+  <data name="Text_Task_Status_Processing" xml:space="preserve">
+    <value>Обработка…</value>
+  </data>
+  <data name="Text_Task_Status_Completed" xml:space="preserve">
+    <value>Завершено</value>
+  </data>
+  <data name="Text_Task_Status_Filed" xml:space="preserve">
+    <value>Ошибка</value>
+  </data>
+  <data name="Text_Task_Status_Unknown" xml:space="preserve">
+    <value>Неизвестно</value>
+  </data>
+  <data name="Text_File_Not_Available" xml:space="preserve">
+    <value>Исходный файл недоступен или удалён.</value>
+  </data>
+  <data name="Add_To_Lib_Success" xml:space="preserve">
+    <value>Добавлено в локальную библиотеку</value>
+  </data>
+  <data name="Intelligent_Enhance_Mode" xml:space="preserve">
+    <value>Режим</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore" xml:space="preserve">
+    <value>Восстановление качества</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore_Desc" xml:space="preserve">
+    <value>Сохраняет разрешение, устраняет размытие, шум и артефакты сжатия</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution" xml:space="preserve">
+    <value>Сверхразрешение</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution_Desc" xml:space="preserve">
+    <value>Повышает разрешение и улучшает мелкие детали</value>
+  </data>
+  <data name="Intelligent_Enhance_Magnification" xml:space="preserve">
+    <value>Коэффициент увеличения</value>
+  </data>
+  <data name="Intelligent_Enhance_Output" xml:space="preserve">
+    <value>Разрешение результата: </value>
+  </data>
+  <data name="Intelligent_Enhance_Tip" xml:space="preserve">
+    <value>Используйте восстановление качества при достаточном разрешении и низком качестве; сверхразрешение — при недостаточном разрешении.</value>
+  </data>
+  <data name="Text_Error_InvalidFile" xml:space="preserve">
+    <value>Возможно, файл повреждён и не может быть использован.</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasEffect" xml:space="preserve">
+    <value>Эффект</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Adjust" xml:space="preserve">
+    <value>Коррекция</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Color" xml:space="preserve">
+    <value>Цвет</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Special" xml:space="preserve">
+    <value>Эффекты</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Blend" xml:space="preserve">
+    <value>Смешивание</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_GrayScale" xml:space="preserve">
+    <value>Оттенки серого</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Invert" xml:space="preserve">
+    <value>Инверсия</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Exposure" xml:space="preserve">
+    <value>Экспозиция</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Brightness" xml:space="preserve">
+    <value>Яркость</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Saturation" xml:space="preserve">
+    <value>Насыщенность</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Hue" xml:space="preserve">
+    <value>Поворот тона</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Contrast" xml:space="preserve">
+    <value>Контраст</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Temperature" xml:space="preserve">
+    <value>Температура</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Highlights" xml:space="preserve">
+    <value>Света и тени</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sepia" xml:space="preserve">
+    <value>Сепия</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Pixelate" xml:space="preserve">
+    <value>Пикселизация</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Emboss" xml:space="preserve">
+    <value>Тиснение</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Blur" xml:space="preserve">
+    <value>Размытие</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sharpen" xml:space="preserve">
+    <value>Резкость</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Noise" xml:space="preserve">
+    <value>Шум</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Vignette" xml:space="preserve">
+    <value>Виньетка</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Glow" xml:space="preserve">
+    <value>Свечение</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Bloom" xml:space="preserve">
+    <value>Блум</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Distort" xml:space="preserve">
+    <value>Искажение</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Multiply" xml:space="preserve">
+    <value>Умножение</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Screen" xml:space="preserve">
+    <value>Экран</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Overlay" xml:space="preserve">
+    <value>Перекрытие</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_SoftLight" xml:space="preserve">
+    <value>Мягкий свет</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Grayscale" xml:space="preserve">
+    <value>Оттенки серого</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Invert" xml:space="preserve">
+    <value>Инверсия</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Exposure" xml:space="preserve">
+    <value>Экспозиция</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Brightness" xml:space="preserve">
+    <value>Яркость</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Saturation" xml:space="preserve">
+    <value>Насыщенность</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Hue" xml:space="preserve">
+    <value>Поворот тона</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Contrast" xml:space="preserve">
+    <value>Контраст</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Temperature" xml:space="preserve">
+    <value>Температура</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Highlights" xml:space="preserve">
+    <value>Света и тени</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sepia" xml:space="preserve">
+    <value>Сепия</value>
+  </data>
+  <data name="Project_StaticImg_Effect_OilPaint" xml:space="preserve">
+    <value>Масляная живопись</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sketch" xml:space="preserve">
+    <value>Эскиз</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Watercolor" xml:space="preserve">
+    <value>Акварель</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pixelate" xml:space="preserve">
+    <value>Пикселизация</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Emboss" xml:space="preserve">
+    <value>Тиснение</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pointillism" xml:space="preserve">
+    <value>Пуантилизм</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Crosshatch" xml:space="preserve">
+    <value>Перекрёстная штриховка</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Cartoon" xml:space="preserve">
+    <value>Мультфильм</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Blur" xml:space="preserve">
+    <value>Размытие</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sharpen" xml:space="preserve">
+    <value>Резкость</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Noise" xml:space="preserve">
+    <value>Шум</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Vignette" xml:space="preserve">
+    <value>Виньетка</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Glow" xml:space="preserve">
+    <value>Свечение</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Bloom" xml:space="preserve">
+    <value>Блум</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Distort" xml:space="preserve">
+    <value>Искажение</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Multiply" xml:space="preserve">
+    <value>Умножение</value>
+  </data>
+  <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
+    <value>Мягкий свет</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
+    <value>Удаляет цвета, преобразуя в оттенки серого</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Invert" xml:space="preserve">
+    <value>Инвертирует все цвета для эффекта негатива</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Exposure" xml:space="preserve">
+    <value>Регулирует общую яркость изображения</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Brightness" xml:space="preserve">
+    <value>Регулирует яркость изображения</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Saturation" xml:space="preserve">
+    <value>Регулирует интенсивность цветов</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Hue" xml:space="preserve">
+    <value>Сдвигает цветовой тон всего изображения</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Contrast" xml:space="preserve">
+    <value>Регулирует разницу между светлыми и тёмными областями</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Temperature" xml:space="preserve">
+    <value>Регулирует тёплые и холодные оттенки и цветовой сдвиг</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Highlights" xml:space="preserve">
+    <value>Отдельно регулирует света и тени</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sepia" xml:space="preserve">
+    <value>Классический коричневый ретротон</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Pixelate" xml:space="preserve">
+    <value>Преобразует изображение в цветные блоки пикселей</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Emboss" xml:space="preserve">
+    <value>Создаёт объёмный эффект тиснения</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Blur" xml:space="preserve">
+    <value>Смягчает изображение и уменьшает детализацию</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sharpen" xml:space="preserve">
+    <value>Повышает чёткость границ и деталей</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Noise" xml:space="preserve">
+    <value>Добавляет текстуру случайного шума</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Vignette" xml:space="preserve">
+    <value>Затемняет края и выделяет центр</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Glow" xml:space="preserve">
+    <value>Добавляет свечение вокруг светлых областей</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Bloom" xml:space="preserve">
+    <value>Создаёт мягкий ореол вокруг ярких участков</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Distort" xml:space="preserve">
+    <value>Деформирует изображение эффектом пластики</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Multiply" xml:space="preserve">
+    <value>Смешивание умножением, затемняет результат</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Screen" xml:space="preserve">
+    <value>Смешивание экраном, осветляет результат</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Overlay" xml:space="preserve">
+    <value>Перекрытие, усиливает контраст</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
+    <value>Мягкий свет, создаёт плавный контраст</value>
+  </data>
+  <data name="Settings_General_Version_InstallerReady" xml:space="preserve">
+    <value>Установщик готов. Нажмите для установки. Приложение потребуется полностью закрыть; сохраните данные.</value>
+  </data>
+  <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
+    <value>Обновление плагинов готово. Нажмите для установки. Главное окно потребуется закрыть; сохраните данные.</value>
+  </data>
+  <data name="Text_NoPreview" xml:space="preserve">
+    <value>Нет предпросмотра</value>
+  </data>
+  <data name="WebBackdrop_NewFile" xml:space="preserve"><value>Новый файл</value></data>
+  <data name="WebBackdrop_NewFolder" xml:space="preserve"><value>Новая папка</value></data>
+  <data name="WebBackdrop_AddItems" xml:space="preserve"><value>Добавить элементы</value></data>
+  <data name="WebBackdrop_Cut" xml:space="preserve"><value>Вырезать</value></data>
+  <data name="WebBackdrop_Copy" xml:space="preserve"><value>Копировать</value></data>
+  <data name="WebBackdrop_Paste" xml:space="preserve"><value>Вставить</value></data>
+  <data name="WebBackdrop_CopyPath" xml:space="preserve"><value>Копировать путь</value></data>
+  <data name="WebBackdrop_CopyRelativePath" xml:space="preserve"><value>Копировать относительный путь</value></data>
+  <data name="WebBackdrop_Rename" xml:space="preserve"><value>Переименовать…</value></data>
+  <data name="WebBackdrop_Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="WebBackdrop_RevealInExplorer" xml:space="preserve"><value>Показать в проводнике</value></data>
+  <data name="WebBackdrop_Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="WebBackdrop_SaveAs" xml:space="preserve"><value>Сохранить как…</value></data>
+  <data name="WebBackdrop_SearchInFiles" xml:space="preserve"><value>Поиск в файлах</value></data>
+  <data name="WebBackdrop_MatchCase" xml:space="preserve"><value>Учитывать регистр</value></data>
+  <data name="WebBackdrop_MatchWholeWord" xml:space="preserve"><value>Слово целиком</value></data>
+  <data name="WebBackdrop_SearchFilesByName" xml:space="preserve"><value>Поиск файлов по имени</value></data>
+  <data name="WebBackdrop_QuickOpenPlaceholder" xml:space="preserve"><value>Поиск файлов по имени (Ctrl+P)</value></data>
+  <data name="WebBackdrop_ProjectInspector" xml:space="preserve"><value>Инспектор проекта</value></data>
+  <data name="WebBackdrop_Wallpaper" xml:space="preserve"><value>Обои</value></data>
+  <data name="WebBackdrop_Title" xml:space="preserve"><value>Название</value></data>
+  <data name="WebBackdrop_Entry" xml:space="preserve"><value>Точка входа</value></data>
+  <data name="WebBackdrop_Current" xml:space="preserve"><value>Текущий</value></data>
+  <data name="WebBackdrop_NoItemSelected" xml:space="preserve"><value>Ничего не выбрано.</value></data>
+  <data name="WebBackdrop_Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="WebBackdrop_Language" xml:space="preserve"><value>Язык</value></data>
+  <data name="WebBackdrop_Type" xml:space="preserve"><value>Тип</value></data>
+  <data name="WebBackdrop_Status" xml:space="preserve"><value>Состояние</value></data>
+  <data name="WebBackdrop_Size" xml:space="preserve"><value>Размер</value></data>
+  <data name="WebBackdrop_Lines" xml:space="preserve"><value>Строки</value></data>
+  <data name="WebBackdrop_Modified" xml:space="preserve"><value>Изменено</value></data>
+  <data name="WebBackdrop_RelativePath" xml:space="preserve"><value>Относительный путь</value></data>
+  <data name="WebBackdrop_Image" xml:space="preserve"><value>Изображение</value></data>
+  <data name="WebBackdrop_Unsupported" xml:space="preserve"><value>Не поддерживается</value></data>
+  <data name="WebBackdrop_Saved" xml:space="preserve"><value>Сохранено</value></data>
+  <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>Не сохранено</value></data>
+  <data name="WebBackdrop_Folder" xml:space="preserve"><value>Папка</value></data>
+  <data name="WebBackdrop_Problems" xml:space="preserve"><value>ПРОБЛЕМЫ</value></data>
+  <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>Этот тип файлов нельзя открыть напрямую.</value></data>
+  <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>Выберите файл для начала</value></data>
+  <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>Откройте файл в проводнике проекта для редактирования и предпросмотра.</value></data>
+  <data name="WebBackdrop_WallpaperTitle" xml:space="preserve"><value>Название обоев</value></data>
+  <data name="WebBackdrop_Description" xml:space="preserve"><value>Описание</value></data>
+  <data name="WebBackdrop_ShortDescription" xml:space="preserve"><value>Краткое описание</value></data>
+  <data name="WebBackdrop_Author" xml:space="preserve"><value>Автор</value></data>
+  <data name="WebBackdrop_AuthorName" xml:space="preserve"><value>Имя автора</value></data>
+  <data name="WebBackdrop_Tags" xml:space="preserve"><value>Теги (через точку с запятой)</value></data>
+  <data name="WebBackdrop_EntryFile" xml:space="preserve"><value>Входной файл</value></data>
+  <data name="WebBackdrop_SaveProjectJson" xml:space="preserve"><value>Сохранить project.json</value></data>
+  <data name="WebBackdrop_Tabs2" xml:space="preserve"><value>Табуляция: 2</value></data>
+  <data name="WebBackdrop_Tabs4" xml:space="preserve"><value>Табуляция: 4</value></data>
+  <data name="WebBackdrop_Spaces2" xml:space="preserve"><value>Пробелы: 2</value></data>
+  <data name="WebBackdrop_Spaces4" xml:space="preserve"><value>Пробелы: 4</value></data>
+  <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Пробелы: 8</value></data>
+  <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Стр. {0}, стлб. {1}</value></data>
+  <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Стр. {0}, стлб. {1} (выбрано: {2}{3})</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Не удалось открыть файл: {0}
+Возможно, файл повреждён или недоступен для чтения.
+{1}</value></data>
+  <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>Не удаётся сохранить файл: {0}
+Файл не загрузился и может быть повреждён. Закройте и откройте его снова.</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Не удалось сохранить файл: {0}
+{1}</value></data>
+  <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>Не удалось сохранить все файлы. Проверьте ошибки и повторите попытку.</value></data>
+  <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>Папка проекта не найдена. Проверьте настройки проекта.</value></data>
+  <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>Файл «{0}» изменён на диске, но содержит несохранённые правки.
+
+Загрузить версию с диска и отменить правки в редакторе?</value></data>
+  <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>Конфликт файла</value></data>
+  <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Загрузить с диска</value></data>
+  <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Сохранить мои правки</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Не удалось перезагрузить файл: {0}
+Возможно, файл повреждён или недоступен для чтения.
+{1}</value></data>
+  <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>Не удалось сохранить файлы проекта. Импорт отменён.</value></data>
+  <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>Не удалось сохранить файлы проекта. Экспорт отменён.</value></data>
+  <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>Панель библиотеки обоев недоступна.</value></data>
+  <data name="WebBackdrop_FailedParseProjectFile" xml:space="preserve"><value>Не удалось обработать файл проекта: {0}
+{1}</value></data>
+  <data name="WebBackdrop_CannotSaveCorruptProject" xml:space="preserve"><value>Не удаётся сохранить файл проекта: {0}
+Файл повреждён. Исправьте или восстановите его перед редактированием.</value></data>
+  <data name="WebBackdrop_FullProjectArchive" xml:space="preserve"><value>Полный архив проекта (.zip)</value></data>
+  <data name="WebBackdrop_WebWallpaperPackage" xml:space="preserve"><value>Пакет веб-обоев (.zip)</value></data>
+  <data name="WebBackdrop_Find" xml:space="preserve"><value>Найти</value></data>
+  <data name="WebBackdrop_FindInFiles" xml:space="preserve"><value>Найти в файлах</value></data>
+  <data name="WebBackdrop_Selection" xml:space="preserve"><value>Выделение (S)</value></data>
+  <data name="WebBackdrop_GoBack" xml:space="preserve"><value>Назад</value></data>
+  <data name="WebBackdrop_GoForward" xml:space="preserve"><value>Вперёд</value></data>
+  <data name="WebBackdrop_CopyLineUp" xml:space="preserve"><value>Копировать строку выше</value></data>
+  <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>Копировать строку ниже</value></data>
+  <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>Переместить строку вверх</value></data>
+  <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>Переместить строку вниз</value></data>
+  <data name="WebBackdrop_Debug" xml:space="preserve"><value>Отладка</value></data>
+  <data name="WebBackdrop_Stop" xml:space="preserve"><value>Остановить</value></data>
+  <data name="WebBackdrop_Saving" xml:space="preserve"><value>Сохранение…</value></data>
+  <data name="WebBackdrop_RecoveryMessage" xml:space="preserve"><value>Найдены несохранённые правки после неожиданного завершения ({0} файлов).
+Восстановить их?</value></data>
+  <data name="WebBackdrop_RecoveryTitle" xml:space="preserve"><value>Восстановить несохранённые правки</value></data>
+  <data name="WebBackdrop_Recover" xml:space="preserve"><value>Восстановить</value></data>
+  <data name="WebBackdrop_DiscardEdits" xml:space="preserve"><value>Отменить правки</value></data>
+  <data name="WebBackdrop_NoProblems" xml:space="preserve"><value>Проблем не обнаружено.</value></data>
+  <data name="WebBackdrop_NoOutput" xml:space="preserve"><value>Нет вывода.</value></data>
+  <data name="WebBackdrop_HiddenFiles" xml:space="preserve"><value>Не показано ещё файлов: {0}</value></data>
+  <data name="WebBackdrop_HiddenProblems" xml:space="preserve"><value>… не показано ещё проблем: {0}</value></data>
+  <data name="Text_PanelUnavailable" xml:space="preserve"><value>Панель недоступна.</value></data>
+  <data name="Text_ResizeDataUnavailable" xml:space="preserve"><value>Данные для изменения размера недоступны.</value></data>
+  <data name="StaticImg_EffectParam_Intensity" xml:space="preserve"><value>Интенсивность</value></data>
+  <data name="StaticImg_EffectParam_Blur" xml:space="preserve"><value>Размытие</value></data>
+  <data name="StaticImg_EffectParam_Hue" xml:space="preserve"><value>Цветовой тон</value></data>
+  <data name="StaticImg_EffectParam_Angle" xml:space="preserve"><value>Угол</value></data>
+  <data name="StaticImg_EffectParam_Opacity" xml:space="preserve"><value>Непрозрачность</value></data>
+  <data name="StaticImg_EffectParam_Width" xml:space="preserve"><value>Ширина</value></data>
+  <data name="StaticImg_EffectParam_Height" xml:space="preserve"><value>Высота</value></data>
+  <data name="StaticImg_EffectParam_Mode" xml:space="preserve"><value>Режим</value></data>
+  <data name="StaticImg_EffectParam_Exposure" xml:space="preserve"><value>Экспозиция</value></data>
+  <data name="StaticImg_EffectParam_Brightness" xml:space="preserve"><value>Яркость</value></data>
+  <data name="StaticImg_EffectParam_Saturation" xml:space="preserve"><value>Насыщенность</value></data>
+  <data name="StaticImg_EffectParam_Contrast" xml:space="preserve"><value>Контраст</value></data>
+  <data name="StaticImg_EffectParam_Vignette" xml:space="preserve"><value>Виньетка</value></data>
+  <data name="StaticImg_EffectParam_Sharpen" xml:space="preserve"><value>Резкость</value></data>
+  <data name="StaticImg_EffectParam_Temperature" xml:space="preserve"><value>Температура</value></data>
+  <data name="StaticImg_EffectParam_Tint" xml:space="preserve"><value>Оттенок</value></data>
+  <data name="StaticImg_EffectParam_Shadows" xml:space="preserve"><value>Тени</value></data>
+  <data name="StaticImg_EffectParam_Highlights" xml:space="preserve"><value>Света</value></data>
+  <data name="StaticImg_EffectParam_Clarity" xml:space="preserve"><value>Чёткость</value></data>
+  <data name="StaticImg_EffectParam_MaskBlur" xml:space="preserve"><value>Размытие маски</value></data>
+  <data name="StaticImg_EffectParam_Threshold" xml:space="preserve"><value>Порог</value></data>
+  <data name="StaticImg_EffectParam_Frequency" xml:space="preserve"><value>Частота</value></data>
+  <data name="StaticImg_EffectParam_Phase" xml:space="preserve"><value>Фаза</value></data>
+  <data name="StaticImg_EffectParam_Amplitude" xml:space="preserve"><value>Амплитуда</value></data>
+  <data name="StaticImg_EffectParam_Spread" xml:space="preserve"><value>Разброс</value></data>
+  <data name="StaticImg_EffectParam_Radius" xml:space="preserve"><value>Радиус</value></data>
+  <data name="StaticImg_EffectParam_Pressure" xml:space="preserve"><value>Нажим</value></data>
+  <data name="StaticImg_EffectParam_Lightness" xml:space="preserve"><value>Светлота</value></data>
+  <data name="StaticImg_EffectParam_Density" xml:space="preserve"><value>Плотность</value></data>
+  <data name="StaticImg_EffectParam_Scale" xml:space="preserve"><value>Масштаб</value></data>
+  <data name="StaticImg_EffectParam_Tolerance" xml:space="preserve"><value>Допуск</value></data>
+  <data name="StaticImg_EffectParam_Offset" xml:space="preserve"><value>Смещение</value></data>
+  <data name="StaticImg_EffectParam_Exponent" xml:space="preserve"><value>Показатель степени</value></data>
+  <data name="StaticImg_EffectParam_OffsetX" xml:space="preserve"><value>Смещение X</value></data>
+  <data name="StaticImg_EffectParam_OffsetY" xml:space="preserve"><value>Смещение Y</value></data>
+  <data name="StaticImg_EffectParam_Levels" xml:space="preserve"><value>Уровни</value></data>
+  <data name="StaticImg_EffectParam_LevelsGreen" xml:space="preserve"><value>Уровни зелёного</value></data>
+  <data name="StaticImg_EffectParam_BlackPoint" xml:space="preserve"><value>Точка чёрного</value></data>
+  <data name="StaticImg_EffectParam_WhitePoint" xml:space="preserve"><value>Точка белого</value></data>
+  <data name="StaticImg_EffectParam_InvertAlpha" xml:space="preserve"><value>Инвертировать альфа-канал</value></data>
+  <data name="StaticImg_EffectParam_Feather" xml:space="preserve"><value>Растушёвка</value></data>
+  <data name="StaticImg_EffectParam_OverlayEdges" xml:space="preserve"><value>Наложить границы</value></data>
+  <data name="StaticImg_EffectParam_Previewing" xml:space="preserve"><value>Предпросмотр</value></data>
+  <data name="StaticImg_EffectParam_WidthPixels" xml:space="preserve"><value>Ширина (пиксели)</value></data>
+  <data name="StaticImg_EffectParam_HeightPixels" xml:space="preserve"><value>Высота (пиксели)</value></data>
+  <data name="Text_Name" xml:space="preserve"><value>Имя</value></data>
+  <data name="Text_More" xml:space="preserve"><value>Ещё</value></data>
+  <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Сведения о веб-обоях Virtual Paper</value></data>
+  <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>Настроить веб-обои</value></data>
+  <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Загрузка Monaco Editor…</value></data>
+  <data name="EffectPrefix_Atmosphere" xml:space="preserve">
+    <value>Атмосферный эффект</value>
+  </data>
+  <data name="EffectPrefix_AtmosphereIntensity" xml:space="preserve">
+    <value>Интенсивность атмосферы</value>
+  </data>
+  <data name="Atmosphere_None" xml:space="preserve"><value>Нет</value></data>
+  <data name="Atmosphere_Stardust" xml:space="preserve"><value>Звёздная пыль</value></data>
+  <data name="Atmosphere_Snow" xml:space="preserve"><value>Снег</value></data>
+  <data name="Atmosphere_Fireflies" xml:space="preserve"><value>Светлячки</value></data>
+  <data name="Atmosphere_Meteor" xml:space="preserve"><value>Метеоры</value></data>
+  <data name="EffectPrefix_AtmosphereStyle" xml:space="preserve"><value>Стиль эффекта</value></data>
+  <data name="Atmosphere_Rain" xml:space="preserve"><value>Дождь</value></data>
+  <data name="Atmosphere_Petals" xml:space="preserve"><value>Лепестки</value></data>
+  <data name="Atmosphere_Bokeh" xml:space="preserve"><value>Боке</value></data>
+  <data name="AtmosphereStyle_Dust" xml:space="preserve"><value>Светящиеся частицы</value></data>
+  <data name="AtmosphereStyle_Stars" xml:space="preserve"><value>Мерцание звёзд</value></data>
+  <data name="AtmosphereStyle_SnowDots" xml:space="preserve"><value>Снежные точки</value></data>
+  <data name="AtmosphereStyle_Snowflakes" xml:space="preserve"><value>Снежинки</value></data>
+  <data name="AtmosphereStyle_WarmFireflies" xml:space="preserve"><value>Тёплые светлячки</value></data>
+  <data name="AtmosphereStyle_BlueFireflies" xml:space="preserve"><value>Синие светлячки</value></data>
+  <data name="AtmosphereStyle_ShootingStars" xml:space="preserve"><value>Метеорный поток</value></data>
+  <data name="AtmosphereStyle_Comets" xml:space="preserve"><value>Разноцветные кометы</value></data>
+  <data name="AtmosphereStyle_Drizzle" xml:space="preserve"><value>Морось</value></data>
+  <data name="AtmosphereStyle_Downpour" xml:space="preserve"><value>Ливень</value></data>
+  <data name="AtmosphereStyle_CherryBlossoms" xml:space="preserve"><value>Цветы сакуры</value></data>
+  <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>Лепестки роз</value></data>
+  <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>Мягкие огни</value></data>
+  <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>Пузыри</value></data>
+  <data name="EffectPrefix_ParallaxStrength" xml:space="preserve"><value>Сила параллакса</value></data>
+  <data name="ParallaxStrength_Gentle" xml:space="preserve"><value>Слабая</value></data>
+  <data name="ParallaxStrength_Standard" xml:space="preserve"><value>Стандартная</value></data>
+  <data name="ParallaxStrength_Strong" xml:space="preserve"><value>Сильная</value></data>
+  <data name="EffectPrefix_ParallaxAutoDrift" xml:space="preserve"><value>Автоматическое движение</value></data>
+  <data name="Effect_Help_ParallaxAutoDrift" xml:space="preserve"><value>Медленно перемещает изображение независимо от мыши. Сила параллакса применяется к обоим эффектам.</value></data>
+  <data name="ParallaxMode_Mouse" xml:space="preserve"><value>Следовать за мышью</value></data>
+  <data name="ParallaxMode_Auto" xml:space="preserve"><value>Автоматическое движение</value></data>
+  <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D-параллакс</value></data>
+  <data name="ScreenFit_Title" xml:space="preserve"><value>Подогнать изображение под экран</value></data>
+  <data name="ScreenFit_SelectImage" xml:space="preserve"><value>Выбрать изображение</value></data>
+  <data name="ScreenFit_Monitor" xml:space="preserve"><value>Целевой монитор</value></data>
+  <data name="ScreenFit_Mode" xml:space="preserve"><value>Режим подгонки</value></data>
+  <data name="ScreenFit_Contain" xml:space="preserve"><value>Показать целиком (чёрные поля)</value></data>
+  <data name="ScreenFit_Cover" xml:space="preserve"><value>Заполнить экран (обрезка по центру)</value></data>
+  <data name="ScreenFit_Preview" xml:space="preserve"><value>Предпросмотр рабочего стола</value></data>
+  <data name="ScreenFit_PreviewSample" xml:space="preserve"><value>Пример</value></data>
+  <data name="ScreenFit_Plan" xml:space="preserve"><value>Источник: {0} × {1}; видимая область: примерно {2} × {3}, по центру.</value></data>
+  <data name="ScreenFit_Enhance" xml:space="preserve"><value>Необязательно: улучшить изображение</value></data>
+  <data name="ScreenFit_EnhanceSize" xml:space="preserve"><value>Улучшенная копия: {0} × {1}, с сохранением пропорций, увеличение до 4×. Исходный файл не изменяется.</value></data>
+  <data name="ScreenFit_NoEnhancementNeeded" xml:space="preserve"><value>Разрешения исходного изображения достаточно для этого режима.</value></data>
+  <data name="ScreenFit_ReadFailed" xml:space="preserve"><value>Не удаётся прочитать изображение. Выберите корректное неподвижное изображение.</value></data>
+  <data name="ScreenFit_DisplayChanged" xml:space="preserve"><value>Монитор или расположение изменились. Закройте диалог и выберите заново.</value></data>
+  <data name="ScreenFit_Enhancing" xml:space="preserve"><value>Улучшение изображения. Нажмите «Отмена» для остановки…</value></data>
+  <data name="ScreenFit_Applying" xml:space="preserve"><value>Импорт и применение…</value></data>
+  <data name="ScreenFit_Canceled" xml:space="preserve"><value>Отменено. Закройте диалог или примените снова без улучшения.</value></data>
+  <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>Не удалось улучшить изображение. Отключите улучшение и повторите с оригиналом.</value></data>
+  <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>Не удалось импортировать или применить обои. Повторите попытку.</value></data>
+  <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>Эта версия поддерживает независимые мониторы. Переключитесь на режим «Отдельно» в управлении экранами и снова откройте инструмент.</value></data>
+  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Включить анимацию переходов</value></data>
+  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Анимирует смену страниц. Также необходимо включить эффекты анимации в специальных возможностях Windows.</value></data>
+  <data name="ScreenSaver_Remove" xml:space="preserve"><value>Удалить из списка исключений</value></data>
+  <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>Приложения ещё не добавлены</value></data>
+  <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Добавьте приложения, при работе которых на переднем плане заставка не должна запускаться.</value></data>
+  <data name="ScreenSaver_WhiteListNoResults" xml:space="preserve"><value>Подходящие приложения не найдены</value></data>
+  <data name="ScreenSaver_WhiteListNoResultsDescription" xml:space="preserve"><value>Попробуйте другое имя приложения или очистите поиск.</value></data>
+  <!-- Live XAML property resources. Plain keys above remain available to code. -->
+  <data name="Intelligent_Result_Temporary" xml:space="preserve"><value>Только временно</value></data>
+  <data name="Intelligent_Result_Exported" xml:space="preserve"><value>Экспортировано</value></data>
+  <data name="Intelligent_Result_Imported" xml:space="preserve"><value>Добавлено в библиотеку</value></data>
+  <data name="Intelligent_Result_ExportedAndImported" xml:space="preserve"><value>Экспортировано · В библиотеке</value></data>
+  <data name="Intelligent_Close_Title" xml:space="preserve"><value>Закрыть задачи ИИ?</value></data>
+  <data name="Intelligent_Close_Active" xml:space="preserve"><value>Задач в очереди, обработке или сохранении: {0}. При закрытии незавершённые задачи будут остановлены.</value></data>
+  <data name="Intelligent_Close_Temporary" xml:space="preserve"><value>Готовых результатов, не экспортированных и не добавленных в библиотеку: {0}. После закрытия восстановить их из списка задач нельзя; временные файлы удалятся при следующем запуске.</value></data>
+  <data name="Intelligent_Close_DontRemind" xml:space="preserve"><value>Не напоминать о несохранённых готовых результатах</value></data>
+  <data name="Intelligent_Close_Return" xml:space="preserve"><value>Вернуться к задачам</value></data>
+  <data name="Intelligent_Close_Confirm" xml:space="preserve"><value>Всё равно закрыть</value></data>
+  <data name="Intelligent_Remove_Title" xml:space="preserve"><value>Удалить временный результат?</value></data>
+  <data name="Intelligent_Remove_Temporary" xml:space="preserve"><value>Результат не экспортирован и не добавлен в библиотеку. При удалении задачи её временный результат также будет удалён.</value></data>
+  <data name="Intelligent_Result_PreservationTooltip" xml:space="preserve"><value>Чтобы сохранить результаты после закрытия, экспортируйте их или добавьте в библиотеку.</value></data>
+  <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Несохранённые результаты ИИ</value></data>
+  <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Напоминать перед закрытием результатов, не экспортированных и не добавленных в библиотеку. Для незавершённых задач подтверждение требуется всегда.</value></data>
+  <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Напоминать о несохранённых результатах ИИ</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Не удалось сохранить копию проекта. Выберите пустую папку за пределами текущего проекта. Исходные файлы не изменены.
+{0}</value></data>
+  <data name="WpLib_Favorites" xml:space="preserve"><value>Только избранное</value></data>
+  <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Избранное и теги</value></data>
+  <data name="WpLib_FinishSelection" xml:space="preserve"><value>Готово</value></data>
+  <data name="WpLib_SearchExplain" xml:space="preserve"><value>Поиск по названиям, описаниям, авторам и тегам во всей библиотеке</value></data>
+  <data name="WpLib_SelectLoaded" xml:space="preserve"><value>Выбрать все загруженные обои</value></data>
+  <data name="WpLib_Sort" xml:space="preserve"><value>Сортировать обои</value></data>
+  <data name="WpLib_SortLabel" xml:space="preserve"><value>Сортировка</value></data>
+  <data name="WpLib_SortNewest" xml:space="preserve"><value>Сначала новые</value></data>
+  <data name="WpLib_SortOldest" xml:space="preserve"><value>Сначала старые</value></data>
+  <data name="WpLib_SortTitle" xml:space="preserve"><value>Название (А–Я)</value></data>
+  <data name="WpLib_SortAuthor" xml:space="preserve"><value>Автор (А–Я)</value></data>
+  <data name="WpLib_TagFilter" xml:space="preserve"><value>Теги</value></data>
+  <data name="WpLib_TagSearchPlaceholder" xml:space="preserve"><value>Введите тег для поиска</value></data>
+  <data name="WpLib_ClearFilters" xml:space="preserve"><value>Сбросить фильтры</value></data>
+  <data name="WpLib_Organize" xml:space="preserve"><value>Упорядочить выбранные обои</value></data>
+  <data name="WpLib_AddFavorite" xml:space="preserve"><value>Добавить в избранное</value></data>
+  <data name="WpLib_RemoveFavorite" xml:space="preserve"><value>Удалить из избранного</value></data>
+  <data name="WpLib_EditTags" xml:space="preserve"><value>Изменить свои теги</value></data>
+  <data name="WpLib_EditInfo" xml:space="preserve"><value>Изменить сведения</value></data>
+  <data name="WpLib_IncludedTags" xml:space="preserve"><value>Исходные теги обоев (только чтение): {0}</value></data>
+  <data name="WpLib_EditTitle" xml:space="preserve"><value>Название</value></data>
+  <data name="WpLib_EditDescription" xml:space="preserve"><value>Описание</value></data>
+  <data name="WpLib_TitlePlaceholder" xml:space="preserve"><value>Введите название обоев</value></data>
+  <data name="WpLib_DescriptionPlaceholder" xml:space="preserve"><value>Добавьте описание обоев</value></data>
+  <data name="WpLib_EditAuthor" xml:space="preserve"><value>Автор</value></data>
+  <data name="WpLib_YourTags" xml:space="preserve"><value>Свои теги</value></data>
+  <data name="WpLib_AuthorTokenPlaceholder" xml:space="preserve"><value>Введите автора и нажмите Enter</value></data>
+  <data name="WpLib_TagTokenPlaceholder" xml:space="preserve"><value>Введите тег и нажмите Enter</value></data>
+  <data name="WpLib_RemoveToken" xml:space="preserve"><value>Удалить элемент</value></data>
+  <data name="WpLib_TagsPlaceholder" xml:space="preserve"><value>Разделяйте теги запятыми или точками с запятой</value></data>
+  <data name="WpLib_TagsExplain" xml:space="preserve"><value>Ваши теги сохраняются для поиска и фильтрации. Исходные теги обоев не изменяются.</value></data>
+  <data name="WpLib_TagMode" xml:space="preserve"><value>Применить к выбранным обоям</value></data>
+  <data name="WpLib_TagsAdd" xml:space="preserve"><value>Добавить теги</value></data>
+  <data name="WpLib_TagsRemove" xml:space="preserve"><value>Удалить теги</value></data>
+  <data name="WpLib_TagsReplace" xml:space="preserve"><value>Заменить свои теги</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>Обои не найдены. Добавьте обои или измените фильтры.</value></data>
+  <data name="EffectPreset_Title" xml:space="preserve"><value>Предустановки эффектов</value></data>
+  <data name="EffectPreset_More" xml:space="preserve"><value>Другие действия библиотеки</value></data>
+  <data name="EffectPreset_Manage" xml:space="preserve"><value>Предустановки эффектов…</value></data>
+  <data name="EffectPreset_ManagerHint" xml:space="preserve"><value>Сохранение записывает предустановку. Примените её в панели эффектов нужных обоев.</value></data>
+  <data name="EffectPreset_List" xml:space="preserve"><value>Предустановки</value></data>
+  <data name="EffectPreset_UnsavedHint" xml:space="preserve"><value>Сохраните предустановку, чтобы оставить изменения. При переключении или закрытии они будут отменены.</value></data>
+  <data name="EffectPreset_ReadOnly" xml:space="preserve"><value>Встроенная · Только чтение</value></data>
+  <data name="EffectPreset_ReadOnlyHint" xml:space="preserve"><value>Встроенные предустановки доступны только для чтения. Создайте редактируемую копию из выбранной предустановки.</value></data>
+  <data name="EffectPreset_Name" xml:space="preserve"><value>Название предустановки</value></data>
+  <data name="EffectPreset_Type" xml:space="preserve"><value>Тип обоев</value></data>
+  <data name="EffectPreset_TypeHint" xml:space="preserve"><value>Типы обоев, поддерживаемые предустановкой. Выбор типа не применяет предустановку.</value></data>
+  <data name="EffectPreset_Source" xml:space="preserve"><value>Обои</value></data>
+  <data name="EffectPreset_SelectWallpaper" xml:space="preserve"><value>Выбрать обои</value></data>
+  <data name="EffectPreset_SourceSearch" xml:space="preserve"><value>Поиск по названию или автору</value></data>
+  <data name="EffectPreset_SourceEmpty" xml:space="preserve"><value>Подходящие обои не найдены</value></data>
+  <data name="EffectPreset_SourceConfig" xml:space="preserve"><value>Сохранённые эффекты</value></data>
+  <data name="EffectPreset_FromWallpaper" xml:space="preserve"><value>Создать из обоев</value></data>
+  <data name="EffectPreset_New" xml:space="preserve"><value>Создать (по умолчанию)</value></data>
+  <data name="EffectPreset_Copy" xml:space="preserve"><value>Создать из выбранного</value></data>
+  <data name="EffectPreset_CopyHint" xml:space="preserve"><value>Создаёт редактируемую копию выбранной предустановки с новым названием и ID.</value></data>
+  <data name="EffectPreset_Delete" xml:space="preserve"><value>Удалить</value></data>
+  <data name="EffectPreset_Discard" xml:space="preserve"><value>Отменить правки</value></data>
+  <data name="EffectPreset_NewName" xml:space="preserve"><value>Новая предустановка</value></data>
+  <data name="EffectPreset_CopySuffix" xml:space="preserve"><value> (копия)</value></data>
+  <data name="EffectPreset_User" xml:space="preserve"><value>Пользовательская предустановка</value></data>
+  <data name="EffectPreset_Actions" xml:space="preserve"><value>Другие действия с предустановками</value></data>
+  <data name="EffectPreset_NameHint" xml:space="preserve"><value>Введите название предустановки</value></data>
+  <data name="EffectPreset_SourceHint" xml:space="preserve"><value>Выберите обои и создайте предустановку из их сохранённых эффектов.</value></data>
+  <data name="EffectPreset_BuiltIn" xml:space="preserve"><value>Встроенная</value></data>
+  <data name="EffectPreset_Draft" xml:space="preserve"><value>Новая предустановка · Не сохранена</value></data>
+  <data name="EffectPreset_Modified" xml:space="preserve"><value>Несохранённые изменения</value></data>
+  <data name="EffectPreset_Save" xml:space="preserve"><value>Сохранить предустановку</value></data>
+  <data name="EffectPreset_UseSource" xml:space="preserve"><value>Создать предустановку</value></data>
+  <data name="EffectPreset_Saving" xml:space="preserve"><value>Сохранение изменений…</value></data>
+  <data name="EffectPreset_DeleteConfirm" xml:space="preserve"><value>Удалить предустановку? Обои, уже использующие эти эффекты, сохранят свои настройки.</value></data>
+  <data name="EffectPreset_NoSource" xml:space="preserve"><value>У этих обоев ещё нет сохранённых эффектов. Сначала сохраните эффекты или создайте новую предустановку.</value></data>
+  <data name="EffectPreset_DuplicateName" xml:space="preserve"><value>Пользовательская предустановка с таким названием уже существует. Выберите другое название.</value></data>
+  <data name="EffectPreset_LoadError" xml:space="preserve"><value>Не удалось загрузить предустановки эффектов. Сохранённые данные не изменены.</value></data>
+  <data name="EffectPreset_SaveError" xml:space="preserve"><value>Не удалось сохранить предустановки. Проверьте название и права на запись, затем повторите попытку.</value></data>
+  <data name="EffectPreset_ApplyError" xml:space="preserve"><value>Не удалось применить предустановку. Проверьте тип обоев и значения эффектов.</value></data>
+  <data name="EffectPreset_Selector" xml:space="preserve"><value>Предустановка эффектов</value></data>
+  <data name="EffectPreset_TrialHint" xml:space="preserve"><value>Попробуйте предустановку здесь. «Применить и закрыть» сохранит эффекты для этих обоев.</value></data>
+  <data name="EffectPreset_CancelTrial" xml:space="preserve"><value>Отменить предпросмотр предустановки</value></data>
+  <data name="EffectPreset_Custom" xml:space="preserve"><value>Свои настройки</value></data>
+  <data name="EffectPreset_Default" xml:space="preserve"><value>Эффекты по умолчанию</value></data>
+  <data name="EffectPreset_Natural" xml:space="preserve"><value>Естественные</value></data>
+  <data name="EffectPreset_Soft" xml:space="preserve"><value>Мягкие цвета</value></data>
+  <data name="EffectPreset_Snow" xml:space="preserve"><value>Лёгкий снег</value></data>
+  <data name="EffectPreset_Stardust" xml:space="preserve"><value>Звёздная пыль</value></data>
+  <data name="EffectPreset_Type_RUnknown" xml:space="preserve"><value>Все типы обоев</value></data>
+  <data name="EffectPreset_Type_RImage" xml:space="preserve"><value>Изображение / GIF</value></data>
+  <data name="EffectPreset_Type_RImage3D" xml:space="preserve"><value>3D-изображение</value></data>
+  <data name="EffectPreset_Type_RVideo" xml:space="preserve"><value>Видео</value></data>
+  <data name="EffectPreset_Type_RWeb" xml:space="preserve"><value>Web</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Downloading" xml:space="preserve"><value>Приостановить</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Installing" xml:space="preserve"><value>Установка…</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Paused" xml:space="preserve"><value>Продолжить</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Ready" xml:space="preserve"><value>Скачать</value></data>
+  <data name="Core_AppUpdater_SpeedText_Ready" xml:space="preserve"><value>Оставшееся время</value></data>
+  <data name="Core_AppUpdater_StatusText_Completed" xml:space="preserve"><value>Загрузка завершена!</value></data>
+  <data name="Core_AppUpdater_StatusText_DownloadFailed" xml:space="preserve"><value>Нет доступа. Проверьте сеть или повторите попытку.</value></data>
+  <data name="Core_AppUpdater_StatusText_Downloading" xml:space="preserve"><value>Загрузка…</value></data>
+  <data name="Core_AppUpdater_StatusText_Installed" xml:space="preserve"><value>Установка завершена!</value></data>
+  <data name="Core_AppUpdater_StatusText_Installing" xml:space="preserve"><value>Установка обновлений…</value></data>
+  <data name="Core_AppUpdater_StatusText_Paused" xml:space="preserve"><value>Загрузка приостановлена</value></data>
+  <data name="Core_AppUpdater_StatusText_Ready" xml:space="preserve"><value>Подготовка загрузки…</value></data>
+  <data name="Core_AppUpdater_StatusText_VerifyFailed" xml:space="preserve"><value>Ошибка проверки файла. Загрузите его снова.</value></data>
+  <data name="Core_AppUpdater_StatusText_Verifying" xml:space="preserve"><value>Проверка целостности ресурсов…</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve"><value>Установка ещё не завершена. Выйти?</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve"><value>Обновление загружается. Прервать и закрыть?</value></data>
+  <data name="Core_AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve"><value>Не удалось обновить. Скачайте установщик для ручного обновления:
+https://github.com/PaperHammer/VirtualPaper/releases</value></data>
+  <data name="Core_AppUpdater_Update_TitleCancelQuestion" xml:space="preserve"><value>Обновление</value></data>
+  <data name="Core_Common_TextCancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Core_Common_TextClose" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="Core_Common_TextConfirm" xml:space="preserve"><value>Подтвердить</value></data>
+  <data name="Core_Common_TextError" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="Core_Common_TextRetry" xml:space="preserve"><value>Повторить</value></data>
+  <data name="Core_Find_New_Verison" xml:space="preserve"><value>Найдена новая версия!</value></data>
+  <data name="Core_Find_New_Version_Restart" xml:space="preserve"><value>Доступно обновление компонентов!</value></data>
+  <data name="Core_Systray_TextCloseAllWallpapers" xml:space="preserve"><value>Закрыть все обои</value></data>
+  <data name="Core_Systray_TextDEBubble" xml:space="preserve"><value>Пузыри</value></data>
+  <data name="Core_Systray_TextDENone" xml:space="preserve"><value>Н/Д</value></data>
+  <data name="Core_Systray_TextDynamicEffect" xml:space="preserve"><value>Анимация</value></data>
+  <data name="Core_Systray_TextExit" xml:space="preserve"><value>Выход</value></data>
+  <data name="Core_Systray_TextIsOnScrSaver" xml:space="preserve"><value>Включить заставку</value></data>
+  <data name="Core_Systray_TextIsRunningLock" xml:space="preserve"><value>Показывать экран входа при возобновлении</value></data>
+  <data name="Core_Systray_TextOpenApp" xml:space="preserve"><value>Открыть главное окно</value></data>
+  <data name="Core_Systray_TextOpenScrSaverSet" xml:space="preserve"><value>Заставка</value></data>
+  <data name="Core_Systray_TextPauseWallpapers" xml:space="preserve"><value>Приостановить все обои</value></data>
+  <data name="Core_Systray_TextReportBug" xml:space="preserve"><value>Сообщить об ошибке</value></data>
+  <data name="Core_UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve"><value>Произошла ошибка. Перезапустите приложение. Если ошибка повторяется, сообщите разработчику и загрузите приложение заново.</value></data>
+  <data name="Core_Virtual_Paper_isRunning" xml:space="preserve"><value>Virtual Paper работает в фоновом режиме</value></data>
+  <data name="Core_Virtual_Paper_isRunning_Greetings" xml:space="preserve"><value>Хорошего дня!</value></data>
+  <data name="Core_WndProcMsg_DescExplorerCrash" xml:space="preserve"><value>Произошла серьёзная ошибка.
+Проводник Windows перезапустился дважды за последние 30 секунд. Возможен конфликт Virtual Paper с Windows или другой программой оформления рабочего стола. Во избежание новых проблем все обои остановлены.</value></data>
+  <data name="Core_WndProcMsg_TitleAppName" xml:space="preserve"><value>Virtual Paper</value></data>
+  <data name="Core_WpControl_TextFileNotFound" xml:space="preserve"><value>Целевой файл не найден</value></data>
+  <data name="Core_WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve"><value>Необходимые настройки:
+1. Нажмите Win + R.
+2. Введите SystemPropertiesPerformance.exe и нажмите ОК.
+3. Включите анимацию элементов управления и элементов внутри окон и примените. Если она уже включена, отключите её.
+4. Нажмите «Применить», затем ОК.
+Если это не помогло, перезапустите Windows. В некоторых предварительных версиях Windows 10 функция не работает.</value></data>
+  <data name="Core_PluginsUpdate_InvalidInfo" xml:space="preserve"><value>Недопустимые сведения об обновлении</value></data>
+  <data name="Core_PluginsUpdate_Starting" xml:space="preserve"><value>Запуск обновления…</value></data>
+  <data name="Core_PluginsUpdate_Completed" xml:space="preserve"><value>Обновление завершено. Интерфейс будет перезапущен.</value></data>
+  <data name="Core_PluginsUpdate_Failed" xml:space="preserve"><value>Ошибка обновления: {0}</value></data>
+  <data name="Core_PluginsUpdate_Stage_Downloading" xml:space="preserve"><value>Загрузка плагинов…</value></data>
+  <data name="Core_PluginsUpdate_Stage_BackingUp" xml:space="preserve"><value>Резервное копирование текущих плагинов…</value></data>
+  <data name="Core_PluginsUpdate_Stage_Replacing" xml:space="preserve"><value>Замена файлов плагинов…</value></data>
+  <data name="Core_PluginsUpdate_Stage_Completed" xml:space="preserve"><value>Завершено</value></data>
+  <data name="Core_PluginsUpdate_Stage_Failed" xml:space="preserve"><value>Ошибка</value></data>
+  <data name="Core_PluginsUpdate_Close" xml:space="preserve"><value>Закрыть</value></data>
+  <data name="Core_PluginsUpdate_PostponeTip" xml:space="preserve"><value>Обновление готово. Закройте главное окно для применения.</value></data>
+  <data name="Core_InstallerUpdate_PostponeTip" xml:space="preserve"><value>Установщик готов. Установка начнётся после полного выхода из приложения.</value></data>
+  <data name="Core_PluginUpdate_Title_Updating" xml:space="preserve"><value>Обновление компонентов…</value></data>
+  <data name="Core_PluginUpdate_Title_Completed" xml:space="preserve"><value>Обновление завершено</value></data>
+  <data name="Core_PluginUpdate_Title_Failed" xml:space="preserve"><value>Ошибка обновления</value></data>
+  <data name="Core_PluginUpdate_Preparing" xml:space="preserve"><value>Подготовка…</value></data>
+  <data name="Core_PluginUpdate_ReplacedPlugin" xml:space="preserve"><value>Заменено: {0}</value></data>
+  <data name="Core_Startup_AutoStartDisabledByUser" xml:space="preserve"><value>Запуск Virtual Paper при входе отключён. Для включения откройте раздел автозагрузки в диспетчере задач.</value></data>
+  <data name="Core_Startup_AppDataCreateFailedTitle" xml:space="preserve"><value>Не удаётся создать папку данных. Virtual Paper будет закрыт.</value></data>
+  <data name="Core_Startup_CoreRuntimeFailed" xml:space="preserve"><value>Ошибка инициализации ядра. Перезапустите или переустановите Virtual Paper.
+{0}</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Title" xml:space="preserve"><value>Остановить загрузку обновления?</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Content" xml:space="preserve"><value>Обновление загружается. Остановить загрузку и закрыть окно обновления?</value></data>
+  <data name="Core_AppUpdater_Close_StopDownload" xml:space="preserve"><value>Остановить загрузку и закрыть</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Title" xml:space="preserve"><value>Отменить эту загрузку?</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Content" xml:space="preserve"><value>Загрузка приостановлена. Отменить загрузку и закрыть окно обновления?</value></data>
+  <data name="Core_AppUpdater_Close_DiscardDownload" xml:space="preserve"><value>Отменить загрузку и закрыть</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Title" xml:space="preserve"><value>Остановить проверку обновления?</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Content" xml:space="preserve"><value>Проверяются файлы обновления. Остановить проверку и закрыть окно обновления?</value></data>
+  <data name="Core_AppUpdater_Close_StopVerification" xml:space="preserve"><value>Остановить проверку и закрыть</value></data>
+  <data name="Core_AppUpdater_Close_Title" xml:space="preserve"><value>Закрыть окно обновления?</value></data>
+  <data name="Core_AppUpdater_Close_Content" xml:space="preserve"><value>Закрыть окно обновления?</value></data>
+  <data name="Core_AppUpdater_Close_Window" xml:space="preserve"><value>Закрыть окно</value></data>
+  <data name="Core_AppUpdater_Close_DownloadFailed_Content" xml:space="preserve"><value>Не удалось загрузить обновление. Закройте окно и повторите попытку позже.</value></data>
+  <data name="Core_AppUpdater_Close_VerifyFailed_Content" xml:space="preserve"><value>Ошибка проверки обновления. Закройте окно и загрузите обновление снова позже.</value></data>
+  <data name="Core_AppUpdater_Close_BackToUpdate" xml:space="preserve"><value>Вернуться к обновлению</value></data>
+  <data name="Core_AppUpdater_UpdateReady_Title" xml:space="preserve"><value>Обновление готово</value></data>
+  <data name="Core_Common_TextGotIt" xml:space="preserve"><value>Понятно</value></data>
+  <data name="Common_FileAccess_Message" xml:space="preserve"><value>Ошибка операции «{1}» с файлом «{0}». Проверьте целостность файла и права доступа.</value></data>
+  <data name="Common_FileAccess_Read" xml:space="preserve"><value>чтение</value></data>
+  <data name="Common_FileAccess_Write" xml:space="preserve"><value>запись</value></data>
+  <data name="Common_FileAccess_Access" xml:space="preserve"><value>доступ</value></data>
+  <data name="Installer_DeleteEverythigMsgBox" xml:space="preserve"><value>Удалить пользовательские настройки?</value></data>
+  <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>Приложение запущено. Закрыть его?</value></data>
+  <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>Не удалось сохранить язык первого запуска.</value></data>
+  <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper — Обновление</value></data>
+</root>

@@ -12,12 +12,15 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
+	<PropertyGroup>
+		<LocalizationResourceKind>Metadata</LocalizationResourceKind>
+	</PropertyGroup>
+	<Import Project="..\..\localization\Localization.targets" />
 
 	<!--NETSDK1152-->
 	<!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
 	<PropertyGroup>
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
-		<DefaultLanguage>zh-CN</DefaultLanguage>
 	</PropertyGroup>
 
 	<!-- 排除 ONNX Runtime 重复的原生 DLL（在 MSIX payload 重复检测之前从 PackagingOutputs 移除 NuGet 缓存副本） -->
@@ -63,7 +66,6 @@
 		<OutputPath>..\VirtualPaper\Plugins\UI\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<DefaultLanguage>zh-cn</DefaultLanguage>
 		<RootNamespace>VirtualPaper.UI</RootNamespace>
 		<ApplicationIcon>Assets\virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>

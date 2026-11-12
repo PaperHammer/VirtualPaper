@@ -15,8 +15,8 @@ namespace VirtualPaper.lang {
         }
 
         public void ChangeLanguage(CultureInfo cultureInfo) {
-            CultureInfo.CurrentCulture = cultureInfo;
             CultureInfo.CurrentUICulture = cultureInfo;
+            CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
             OnPropertyChanged("Item[]");
         }
 

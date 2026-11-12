@@ -178,7 +178,7 @@
                                     <ContentControl x:Name="Title" Margin="24 24 24 0" Content="{TemplateBinding Title}" ContentTemplate="{TemplateBinding TitleTemplate}" FontSize="20" FontFamily="{StaticResource ContentControlThemeFontFamily}" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}" HorizontalAlignment="Stretch" VerticalAlignment="Top" IsTabStop="False" Grid.Row="0">
                                         <ContentControl.Template>
                                             <ControlTemplate TargetType="ContentControl">
-                                                <ContentPresenter Content="{TemplateBinding Content}" MaxLines="2" TextWrapping="Wrap" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" ContentTransitions="{TemplateBinding ContentTransitions}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                                <ContentPresenter Content="{TemplateBinding Content}" TextWrapping="Wrap" ContentTemplate="{TemplateBinding ContentTemplate}" Margin="{TemplateBinding Padding}" ContentTransitions="{TemplateBinding ContentTransitions}" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                                             </ControlTemplate>
                                         </ContentControl.Template>
                                     </ContentControl>

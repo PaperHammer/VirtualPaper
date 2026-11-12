@@ -16,7 +16,6 @@
 
 	<!--避免打包时生成额外的语言包文件夹-->
 	<PropertyGroup>
-		<SupportedCultures>zh-CN;en-US</SupportedCultures>
 		<GenerateSatelliteAssemblies>false</GenerateSatelliteAssemblies>
 	</PropertyGroup>
 	<ItemGroup>
@@ -29,11 +28,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PRIResource Remove="Strings\en-US\Resources.resw" />
-		<PRIResource Remove="Strings\zh-CN\Resources.resw" />
+		<PRIResource Remove="Strings\**\Resources.resw" />
 	</ItemGroup>
 	<ItemGroup>
-		<UpToDateCheckInput Include="Strings\**\Resources.resw;Localization\XamlResources.xml;Localization\Generate-Resources.ps1" />
+		<UpToDateCheckInput Include="..\..\localization\Strings\**\Resources.resw;..\..\localization\LanguageCatalog.json;..\..\localization\ResourceMappings.xml;..\..\localization\*.ps1;Localization\XamlResources.xml;Localization\Generate-Resources.ps1" />
 	</ItemGroup>
 
 	<!-- Source resw files contain translations only. Keep generated property
@@ -44,6 +42,12 @@
 		</PropertyGroup>
 		<Exec WorkingDirectory="$(MSBuildProjectDirectory)"
 			Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\Localization\Generate-Resources.ps1&quot; -OutputRoot &quot;$(_GeneratedLocalizationRoot)&quot;" />
+		<XmlPeek XmlInputPath="$(_GeneratedLocalizationRoot)\Languages.props" Query="/Project/PropertyGroup/SupportedCultures/text()">
+			<Output TaskParameter="Result" PropertyName="SupportedCultures" />
+		</XmlPeek>
+		<XmlPeek XmlInputPath="$(_GeneratedLocalizationRoot)\Languages.props" Query="/Project/PropertyGroup/DefaultLanguage/text()">
+			<Output TaskParameter="Result" PropertyName="DefaultLanguage" />
+		</XmlPeek>
 		<ItemGroup>
 			<_GeneratedLocalizationResource Include="$(_GeneratedLocalizationRoot)\**\Resources.resw" />
 			<Content Include="@(_GeneratedLocalizationResource)">

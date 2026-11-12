@@ -1,5 +1,19 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/InstallerTestSupport.ps1"
+foreach ($language in @('english', 'en-US', 'en')) {
+    if ((Get-InstallerApplicationLanguage $language) -cne 'en-US') { throw 'English installer marker compatibility failed.' }
+}
+foreach ($language in @('chinese', 'zh-CN', 'zh-Hans')) {
+    if ((Get-InstallerApplicationLanguage $language) -cne 'zh-CN') { throw 'Chinese installer marker compatibility failed.' }
+}
+foreach ($entry in (Get-LanguageCatalog).Languages) {
+    foreach ($marker in @($entry.Code, $entry.InstallerName) + @($entry.Aliases)) {
+        if ((Get-InstallerApplicationLanguage $marker) -cne $entry.Code) { throw "Installer language does not resolve to its catalog locale: $marker" }
+    }
+}
+$rejected = $false
+try { $null = Get-InstallerApplicationLanguage 'unsupported' } catch { $rejected = $true }
+if (-not $rejected) { throw 'An unknown installer marker must fail acceptance.' }
 
 # Callbacks only: no installer, GUI, registry or system configuration is touched.
 $stages = @('Install', 'Open', 'Reinstall', 'VerifyPreserved', 'OpenFresh', 'Uninstall')

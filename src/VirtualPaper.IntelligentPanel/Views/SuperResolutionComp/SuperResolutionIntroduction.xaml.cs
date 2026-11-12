@@ -15,6 +15,10 @@ namespace VirtualPaper.IntelligentPanel.Views.SuperResolutionComp {
         private void OnLoaded(object sender, RoutedEventArgs e) {
         }
 
+        private void IntroductionRoot_SizeChanged(object sender, SizeChangedEventArgs e) {
+            VisualStateManager.GoToState(this, e.NewSize.Width >= 960 ? "WideLayout" : "NarrowLayout", false);
+        }
+
         private void OnUnloaded(object sender, RoutedEventArgs e) {
         }
 

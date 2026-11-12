@@ -16,7 +16,11 @@ namespace VirtualPaper.IntelligentPanel.Services {
             var content = new StackPanel { Spacing = 16 };
             content.Children.Add(new TextBlock { Text = string.Join(Environment.NewLine + Environment.NewLine, lines), TextWrapping = TextWrapping.Wrap });
             var dontRemind = new CheckBox {
-                Content = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Close_DontRemind),
+                Content = new TextBlock {
+                    Text = LanguageUtil.GetI18n(Constants.I18n.Intelligent_Close_DontRemind),
+                    TextWrapping = TextWrapping.Wrap
+                },
+                HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Visibility = allowDontRemind ? Visibility.Visible : Visibility.Collapsed
             };
             AutomationProperties.SetAutomationId(dontRemind, "Intelligent.Close.DontRemind");
@@ -25,7 +29,7 @@ namespace VirtualPaper.IntelligentPanel.Services {
                 LanguageUtil.GetI18n(Constants.I18n.Intelligent_Close_Title),
                 LanguageUtil.GetI18n(Constants.I18n.Intelligent_Close_Return),
                 LanguageUtil.GetI18n(Constants.I18n.Intelligent_Close_Confirm))!;
-            dialog.DialogMaxWidth = 520;
+            dialog.DialogMaxWidth = 640;
             AutomationProperties.SetAutomationId(dialog, "Intelligent.Close.Dialog");
             bool close = await dialog.ShowAsync() == ContentDialogResult.Secondary;
             return new(close, close && allowDontRemind && dontRemind.IsChecked == true);

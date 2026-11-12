@@ -13,11 +13,13 @@
 ; Must match Constants.CoreField.AppName in VirtualPaper.Common\Constants.cs
 #define MyAppDataFolderName "VirtualPaper"
 
-[CustomMessages]
-english.DeleteEverythigMsgBox=Do you want to delete user settings?
-chinese.DeleteEverythigMsgBox=是否删除用户配置信息？
-english.ClosingMsgBox=Application is running, do you want to close it?
-chinese.ClosingMsgBox=应用程序正在运行，是否关闭？
+; Generate on every compile, including direct compilation in the Inno Setup IDE.
+#define LocalizationScript SourcePath + "..\localization\Generate-Resources.ps1"
+#define LocalizationOutput SourcePath + "obj\Localization"
+#if Exec("powershell.exe", "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File " + AddQuotes(LocalizationScript) + " -Target Installer -OutputRoot " + AddQuotes(LocalizationOutput), SourcePath, 1) != 0
+  #error "Localization generation failed."
+#endif
+#include "obj\Localization\Localization.iss"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -53,10 +55,6 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 ArchitecturesInstallIn64BitMode=x64compatible
 UsePreviousAppDir=yes
 
-[Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"; LicenseFile: "License\LICENSE.txt";
-Name: "chinese"; MessagesFile: "Languages\ChineseSimplified.isl";
-
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 ; Name: "windowsstartup"; Description: "{cm:AutoStartProgram,{#MyAppName}}"
@@ -86,8 +84,8 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then
     // Read only when the application creates a new user settings file.
-    if not SaveStringToFile(ExpandConstant('{app}\installer-language.txt'), ActiveLanguage, False) then
-      RaiseException('Could not save the initial application language.');
+    if not SaveStringToFile(ExpandConstant('{app}\installer-language.txt'), ExpandConstant('{cm:InitialApplicationLanguage}'), False) then
+      RaiseException(ExpandConstant('{cm:InitialLanguageSaveFailed}'));
 end;
 
 // InnoDependencyInstaller 初始化向导 UI

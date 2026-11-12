@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+& (Join-Path $repositoryRoot 'test/Test-LocalizationResources.ps1')
 . (Join-Path $repositoryRoot 'test/TestReportSupport.ps1')
 $workflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/pre-merge-check.yml') -Raw
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/pre-release.yml') -Raw

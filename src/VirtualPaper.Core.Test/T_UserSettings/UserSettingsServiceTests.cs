@@ -182,6 +182,16 @@ namespace VirtualPaper.Core.Test.T_UserSettings {
         [TestMethod]
         [DataRow("english", "en-US")]
         [DataRow("chinese", "zh-CN")]
+        [DataRow("en-US", "en-US")]
+        [DataRow("zh-CN", "zh-CN")]
+        [DataRow("zh-TW", "zh-TW")]
+        [DataRow("japanese", "ja-JP")]
+        [DataRow("korean", "ko-KR")]
+        [DataRow("german", "de-DE")]
+        [DataRow("french", "fr-FR")]
+        [DataRow("spanish", "es-ES")]
+        [DataRow("brazilianportuguese", "pt-BR")]
+        [DataRow("russian", "ru-RU")]
         public void FirstLaunch_UsesInstallerLanguageAndPersistsIt(string installerLanguage, string expectedLanguage) {
             string marker = Path.GetTempFileName();
             try {
@@ -201,6 +211,8 @@ namespace VirtualPaper.Core.Test.T_UserSettings {
         [TestMethod]
         [DataRow("english", "zh-CN")]
         [DataRow("chinese", "en-US")]
+        [DataRow("chinese", "zh-TW")]
+        [DataRow("english", "ja-JP")]
         public void ExistingSettings_KeepLanguageRegardlessOfInstallerLanguage(string installerLanguage, string savedLanguage) {
             string marker = Path.GetTempFileName();
             try {
@@ -224,13 +236,44 @@ namespace VirtualPaper.Core.Test.T_UserSettings {
                 File.WriteAllText(marker, installerLanguage);
                 _mockJsonSaver.Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
                     .Throws(new FileNotFoundException());
-                string expected = SupportedLanguages.GetLanguage(new Settings().Language).Codes[0];
+                string expected = "en-US";
 
-                var service = new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object, _ => { }, marker);
+                var service = new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object, _ => { }, marker, ["unsupported", "en-GB"]);
 
                 Assert.AreEqual(expected, service.Settings.Language);
             }
             finally { File.Delete(marker); }
+        }
+
+        [TestMethod]
+        public void FirstLaunchWithoutInstaller_TriesAllSystemPreferences() {
+            _mockJsonSaver.Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                .Throws(new FileNotFoundException());
+            string missingMarker = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));
+
+            var service = new UserSettingsService(_mockMonitorManager.Object, _mockJsonSaver.Object, _ => { }, missingMarker,
+                ["unsupported", "zh-SG", "en-US"]);
+
+            Assert.AreEqual("zh-CN", service.Settings.Language);
+            _mockJsonSaver.Verify(s => s.Save(It.IsAny<string>(),
+                It.Is<ISettings>(settings => settings.Language == "zh-CN"), It.IsAny<JsonSerializerContext>()), Times.Once);
+        }
+
+        [TestMethod]
+        [DataRow("en-GB", "en-US")]
+        [DataRow("en-us", "en-US")]
+        [DataRow("zh-Hant", "zh-TW")]
+        [DataRow("fr-CA", "fr-FR")]
+        [DataRow("unsupported", "en-US")]
+        public void ExistingLanguageIsCanonicalizedAndPersisted(string savedLanguage, string expectedLanguage) {
+            _mockJsonSaver.Setup(s => s.Load<Settings>(It.IsAny<string>(), It.IsAny<JsonSerializerContext>()))
+                .Returns(new Settings { Language = savedLanguage });
+
+            var service = CreateService();
+
+            Assert.AreEqual(expectedLanguage, service.Settings.Language);
+            _mockJsonSaver.Verify(s => s.Save(It.IsAny<string>(),
+                It.Is<ISettings>(settings => settings.Language == expectedLanguage), It.IsAny<JsonSerializerContext>()), Times.Once);
         }
 
         private UserSettingsService CreateService() =>

@@ -29,7 +29,7 @@ test/
 
 ## 运行测试
 
-命令均从仓库根目录执行。AI 应先阅读 [AGENTS.md](../AGENTS.md) 和 [VirtualPaper 测试 skill](../.agents/skills/virtualpaper-testing/SKILL.md)，了解测试选择、进程隔离、结果判定及工作流门禁。
+命令均从仓库根目录执行。AI 应先阅读 [AGENTS.md](../AGENTS.md) 和 [VirtualPaper 测试 skill](../.agents/skills/testing/SKILL.md)，了解测试选择、进程隔离、结果判定及工作流门禁。
 
 | 目标 | 入口 | 范围 |
 | --- | --- | --- |
@@ -145,9 +145,11 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 ### 语言即时切换
 
-源文案只维护在 `VirtualPaper.UIComponent/Strings` 中；正常构建解决方案时，根据 `Localization/XamlResources.xml` 生成 XAML 属性资源。包体测试使用内嵌映射快照核验包内生成 key 集合及源文案一致性，不再依赖资源注释。修改方法及单独生成、校验命令见[语言资源说明](../src/VirtualPaper.UIComponent/Localization/README.zh-CN.md)。
+源文案只维护在 `localization/Strings` 中；正常构建解决方案时，根据共用语言清单及映射生成 UI/Core/Common 资源。包体测试使用内嵌源文案与映射快照，逐一核验清单内语种的包内生成 key 及 value，不依赖资源注释。修改方法及单独生成、校验命令见[语言资源说明](../localization/README.zh-CN.md)。
 
 `Localization.LiveText.RefreshAndPreserveState` 在正式组件上往返切换中英文，检查画笔名称、预设风格名称、无名称时的提示和队列任务文字，同时检查画笔参数、风格选择、输入路径和自定义名称保持不变。
+
+桌面排版验收还应切换德语、法语和俄语，缩放窗口，并检查较高显示／文本缩放下的表现。重点包括侧栏文字、两种介绍页和智能任务表单、风格库、任务操作按钮及关闭提醒。侧栏保持紧凑，文字可读，悬停可查看完整名称；介绍页预览保持原比例，宽页面图文左右排列，窄页面上下居中排列。任务卡片的信息、状态和按钮始终排在同一行；窗口变窄时对长文件路径使用省略号，不将操作按钮移到下一行。长文案可换行，窄窗口下表单上下排列，正文可滚动且底部按钮保持可见。项目单测和资源完整性检查不代表视觉验收通过；仅在允许占用前台时执行这项检查。
 
 ### 组件效果
 
@@ -431,6 +433,10 @@ CI 使用 `Summarize-PipelineTests.ps1`：共享 TRX/覆盖率、选中的包、
 打包汇总契约还会拒绝安装包哈希／版本不符、MSIX 源代码版本与包身份不符、配置验收报告缺失，以及内置壁纸证据不完整。两个渠道的完整安装 UI 验收均要求七个模块齐全，即使精简后的报告声称全部预期用例通过也不能放行。反例完成后会恢复并重新验证通过样本；这些契约不会真实安装程序或操作 UI。
 
 ## 添加覆盖
+
+源文案和语言清单位于 [`localization`](../localization/README.zh-CN.md)。`Test-LocalizationResources.ps1` 随工作流契约运行，不操作 UI 或安装程序。Core 单测覆盖语言匹配、旧／新安装标记、首启首选语言顺序、升级保留及中性／卫星资源回退；产物测试逐项比对清单内语种和内嵌文案快照，MSIX 包体校验同时检查语种声明与实际翻译文件。
+
+EXE/MSIX 启动探针从目标语种资源读取“通用”页签的预期文字，不依赖测试宿主的界面语言。产物测试将这段共用读取逻辑与各语种内嵌源文案逐项比对。这不代表 EXE 冒烟已扩展到中英文以外的安装顺序，也不代表各语种视觉验收通过。
 
 内置壁纸文件夹维护在 [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.zh-CN.md)。构建时带入 Core 输出，安装器读取 `BuiltInWallpapersDir`；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，添加缺失文件夹并保留已有目录及用户修改。安装验收向安装程序传递隔离数据目录，不写入日常壁纸库。Core 和 UI 逻辑测试覆盖旧配置默认值、独立路径经 RPC 保存及重启恢复、双目录扫描/删除、预览配置落盘、单一入口下的双目录迁移、索引刷新及失败时保留原数据。
 

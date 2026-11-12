@@ -14,18 +14,44 @@
     Unloaded="Page_Unloaded">
 
     <Grid x:Name="addTaskGrid"
-        HorizontalAlignment="Center"
-        VerticalAlignment="Center">
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Top">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="WideLayout">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="1100"/></VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ConnectorColumn.Width" Value="Auto"/>
+                        <Setter Target="OptionsColumn.Width" Value="*"/>
+                        <Setter Target="ConnectorPanel.(Grid.Row)" Value="0"/>
+                        <Setter Target="ConnectorPanel.(Grid.Column)" Value="1"/>
+                        <Setter Target="ConnectorPanel.Margin" Value="20,-40,20,0"/>
+                        <Setter Target="ConnectorIconRotation.Angle" Value="0"/>
+                        <Setter Target="OptionsPanel.(Grid.Row)" Value="0"/>
+                        <Setter Target="OptionsPanel.(Grid.Column)" Value="2"/>
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="NarrowLayout">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="0"/></VisualState.StateTriggers>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition x:Name="ConnectorColumn" Width="0"/>
+            <ColumnDefinition x:Name="OptionsColumn" Width="0"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel HorizontalAlignment="Center" Spacing="6">
+        <StackPanel HorizontalAlignment="Stretch" MaxWidth="420" Spacing="6">
 
             <TextBlock 
                 l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Text"
+                MinHeight="36" TextWrapping="Wrap" TextAlignment="Center"
                 FontSize="16"
                 FontWeight="SemiBold"
                 HorizontalAlignment="Center"/>
@@ -42,7 +68,8 @@
                 <Button x:Name="sourceImageBorder" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                     AutomationProperties.AutomationId="Intelligent.SuperResolution.Source"
                     l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Import_AutomationProperties_Name"
-                    Width="400"
+                    MaxWidth="400"
+                    HorizontalAlignment="Stretch"
                     Height="250"
                     Margin="10"
                     CornerRadius="10"
@@ -54,7 +81,8 @@
                     Click="SourceImageButton_Click">
                     <Grid>
                         <StackPanel 
-                            HorizontalAlignment="Center"
+                            HorizontalAlignment="Stretch"
+                            Margin="16"
                             VerticalAlignment="Center"
                             Spacing="6"
                             Visibility="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
@@ -65,7 +93,7 @@
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                             <TextBlock 
                                 l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Import_Text"
-                                HorizontalAlignment="Center"
+                                TextWrapping="Wrap" TextAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 FontSize="14"/>
                         </StackPanel>
@@ -106,10 +134,10 @@
             </StackPanel>
         </StackPanel>
 
-        <Grid 
-            Grid.Column="1"
+        <Grid x:Name="ConnectorPanel"
+            Grid.Row="1"
             VerticalAlignment="Center"
-            Margin="20,-40,20,0">
+            Margin="0,16">
             <Border 
                 Width="48"
                 Height="48"
@@ -124,24 +152,28 @@
                     FontSize="20"
                     Foreground="{ThemeResource AccentButtonForeground}"
                     HorizontalAlignment="Center"
-                    VerticalAlignment="Center"/>
+                    VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                    <FontIcon.RenderTransform><RotateTransform x:Name="ConnectorIconRotation" Angle="90"/></FontIcon.RenderTransform>
+                </FontIcon>
             </Border>
         </Grid>
 
-        <StackPanel 
-            Grid.Column="2"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center"
+        <StackPanel x:Name="OptionsPanel"
+            Grid.Row="2"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Stretch"
+            MaxWidth="420"
             Spacing="12">
 
             <TextBlock 
                 l:Uids.Uid="Ui_Intelligent_Enhance_Mode_Text"
+                MinHeight="36" TextWrapping="Wrap" TextAlignment="Center"
                 FontSize="16"
                 FontWeight="SemiBold"
                 HorizontalAlignment="Center"/>
 
             <Border
-                Width="320"
+                HorizontalAlignment="Stretch"
                 Padding="20"
                 CornerRadius="12"
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
@@ -151,6 +183,7 @@
                 <StackPanel Spacing="16">
 
                     <RadioButton x:Name="qualityRestoreRadio"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         AutomationProperties.AutomationId="Intelligent.SuperResolution.Restore"
                         GroupName="EnhanceMode"
                         IsChecked="{x:Bind _viewModel.IsQualityRestoreMode, Mode=TwoWay}"
@@ -158,6 +191,7 @@
                         <StackPanel Spacing="2">
                             <TextBlock 
                                 l:Uids.Uid="Ui_Intelligent_Enhance_QualityRestore_Text"
+                                TextWrapping="Wrap"
                                 FontSize="14"
                                 FontWeight="SemiBold"/>
                             <TextBlock 
@@ -174,6 +208,7 @@
                         HorizontalAlignment="Stretch"/>
 
                     <RadioButton x:Name="superResolutionRadio"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                         AutomationProperties.AutomationId="Intelligent.SuperResolution.Enhance"
                         GroupName="EnhanceMode"
                         IsChecked="{x:Bind _viewModel.IsSuperResolutionMode, Mode=TwoWay}"
@@ -181,6 +216,7 @@
                         <StackPanel Spacing="2">
                             <TextBlock 
                                 l:Uids.Uid="Ui_Intelligent_Enhance_SuperResolution_Text"
+                                TextWrapping="Wrap"
                                 FontSize="14"
                                 FontWeight="SemiBold"/>
                             <TextBlock 
@@ -198,6 +234,7 @@
 
                         <TextBlock 
                             l:Uids.Uid="Ui_Intelligent_Enhance_Magnification_Text"
+                            TextWrapping="Wrap"
                             FontSize="13"
                             Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
 
@@ -228,29 +265,34 @@
                 CornerRadius="8"
                 Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
                 Visibility="{x:Bind _viewModel.OutputResolutionText, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}">
-                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                    <FontIcon 
-                        Glyph="&#xE809;" 
-                        FontSize="14" 
-                        Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                    <TextBlock 
-                        l:Uids.Uid="Ui_Intelligent_Enhance_Output_Text"
-                        FontSize="13"
-                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                    <TextBlock 
+                <Grid RowSpacing="4">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid ColumnSpacing="8">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <FontIcon
+                            Glyph="&#xE809;"
+                            FontSize="14"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+                        <TextBlock
+                            l:Uids.Uid="Ui_Intelligent_Enhance_Output_Text"
+                            Grid.Column="1" TextWrapping="Wrap"
+                            FontSize="13"
+                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </Grid>
+                    <TextBlock Grid.Row="1" HorizontalAlignment="Center"
                         AutomationProperties.AutomationId="Intelligent.SuperResolution.OutputSize"
                         Text="{x:Bind _viewModel.OutputResolutionText, Mode=OneWay}"
                         FontSize="13"
                         FontWeight="SemiBold"
                         Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                </StackPanel>
+                </Grid>
             </Border>
 
-            <StackPanel 
+            <Grid
                 Padding="4,4" 
-                Orientation="Horizontal" 
-                Spacing="8" 
-                HorizontalAlignment="Center">
+                ColumnSpacing="8"
+                HorizontalAlignment="Stretch">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <FontIcon 
                     Glyph="&#xE946;"
                     FontSize="13"
@@ -258,10 +300,10 @@
                     Margin="0,2,0,0"/>
                 <TextBlock 
                     l:Uids.Uid="Ui_Intelligent_Enhance_Tip_Text"
+                    Grid.Column="1"
                     FontSize="12"
-                    TextWrapping="Wrap"
-                    MaxWidth="280"/>
-            </StackPanel>
+                    TextWrapping="Wrap"/>
+            </Grid>
         </StackPanel>
     </Grid>
 </arc:ArcPage>

@@ -95,12 +95,7 @@ namespace VirtualPaper.Models.Cores {
             ScreenSaverEffect = ScrEffect.None;
             WhiteListScr = [];
 
-            try {
-                Language = CultureInfo.CurrentUICulture.Name;
-            }
-            catch (ArgumentNullException) {
-                Language = "zh-CN";
-            }
+            Language = SupportedLanguages.ResolveLanguage([CultureInfo.CurrentUICulture.Name]);
         }
     }
 }

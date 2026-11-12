@@ -1,5 +1,5 @@
 ---
-name: virtualpaper-testing
+name: testing
 description: Run, select, extend or diagnose VirtualPaper local tests and installed-app acceptance; trace their relationship to Pre-merge Check and Pre-release workflows. Use for changes to test runners, UI acceptance, packaging verification or workflow test gates.
 ---
 

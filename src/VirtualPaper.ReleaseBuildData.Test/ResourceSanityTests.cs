@@ -18,7 +18,7 @@ namespace VirtualPaper.ReleaseBuildData.Test {
 
         // ── UI Plugin 语言目录 ────────────────────────────────────────────────
         // VirtualPaper.UI 是主语言化入口，语言目录在 Plugins/UI/ 下
-        // 检查最核心的两个 locale，全量语言由 InnoSetup smoke test 负责
+        // These are framework satellite directories. App translations are verified separately below.
 
         [TestMethod]
         [TestCategory("ReleaseBuild")]
@@ -47,12 +47,26 @@ namespace VirtualPaper.ReleaseBuildData.Test {
 
         [TestMethod]
         [TestCategory("ReleaseBuild")]
-        [DataRow("zh-CN")]
-        [DataRow("en-US")]
+        [DynamicData(nameof(SupportedLocales), DynamicDataSourceType.Method)]
         public void Plugin_UI_LiveTranslations_MatchTheirSourceStrings(string locale) {
             string path = Path.Combine(PluginsDir, "UI", "VirtualPaper.UIComponent", "Strings", locale, "Resources.resw");
             var entries = System.Xml.Linq.XDocument.Load(path).Root!.Elements("data")
                 .ToDictionary(element => (string)element.Attribute("name")!, element => element);
+            var assembly = typeof(ResourceSanityTests).Assembly;
+            string sourceName = assembly.GetManifestResourceNames().Single(name =>
+                name.StartsWith("VirtualPaper.Localization.Source.", StringComparison.Ordinal)
+                && name.Replace('\\', '/').EndsWith($"{locale}/Resources.resw", StringComparison.Ordinal));
+            using var sourceStream = assembly.GetManifestResourceStream(sourceName)!;
+            var sources = System.Xml.Linq.XDocument.Load(sourceStream).Root!.Elements("data");
+            const string generalTabKey = "AppSettings_SelBarItem1_General";
+            Assert.AreEqual((string?)sources.Single(source => (string?)source.Attribute("name") == generalTabKey).Element("value"),
+                VirtualPaper.TestSupport.LocalizedTestStrings.Read(Path.Combine(PluginsDir, "UI"), locale, generalTabKey),
+                $"Installed acceptance must use the requested language: {locale}");
+            foreach (var source in sources) {
+                string key = (string)source.Attribute("name")!;
+                Assert.IsTrue(entries.TryGetValue(key, out var actual), $"Missing packaged source string: {locale}/{key}");
+                Assert.AreEqual((string?)source.Element("value"), (string?)actual!.Element("value"), $"Stale packaged translation: {locale}/{key}");
+            }
             // Embed the build's expected mappings in the test assembly; runtime
             // packages need only the generated resw files, not build metadata.
             using var mappingStream = typeof(ResourceSanityTests).Assembly.GetManifestResourceStream("VirtualPaper.XamlResources.xml");
@@ -76,6 +90,13 @@ namespace VirtualPaper.ReleaseBuildData.Test {
             ReleaseBuildSanityTests.AssertDirExists(
                 Path.Combine(PluginsDir, "UI", "EditPanelConfigs"),
                 "EditPanelConfigs directory");
+        }
+
+        public static IEnumerable<object[]> SupportedLocales() {
+            using var stream = typeof(ResourceSanityTests).Assembly.GetManifestResourceStream("VirtualPaper.LanguageCatalog.json")!;
+            using var catalog = System.Text.Json.JsonDocument.Parse(stream);
+            return catalog.RootElement.GetProperty("Languages").EnumerateArray()
+                .Select(language => new object[] { language.GetProperty("Code").GetString()! }).ToArray();
         }
 
         // ── PlayerWeb 内嵌 Web 资源 ───────────────────────────────────────────

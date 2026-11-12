@@ -32,36 +32,36 @@
                         Icon="Library"
                         IsSelected="True">
                     </NavigationViewItem>-->
-                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True" AutomationProperties.AutomationId="App.Navigation.Library">
+                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Library">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate x:DataType="local:MainWindow">
-                                <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
+                                <StackPanel Orientation="Vertical" Width="52" ToolTipService.ToolTip="{Binding Text, ElementName=LibraryLabel}" Margin="-10,4,0,4">
                                     <FontIcon Glyph="&#xE7B8;" FontSize="22" HorizontalAlignment="Center"/>
-                                    <TextBlock l:Uids.Uid="Ui_SidebarRepository_Text" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                    <TextBlock x:Name="LibraryLabel" l:Uids.Uid="Ui_SidebarRepository_Text" FontSize="12" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" TextAlignment="Center" Margin="0 4 0 0"/>
                                 </StackPanel>
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Edit" AutomationProperties.AutomationId="App.Navigation.Projects">
+                    <NavigationViewItem x:Name="Nav_Edit" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Projects">
                         <!--TODO：IsSelected = true 时，若直接设置 Content 为 非IconElement or 非String 时会报错 -->
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
+                                <StackPanel Orientation="Vertical" Width="52" ToolTipService.ToolTip="{Binding Text, ElementName=ProjectsLabel}" Margin="-10,4,0,4">
                                     <FontIcon Glyph="&#xF156;" FontSize="22" HorizontalAlignment="Center"/>
-                                    <TextBlock l:Uids.Uid="Ui_SidebarProject_Text" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                    <TextBlock x:Name="ProjectsLabel" l:Uids.Uid="Ui_SidebarProject_Text" FontSize="12" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" TextAlignment="Center" Margin="0 4 0 0"/>
                                 </StackPanel>
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Intelligent" AutomationProperties.AutomationId="App.Navigation.Intelligent">
+                    <NavigationViewItem x:Name="Nav_Intelligent" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Intelligent">
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Vertical" Margin="-10,4,0,4">
+                                <StackPanel Orientation="Vertical" Width="52" l:Uids.Uid="Ui_SidebarIntelligent_FullName" Margin="-10,4,0,4">
                                     <ImageIcon
                                         Height="24"
                                         Width="24"
                                         Source="{ThemeResource IntelligentPanel_Sider}"/>
-                                    <TextBlock l:Uids.Uid="Ui_SidebarIntelligent_Text" FontSize="12" HorizontalAlignment="Center" Margin="0 4 0 0"/>
+                                    <TextBlock x:Name="IntelligentLabel" l:Uids.Uid="Ui_SidebarIntelligent_Text" FontSize="12" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" TextAlignment="Center" Margin="0 4 0 0"/>
                                 </StackPanel>
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>

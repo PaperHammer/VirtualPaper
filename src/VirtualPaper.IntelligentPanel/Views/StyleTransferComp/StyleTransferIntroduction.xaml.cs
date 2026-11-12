@@ -16,6 +16,11 @@ namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
             demoCrossfadeStoryboard.Begin();
         }
 
+        private void IntroductionRoot_SizeChanged(object sender, SizeChangedEventArgs e) {
+            // Use this page's available width rather than the entire window.
+            VisualStateManager.GoToState(this, e.NewSize.Width >= 960 ? "WideLayout" : "NarrowLayout", false);
+        }
+
         private void OnUnloaded(object sender, RoutedEventArgs e) {
             demoCrossfadeStoryboard.Stop();
         }

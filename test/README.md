@@ -29,7 +29,7 @@ test/
 
 ## Running the tests
 
-Run commands from the repository root. AI agents should start with [AGENTS.md](../AGENTS.md) and the [VirtualPaper testing skill](../.agents/skills/virtualpaper-testing/SKILL.md). The skill explains test selection, process isolation, report interpretation and workflow gates.
+Run commands from the repository root. AI agents should start with [AGENTS.md](../AGENTS.md) and the [VirtualPaper testing skill](../.agents/skills/testing/SKILL.md). The skill explains test selection, process isolation, report interpretation and workflow gates.
 
 | Goal | Entry point | Scope |
 | --- | --- | --- |
@@ -145,9 +145,11 @@ Independent UI can be skipped when no suitable desktop is available, and summari
 
 ### Live language changes
 
-Source translations live only in `VirtualPaper.UIComponent/Strings`; the normal solution build generates XAML property resources from `Localization/XamlResources.xml`. Artifact tests use an embedded mapping snapshot to validate the packaged generated key set and matching source values without relying on resource comments. See [localization resources](../src/VirtualPaper.UIComponent/Localization/README.md) for editing and standalone generation/check commands.
+Source translations live only in `localization/Strings`; the normal solution build generates UI/Core/Common resources from the shared language catalog and mappings. Artifact tests use embedded source and mapping snapshots to validate every catalog locale's packaged generated keys and values without relying on resource comments. See [localization resources](../localization/README.md) for editing and standalone generation/check commands.
 
 `Localization.LiveText.RefreshAndPreserveState` switches between Chinese and English on production controls. It checks brush labels, preset style names, unnamed-style prompts, and queued task labels, while preserving brush settings, selected styles, input paths, and custom names.
+
+For desktop layout review, also switch to German, French and Russian and resize the window, including at increased display/text scaling. Check sidebar captions, both introduction pages and intelligent-task forms, the style gallery, task actions and the close reminder. Keep the sidebar compact with readable captions and full-label tooltips. Introduction previews must keep their aspect ratio, with image/text side by side on wide pages and centered vertically on narrow pages. Task metadata, status and actions must remain in one row; long file paths use an ellipsis as the window narrows instead of moving the action buttons below. Long labels must wrap, narrow task forms must stack, and the form body must scroll while its command buttons remain visible. Project tests and resource completeness checks do not establish visual acceptance; run this desktop review only when foreground use is authorized.
 
 ### Component effects
 
@@ -431,6 +433,10 @@ The workflow contracts include isolated Git tests for a single version commit on
 Package summary contracts also reject mismatched installer hashes/versions, MSIX source snapshots and package identities, missing profile reports, and incomplete built-in wallpaper evidence. Both channels require all seven installed extended UI modules even when a reduced report claims that every expected case passed. Positive fixtures are restored and rechecked after negative cases; these contracts perform no real installation or UI interaction.
 
 ## Adding coverage
+
+Localization sources and language metadata live in [`localization`](../localization/README.md). `Test-LocalizationResources.ps1` runs inside workflow contracts without UI or installation. Core tests exercise matching, legacy/canonical installer markers, first-run preference ordering, upgrade retention and neutral/satellite fallback. Artifact tests compare all advertised UI locales with embedded source snapshots; MSIX package validation checks the catalog declarations and actual translation files.
+
+EXE/MSIX startup probes read the expected General-tab label from the requested locale's resources, independently of the test host's language. Artifact tests verify this shared reader against each locale's embedded source snapshot. This does not expand the EXE smoke language sequence beyond English/Chinese or establish visual acceptance for every language.
 
 Built-in wallpaper folders are maintained under [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.md). The build includes them in Core output; setup reads `BuiltInWallpapersDir`, falling back to a sibling of `WallpaperDir` for older profiles, and adds missing folders while preserving existing folders and edits. Installer acceptance supplies its isolated data root to setup, so this deployment never writes into the daily library. Core and UI logic tests cover legacy defaults, persisted independent paths through RPC/restart, combined scanning/deletion, preview settings, moving both libraries through one directory picker, index refresh, and preserving source data on failure. The authored metadata inventory is embedded into artifact tests, so a missing build folder or stale item fails. Core workflow tests relocate and decode the actual collection (including animated frames and prepared depth maps), scan it alongside a user item, and check that neither source assets nor user data changed. Real UI verifies multi-file import and prepared-item playback as described above. Installer smoke verifies complete initial deployment, then moves the isolated built-in library, edits an existing title, adds a user file, deletes an existing notice and removes another whole item. The real reinstall must honor the saved directory, preserve the edited folder exactly (including its deleted file), and deploy the missing item. Uninstall must preserve this library. These checks run inside required smoke stages; `BuiltInWallpapers` in the report records their evidence. `Test-BuiltInWallpaperTestSupport.ps1` checks positive and negative validator contracts without installing; it does not simulate or replace the actual ISS acceptance.
 

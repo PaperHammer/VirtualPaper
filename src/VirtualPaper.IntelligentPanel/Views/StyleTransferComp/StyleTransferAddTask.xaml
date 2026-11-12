@@ -14,18 +14,43 @@
     Unloaded="Page_Unloaded">
 
     <Grid x:Name="addTaskGrid"
-        HorizontalAlignment="Center"
-        VerticalAlignment="Center">
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Top">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="WideLayout">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="1100"/></VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ConnectorColumn.Width" Value="Auto"/>
+                        <Setter Target="OptionsColumn.Width" Value="*"/>
+                        <Setter Target="ConnectorPanel.(Grid.Row)" Value="0"/>
+                        <Setter Target="ConnectorPanel.(Grid.Column)" Value="1"/>
+                        <Setter Target="ConnectorPanel.Margin" Value="20,-40,20,0"/>
+                        <Setter Target="OptionsPanel.(Grid.Row)" Value="0"/>
+                        <Setter Target="OptionsPanel.(Grid.Column)" Value="2"/>
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="NarrowLayout">
+                    <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="0"/></VisualState.StateTriggers>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition x:Name="ConnectorColumn" Width="0"/>
+            <ColumnDefinition x:Name="OptionsColumn" Width="0"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel HorizontalAlignment="Center" Spacing="6">
+        <StackPanel HorizontalAlignment="Stretch" MaxWidth="420" Spacing="6">
 
             <TextBlock 
                 l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Text"
+                MinHeight="36" TextWrapping="Wrap" TextAlignment="Center"
                 FontSize="16"
                 FontWeight="SemiBold"
                 HorizontalAlignment="Center"/>
@@ -43,7 +68,8 @@
                     AutomationProperties.AutomationId="Intelligent.StyleTransfer.Source"
                     l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Import_AutomationProperties_Name"
                     AutomationProperties.HelpText="{x:Bind _viewModel.SourceFilePath, Mode=OneWay}"
-                    Width="400"
+                    MaxWidth="400"
+                    HorizontalAlignment="Stretch"
                     Height="250"
                     Margin="10"
                     CornerRadius="10"
@@ -55,7 +81,8 @@
                     Click="SourceImageButton_Click">
                     <Grid>
                         <StackPanel 
-                            HorizontalAlignment="Center"
+                            HorizontalAlignment="Stretch"
+                            Margin="16"
                             VerticalAlignment="Center"
                             Spacing="6"
                             Visibility="{x:Bind _viewModel.SourceFilePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
@@ -66,7 +93,7 @@
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                             <TextBlock 
                                 l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Import_Text"
-                                HorizontalAlignment="Center"
+                                TextWrapping="Wrap" TextAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 FontSize="14"/>
                         </StackPanel>
@@ -107,10 +134,10 @@
             </StackPanel>
         </StackPanel>
 
-        <Grid 
-            Grid.Column="1"
+        <Grid x:Name="ConnectorPanel"
+            Grid.Row="1"
             VerticalAlignment="Center"
-            Margin="20 -40 20 0">
+            Margin="0,16">
             <Border 
                 Width="48"
                 Height="48"
@@ -129,41 +156,54 @@
             </Border>
         </Grid>
 
-        <StackPanel 
-            Grid.Column="2"
-            VerticalAlignment="Center"
-            HorizontalAlignment="Center"
+        <StackPanel x:Name="OptionsPanel"
+            Grid.Row="2"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Stretch"
+            MaxWidth="420"
             Spacing="6">
 
-            <Grid HorizontalAlignment="Stretch">
+            <Grid HorizontalAlignment="Stretch" MinHeight="36" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
                 <TextBlock 
                     l:Uids.Uid="Ui_Intelligent_Task_Style_Text"
                     FontSize="16"
                     FontWeight="SemiBold"
-                    HorizontalAlignment="Center"
+                    HorizontalAlignment="Left"
+                    TextWrapping="Wrap"
                     VerticalAlignment="Center"/>
 
                 <Button x:Name="styleGalleryButton"
+                    Grid.Column="1"
                     HorizontalAlignment="Right"
+                    HorizontalContentAlignment="Stretch"
                     VerticalAlignment="Center"
                     Padding="8,4"
                     CornerRadius="6"
                     Background="Transparent"
                     uicomp_utils:CursorUtil.CursorShape="Hand"
                     BorderThickness="0">
-                    <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Grid ColumnSpacing="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
                         <FontIcon Glyph="&#xE71D;" FontSize="13" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
                         <TextBlock 
                             l:Uids.Uid="Ui_Intelligent_Style_Lib_Text"
+                            Grid.Column="1" TextWrapping="Wrap"
                             FontSize="13"
                             Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
-                    </StackPanel>
+                    </Grid>
 
                     <Button.Flyout>
                         <Flyout x:Name="styleGalleryFlyout" Placement="BottomEdgeAlignedRight">
                             <Flyout.FlyoutPresenterStyle>
                                 <Style TargetType="FlyoutPresenter">
-                                    <Setter Property="MinWidth" Value="600"/>
+                                    <Setter Property="MinWidth" Value="280"/>
                                     <Setter Property="MaxWidth" Value="620"/>
                                     <Setter Property="Padding" Value="16"/>
                                     <Setter Property="CornerRadius" Value="8"/>
@@ -172,7 +212,7 @@
                                 </Style>
                             </Flyout.FlyoutPresenterStyle>
 
-                            <StackPanel Spacing="12" MinWidth="560">
+                            <StackPanel Spacing="12" MaxWidth="588">
                                 <TextBlock 
                                     l:Uids.Uid="Ui_Intelligent_Style_Inner_Select_Text"
                                     FontSize="14"
@@ -238,7 +278,7 @@
                                                     <TextBlock 
                                                         Text="{x:Bind Name, Mode=OneWay}"
                                                         FontSize="12"
-                                                        HorizontalAlignment="Center"/>
+                                                        TextWrapping="Wrap" TextAlignment="Center"/>
                                                 </Border>
                                             </Grid>
                                         </DataTemplate>
@@ -263,7 +303,8 @@
                     AutomationProperties.AutomationId="Intelligent.StyleTransfer.Style"
                     l:Uids.Uid="Ui_Intelligent_Task_Style_Img_Import_AutomationProperties_Name"
                     AutomationProperties.HelpText="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay}"
-                    Width="300"
+                    MaxWidth="400"
+                    HorizontalAlignment="Stretch"
                     Height="250"
                     Margin="10"
                     CornerRadius="10"
@@ -275,7 +316,8 @@
                     Click="StyleImageButton_Click">
                     <Grid>
                         <StackPanel 
-                            HorizontalAlignment="Center"
+                            HorizontalAlignment="Stretch"
+                            Margin="16"
                             VerticalAlignment="Center"
                             Spacing="6"
                             Visibility="{x:Bind _viewModel.SelectedStyle.ImagePath, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}">
@@ -286,7 +328,7 @@
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                             <TextBlock 
                                 l:Uids.Uid="Ui_Intelligent_Task_Style_Img_Import_Text"
-                                HorizontalAlignment="Center"
+                                TextWrapping="Wrap" TextAlignment="Center"
                                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                 FontSize="14"/>
                         </StackPanel>
@@ -340,7 +382,11 @@
                     </StackPanel>
                 </StackPanel>
 
-                <StackPanel Padding="10,8" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Stretch">
+                <Grid Padding="10,8" ColumnSpacing="8" HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
                     <FontIcon 
                     Glyph="&#xE946;"
                     FontSize="13"
@@ -348,10 +394,10 @@
                     Margin="0,2,0,0"/>
                     <TextBlock 
                     l:Uids.Uid="Ui_Intelligent_Style_Img_Desc_Text"
+                    Grid.Column="1"
                     FontSize="12"
-                    TextWrapping="Wrap"
-                    MaxWidth="260"/>
-                </StackPanel>
+                    TextWrapping="Wrap"/>
+                </Grid>
             </StackPanel>
         </StackPanel>
     </Grid>

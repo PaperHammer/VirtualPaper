@@ -1,0 +1,2132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppSettings_SelBarItem1_General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="AppSettings_SelBarItem2_Performance" xml:space="preserve">
+    <value>Rendimiento</value>
+  </data>
+  <data name="AppSettings_SelBarItem3_System" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
+    <value>Otros</value>
+  </data>
+  <data name="Text_Close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="Text_Detect" xml:space="preserve">
+    <value>Detectar</value>
+  </data>
+  <data name="Text_Identify" xml:space="preserve">
+    <value>Identificar</value>
+  </data>
+  <data name="Effect_Help_Parallax" xml:space="preserve">
+    <value>El fondo sigue el movimiento del ratón cuando el escritorio tiene el foco, creando un efecto de paralaje.</value>
+  </data>
+  <data name="Effect_Help_Scaling" xml:space="preserve">
+    <value>Estirar: llena toda el área sin conservar la proporción. Si las proporciones difieren, la imagen se deforma.
+
+Ajustar: muestra la imagen completa conservando la proporción. Pueden aparecer márgenes.
+
+Rellenar: cubre toda el área conservando la proporción. Se recortan las partes que sobresalen.
+
+Tamaño original: conserva el tamaño original.
+
+Solo reducir: usa el menor tamaño entre Tamaño original y Ajustar.</value>
+  </data>
+  <data name="Dialog_Content_ApplyError" xml:space="preserve">
+    <value>No se pudo aplicar el fondo. Inténtalo de nuevo.</value>
+  </data>
+  <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
+    <value>Monitores disponibles:</value>
+  </data>
+  <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
+    <value>Formatos compatibles:
+    Animaciones: .gif .apng
+    Imágenes: .jpg .jpeg .bmp .png
+    Vídeos: .mp4 .webm
+
+No se puede importar el archivo: </value>
+  </data>
+  <data name="Dialog_Content_Import_NeedUpdate" xml:space="preserve">
+    <value>Puedes actualizar los datos del fondo para usar las nuevas funciones. ¿Actualizar?</value>
+  </data>
+  <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
+    <value>Se eliminarán este fondo y sus archivos de la biblioteca. Esta acción no se puede deshacer.</value>
+  </data>
+  <data name="Dialog_Content_LibraryDeleteMany" xml:space="preserve">
+    <value>Se eliminarán los fondos seleccionados y sus archivos de la biblioteca. Esta acción no se puede deshacer.</value>
+  </data>
+  <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
+    <value>Formatos compatibles:
+    Animaciones: .gif
+    Imágenes: .jpg .jpeg .bmp .png</value>
+  </data>
+  <data name="Dialog_Content_WpIsUsing" xml:space="preserve">
+    <value>El archivo está en uso como fondo y no se puede eliminar.</value>
+  </data>
+  <data name="Dialog_Title_CreateType" xml:space="preserve">
+    <value>Elegir modo del fondo</value>
+  </data>
+  <data name="Dialog_Title_Prompt" xml:space="preserve">
+    <value>Aviso</value>
+  </data>
+  <data name="Dialog_Title_LibraryDelete" xml:space="preserve">
+    <value>¿Eliminar el fondo?</value>
+  </data>
+  <data name="Dialog_Title_LibraryDeleteMany" xml:space="preserve">
+    <value>¿Eliminar estos {0} fondos?</value>
+  </data>
+  <data name="Dialog_Title_LibraryUpgrade" xml:space="preserve">
+    <value>¿Actualizar los datos del fondo?</value>
+  </data>
+  <data name="Dialog_Title_RecentProjectMissing" xml:space="preserve">
+    <value>¿Quitar la entrada del proyecto que falta?</value>
+  </data>
+  <data name="Text_Create" xml:space="preserve">
+    <value>Crear</value>
+  </data>
+  <data name="Text_RemoveRecord" xml:space="preserve">
+    <value>Quitar entrada</value>
+  </data>
+  <data name="Text_Rename" xml:space="preserve">
+    <value>Cambiar nombre</value>
+  </data>
+  <data name="Text_Upgrade" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="InfobarMsg_Cancel" xml:space="preserve">
+    <value>La operación se ha cancelado.</value>
+  </data>
+  <data name="InfobarMsg_Err" xml:space="preserve">
+    <value>Se ha producido un error.</value>
+  </data>
+  <data name="InfobarMsg_Success" xml:space="preserve">
+    <value>Completado</value>
+  </data>
+  <data name="AppUpdater_UpdateFailedMessage" xml:space="preserve">
+    <value>La actualización ha fallado. Reinténtalo o descarga el instalador completo.</value>
+  </data>
+  <data name="Settings_General_Version_Plugins" xml:space="preserve">
+    <value>Versión de complementos</value>
+  </data>
+  <data name="PluginsUpdate_InvalidInfo" xml:space="preserve">
+    <value>Información de actualización no válida</value>
+  </data>
+  <data name="PluginsUpdate_Starting" xml:space="preserve">
+    <value>Iniciando actualización…</value>
+  </data>
+  <data name="PluginsUpdate_Completed" xml:space="preserve">
+    <value>Actualización completada. La interfaz se reiniciará.</value>
+  </data>
+  <data name="PluginsUpdate_Failed" xml:space="preserve">
+    <value>Error de actualización: {0}</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Downloading" xml:space="preserve">
+    <value>Descargando complementos…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>Guardando copia de los complementos actuales…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Replacing" xml:space="preserve">
+    <value>Sustituyendo archivos de complementos…</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Completed" xml:space="preserve">
+    <value>Completado</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Failed" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="PluginsUpdate_Close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="Text_Apply" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="Text_ApplyToLockBG" xml:space="preserve">
+    <value>Establecer como pantalla de bloqueo</value>
+  </data>
+  <data name="Text_RemoveFromLib" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="WpLib_SelectAll" xml:space="preserve">
+    <value>Seleccionar todo</value>
+  </data>
+  <data name="WpLib_InvertSelection" xml:space="preserve">
+    <value>Invertir selección</value>
+  </data>
+  <data name="WpLib_SelectedCount" xml:space="preserve">
+    <value>{0} seleccionados</value>
+  </data>
+  <data name="WpLib_AddWallpaper" xml:space="preserve">
+    <value>Añadir fondo</value>
+  </data>
+  <data name="WpLib_SelectItems" xml:space="preserve">
+    <value>Seleccionar fondos</value>
+  </data>
+  <data name="WpLib_DisplayControls" xml:space="preserve">
+    <value>Controles de pantalla</value>
+  </data>
+  <data name="Text_ShowOnDisk" xml:space="preserve">
+    <value>Abrir en el Explorador</value>
+  </data>
+  <data name="Text_UpdateConfig" xml:space="preserve">
+    <value>Actualizar información básica</value>
+  </data>
+  <data name="ScreenSaver_Add" xml:space="preserve">
+    <value>Añadir aplicación</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>Efectos animados del salvapantallas</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>Recomendado al usar una imagen fija como fondo del salvapantallas.</value>
+  </data>
+  <data name="ScreenSaver_RunningLock" xml:space="preserve">
+    <value>Mostrar la pantalla de inicio de sesión al reanudar</value>
+  </data>
+  <data name="ScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>Se recomienda activar esta opción para proteger tus datos.</value>
+  </data>
+  <data name="ScreenSaver_SeekFromList" xml:space="preserve">
+    <value>Buscar aplicaciones</value>
+  </data>
+  <data name="ScreenSaver_Server" xml:space="preserve">
+    <value>Activar salvapantallas</value>
+  </data>
+  <data name="ScreenSaver_ServerExplain" xml:space="preserve">
+    <value>Usa el fondo de la pantalla principal como fondo del salvapantallas.</value>
+  </data>
+  <data name="ScreenSaver_WaitingTime" xml:space="preserve">
+    <value>Tiempo de inactividad (minutos)</value>
+  </data>
+  <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>El salvapantallas no se iniciará mientras una aplicación de esta lista esté en primer plano.</value>
+  </data>
+  <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>Lista de aplicaciones permitidas</value>
+  </data>
+  <data name="ScreenSaver__effectBubble" xml:space="preserve">
+    <value>Burbujas</value>
+  </data>
+  <data name="ScreenSaver__effectNone" xml:space="preserve">
+    <value>Ninguno</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
+    <value>Ubicación de almacenamiento</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorageExplain" xml:space="preserve">
+    <value>Al cambiar la carpeta, se copiará todo el contenido a la nueva ubicación.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip" xml:space="preserve">
+    <value>Cambiar carpeta</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip" xml:space="preserve">
+    <value>Abrir carpeta</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguage" xml:space="preserve">
+    <value>Configuración de idioma</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
+    <value>Los cambios de idioma se aplican de inmediato.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
+    <value>Material de la interfaz</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
+    <value>Cambiar el material del fondo requiere reiniciar la interfaz.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink" xml:space="preserve">
+    <value>Acrílico</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink" xml:space="preserve">
+    <value>Mica</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppTheme" xml:space="preserve">
+    <value>Tema de la aplicación</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeExplain" xml:space="preserve">
+    <value>Cambiar el tema requiere reiniciar la interfaz.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeHyperlink" xml:space="preserve">
+    <value>Configuración de temas de Windows</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
+    <value>Iniciar con Windows</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
+    <value>Virtual Paper se inicia automáticamente y restaura la configuración del fondo.</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdAcrylic" xml:space="preserve">
+    <value>Acrílico</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdDefault" xml:space="preserve">
+    <value>Predeterminado</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdMica" xml:space="preserve">
+    <value>Mica</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeDark" xml:space="preserve">
+    <value>Oscuro</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeFollowSystem" xml:space="preserve">
+    <value>Seguir al sistema</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeLight" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="Settings_General_Text_AppearanceAndAction" xml:space="preserve">
+    <value>Apariencia y comportamiento</value>
+  </data>
+  <data name="Settings_General_Text_Version" xml:space="preserve">
+    <value>Versión</value>
+  </data>
+  <data name="Settings_General_Version_Download" xml:space="preserve">
+    <value>Descargar ahora</value>
+  </data>
+  <data name="Settings_General_Version_DownloadCancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Settings_General_Version_DownloadStart" xml:space="preserve">
+    <value>Descargar</value>
+  </data>
+  <data name="Settings_General_Version_FindNew" xml:space="preserve">
+    <value>Nueva versión disponible</value>
+  </data>
+  <data name="Settings_General_Version_Install" xml:space="preserve">
+    <value>Instalar</value>
+  </data>
+  <data name="Settings_General_Version_LastCheckDate" xml:space="preserve">
+    <value>Última comprobación:</value>
+  </data>
+  <data name="Settings_General_Version_MsStore" xml:space="preserve">
+    <value>Edición de Microsoft Store</value>
+  </data>
+  <data name="Settings_General_Version_NewVersionDownLoadedTitle" xml:space="preserve">
+    <value>Descarga completada</value>
+  </data>
+  <data name="Settings_General_Version_Release_Notes" xml:space="preserve">
+    <value>Notas de la versión</value>
+  </data>
+  <data name="Settings_General_Version_SeeNews" xml:space="preserve">
+    <value>Ver novedades</value>
+  </data>
+  <data name="Settings_General_Version_UpdateCheck" xml:space="preserve">
+    <value>Buscar actualizaciones</value>
+  </data>
+  <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
+    <value>La actualización ha fallado. Comprueba la conexión de red.</value>
+  </data>
+  <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
+    <value>¡Tienes la última versión!</value>
+  </data>
+  <data name="Settings_Others_About_Basic" xml:space="preserve">
+    <value>¡Gracias por descargar la aplicación!
+Virtual Paper es una aplicación gratuita y ligera para Windows 10 y posteriores que permite gestionar fondos y personalizar el escritorio. Si encuentras algún problema, ponte en contacto con nosotros.
+Autor: PaperHammer</value>
+  </data>
+  <data name="Settings_Others_More_Document" xml:space="preserve">
+    <value>Documentación</value>
+  </data>
+  <data name="Settings_Others_More_DocumentExplain" xml:space="preserve">
+    <value>Manuales y ayuda</value>
+  </data>
+  <data name="Settings_Others_More_ReportBug" xml:space="preserve">
+    <value>Informar de vulnerabilidades y errores</value>
+  </data>
+  <data name="Settings_Others_More_ReportBugExplain" xml:space="preserve">
+    <value>Informa de problemas y ayuda a mejorar la aplicación.</value>
+  </data>
+  <data name="Settings_Others_More_RequestFunc" xml:space="preserve">
+    <value>Solicitar una función</value>
+  </data>
+  <data name="Settings_Others_More_RequestFuncExplain" xml:space="preserve">
+    <value>Comparte tus ideas y ayuda a mejorar la aplicación.</value>
+  </data>
+  <data name="Settings_Others_More_SourceCode" xml:space="preserve">
+    <value>Repositorios de GitHub</value>
+  </data>
+  <data name="Settings_Others_More_SourceCodeExplain" xml:space="preserve">
+    <value>Apoyar el proyecto con una estrella</value>
+  </data>
+  <data name="Settings_Others_Text_About" xml:space="preserve">
+    <value>Acerca de</value>
+  </data>
+  <data name="Settings_Others_Text_More" xml:space="preserve">
+    <value>Más</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPoweredn" xml:space="preserve">
+    <value>Con batería</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPowerednExplain" xml:space="preserve">
+    <value>Comportamiento del fondo sin conexión a la corriente</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSaving" xml:space="preserve">
+    <value>Ahorro de energía</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSavingExplain" xml:space="preserve">
+    <value>Comportamiento del fondo en el modo de ahorro de energía de Windows</value>
+  </data>
+  <data name="Settings_Perforemance_Play_Audio" xml:space="preserve">
+    <value>Reproducir audio solo cuando el escritorio tenga el foco</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocus" xml:space="preserve">
+    <value>Aplicación activa a pantalla completa</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocusExplain" xml:space="preserve">
+    <value>Comportamiento del fondo cuando la aplicación activa está a pantalla completa</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreen" xml:space="preserve">
+    <value>Otras aplicaciones a pantalla completa</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreenExplain" xml:space="preserve">
+    <value>Comportamiento del fondo cuando otras aplicaciones o juegos están a pantalla completa</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_KeepRun" xml:space="preserve">
+    <value>Seguir funcionando</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Pause" xml:space="preserve">
+    <value>Pausar</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Silence" xml:space="preserve">
+    <value>Silenciar</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktop" xml:space="preserve">
+    <value>Escritorio remoto</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktopExplain" xml:space="preserve">
+    <value>Comportamiento del fondo durante una conexión de Escritorio remoto</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanism" xml:space="preserve">
+    <value>Ámbito de las reglas</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForAll" xml:space="preserve">
+    <value>Todos: una regla activada en una pantalla cambia el estado de los fondos de todas las pantallas.</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForPer" xml:space="preserve">
+    <value>Por pantalla: cambia solo el estado del fondo de la pantalla donde se activó la regla.</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_all" xml:space="preserve">
+    <value>Todos</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_per" xml:space="preserve">
+    <value>Por pantalla</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Laptop" xml:space="preserve">
+    <value>Portátil</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Play" xml:space="preserve">
+    <value>Reproducir</value>
+  </data>
+  <data name="Settings_Perforemance_Text_System" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="Settings_System_Developer_Debug" xml:space="preserve">
+    <value>Depurador</value>
+  </data>
+  <data name="Settings_System_Developer_DebugExplain" xml:space="preserve">
+    <value>Muestra información detallada sobre las operaciones durante la ejecución.</value>
+  </data>
+  <data name="Settings_System_Developer_Log" xml:space="preserve">
+    <value>Registro</value>
+  </data>
+  <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
+    <value>Crear informe de diagnóstico</value>
+  </data>
+  <data name="Settings_System_Text_Debug" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="Settings_System_Text_Developer" xml:space="preserve">
+    <value>Desarrolladores</value>
+  </data>
+  <data name="SidebarAccount" xml:space="preserve">
+    <value>Cuenta</value>
+  </data>
+  <data name="SidebarAppSettings" xml:space="preserve">
+    <value>Configuración</value>
+  </data>
+  <data name="SidebarGallery" xml:space="preserve">
+    <value>Galería</value>
+  </data>
+  <data name="SidebarProject" xml:space="preserve">
+    <value>Proyecto</value>
+  </data>
+  <data name="SidebarRepository" xml:space="preserve">
+    <value>Repositorio</value>
+  </data>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>Ajustar</value>
+  </data>
+  <data name="Text_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Text_Confirm" xml:space="preserve">
+    <value>Confirmar</value>
+  </data>
+  <data name="Text_Delete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="Text_Loading" xml:space="preserve">
+    <value>Cargando datos. Espera un momento.</value>
+  </data>
+  <data name="Text_Restore" xml:space="preserve">
+    <value>Restaurar</value>
+  </data>
+  <data name="Text_WpArrange" xml:space="preserve">
+    <value>Distribución del fondo</value>
+  </data>
+  <data name="WpArrange_Duplicate" xml:space="preserve">
+    <value>Duplicar</value>
+  </data>
+  <data name="WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>Muestra el mismo fondo de la pantalla principal en las demás pantallas.</value>
+  </data>
+  <data name="WpArrange_Expand" xml:space="preserve">
+    <value>Extender</value>
+  </data>
+  <data name="WpArrange_ExpandExplain" xml:space="preserve">
+    <value>Extiende el fondo de la pantalla principal por todas las pantallas.</value>
+  </data>
+  <data name="WpArrange_Per" xml:space="preserve">
+    <value>Por pantalla</value>
+  </data>
+  <data name="WpArrange_PerExplain" xml:space="preserve">
+    <value>Muestra un fondo independiente en cada monitor.</value>
+  </data>
+  <data name="Text_AspectRatio" xml:space="preserve">
+    <value>Relación de aspecto:</value>
+  </data>
+  <data name="Text_Details" xml:space="preserve">
+    <value>Detalles</value>
+  </data>
+  <data name="Text_FileExtension" xml:space="preserve">
+    <value>Tipo de archivo:</value>
+  </data>
+  <data name="Text_FileSize" xml:space="preserve">
+    <value>Tamaño del archivo:</value>
+  </data>
+  <data name="Text_Resolution" xml:space="preserve">
+    <value>Resolución:</value>
+  </data>
+  <data name="Text_Type" xml:space="preserve">
+    <value>Tipo de fondo:</value>
+  </data>
+  <data name="Text_EffectConfig" xml:space="preserve">
+    <value>Opciones de personalización</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
+    <value>Efecto de paralaje más realista, con mayor consumo de recursos.</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Title" xml:space="preserve">
+    <value>Fondo 3D con modelo de IA</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Explain" xml:space="preserve">
+    <value>Efecto de paralaje seudo-3D con consumo moderado de recursos.</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
+    <value>Fondo estándar</value>
+  </data>
+  <data name="WpLib_TypeFilter_All" xml:space="preserve">
+    <value>Filtros</value>
+  </data>
+  <data name="WpLib_TypeFilterHeading" xml:space="preserve"><value>Tipo</value></data>
+  <data name="WpLib_CardType_Image" xml:space="preserve"><value>Imagen</value></data>
+  <data name="WpLib_CardType_Gif" xml:space="preserve"><value>GIF</value></data>
+  <data name="WpLib_CardType_Web" xml:space="preserve"><value>Web</value></data>
+  <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
+    <value>Imagen</value>
+  </data>
+  <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
+    <value>Imagen animada</value>
+  </data>
+  <data name="WpLib_TypeFilter_Video" xml:space="preserve">
+    <value>Vídeo</value>
+  </data>
+  <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
+    <value>Web</value>
+  </data>
+  <data name="WpLib_Search_Placeholder" xml:space="preserve">
+    <value>Buscar fondos…</value>
+  </data>
+  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
+    <value>Contenido de la biblioteca</value>
+  </data>
+  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
+    <value>Salvapantallas</value>
+  </data>
+  <data name="Text_Edit_Desc" xml:space="preserve">
+    <value>Descripción:</value>
+  </data>
+  <data name="Text_Edit_Tags" xml:space="preserve">
+    <value>Etiquetas:</value>
+  </data>
+  <data name="Text_Edit_Title" xml:space="preserve">
+    <value>Título:</value>
+  </data>
+  <data name="Text_Edit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Text_Preview" xml:space="preserve">
+    <value>Vista previa</value>
+  </data>
+  <data name="Text_Off" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="Text_On" xml:space="preserve">
+    <value>Activado</value>
+  </data>
+  <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
+    <value>No se puede usar la carpeta raíz de los datos de la aplicación como ubicación de almacenamiento.</value>
+  </data>
+  <data name="Text_VersionInfo" xml:space="preserve">
+    <value>Versión:</value>
+  </data>
+  <data name="InfobarMsg_ImportErr" xml:space="preserve">
+    <value>Error al importar el archivo</value>
+  </data>
+  <data name="Text_FileUsing" xml:space="preserve">
+    <value>El archivo se está usando como fondo. Ciérralo e inténtalo de nuevo.</value>
+  </data>
+  <data name="Project_RecentUsed" xml:space="preserve">
+    <value>Abrir proyecto reciente</value>
+  </data>
+  <data name="Project_SearchRecentUsed" xml:space="preserve">
+    <value>Buscar elementos recientes</value>
+  </data>
+  <data name="Project_StartUp" xml:space="preserve">
+    <value>Primeros pasos</value>
+  </data>
+  <data name="Project_StartUp_OpenFile" xml:space="preserve">
+    <value>Abrir archivos (F)</value>
+  </data>
+  <data name="Project_StartUp_OpenFile_Desc" xml:space="preserve">
+    <value>Abrir archivos compatibles</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder_Desc" xml:space="preserve">
+    <value>Explora o edita archivos compatibles de la carpeta.</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd" xml:space="preserve">
+    <value>Abrir diseño (V)</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd_Desc" xml:space="preserve">
+    <value>Abrir archivo .vpd local</value>
+  </data>
+  <data name="Project_StartUp_NewVpd" xml:space="preserve">
+    <value>Crear nuevo diseño</value>
+  </data>
+  <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
+    <value>Elige una plantilla de proyecto para empezar</value>
+  </data>
+  <data name="Project_ContinueWithoutFile" xml:space="preserve">
+    <value>Continuar sin archivos (W)</value>
+  </data>
+  <data name="Project_DeployNewDraft" xml:space="preserve">
+    <value>Configurar nuevo diseño</value>
+  </data>
+  <data name="Project_DeployNewDraft_Create" xml:space="preserve">
+    <value>Crear (N)</value>
+  </data>
+  <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
+    <value>Anterior</value>
+  </data>
+  <data name="Project_NewDraftName" xml:space="preserve">
+    <value>Nombre del diseño (J)</value>
+  </data>
+  <data name="Project_NewDraftName_Placeholder" xml:space="preserve">
+    <value>Introduce un nombre para el diseño</value>
+  </data>
+  <data name="Project_NewDraftPosition" xml:space="preserve">
+    <value>Posición</value>
+  </data>
+  <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
+    <value>Examinar carpeta</value>
+  </data>
+  <data name="Project_DeployNewDraft_Desc" xml:space="preserve">
+    <value>El diseño se creará en la carpeta:</value>
+  </data>
+  <data name="Project_NewName_InvalidTip" xml:space="preserve">
+    <value>El nombre está vacío o no es válido (máximo 30 caracteres).</value>
+  </data>
+  <data name="WebBackdrop_FileTree_FilterPlaceholder" xml:space="preserve">
+    <value>Filtrar archivos…</value>
+  </data>
+  <data name="Project_NewPosition_InvalidTip" xml:space="preserve">
+    <value>La ubicación está vacía o no es válida (máximo 200 caracteres).</value>
+  </data>
+  <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
+    <value>Siguiente</value>
+  </data>
+  <data name="Project_SearchTemplate" xml:space="preserve">
+    <value>Buscar plantilla de proyecto</value>
+  </data>
+  <data name="Project_TemplateConfig" xml:space="preserve">
+    <value>Crear nuevo proyecto</value>
+  </data>
+  <data name="Project_NewProjectName" xml:space="preserve">
+    <value>Nombre del proyecto</value>
+  </data>
+  <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
+    <value>Introduce un nombre para el proyecto</value>
+  </data>
+  <data name="DirExsits" xml:space="preserve">
+    <value>Ya existe una ruta similar.</value>
+  </data>
+  <data name="Draft_SI_LayerLocked" xml:space="preserve">
+    <value>La capa seleccionada está bloqueada y no se puede editar.</value>
+  </data>
+  <data name="Draft_Canvas_DefaultName" xml:space="preserve">
+    <value>Lienzo</value>
+  </data>
+  <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
+    <value>Ha ocurrido un error en el proyecto. Vuelve a cargarlo.</value>
+  </data>
+  <data name="SIG_Text_AddLayer" xml:space="preserve">
+    <value>Crear capa</value>
+  </data>
+  <data name="SIG_Text_DeleteLayer" xml:space="preserve">
+    <value>Eliminar capa</value>
+  </data>
+  <data name="SIG_Text_RenameLayer" xml:space="preserve">
+    <value>Cambiar nombre de capa</value>
+  </data>
+  <data name="SIG_Text_CopyLayer" xml:space="preserve">
+    <value>Copiar capa</value>
+  </data>
+  <data name="RenameDialog_Text_AfterChange" xml:space="preserve">
+    <value>Después:</value>
+  </data>
+  <data name="RenameDialog_Text_BeforeChange" xml:space="preserve">
+    <value>Antes:</value>
+  </data>
+  <data name="Dialog_Title_Rename" xml:space="preserve">
+    <value>Cambiar nombre</value>
+  </data>
+  <data name="Project_CannotDelete_OnlyCanvas" xml:space="preserve">
+    <value>No se puede eliminar la única capa.</value>
+  </data>
+  <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
+    <value>Error al guardar la capa: </value>
+  </data>
+  <data name="Project_STI_LayerLoadFailed" xml:space="preserve">
+    <value>Error al cargar la capa: </value>
+  </data>
+  <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
+    <value>Añadir a colores personalizados</value>
+  </data>
+  <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
+    <value>El ancho y el alto deben estar entre 1 y {0} píxeles (límite de la GPU actual). Se ha restaurado a {1} × {2}.</value>
+  </data>
+  <data name="Account_Email_InvalidTip" xml:space="preserve">
+    <value>El formato del correo electrónico no es válido.</value>
+  </data>
+  <data name="Account_Pwd_InvalidTip" xml:space="preserve">
+    <value>La contraseña debe tener entre 8 y 32 caracteres e incluir al menos:
+una mayúscula, una minúscula, un número y un carácter especial</value>
+  </data>
+  <data name="Account_LoginWithAccount" xml:space="preserve">
+    <value>Iniciar sesión en tu cuenta</value>
+  </data>
+  <data name="Account_EmailText" xml:space="preserve">
+    <value>Correo electrónico</value>
+  </data>
+  <data name="Account_EmailTextWithColon" xml:space="preserve">
+    <value>Correo electrónico:</value>
+  </data>
+  <data name="Account_PwdText" xml:space="preserve">
+    <value>Contraseña</value>
+  </data>
+  <data name="Account_PwdTextWithColon" xml:space="preserve">
+    <value>Contraseña:</value>
+  </data>
+  <data name="Account_RegisterWithEmail" xml:space="preserve">
+    <value>Crear una cuenta</value>
+  </data>
+  <data name="Account_ConfirmPwdText" xml:space="preserve">
+    <value>Confirmar contraseña</value>
+  </data>
+  <data name="Account_ConfirmPwdTextWithColon" xml:space="preserve">
+    <value>Confirmación:</value>
+  </data>
+  <data name="Account_CodeText" xml:space="preserve">
+    <value>Código de verificación</value>
+  </data>
+  <data name="Account_CodeTextWithColon" xml:space="preserve">
+    <value>Código de verificación:</value>
+  </data>
+  <data name="Account_UsernameText" xml:space="preserve">
+    <value>Nombre de usuario</value>
+  </data>
+  <data name="Account_UsernameTextWithColon" xml:space="preserve">
+    <value>Nombre de usuario:</value>
+  </data>
+  <data name="Account_LoginText" xml:space="preserve">
+    <value>Iniciar sesión</value>
+  </data>
+  <data name="Account_RegisterText" xml:space="preserve">
+    <value>Registrarse</value>
+  </data>
+  <data name="Account_BackText" xml:space="preserve">
+    <value>Volver</value>
+  </data>
+  <data name="Account_RequestCodeText" xml:space="preserve">
+    <value>Solicitar</value>
+  </data>
+  <data name="Server_Success" xml:space="preserve">
+    <value>Operación completada</value>
+  </data>
+  <data name="Server_InnerError" xml:space="preserve">
+    <value>Error interno del servidor. Inténtalo más tarde.</value>
+  </data>
+  <data name="Server_EmailFormatIllegal" xml:space="preserve">
+    <value>Formato de correo incorrecto</value>
+  </data>
+  <data name="Server_EmailOccupied" xml:space="preserve">
+    <value>Este correo electrónico ya está en uso.</value>
+  </data>
+  <data name="Server_UsernameFormatIllegal" xml:space="preserve">
+    <value>El formato del nombre de usuario no es válido.</value>
+  </data>
+  <data name="Server_UsernameOccupied" xml:space="preserve">
+    <value>Este nombre de usuario ya está en uso.</value>
+  </data>
+  <data name="Server_PasswordFormatIllegal" xml:space="preserve">
+    <value>El formato de la contraseña no es válido.</value>
+  </data>
+  <data name="Server_ConfirmPasswordIllegal" xml:space="preserve">
+    <value>Las contraseñas introducidas no coinciden.</value>
+  </data>
+  <data name="Server_UsernameNotFindOrPasswordError" xml:space="preserve">
+    <value>El usuario no existe o la contraseña es incorrecta.</value>
+  </data>
+  <data name="Server_SecurityCodeError" xml:space="preserve">
+    <value>El código de verificación es incorrecto o ha caducado.</value>
+  </data>
+  <data name="Server_PotentialRisks" xml:space="preserve">
+    <value>La operación se ha detenido por un posible riesgo.</value>
+  </data>
+  <data name="Server_Inaccessible" xml:space="preserve">
+    <value>No se puede acceder a este contenido.</value>
+  </data>
+  <data name="Account_Username_InvalidTip" xml:space="preserve">
+    <value>El nombre de usuario debe tener entre 3 y 20 caracteres. Se permiten:
+letras, números (0–9), guion bajo (_), punto (.), guion (-) y la mayoría de los caracteres Unicode.
+No puede empezar ni terminar por un punto o guion.
+Nombres no permitidos: admin, root, test, guest, user, system</value>
+  </data>
+  <data name="Server_CannotAccess" xml:space="preserve">
+    <value>No se puede conectar con el servidor.</value>
+  </data>
+  <data name="Account_ConfirmPwd_InvalidTip" xml:space="preserve">
+    <value>No coincide con la contraseña actual.</value>
+  </data>
+  <data name="Account_SelBarItem1_Cloud" xml:space="preserve">
+    <value>Nube</value>
+  </data>
+  <data name="Account_SelBarItem2_Star" xml:space="preserve">
+    <value>Favoritos</value>
+  </data>
+  <data name="Account_SelBarItem3_Upload" xml:space="preserve">
+    <value>Subir</value>
+  </data>
+  <data name="InnerErr" xml:space="preserve">
+    <value>Error interno del cliente</value>
+  </data>
+  <data name="Account_DefaultSign" xml:space="preserve">
+    <value>Todavía no hay elementos</value>
+  </data>
+  <data name="Account_AvatarDesc" xml:space="preserve">
+    <value>Añade una foto a tu cuenta. Se mostrará en las aplicaciones que utilicen esta cuenta.</value>
+  </data>
+  <data name="Account_ChangeAvatar" xml:space="preserve">
+    <value>Cambiar foto de perfil</value>
+  </data>
+  <data name="Account_Username" xml:space="preserve">
+    <value>Nombre de usuario</value>
+  </data>
+  <data name="Account_Sign" xml:space="preserve">
+    <value>Firma</value>
+  </data>
+  <data name="Account_UserAccount" xml:space="preserve">
+    <value>Cuenta</value>
+  </data>
+  <data name="Account_PersonalInfo" xml:space="preserve">
+    <value>Información personal</value>
+  </data>
+  <data name="Account_Email" xml:space="preserve">
+    <value>Correo electrónico</value>
+  </data>
+  <data name="Account_Sign_InvalidTip" xml:space="preserve">
+    <value>Caracteres permitidos en la firma:
+letras de cualquier idioma, números, puntuación, símbolos y espacios.
+Longitud: de 0 a 100 caracteres.</value>
+  </data>
+  <data name="Text_FileNotAccess" xml:space="preserve">
+    <value>No se pudo analizar el archivo. Comprueba que sea válido.</value>
+  </data>
+  <data name="Text_FileSizeIllegal_5MB" xml:space="preserve">
+    <value>Tamaño de archivo no válido (máximo 5 MB).</value>
+  </data>
+  <data name="Account_Usersign_InvalidTip_Sim" xml:space="preserve">
+    <value>El formato de la firma no es válido.</value>
+  </data>
+  <data name="Account_UpdateUserInfo_Fail" xml:space="preserve">
+    <value>No se pudieron actualizar los datos. Inténtalo más tarde.</value>
+  </data>
+  <data name="Account_Username_InvalidTip_Sim" xml:space="preserve">
+    <value>El formato del nombre de usuario no es válido.</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>Cerrar sesión</value>
+  </data>
+  <data name="MenuFlyout_Text_DetailAndEditInfo" xml:space="preserve">
+    <value>Detalles y edición</value>
+  </data>
+  <data name="MenuFlyout_Text_Downlaod" xml:space="preserve">
+    <value>Descargar</value>
+  </data>
+  <data name="App_UserNotLogin" xml:space="preserve">
+    <value>Hay un problema con los datos de sesión. Vuelve a iniciar sesión.</value>
+  </data>
+  <data name="Text_DeleteFromServer" xml:space="preserve">
+    <value>Eliminar de la nube</value>
+  </data>
+  <data name="Server_Account_Locked" xml:space="preserve">
+    <value>La cuenta está bloqueada. Contacta con el administrador.</value>
+  </data>
+  <data name="Server_Authentication_Failed" xml:space="preserve">
+    <value>La autenticación ha fallado. Vuelve a iniciar sesión.</value>
+  </data>
+  <data name="SIG_CanvasSet_Header" xml:space="preserve">
+    <value>Lienzo</value>
+  </data>
+  <data name="SIG_CanvasSet_AdjustSize" xml:space="preserve">
+    <value>Cambiar tamaño del lienzo</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelWidth" xml:space="preserve">
+    <value>Ancho (píxeles)</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelHeight" xml:space="preserve">
+    <value>Alto (píxeles)</value>
+  </data>
+  <data name="SIG_CanvasSet_LockAspectRatio" xml:space="preserve">
+    <value>Bloquear proporción</value>
+  </data>
+  <data name="SIG_CanvasSet_SacleContent" xml:space="preserve">
+    <value>Escalar también el contenido</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateAndFlip" xml:space="preserve">
+    <value>Girar y voltear</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateLeftNinety" xml:space="preserve">
+    <value>Girar 90° a la izquierda</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateRightNinety" xml:space="preserve">
+    <value>Girar 90° a la derecha</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipHorizon" xml:space="preserve">
+    <value>Voltear horizontalmente</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
+    <value>Voltear verticalmente</value>
+  </data>
+  <data name="Project_SI_Text_Layer" xml:space="preserve">
+    <value>Capa</value>
+  </data>
+  <data name="Project_SI_Text_Copy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Project_SI_Text_UnnamedLayer" xml:space="preserve">
+    <value>Capa sin nombre</value>
+  </data>
+  <data name="Project_SI_FileNotFound" xml:space="preserve">
+    <value>El archivo no existe o se ha movido. ¿Quitarlo de la lista?</value>
+  </data>
+  <data name="SIG_Text_RemoveFromList" xml:space="preserve">
+    <value>Quitar de la lista</value>
+  </data>
+  <data name="SIG_Text_CopyPath" xml:space="preserve">
+    <value>Copiar ruta</value>
+  </data>
+  <data name="Settings_General_Version_DownloadingTitle" xml:space="preserve">
+    <value>Descargando…</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedTitle" xml:space="preserve">
+    <value>Error de descarga</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedMsg" xml:space="preserve">
+    <value>No se puede descargar la actualización. Comprueba la conexión e inténtalo de nuevo.</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedTitle" xml:space="preserve">
+    <value>Error de verificación del archivo</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedMsg" xml:space="preserve">
+    <value>El paquete de actualización puede estar dañado. Vuelve a descargarlo.</value>
+  </data>
+  <data name="Settings_General_Version_DownLoadedMsg" xml:space="preserve">
+    <value>La actualización está lista. Pulsa «Instalar» para empezar.</value>
+  </data>
+  <data name="Text_ApplyAndClose" xml:space="preserve">
+    <value>Aplicar y cerrar</value>
+  </data>
+  <data name="Webview_SelBarItem1_GeneralEffect" xml:space="preserve">
+    <value>Efectos generales</value>
+  </data>
+  <data name="Webview_SelBarItem2_GeneralInfo" xml:space="preserve">
+    <value>Información básica</value>
+  </data>
+  <data name="Text_FileInPreview" xml:space="preserve">
+    <value>El archivo está en la vista previa. Ciérrala e inténtalo de nuevo.</value>
+  </data>
+  <data name="Details_Text_FileProperty" xml:space="preserve">
+    <value>Propiedades del archivo</value>
+  </data>
+  <data name="Webview_SelBarItem3_GeneralInfoEdit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Text_Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="RunningAsAdminWarning" xml:space="preserve">
+    <value>Algunas funciones pueden no estar disponibles al ejecutar como administrador.</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles" xml:space="preserve">
+    <value>Elegir archivo</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles_Explain" xml:space="preserve">
+    <value>Añadir archivos compatibles a la biblioteca de fondos</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolder" xml:space="preserve">
+    <value>Elegir carpeta</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolderExplain" xml:space="preserve">
+    <value>Añadir todos los archivos compatibles de la carpeta a la biblioteca</value>
+  </data>
+  <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
+    <value>Arrastra aquí para añadir</value>
+  </data>
+  <data name="Lib_NotAnyMore" xml:space="preserve">
+    <value>Fin de la lista</value>
+  </data>
+  <data name="Text_Drop_Files" xml:space="preserve">
+    <value>Suelta los archivos</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>Añadir fondo</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Name" xml:space="preserve">
+    <value>Imagen estática</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
+    <value>Edición de mapas de bits por píxeles para dibujar, retocar y procesar imágenes.</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Name" xml:space="preserve">
+    <value>Fondo web</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Desc" xml:space="preserve">
+    <value>Plantilla web para crear fondos animados e interactivos con HTML/CSS/JS.</value>
+  </data>
+  <data name="Project_Create_New" xml:space="preserve">
+    <value>Nuevo</value>
+  </data>
+  <data name="Project_Open" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="Project_Drops_Contains_Invalid_FIles" xml:space="preserve">
+    <value>Se ha omitido automáticamente un archivo no compatible.</value>
+  </data>
+  <data name="Project_FileSave_Failed" xml:space="preserve">
+    <value>Error al guardar el archivo: </value>
+  </data>
+  <data name="Project_FileLoad_Failed" xml:space="preserve">
+    <value>Error al cargar el archivo: </value>
+  </data>
+  <data name="Project_SI_Text_BackgroundLayer" xml:space="preserve">
+    <value>Fondo</value>
+  </data>
+  <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
+    <value>El archivo puede estar dañado: </value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
+    <value>Nuevo</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerCopy" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_FitView" xml:space="preserve">
+    <value>Ajustar a la vista</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomIn" xml:space="preserve">
+    <value>Acercar</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomOut" xml:space="preserve">
+    <value>Alejar</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Selection" xml:space="preserve">
+    <value>Selección</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_PaintBrush" xml:space="preserve">
+    <value>Pincel</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Fill" xml:space="preserve">
+    <value>Rellenar</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Eraser" xml:space="preserve">
+    <value>Borrador</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Crop" xml:space="preserve">
+    <value>Recortar</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
+    <value>Lienzo</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Content" xml:space="preserve">
+    <value>tiene cambios sin guardar. ¿Guardarlos?</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Title" xml:space="preserve">
+    <value>Cambios sin guardar</value>
+  </data>
+  <data name="Text_Unsave" xml:space="preserve">
+    <value>No guardar</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_File" xml:space="preserve">
+    <value>Archivo (F)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_CreateNew" xml:space="preserve">
+    <value>Nuevo</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_SaveAll" xml:space="preserve">
+    <value>Guardar todo</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Exit" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Edit" xml:space="preserve">
+    <value>Editar (E)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Undo" xml:space="preserve">
+    <value>Deshacer</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Redo" xml:space="preserve">
+    <value>Rehacer</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
+    <value>Ayuda (H)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
+    <value>Acerca de</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
+    <value>Manual</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
+    <value>Exportar</value>
+  </data>
+  <data name="Project_Export_Success" xml:space="preserve">
+    <value>Exportado a:</value>
+  </data>
+  <data name="Project_Export_Failed" xml:space="preserve">
+    <value>Error al exportar:</value>
+  </data>
+  <data name="Project_Export_PathNotBeNone" xml:space="preserve">
+    <value>La ruta de exportación no puede estar vacía.</value>
+  </data>
+  <data name="Project_Export_InternalError" xml:space="preserve">
+    <value>Error interno. Prueba a reiniciar la aplicación.</value>
+  </data>
+  <data name="Project_StaticImg_Text_Palette" xml:space="preserve">
+    <value>Paleta</value>
+  </data>
+  <data name="Text_Complete" xml:space="preserve">
+    <value>Completar</value>
+  </data>
+  <data name="Project_StaticImg_Text_Eraser" xml:space="preserve">
+    <value>Borrador</value>
+  </data>
+  <data name="Project_StaticImg_Text_WidthPixel" xml:space="preserve">
+    <value>Ancho (píxeles)</value>
+  </data>
+  <data name="Project_StaticImg_Text_OpacityPercent" xml:space="preserve">
+    <value>Opacidad (%)</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerSet" xml:space="preserve">
+    <value>Grupo de capas</value>
+  </data>
+  <data name="Project_StaticImg_Text_Paintbrush" xml:space="preserve">
+    <value>Pincel</value>
+  </data>
+  <data name="Project_StaticImg_Text_PaintbrushBox" xml:space="preserve">
+    <value>Selección de pinceles</value>
+  </data>
+  <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
+    <value>Grosor (píxeles)</value>
+  </data>
+  <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
+    <value>El contenido del archivo no es válido y no se puede abrir.</value>
+  </data>
+  <data name="Text_Save_As" xml:space="preserve">
+    <value>Guardar como</value>
+  </data>
+  <data name="EffectPrefix_Saturation" xml:space="preserve">
+    <value>Saturación</value>
+  </data>
+  <data name="EffectPrefix_Brightness" xml:space="preserve">
+    <value>Brillo</value>
+  </data>
+  <data name="EffectPrefix_Contrast" xml:space="preserve">
+    <value>Contraste</value>
+  </data>
+  <data name="EffectPrefix_Speed" xml:space="preserve">
+    <value>Velocidad</value>
+  </data>
+  <data name="EffectPrefix_Volume" xml:space="preserve">
+    <value>Volumen</value>
+  </data>
+  <data name="EffectPrefix_Hue" xml:space="preserve">
+    <value>Tono</value>
+  </data>
+  <data name="EffectPrefix_Scale_Way" xml:space="preserve">
+    <value>Modo de escalado</value>
+  </data>
+  <data name="EffectPrefix_Parallax" xml:space="preserve">
+    <value>Paralaje</value>
+  </data>
+  <data name="EffectPrefix_Time_Perception" xml:space="preserve">
+    <value>Adaptación horaria</value>
+  </data>
+  <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
+    <value>Calcula el amanecer y el atardecer según tu ubicación y adapta el brillo y el tono del fondo al día, al crepúsculo y a la noche, en armonía con la luz natural.</value>
+  </data>
+  <data name="SidebarIntelligent" xml:space="preserve">
+    <value>IA</value>
+  </data>
+  <data name="SidebarIntelligentFullName" xml:space="preserve">
+    <value>Herramientas de IA</value>
+  </data>
+  <data name="Intelligent_SelBarItem1_StyleTranfer" xml:space="preserve">
+    <value>Estilizar</value>
+  </data>
+  <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
+    <value>Mejorar</value>
+  </data>
+  <data name="Intelligent_Intro_Title" xml:space="preserve">
+    <value>Transferencia de estilo</value>
+  </data>
+  <data name="Intelligent_Intro_Desc" xml:space="preserve">
+    <value>Aplica el estilo artístico de una imagen a otra mediante IA. Elige una imagen de contenido y otra de referencia para generar una imagen que combine el contenido original y el estilo deseado.</value>
+  </data>
+  <data name="Intelligent_Intro_Warning" xml:space="preserve">
+    <value>Nota: el modelo local ligero reduce las imágenes antes de procesarlas y restaura su tamaño después. Se pueden perder algunos detalles.</value>
+  </data>
+  <data name="Intelligent_SR_Title" xml:space="preserve">
+    <value>Mejora de imagen</value>
+  </data>
+  <data name="Intelligent_SR_Desc" xml:space="preserve">
+    <value>Mejora imágenes mediante superresolución con IA.
+- Restauración: recupera detalles y nitidez en imágenes borrosas o de baja calidad
+- Ampliación: aumenta la resolución preservando los detalles originales</value>
+  </data>
+  <data name="Intelligent_SR_Warning" xml:space="preserve">
+    <value>Nota: el modelo reconstruye detalles, por lo que el resultado puede diferir del original. El procesamiento local puede tardar un tiempo.</value>
+  </data>
+  <data name="Intelligent_AddTask" xml:space="preserve">
+    <value>Tarea añadida</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img" xml:space="preserve">
+    <value>Original</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
+    <value>Haz clic o arrastra la imagen original</value>
+  </data>
+  <data name="Intelligent_Style_Lib" xml:space="preserve">
+    <value>Biblioteca de estilos</value>
+  </data>
+  <data name="Intelligent_Style_Inner_Select" xml:space="preserve">
+    <value>Elegir estilo incluido</value>
+  </data>
+  <data name="Intelligent_Style_Type_Custom" xml:space="preserve">
+    <value>Personalizado</value>
+  </data>
+  <data name="Intelligent_Task_Style_Img_Import" xml:space="preserve">
+    <value>Haz clic o elige en la biblioteca de estilos</value>
+  </data>
+  <data name="Intelligent_Style_Img_Desc" xml:space="preserve">
+    <value>La imagen de estilo solo se analiza localmente. Se recomienda alrededor de 1 MB. La resolución de salida depende de la imagen original.</value>
+  </data>
+  <data name="Intelligent_Style_Type_Anime" xml:space="preserve">
+    <value>Anime</value>
+  </data>
+  <data name="Intelligent_Style_Type_Cartoon" xml:space="preserve">
+    <value>Dibujo animado</value>
+  </data>
+  <data name="Intelligent_Style_Type_Gongbi" xml:space="preserve">
+    <value>Gongbi</value>
+  </data>
+  <data name="Intelligent_Style_Type_Pencil" xml:space="preserve">
+    <value>Lápiz</value>
+  </data>
+  <data name="Intelligent_Style_Type_Watercolor" xml:space="preserve">
+    <value>Acuarela</value>
+  </data>
+  <data name="Intelligent_Style_Type_InkWash" xml:space="preserve">
+    <value>Tinta china</value>
+  </data>
+  <data name="Intelligent_Style_Type_OilPainting" xml:space="preserve">
+    <value>Óleo</value>
+  </data>
+  <data name="Intelligent_Style_Type_ColoredPencil" xml:space="preserve">
+    <value>Lápiz de color</value>
+  </data>
+  <data name="Intelligent_Style_Type_OutlineDrawing" xml:space="preserve">
+    <value>Dibujo de contorno</value>
+  </data>
+  <data name="Intelligent_Style_Type_Ukiyoe" xml:space="preserve">
+    <value>Ukiyo-e</value>
+  </data>
+  <data name="Intelligent_Task_Style" xml:space="preserve">
+    <value>Estilo</value>
+  </data>
+  <data name="Text_ImportLib" xml:space="preserve">
+    <value>Añadir a la biblioteca</value>
+  </data>
+  <data name="Text_Result" xml:space="preserve">
+    <value>Resultado</value>
+  </data>
+  <data name="Text_Task_Status_Created" xml:space="preserve">
+    <value>Creado</value>
+  </data>
+  <data name="Text_Task_Status_Queue" xml:space="preserve">
+    <value>En espera…</value>
+  </data>
+  <data name="Text_Task_Status_Processing" xml:space="preserve">
+    <value>Procesando…</value>
+  </data>
+  <data name="Text_Task_Status_Completed" xml:space="preserve">
+    <value>Completado</value>
+  </data>
+  <data name="Text_Task_Status_Filed" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Text_Task_Status_Unknown" xml:space="preserve">
+    <value>Desconocido</value>
+  </data>
+  <data name="Text_File_Not_Available" xml:space="preserve">
+    <value>El archivo de origen no es accesible o se ha eliminado.</value>
+  </data>
+  <data name="Add_To_Lib_Success" xml:space="preserve">
+    <value>Añadido a la biblioteca local</value>
+  </data>
+  <data name="Intelligent_Enhance_Mode" xml:space="preserve">
+    <value>Modo</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore" xml:space="preserve">
+    <value>Restaurar calidad</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore_Desc" xml:space="preserve">
+    <value>Mantiene la resolución y reduce desenfoque, ruido y artefactos de compresión</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution" xml:space="preserve">
+    <value>Superresolución</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution_Desc" xml:space="preserve">
+    <value>Aumenta la resolución y mejora los detalles finos</value>
+  </data>
+  <data name="Intelligent_Enhance_Magnification" xml:space="preserve">
+    <value>Factor de ampliación</value>
+  </data>
+  <data name="Intelligent_Enhance_Output" xml:space="preserve">
+    <value>Resolución de salida: </value>
+  </data>
+  <data name="Intelligent_Enhance_Tip" xml:space="preserve">
+    <value>Usa Restaurar calidad si la resolución es suficiente pero la calidad es baja, y Superresolución si falta resolución.</value>
+  </data>
+  <data name="Text_Error_InvalidFile" xml:space="preserve">
+    <value>El archivo puede estar dañado y no se puede usar.</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasEffect" xml:space="preserve">
+    <value>Efecto</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Adjust" xml:space="preserve">
+    <value>Ajustes</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Color" xml:space="preserve">
+    <value>Color</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Special" xml:space="preserve">
+    <value>Efectos</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Blend" xml:space="preserve">
+    <value>Fusión</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_GrayScale" xml:space="preserve">
+    <value>Escala de grises</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Invert" xml:space="preserve">
+    <value>Invertir</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Exposure" xml:space="preserve">
+    <value>Exposición</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Brightness" xml:space="preserve">
+    <value>Brillo</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Saturation" xml:space="preserve">
+    <value>Saturación</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Hue" xml:space="preserve">
+    <value>Rotación de tono</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Contrast" xml:space="preserve">
+    <value>Contraste</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Temperature" xml:space="preserve">
+    <value>Temperatura</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Highlights" xml:space="preserve">
+    <value>Luces y sombras</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sepia" xml:space="preserve">
+    <value>Sepia</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Pixelate" xml:space="preserve">
+    <value>Pixelar</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Emboss" xml:space="preserve">
+    <value>Relieve</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Blur" xml:space="preserve">
+    <value>Desenfoque</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sharpen" xml:space="preserve">
+    <value>Enfocar</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Noise" xml:space="preserve">
+    <value>Ruido</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Vignette" xml:space="preserve">
+    <value>Viñeta</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Glow" xml:space="preserve">
+    <value>Resplandor</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Bloom" xml:space="preserve">
+    <value>Bloom</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Distort" xml:space="preserve">
+    <value>Distorsión</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Multiply" xml:space="preserve">
+    <value>Multiplicar</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Screen" xml:space="preserve">
+    <value>Trama</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Overlay" xml:space="preserve">
+    <value>Superponer</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_SoftLight" xml:space="preserve">
+    <value>Luz suave</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Grayscale" xml:space="preserve">
+    <value>Escala de grises</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Invert" xml:space="preserve">
+    <value>Invertir</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Exposure" xml:space="preserve">
+    <value>Exposición</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Brightness" xml:space="preserve">
+    <value>Brillo</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Saturation" xml:space="preserve">
+    <value>Saturación</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Hue" xml:space="preserve">
+    <value>Rotación de tono</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Contrast" xml:space="preserve">
+    <value>Contraste</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Temperature" xml:space="preserve">
+    <value>Temperatura</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Highlights" xml:space="preserve">
+    <value>Luces y sombras</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sepia" xml:space="preserve">
+    <value>Sepia</value>
+  </data>
+  <data name="Project_StaticImg_Effect_OilPaint" xml:space="preserve">
+    <value>Pintura al óleo</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sketch" xml:space="preserve">
+    <value>Boceto</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Watercolor" xml:space="preserve">
+    <value>Acuarela</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pixelate" xml:space="preserve">
+    <value>Pixelar</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Emboss" xml:space="preserve">
+    <value>Relieve</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pointillism" xml:space="preserve">
+    <value>Puntillismo</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Crosshatch" xml:space="preserve">
+    <value>Tramado cruzado</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Cartoon" xml:space="preserve">
+    <value>Dibujo animado</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Blur" xml:space="preserve">
+    <value>Desenfoque</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sharpen" xml:space="preserve">
+    <value>Enfocar</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Noise" xml:space="preserve">
+    <value>Ruido</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Vignette" xml:space="preserve">
+    <value>Viñeta</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Glow" xml:space="preserve">
+    <value>Resplandor</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Bloom" xml:space="preserve">
+    <value>Bloom</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Distort" xml:space="preserve">
+    <value>Distorsión</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Multiply" xml:space="preserve">
+    <value>Multiplicar</value>
+  </data>
+  <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
+    <value>Luz suave</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
+    <value>Elimina el color y convierte a escala de grises</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Invert" xml:space="preserve">
+    <value>Invierte todos los colores para crear un negativo</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Exposure" xml:space="preserve">
+    <value>Ajusta el brillo general de la imagen</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Brightness" xml:space="preserve">
+    <value>Ajusta el brillo de la imagen</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Saturation" xml:space="preserve">
+    <value>Ajusta la intensidad del color</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Hue" xml:space="preserve">
+    <value>Gira el tono para cambiar el color general</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Contrast" xml:space="preserve">
+    <value>Ajusta la diferencia entre luces y sombras</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Temperature" xml:space="preserve">
+    <value>Ajusta los tonos cálidos, fríos y el matiz</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Highlights" xml:space="preserve">
+    <value>Ajusta luces y sombras por separado</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sepia" xml:space="preserve">
+    <value>Tono marrón clásico de estilo antiguo</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Pixelate" xml:space="preserve">
+    <value>Convierte la imagen en bloques de píxeles de color</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Emboss" xml:space="preserve">
+    <value>Crea un efecto de relieve 3D</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Blur" xml:space="preserve">
+    <value>Suaviza la imagen y reduce los detalles</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sharpen" xml:space="preserve">
+    <value>Mejora los bordes y la claridad de los detalles</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Noise" xml:space="preserve">
+    <value>Añade una textura de ruido aleatorio</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Vignette" xml:space="preserve">
+    <value>Oscurece los bordes para destacar el centro</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Glow" xml:space="preserve">
+    <value>Añade un halo luminoso a las zonas brillantes</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Bloom" xml:space="preserve">
+    <value>Crea un halo suave alrededor de las luces</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Distort" xml:space="preserve">
+    <value>Licua y deforma la imagen</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Multiply" xml:space="preserve">
+    <value>Fusión multiplicar para oscurecer</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Screen" xml:space="preserve">
+    <value>Fusión trama para aclarar</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Overlay" xml:space="preserve">
+    <value>Fusión superponer para aumentar el contraste</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
+    <value>Fusión luz suave para un contraste delicado</value>
+  </data>
+  <data name="Settings_General_Version_InstallerReady" xml:space="preserve">
+    <value>El instalador está listo. Haz clic para instalar. La aplicación debe cerrarse por completo; guarda tus datos.</value>
+  </data>
+  <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
+    <value>La actualización de complementos está lista. Haz clic para instalar. La ventana principal debe cerrarse; guarda tus datos.</value>
+  </data>
+  <data name="Text_NoPreview" xml:space="preserve">
+    <value>Sin vista previa</value>
+  </data>
+  <data name="WebBackdrop_NewFile" xml:space="preserve"><value>Nuevo archivo</value></data>
+  <data name="WebBackdrop_NewFolder" xml:space="preserve"><value>Nueva carpeta</value></data>
+  <data name="WebBackdrop_AddItems" xml:space="preserve"><value>Añadir elementos</value></data>
+  <data name="WebBackdrop_Cut" xml:space="preserve"><value>Cortar</value></data>
+  <data name="WebBackdrop_Copy" xml:space="preserve"><value>Copiar</value></data>
+  <data name="WebBackdrop_Paste" xml:space="preserve"><value>Pegar</value></data>
+  <data name="WebBackdrop_CopyPath" xml:space="preserve"><value>Copiar ruta</value></data>
+  <data name="WebBackdrop_CopyRelativePath" xml:space="preserve"><value>Copiar ruta relativa</value></data>
+  <data name="WebBackdrop_Rename" xml:space="preserve"><value>Cambiar nombre…</value></data>
+  <data name="WebBackdrop_Delete" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="WebBackdrop_RevealInExplorer" xml:space="preserve"><value>Mostrar en el Explorador</value></data>
+  <data name="WebBackdrop_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="WebBackdrop_SaveAs" xml:space="preserve"><value>Guardar como…</value></data>
+  <data name="WebBackdrop_SearchInFiles" xml:space="preserve"><value>Buscar en archivos</value></data>
+  <data name="WebBackdrop_MatchCase" xml:space="preserve"><value>Distinguir mayúsculas</value></data>
+  <data name="WebBackdrop_MatchWholeWord" xml:space="preserve"><value>Palabra completa</value></data>
+  <data name="WebBackdrop_SearchFilesByName" xml:space="preserve"><value>Buscar archivos por nombre</value></data>
+  <data name="WebBackdrop_QuickOpenPlaceholder" xml:space="preserve"><value>Buscar archivos por nombre (Ctrl+P)</value></data>
+  <data name="WebBackdrop_ProjectInspector" xml:space="preserve"><value>Inspector del proyecto</value></data>
+  <data name="WebBackdrop_Wallpaper" xml:space="preserve"><value>Fondo</value></data>
+  <data name="WebBackdrop_Title" xml:space="preserve"><value>Título</value></data>
+  <data name="WebBackdrop_Entry" xml:space="preserve"><value>Punto de entrada</value></data>
+  <data name="WebBackdrop_Current" xml:space="preserve"><value>Actual</value></data>
+  <data name="WebBackdrop_NoItemSelected" xml:space="preserve"><value>Ningún elemento seleccionado.</value></data>
+  <data name="WebBackdrop_Name" xml:space="preserve"><value>Nombre</value></data>
+  <data name="WebBackdrop_Language" xml:space="preserve"><value>Idioma</value></data>
+  <data name="WebBackdrop_Type" xml:space="preserve"><value>Tipo</value></data>
+  <data name="WebBackdrop_Status" xml:space="preserve"><value>Estado</value></data>
+  <data name="WebBackdrop_Size" xml:space="preserve"><value>Tamaño</value></data>
+  <data name="WebBackdrop_Lines" xml:space="preserve"><value>Líneas</value></data>
+  <data name="WebBackdrop_Modified" xml:space="preserve"><value>Modificado</value></data>
+  <data name="WebBackdrop_RelativePath" xml:space="preserve"><value>Ruta relativa</value></data>
+  <data name="WebBackdrop_Image" xml:space="preserve"><value>Imagen</value></data>
+  <data name="WebBackdrop_Unsupported" xml:space="preserve"><value>No compatible</value></data>
+  <data name="WebBackdrop_Saved" xml:space="preserve"><value>Guardado</value></data>
+  <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>Sin guardar</value></data>
+  <data name="WebBackdrop_Folder" xml:space="preserve"><value>Carpeta</value></data>
+  <data name="WebBackdrop_Problems" xml:space="preserve"><value>PROBLEMAS</value></data>
+  <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>Este tipo de archivo no se puede abrir directamente.</value></data>
+  <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>Elige un archivo para empezar</value></data>
+  <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>Abre un archivo desde el explorador para editarlo y previsualizarlo.</value></data>
+  <data name="WebBackdrop_WallpaperTitle" xml:space="preserve"><value>Título del fondo</value></data>
+  <data name="WebBackdrop_Description" xml:space="preserve"><value>Descripción</value></data>
+  <data name="WebBackdrop_ShortDescription" xml:space="preserve"><value>Descripción breve</value></data>
+  <data name="WebBackdrop_Author" xml:space="preserve"><value>Autor</value></data>
+  <data name="WebBackdrop_AuthorName" xml:space="preserve"><value>Nombre del autor</value></data>
+  <data name="WebBackdrop_Tags" xml:space="preserve"><value>Etiquetas (separadas por punto y coma)</value></data>
+  <data name="WebBackdrop_EntryFile" xml:space="preserve"><value>Archivo de entrada</value></data>
+  <data name="WebBackdrop_SaveProjectJson" xml:space="preserve"><value>Guardar project.json</value></data>
+  <data name="WebBackdrop_Tabs2" xml:space="preserve"><value>Tabulaciones: 2</value></data>
+  <data name="WebBackdrop_Tabs4" xml:space="preserve"><value>Tabulaciones: 4</value></data>
+  <data name="WebBackdrop_Spaces2" xml:space="preserve"><value>Espacios: 2</value></data>
+  <data name="WebBackdrop_Spaces4" xml:space="preserve"><value>Espacios: 4</value></data>
+  <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Espacios: 8</value></data>
+  <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Lín. {0}, col. {1}</value></data>
+  <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Lín. {0}, col. {1} ({2}{3} seleccionados)</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>No se pudo abrir el archivo: {0}
+Puede estar dañado o ser ilegible.
+{1}</value></data>
+  <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>No se puede guardar el archivo: {0}
+No se pudo cargar y puede estar dañado. Ciérralo y vuelve a abrirlo.</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Error al guardar el archivo: {0}
+{1}</value></data>
+  <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>No se pudieron guardar todos los archivos. Revisa los errores e inténtalo de nuevo.</value></data>
+  <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>No se encuentra la carpeta del proyecto. Revisa su configuración.</value></data>
+  <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>El archivo «{0}» se ha modificado en disco y tiene cambios sin guardar.
+
+¿Recargar la versión del disco y descartar los cambios del editor?</value></data>
+  <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>Conflicto de archivo</value></data>
+  <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Recargar desde disco</value></data>
+  <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Conservar mis cambios</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>No se pudo recargar el archivo: {0}
+Puede estar dañado o ser ilegible.
+{1}</value></data>
+  <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>No se pudieron guardar los archivos del proyecto. Importación cancelada.</value></data>
+  <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>No se pudieron guardar los archivos del proyecto. Exportación cancelada.</value></data>
+  <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>El panel de la biblioteca no está disponible.</value></data>
+  <data name="WebBackdrop_FailedParseProjectFile" xml:space="preserve"><value>No se pudo analizar el archivo del proyecto: {0}
+{1}</value></data>
+  <data name="WebBackdrop_CannotSaveCorruptProject" xml:space="preserve"><value>No se puede guardar el archivo del proyecto: {0}
+El archivo está dañado. Repáralo o restáuralo antes de modificarlo.</value></data>
+  <data name="WebBackdrop_FullProjectArchive" xml:space="preserve"><value>Archivo del proyecto completo (.zip)</value></data>
+  <data name="WebBackdrop_WebWallpaperPackage" xml:space="preserve"><value>Paquete de fondo web (.zip)</value></data>
+  <data name="WebBackdrop_Find" xml:space="preserve"><value>Buscar</value></data>
+  <data name="WebBackdrop_FindInFiles" xml:space="preserve"><value>Buscar en archivos</value></data>
+  <data name="WebBackdrop_Selection" xml:space="preserve"><value>Selección (S)</value></data>
+  <data name="WebBackdrop_GoBack" xml:space="preserve"><value>Atrás</value></data>
+  <data name="WebBackdrop_GoForward" xml:space="preserve"><value>Adelante</value></data>
+  <data name="WebBackdrop_CopyLineUp" xml:space="preserve"><value>Copiar línea arriba</value></data>
+  <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>Copiar línea abajo</value></data>
+  <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>Mover línea arriba</value></data>
+  <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>Mover línea abajo</value></data>
+  <data name="WebBackdrop_Debug" xml:space="preserve"><value>Depurar</value></data>
+  <data name="WebBackdrop_Stop" xml:space="preserve"><value>Detener</value></data>
+  <data name="WebBackdrop_Saving" xml:space="preserve"><value>Guardando…</value></data>
+  <data name="WebBackdrop_RecoveryMessage" xml:space="preserve"><value>Se encontraron cambios sin guardar tras el último cierre inesperado ({0} archivos).
+¿Recuperarlos?</value></data>
+  <data name="WebBackdrop_RecoveryTitle" xml:space="preserve"><value>Recuperar cambios sin guardar</value></data>
+  <data name="WebBackdrop_Recover" xml:space="preserve"><value>Recuperar</value></data>
+  <data name="WebBackdrop_DiscardEdits" xml:space="preserve"><value>Descartar cambios</value></data>
+  <data name="WebBackdrop_NoProblems" xml:space="preserve"><value>No se han detectado problemas.</value></data>
+  <data name="WebBackdrop_NoOutput" xml:space="preserve"><value>Sin salida.</value></data>
+  <data name="WebBackdrop_HiddenFiles" xml:space="preserve"><value>No se muestran {0} archivos más</value></data>
+  <data name="WebBackdrop_HiddenProblems" xml:space="preserve"><value>… no se muestran {0} problemas más</value></data>
+  <data name="Text_PanelUnavailable" xml:space="preserve"><value>El panel no está disponible.</value></data>
+  <data name="Text_ResizeDataUnavailable" xml:space="preserve"><value>No hay datos de cambio de tamaño disponibles.</value></data>
+  <data name="StaticImg_EffectParam_Intensity" xml:space="preserve"><value>Intensidad</value></data>
+  <data name="StaticImg_EffectParam_Blur" xml:space="preserve"><value>Desenfoque</value></data>
+  <data name="StaticImg_EffectParam_Hue" xml:space="preserve"><value>Tono</value></data>
+  <data name="StaticImg_EffectParam_Angle" xml:space="preserve"><value>Ángulo</value></data>
+  <data name="StaticImg_EffectParam_Opacity" xml:space="preserve"><value>Opacidad</value></data>
+  <data name="StaticImg_EffectParam_Width" xml:space="preserve"><value>Ancho</value></data>
+  <data name="StaticImg_EffectParam_Height" xml:space="preserve"><value>Alto</value></data>
+  <data name="StaticImg_EffectParam_Mode" xml:space="preserve"><value>Modo</value></data>
+  <data name="StaticImg_EffectParam_Exposure" xml:space="preserve"><value>Exposición</value></data>
+  <data name="StaticImg_EffectParam_Brightness" xml:space="preserve"><value>Brillo</value></data>
+  <data name="StaticImg_EffectParam_Saturation" xml:space="preserve"><value>Saturación</value></data>
+  <data name="StaticImg_EffectParam_Contrast" xml:space="preserve"><value>Contraste</value></data>
+  <data name="StaticImg_EffectParam_Vignette" xml:space="preserve"><value>Viñeta</value></data>
+  <data name="StaticImg_EffectParam_Sharpen" xml:space="preserve"><value>Enfocar</value></data>
+  <data name="StaticImg_EffectParam_Temperature" xml:space="preserve"><value>Temperatura</value></data>
+  <data name="StaticImg_EffectParam_Tint" xml:space="preserve"><value>Matiz</value></data>
+  <data name="StaticImg_EffectParam_Shadows" xml:space="preserve"><value>Sombras</value></data>
+  <data name="StaticImg_EffectParam_Highlights" xml:space="preserve"><value>Luces</value></data>
+  <data name="StaticImg_EffectParam_Clarity" xml:space="preserve"><value>Claridad</value></data>
+  <data name="StaticImg_EffectParam_MaskBlur" xml:space="preserve"><value>Desenfoque de máscara</value></data>
+  <data name="StaticImg_EffectParam_Threshold" xml:space="preserve"><value>Umbral</value></data>
+  <data name="StaticImg_EffectParam_Frequency" xml:space="preserve"><value>Frecuencia</value></data>
+  <data name="StaticImg_EffectParam_Phase" xml:space="preserve"><value>Fase</value></data>
+  <data name="StaticImg_EffectParam_Amplitude" xml:space="preserve"><value>Amplitud</value></data>
+  <data name="StaticImg_EffectParam_Spread" xml:space="preserve"><value>Dispersión</value></data>
+  <data name="StaticImg_EffectParam_Radius" xml:space="preserve"><value>Radio</value></data>
+  <data name="StaticImg_EffectParam_Pressure" xml:space="preserve"><value>Presión</value></data>
+  <data name="StaticImg_EffectParam_Lightness" xml:space="preserve"><value>Luminosidad</value></data>
+  <data name="StaticImg_EffectParam_Density" xml:space="preserve"><value>Densidad</value></data>
+  <data name="StaticImg_EffectParam_Scale" xml:space="preserve"><value>Escala</value></data>
+  <data name="StaticImg_EffectParam_Tolerance" xml:space="preserve"><value>Tolerancia</value></data>
+  <data name="StaticImg_EffectParam_Offset" xml:space="preserve"><value>Desplazamiento</value></data>
+  <data name="StaticImg_EffectParam_Exponent" xml:space="preserve"><value>Exponente</value></data>
+  <data name="StaticImg_EffectParam_OffsetX" xml:space="preserve"><value>Desplazamiento X</value></data>
+  <data name="StaticImg_EffectParam_OffsetY" xml:space="preserve"><value>Desplazamiento Y</value></data>
+  <data name="StaticImg_EffectParam_Levels" xml:space="preserve"><value>Niveles</value></data>
+  <data name="StaticImg_EffectParam_LevelsGreen" xml:space="preserve"><value>Niveles de verde</value></data>
+  <data name="StaticImg_EffectParam_BlackPoint" xml:space="preserve"><value>Punto negro</value></data>
+  <data name="StaticImg_EffectParam_WhitePoint" xml:space="preserve"><value>Punto blanco</value></data>
+  <data name="StaticImg_EffectParam_InvertAlpha" xml:space="preserve"><value>Invertir alfa</value></data>
+  <data name="StaticImg_EffectParam_Feather" xml:space="preserve"><value>Desvanecer borde</value></data>
+  <data name="StaticImg_EffectParam_OverlayEdges" xml:space="preserve"><value>Superponer bordes</value></data>
+  <data name="StaticImg_EffectParam_Previewing" xml:space="preserve"><value>Vista previa activa</value></data>
+  <data name="StaticImg_EffectParam_WidthPixels" xml:space="preserve"><value>Ancho (píxeles)</value></data>
+  <data name="StaticImg_EffectParam_HeightPixels" xml:space="preserve"><value>Alto (píxeles)</value></data>
+  <data name="Text_Name" xml:space="preserve"><value>Nombre</value></data>
+  <data name="Text_More" xml:space="preserve"><value>Más</value></data>
+  <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Detalles web de Virtual Paper</value></data>
+  <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>Ajustar fondo web</value></data>
+  <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Cargando Monaco Editor…</value></data>
+  <data name="EffectPrefix_Atmosphere" xml:space="preserve">
+    <value>Efecto ambiental</value>
+  </data>
+  <data name="EffectPrefix_AtmosphereIntensity" xml:space="preserve">
+    <value>Intensidad ambiental</value>
+  </data>
+  <data name="Atmosphere_None" xml:space="preserve"><value>Ninguno</value></data>
+  <data name="Atmosphere_Stardust" xml:space="preserve"><value>Polvo de estrellas</value></data>
+  <data name="Atmosphere_Snow" xml:space="preserve"><value>Nieve</value></data>
+  <data name="Atmosphere_Fireflies" xml:space="preserve"><value>Luciérnagas</value></data>
+  <data name="Atmosphere_Meteor" xml:space="preserve"><value>Meteoros</value></data>
+  <data name="EffectPrefix_AtmosphereStyle" xml:space="preserve"><value>Estilo del efecto</value></data>
+  <data name="Atmosphere_Rain" xml:space="preserve"><value>Lluvia</value></data>
+  <data name="Atmosphere_Petals" xml:space="preserve"><value>Pétalos</value></data>
+  <data name="Atmosphere_Bokeh" xml:space="preserve"><value>Bokeh</value></data>
+  <data name="AtmosphereStyle_Dust" xml:space="preserve"><value>Partículas de luz</value></data>
+  <data name="AtmosphereStyle_Stars" xml:space="preserve"><value>Destellos de estrellas</value></data>
+  <data name="AtmosphereStyle_SnowDots" xml:space="preserve"><value>Puntos de nieve</value></data>
+  <data name="AtmosphereStyle_Snowflakes" xml:space="preserve"><value>Copos de nieve</value></data>
+  <data name="AtmosphereStyle_WarmFireflies" xml:space="preserve"><value>Luciérnagas cálidas</value></data>
+  <data name="AtmosphereStyle_BlueFireflies" xml:space="preserve"><value>Luciérnagas azules</value></data>
+  <data name="AtmosphereStyle_ShootingStars" xml:space="preserve"><value>Lluvia de meteoros</value></data>
+  <data name="AtmosphereStyle_Comets" xml:space="preserve"><value>Cometas de colores</value></data>
+  <data name="AtmosphereStyle_Drizzle" xml:space="preserve"><value>Llovizna</value></data>
+  <data name="AtmosphereStyle_Downpour" xml:space="preserve"><value>Aguacero</value></data>
+  <data name="AtmosphereStyle_CherryBlossoms" xml:space="preserve"><value>Flores de cerezo</value></data>
+  <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>Pétalos de rosa</value></data>
+  <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>Luces suaves</value></data>
+  <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>Burbujas</value></data>
+  <data name="EffectPrefix_ParallaxStrength" xml:space="preserve"><value>Intensidad del paralaje</value></data>
+  <data name="ParallaxStrength_Gentle" xml:space="preserve"><value>Suave</value></data>
+  <data name="ParallaxStrength_Standard" xml:space="preserve"><value>Estándar</value></data>
+  <data name="ParallaxStrength_Strong" xml:space="preserve"><value>Fuerte</value></data>
+  <data name="EffectPrefix_ParallaxAutoDrift" xml:space="preserve"><value>Movimiento automático</value></data>
+  <data name="Effect_Help_ParallaxAutoDrift" xml:space="preserve"><value>Mueve la imagen lentamente sin depender del ratón. La intensidad del paralaje se aplica a ambos efectos.</value></data>
+  <data name="ParallaxMode_Mouse" xml:space="preserve"><value>Seguir al ratón</value></data>
+  <data name="ParallaxMode_Auto" xml:space="preserve"><value>Movimiento automático</value></data>
+  <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>Paralaje 3D</value></data>
+  <data name="ScreenFit_Title" xml:space="preserve"><value>Ajustar imagen a la pantalla</value></data>
+  <data name="ScreenFit_SelectImage" xml:space="preserve"><value>Elegir imagen</value></data>
+  <data name="ScreenFit_Monitor" xml:space="preserve"><value>Pantalla de destino</value></data>
+  <data name="ScreenFit_Mode" xml:space="preserve"><value>Modo de ajuste</value></data>
+  <data name="ScreenFit_Contain" xml:space="preserve"><value>Mostrar imagen completa (bandas negras)</value></data>
+  <data name="ScreenFit_Cover" xml:space="preserve"><value>Rellenar pantalla (recorte centrado)</value></data>
+  <data name="ScreenFit_Preview" xml:space="preserve"><value>Vista previa del escritorio</value></data>
+  <data name="ScreenFit_PreviewSample" xml:space="preserve"><value>Ejemplo</value></data>
+  <data name="ScreenFit_Plan" xml:space="preserve"><value>Origen: {0} × {1}; área visible: aproximadamente {2} × {3}, centrada.</value></data>
+  <data name="ScreenFit_Enhance" xml:space="preserve"><value>Opcional: mejorar imagen</value></data>
+  <data name="ScreenFit_EnhanceSize" xml:space="preserve"><value>Copia mejorada: {0} × {1}, conservando la proporción, hasta 4×. El archivo original no cambia.</value></data>
+  <data name="ScreenFit_NoEnhancementNeeded" xml:space="preserve"><value>La resolución de origen ya es suficiente para este modo.</value></data>
+  <data name="ScreenFit_ReadFailed" xml:space="preserve"><value>No se puede leer la imagen. Elige una imagen estática válida.</value></data>
+  <data name="ScreenFit_DisplayChanged" xml:space="preserve"><value>La pantalla o su distribución ha cambiado. Cierra este diálogo y selecciona de nuevo.</value></data>
+  <data name="ScreenFit_Enhancing" xml:space="preserve"><value>Mejorando imagen. Pulsa Cancelar para detener…</value></data>
+  <data name="ScreenFit_Applying" xml:space="preserve"><value>Importando y aplicando…</value></data>
+  <data name="ScreenFit_Canceled" xml:space="preserve"><value>Cancelado. Cierra este diálogo o aplica de nuevo sin mejora.</value></data>
+  <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>La mejora ha fallado. Desactívala para reintentar con la imagen original.</value></data>
+  <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>No se pudo importar o aplicar el fondo. Inténtalo de nuevo.</value></data>
+  <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>Esta versión admite pantallas independientes. Cambia a Por pantalla en los controles de pantalla y vuelve a abrir esta herramienta.</value></data>
+  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Activar animaciones de navegación</value></data>
+  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Anima los cambios de página. También requiere activar Efectos de animación en la accesibilidad de Windows.</value></data>
+  <data name="ScreenSaver_Remove" xml:space="preserve"><value>Quitar de la lista de permitidos</value></data>
+  <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>Aún no hay aplicaciones</value></data>
+  <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Añade aplicaciones para impedir que se inicie el salvapantallas mientras estén en primer plano.</value></data>
+  <data name="ScreenSaver_WhiteListNoResults" xml:space="preserve"><value>No hay aplicaciones coincidentes</value></data>
+  <data name="ScreenSaver_WhiteListNoResultsDescription" xml:space="preserve"><value>Prueba otro nombre o borra la búsqueda.</value></data>
+  <!-- Live XAML property resources. Plain keys above remain available to code. -->
+  <data name="Intelligent_Result_Temporary" xml:space="preserve"><value>Solo temporal</value></data>
+  <data name="Intelligent_Result_Exported" xml:space="preserve"><value>Exportado</value></data>
+  <data name="Intelligent_Result_Imported" xml:space="preserve"><value>Añadido a la biblioteca</value></data>
+  <data name="Intelligent_Result_ExportedAndImported" xml:space="preserve"><value>Exportado · En biblioteca</value></data>
+  <data name="Intelligent_Close_Title" xml:space="preserve"><value>¿Cerrar las tareas de IA?</value></data>
+  <data name="Intelligent_Close_Active" xml:space="preserve"><value>Hay {0} tareas en espera, procesamiento o guardado. Al cerrar se detendrá el trabajo pendiente.</value></data>
+  <data name="Intelligent_Close_Temporary" xml:space="preserve"><value>Hay {0} resultados terminados sin exportar ni añadir a la biblioteca. No podrán recuperarse desde la lista tras cerrar y sus archivos temporales se eliminarán en el próximo inicio.</value></data>
+  <data name="Intelligent_Close_DontRemind" xml:space="preserve"><value>No volver a avisar sobre resultados terminados sin guardar</value></data>
+  <data name="Intelligent_Close_Return" xml:space="preserve"><value>Volver a las tareas</value></data>
+  <data name="Intelligent_Close_Confirm" xml:space="preserve"><value>Cerrar de todos modos</value></data>
+  <data name="Intelligent_Remove_Title" xml:space="preserve"><value>¿Eliminar el resultado temporal?</value></data>
+  <data name="Intelligent_Remove_Temporary" xml:space="preserve"><value>Este resultado aún no se ha exportado ni añadido a la biblioteca. Al eliminar la tarea también se elimina su resultado temporal.</value></data>
+  <data name="Intelligent_Result_PreservationTooltip" xml:space="preserve"><value>Exporta los resultados o añádelos a la biblioteca para conservarlos tras cerrar.</value></data>
+  <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Resultados de IA sin guardar</value></data>
+  <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Avisa antes de cerrar resultados sin exportar ni añadir a la biblioteca. Las tareas pendientes siempre requieren confirmación.</value></data>
+  <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Avisar sobre resultados de IA sin guardar</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>No se pudo guardar una copia del proyecto. Elige una carpeta vacía fuera del proyecto actual. Los archivos originales no se han modificado.
+{0}</value></data>
+  <data name="WpLib_Favorites" xml:space="preserve"><value>Solo favoritos</value></data>
+  <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Favoritos y etiquetas</value></data>
+  <data name="WpLib_FinishSelection" xml:space="preserve"><value>Listo</value></data>
+  <data name="WpLib_SearchExplain" xml:space="preserve"><value>Busca títulos, descripciones, autores y etiquetas en toda la biblioteca</value></data>
+  <data name="WpLib_SelectLoaded" xml:space="preserve"><value>Seleccionar todos los fondos cargados</value></data>
+  <data name="WpLib_Sort" xml:space="preserve"><value>Ordenar fondos</value></data>
+  <data name="WpLib_SortLabel" xml:space="preserve"><value>Ordenar</value></data>
+  <data name="WpLib_SortNewest" xml:space="preserve"><value>Más recientes primero</value></data>
+  <data name="WpLib_SortOldest" xml:space="preserve"><value>Más antiguos primero</value></data>
+  <data name="WpLib_SortTitle" xml:space="preserve"><value>Título (A–Z)</value></data>
+  <data name="WpLib_SortAuthor" xml:space="preserve"><value>Autor (A–Z)</value></data>
+  <data name="WpLib_TagFilter" xml:space="preserve"><value>Etiquetas</value></data>
+  <data name="WpLib_TagSearchPlaceholder" xml:space="preserve"><value>Escribe para buscar etiquetas</value></data>
+  <data name="WpLib_ClearFilters" xml:space="preserve"><value>Borrar filtros</value></data>
+  <data name="WpLib_Organize" xml:space="preserve"><value>Organizar fondos seleccionados</value></data>
+  <data name="WpLib_AddFavorite" xml:space="preserve"><value>Añadir a favoritos</value></data>
+  <data name="WpLib_RemoveFavorite" xml:space="preserve"><value>Quitar de favoritos</value></data>
+  <data name="WpLib_EditTags" xml:space="preserve"><value>Editar tus etiquetas</value></data>
+  <data name="WpLib_EditInfo" xml:space="preserve"><value>Editar información</value></data>
+  <data name="WpLib_IncludedTags" xml:space="preserve"><value>Etiquetas originales del fondo (solo lectura): {0}</value></data>
+  <data name="WpLib_EditTitle" xml:space="preserve"><value>Título</value></data>
+  <data name="WpLib_EditDescription" xml:space="preserve"><value>Descripción</value></data>
+  <data name="WpLib_TitlePlaceholder" xml:space="preserve"><value>Introduce un título para el fondo</value></data>
+  <data name="WpLib_DescriptionPlaceholder" xml:space="preserve"><value>Añade una descripción del fondo</value></data>
+  <data name="WpLib_EditAuthor" xml:space="preserve"><value>Autor</value></data>
+  <data name="WpLib_YourTags" xml:space="preserve"><value>Tus etiquetas</value></data>
+  <data name="WpLib_AuthorTokenPlaceholder" xml:space="preserve"><value>Escribe un autor y pulsa Intro</value></data>
+  <data name="WpLib_TagTokenPlaceholder" xml:space="preserve"><value>Escribe una etiqueta y pulsa Intro</value></data>
+  <data name="WpLib_RemoveToken" xml:space="preserve"><value>Quitar elemento</value></data>
+  <data name="WpLib_TagsPlaceholder" xml:space="preserve"><value>Separa las etiquetas con comas o punto y coma</value></data>
+  <data name="WpLib_TagsExplain" xml:space="preserve"><value>Tus etiquetas se guardan para buscar y filtrar. Las etiquetas originales del fondo no cambian.</value></data>
+  <data name="WpLib_TagMode" xml:space="preserve"><value>Aplicar a los fondos seleccionados</value></data>
+  <data name="WpLib_TagsAdd" xml:space="preserve"><value>Añadir etiquetas</value></data>
+  <data name="WpLib_TagsRemove" xml:space="preserve"><value>Quitar etiquetas</value></data>
+  <data name="WpLib_TagsReplace" xml:space="preserve"><value>Reemplazar tus etiquetas</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>No se encontraron fondos. Añade fondos o cambia los filtros.</value></data>
+  <data name="EffectPreset_Title" xml:space="preserve"><value>Preajustes de efectos</value></data>
+  <data name="EffectPreset_More" xml:space="preserve"><value>Más acciones de biblioteca</value></data>
+  <data name="EffectPreset_Manage" xml:space="preserve"><value>Preajustes de efectos…</value></data>
+  <data name="EffectPreset_ManagerHint" xml:space="preserve"><value>Guardar almacena el preajuste. Aplícalo desde el panel de efectos de un fondo.</value></data>
+  <data name="EffectPreset_List" xml:space="preserve"><value>Preajustes</value></data>
+  <data name="EffectPreset_UnsavedHint" xml:space="preserve"><value>Guarda el preajuste para conservar los cambios. Cambiar de preajuste o cerrar los descarta.</value></data>
+  <data name="EffectPreset_ReadOnly" xml:space="preserve"><value>Incluido · Solo lectura</value></data>
+  <data name="EffectPreset_ReadOnlyHint" xml:space="preserve"><value>Los preajustes incluidos son de solo lectura. Usa «Crear desde selección» para crear una copia editable.</value></data>
+  <data name="EffectPreset_Name" xml:space="preserve"><value>Nombre del preajuste</value></data>
+  <data name="EffectPreset_Type" xml:space="preserve"><value>Tipo de fondo</value></data>
+  <data name="EffectPreset_TypeHint" xml:space="preserve"><value>Tipos de fondo compatibles con el preajuste. Elegir un tipo no aplica el preajuste.</value></data>
+  <data name="EffectPreset_Source" xml:space="preserve"><value>Fondo</value></data>
+  <data name="EffectPreset_SelectWallpaper" xml:space="preserve"><value>Elegir fondo</value></data>
+  <data name="EffectPreset_SourceSearch" xml:space="preserve"><value>Buscar nombre o autor</value></data>
+  <data name="EffectPreset_SourceEmpty" xml:space="preserve"><value>No hay fondos coincidentes</value></data>
+  <data name="EffectPreset_SourceConfig" xml:space="preserve"><value>Efectos guardados</value></data>
+  <data name="EffectPreset_FromWallpaper" xml:space="preserve"><value>Crear desde un fondo</value></data>
+  <data name="EffectPreset_New" xml:space="preserve"><value>Nuevo (valores predeterminados)</value></data>
+  <data name="EffectPreset_Copy" xml:space="preserve"><value>Crear desde selección</value></data>
+  <data name="EffectPreset_CopyHint" xml:space="preserve"><value>Crea una copia editable del preajuste seleccionado con un nombre e ID nuevos.</value></data>
+  <data name="EffectPreset_Delete" xml:space="preserve"><value>Eliminar</value></data>
+  <data name="EffectPreset_Discard" xml:space="preserve"><value>Descartar cambios</value></data>
+  <data name="EffectPreset_NewName" xml:space="preserve"><value>Nuevo preajuste</value></data>
+  <data name="EffectPreset_CopySuffix" xml:space="preserve"><value> (copia)</value></data>
+  <data name="EffectPreset_User" xml:space="preserve"><value>Preajuste del usuario</value></data>
+  <data name="EffectPreset_Actions" xml:space="preserve"><value>Más acciones de preajustes</value></data>
+  <data name="EffectPreset_NameHint" xml:space="preserve"><value>Introduce un nombre de preajuste</value></data>
+  <data name="EffectPreset_SourceHint" xml:space="preserve"><value>Elige un fondo y crea un preajuste a partir de sus efectos guardados.</value></data>
+  <data name="EffectPreset_BuiltIn" xml:space="preserve"><value>Incluido</value></data>
+  <data name="EffectPreset_Draft" xml:space="preserve"><value>Nuevo preajuste · Sin guardar</value></data>
+  <data name="EffectPreset_Modified" xml:space="preserve"><value>Cambios sin guardar</value></data>
+  <data name="EffectPreset_Save" xml:space="preserve"><value>Guardar preajuste</value></data>
+  <data name="EffectPreset_UseSource" xml:space="preserve"><value>Crear preajuste</value></data>
+  <data name="EffectPreset_Saving" xml:space="preserve"><value>Guardando cambios…</value></data>
+  <data name="EffectPreset_DeleteConfirm" xml:space="preserve"><value>¿Eliminar este preajuste? Los fondos que ya usan estos efectos conservarán su configuración.</value></data>
+  <data name="EffectPreset_NoSource" xml:space="preserve"><value>Este fondo aún no tiene efectos guardados. Guarda sus efectos una vez o crea un preajuste nuevo.</value></data>
+  <data name="EffectPreset_DuplicateName" xml:space="preserve"><value>Ya existe un preajuste de usuario con este nombre. Elige otro.</value></data>
+  <data name="EffectPreset_LoadError" xml:space="preserve"><value>No se pudieron cargar los preajustes. Los datos guardados no se han modificado.</value></data>
+  <data name="EffectPreset_SaveError" xml:space="preserve"><value>No se pudieron guardar los preajustes. Comprueba el nombre y los permisos de escritura e inténtalo de nuevo.</value></data>
+  <data name="EffectPreset_ApplyError" xml:space="preserve"><value>No se pudo aplicar el preajuste. Comprueba el tipo de fondo y los valores de efectos.</value></data>
+  <data name="EffectPreset_Selector" xml:space="preserve"><value>Preajuste de efectos</value></data>
+  <data name="EffectPreset_TrialHint" xml:space="preserve"><value>Prueba un preajuste aquí. «Aplicar y cerrar» guarda los efectos en este fondo.</value></data>
+  <data name="EffectPreset_CancelTrial" xml:space="preserve"><value>Cancelar vista previa del preajuste</value></data>
+  <data name="EffectPreset_Custom" xml:space="preserve"><value>Ajustes personalizados</value></data>
+  <data name="EffectPreset_Default" xml:space="preserve"><value>Efectos predeterminados</value></data>
+  <data name="EffectPreset_Natural" xml:space="preserve"><value>Natural</value></data>
+  <data name="EffectPreset_Soft" xml:space="preserve"><value>Colores suaves</value></data>
+  <data name="EffectPreset_Snow" xml:space="preserve"><value>Nieve ligera</value></data>
+  <data name="EffectPreset_Stardust" xml:space="preserve"><value>Polvo de estrellas</value></data>
+  <data name="EffectPreset_Type_RUnknown" xml:space="preserve"><value>Todos los tipos de fondo</value></data>
+  <data name="EffectPreset_Type_RImage" xml:space="preserve"><value>Imagen / GIF</value></data>
+  <data name="EffectPreset_Type_RImage3D" xml:space="preserve"><value>Imagen 3D</value></data>
+  <data name="EffectPreset_Type_RVideo" xml:space="preserve"><value>Vídeo</value></data>
+  <data name="EffectPreset_Type_RWeb" xml:space="preserve"><value>Web</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Downloading" xml:space="preserve"><value>Pausar</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Installing" xml:space="preserve"><value>Instalando…</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Paused" xml:space="preserve"><value>Reanudar</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Ready" xml:space="preserve"><value>Descargar</value></data>
+  <data name="Core_AppUpdater_SpeedText_Ready" xml:space="preserve"><value>Tiempo restante</value></data>
+  <data name="Core_AppUpdater_StatusText_Completed" xml:space="preserve"><value>¡Descarga completada!</value></data>
+  <data name="Core_AppUpdater_StatusText_DownloadFailed" xml:space="preserve"><value>No se puede acceder. Comprueba la red o inténtalo de nuevo.</value></data>
+  <data name="Core_AppUpdater_StatusText_Downloading" xml:space="preserve"><value>Descargando…</value></data>
+  <data name="Core_AppUpdater_StatusText_Installed" xml:space="preserve"><value>¡Instalación completada!</value></data>
+  <data name="Core_AppUpdater_StatusText_Installing" xml:space="preserve"><value>Instalando actualizaciones…</value></data>
+  <data name="Core_AppUpdater_StatusText_Paused" xml:space="preserve"><value>Descarga pausada</value></data>
+  <data name="Core_AppUpdater_StatusText_Ready" xml:space="preserve"><value>Preparando descarga…</value></data>
+  <data name="Core_AppUpdater_StatusText_VerifyFailed" xml:space="preserve"><value>La verificación del archivo ha fallado. Vuelve a descargarlo.</value></data>
+  <data name="Core_AppUpdater_StatusText_Verifying" xml:space="preserve"><value>Verificando integridad de recursos…</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve"><value>La instalación no ha terminado. ¿Quieres salir?</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve"><value>La actualización se está descargando. ¿Interrumpir y cerrar?</value></data>
+  <data name="Core_AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve"><value>La actualización ha fallado. Descarga el instalador para actualizar manualmente:
+https://github.com/PaperHammer/VirtualPaper/releases</value></data>
+  <data name="Core_AppUpdater_Update_TitleCancelQuestion" xml:space="preserve"><value>Actualizando</value></data>
+  <data name="Core_Common_TextCancel" xml:space="preserve"><value>Cancelar</value></data>
+  <data name="Core_Common_TextClose" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="Core_Common_TextConfirm" xml:space="preserve"><value>Confirmar</value></data>
+  <data name="Core_Common_TextError" xml:space="preserve"><value>Error</value></data>
+  <data name="Core_Common_TextRetry" xml:space="preserve"><value>Reintentar</value></data>
+  <data name="Core_Find_New_Verison" xml:space="preserve"><value>¡Nueva versión disponible!</value></data>
+  <data name="Core_Find_New_Version_Restart" xml:space="preserve"><value>¡Actualización de componentes disponible!</value></data>
+  <data name="Core_Systray_TextCloseAllWallpapers" xml:space="preserve"><value>Cerrar todos los fondos</value></data>
+  <data name="Core_Systray_TextDEBubble" xml:space="preserve"><value>Burbujas</value></data>
+  <data name="Core_Systray_TextDENone" xml:space="preserve"><value>No disponible</value></data>
+  <data name="Core_Systray_TextDynamicEffect" xml:space="preserve"><value>Animación</value></data>
+  <data name="Core_Systray_TextExit" xml:space="preserve"><value>Salir</value></data>
+  <data name="Core_Systray_TextIsOnScrSaver" xml:space="preserve"><value>Activar salvapantallas</value></data>
+  <data name="Core_Systray_TextIsRunningLock" xml:space="preserve"><value>Mostrar la pantalla de inicio de sesión al reanudar</value></data>
+  <data name="Core_Systray_TextOpenApp" xml:space="preserve"><value>Abrir ventana principal</value></data>
+  <data name="Core_Systray_TextOpenScrSaverSet" xml:space="preserve"><value>Salvapantallas</value></data>
+  <data name="Core_Systray_TextPauseWallpapers" xml:space="preserve"><value>Pausar todos los fondos</value></data>
+  <data name="Core_Systray_TextReportBug" xml:space="preserve"><value>Informar de un error</value></data>
+  <data name="Core_UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve"><value>Ha ocurrido un error. Reinicia la aplicación. Si se repite, informa del error o contacta con el desarrollador y vuelve a descargarla.</value></data>
+  <data name="Core_Virtual_Paper_isRunning" xml:space="preserve"><value>Virtual Paper se ejecuta en segundo plano</value></data>
+  <data name="Core_Virtual_Paper_isRunning_Greetings" xml:space="preserve"><value>¡Que tengas un buen día!</value></data>
+  <data name="Core_WndProcMsg_DescExplorerCrash" xml:space="preserve"><value>Ha ocurrido un error grave.
+El Explorador de Windows se ha reiniciado dos veces en 30 segundos. Puede haber un conflicto con Windows u otro programa de personalización. Se han detenido todos los fondos para evitar más problemas.</value></data>
+  <data name="Core_WndProcMsg_TitleAppName" xml:space="preserve"><value>Virtual Paper</value></data>
+  <data name="Core_WpControl_TextFileNotFound" xml:space="preserve"><value>No se encuentra el archivo de destino</value></data>
+  <data name="Core_WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve"><value>Se requieren estos ajustes:
+1. Pulsa Win + R.
+2. Escribe SystemPropertiesPerformance.exe y acepta.
+3. Activa «Animar controles y elementos dentro de las ventanas» y aplica. Si ya está activado, desactívalo.
+4. Pulsa Aplicar y Aceptar.
+Si no funciona, reinicia Windows. Algunas versiones preliminares de Windows 10 no son compatibles.</value></data>
+  <data name="Core_PluginsUpdate_InvalidInfo" xml:space="preserve"><value>Información de actualización no válida</value></data>
+  <data name="Core_PluginsUpdate_Starting" xml:space="preserve"><value>Iniciando actualización…</value></data>
+  <data name="Core_PluginsUpdate_Completed" xml:space="preserve"><value>Actualización completada. La interfaz se reiniciará.</value></data>
+  <data name="Core_PluginsUpdate_Failed" xml:space="preserve"><value>Error de actualización: {0}</value></data>
+  <data name="Core_PluginsUpdate_Stage_Downloading" xml:space="preserve"><value>Descargando complementos…</value></data>
+  <data name="Core_PluginsUpdate_Stage_BackingUp" xml:space="preserve"><value>Guardando copia de los complementos actuales…</value></data>
+  <data name="Core_PluginsUpdate_Stage_Replacing" xml:space="preserve"><value>Sustituyendo archivos de complementos…</value></data>
+  <data name="Core_PluginsUpdate_Stage_Completed" xml:space="preserve"><value>Completado</value></data>
+  <data name="Core_PluginsUpdate_Stage_Failed" xml:space="preserve"><value>Error</value></data>
+  <data name="Core_PluginsUpdate_Close" xml:space="preserve"><value>Cerrar</value></data>
+  <data name="Core_PluginsUpdate_PostponeTip" xml:space="preserve"><value>Actualización lista. Cierra la ventana principal para aplicarla.</value></data>
+  <data name="Core_InstallerUpdate_PostponeTip" xml:space="preserve"><value>Instalador listo. La instalación comenzará al salir completamente de la aplicación.</value></data>
+  <data name="Core_PluginUpdate_Title_Updating" xml:space="preserve"><value>Actualizando componentes…</value></data>
+  <data name="Core_PluginUpdate_Title_Completed" xml:space="preserve"><value>Actualización completada</value></data>
+  <data name="Core_PluginUpdate_Title_Failed" xml:space="preserve"><value>Error de actualización</value></data>
+  <data name="Core_PluginUpdate_Preparing" xml:space="preserve"><value>Preparando…</value></data>
+  <data name="Core_PluginUpdate_ReplacedPlugin" xml:space="preserve"><value>{0} reemplazado</value></data>
+  <data name="Core_Startup_AutoStartDisabledByUser" xml:space="preserve"><value>El inicio de Virtual Paper al iniciar sesión está desactivado. Para activarlo, abre Aplicaciones de arranque en el Administrador de tareas.</value></data>
+  <data name="Core_Startup_AppDataCreateFailedTitle" xml:space="preserve"><value>No se puede crear la carpeta de datos. Virtual Paper se cerrará.</value></data>
+  <data name="Core_Startup_CoreRuntimeFailed" xml:space="preserve"><value>Error al inicializar el núcleo. Reinicia o reinstala Virtual Paper.
+{0}</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Title" xml:space="preserve"><value>¿Detener la descarga de la actualización?</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Content" xml:space="preserve"><value>La actualización se está descargando. ¿Detener la descarga y cerrar la ventana?</value></data>
+  <data name="Core_AppUpdater_Close_StopDownload" xml:space="preserve"><value>Detener descarga y cerrar</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Title" xml:space="preserve"><value>¿Descartar esta descarga?</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Content" xml:space="preserve"><value>La descarga está pausada. ¿Descartarla y cerrar la ventana de actualización?</value></data>
+  <data name="Core_AppUpdater_Close_DiscardDownload" xml:space="preserve"><value>Descartar descarga y cerrar</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Title" xml:space="preserve"><value>¿Detener la verificación de la actualización?</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Content" xml:space="preserve"><value>Se están verificando los archivos. ¿Detener la verificación y cerrar la ventana?</value></data>
+  <data name="Core_AppUpdater_Close_StopVerification" xml:space="preserve"><value>Detener verificación y cerrar</value></data>
+  <data name="Core_AppUpdater_Close_Title" xml:space="preserve"><value>¿Cerrar la ventana de actualización?</value></data>
+  <data name="Core_AppUpdater_Close_Content" xml:space="preserve"><value>¿Cerrar la ventana de actualización?</value></data>
+  <data name="Core_AppUpdater_Close_Window" xml:space="preserve"><value>Cerrar ventana</value></data>
+  <data name="Core_AppUpdater_Close_DownloadFailed_Content" xml:space="preserve"><value>La descarga de la actualización ha fallado. Puedes cerrar esta ventana e intentarlo más tarde.</value></data>
+  <data name="Core_AppUpdater_Close_VerifyFailed_Content" xml:space="preserve"><value>La verificación ha fallado. Puedes cerrar esta ventana y descargar la actualización más tarde.</value></data>
+  <data name="Core_AppUpdater_Close_BackToUpdate" xml:space="preserve"><value>Volver a la actualización</value></data>
+  <data name="Core_AppUpdater_UpdateReady_Title" xml:space="preserve"><value>Actualización lista</value></data>
+  <data name="Core_Common_TextGotIt" xml:space="preserve"><value>Entendido</value></data>
+  <data name="Common_FileAccess_Message" xml:space="preserve"><value>Error de {1} en el archivo «{0}». Comprueba su integridad y los permisos.</value></data>
+  <data name="Common_FileAccess_Read" xml:space="preserve"><value>lectura</value></data>
+  <data name="Common_FileAccess_Write" xml:space="preserve"><value>escritura</value></data>
+  <data name="Common_FileAccess_Access" xml:space="preserve"><value>acceso</value></data>
+  <data name="Installer_DeleteEverythigMsgBox" xml:space="preserve"><value>¿Eliminar la configuración de usuario?</value></data>
+  <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>La aplicación se está ejecutando. ¿Quieres cerrarla?</value></data>
+  <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>No se pudo guardar el idioma del primer inicio.</value></data>
+  <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper – Actualización</value></data>
+</root>

@@ -143,6 +143,10 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 ## 默认覆盖范围
 
+### 下载与插件替换
+
+Core 测试通过隔离的本地 HTTP 服务验证单／多文件下载的字节及进度、HTTP 失败、暂停恢复、取消后复用、校验文件响应及依赖容器释放。插件安装测试使用独立应用目录、真实 ZIP 和 SHA256 校验，覆盖替换成功、验证失败、备份不完整、部分替换或清单更新后回滚、新增／移除插件、恢复失败保留备份、取消及提交后清理失败。断言比较原始文件内容和清单；插件进程控制使用 mock，不操作已安装应用或真实 UI。
+
 ### 语言即时切换
 
 源文案只维护在 `localization/Strings` 中；正常构建解决方案时，根据共用语言清单及映射生成 UI/Core/Common 资源。包体测试使用内嵌源文案与映射快照，逐一核验清单内语种的包内生成 key 及 value，不依赖资源注释。修改方法及单独生成、校验命令见[语言资源说明](../localization/README.zh-CN.md)。

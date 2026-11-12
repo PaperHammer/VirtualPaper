@@ -143,6 +143,10 @@ Independent UI can be skipped when no suitable desktop is available, and summari
 
 ## Default coverage
 
+### Downloads and plugin replacement
+
+Core tests use an isolated loopback HTTP server for single/batch download bytes and progress, HTTP failures, pause/resume, cancellation followed by reuse, checksum responses and dependency-container disposal. Plugin installation tests use a separate application directory, real ZIP files and SHA256 verification. They check successful replacement, verification failure, partial backup failure, rollback after a partial replacement or manifest update, newly added/removed plugins, retained backups after failed recovery, cancellation and cleanup failures after commit. Assertions compare original file contents and manifests; plugin process control is mocked, and no installed application or real UI is touched.
+
 ### Live language changes
 
 Source translations live only in `localization/Strings`; the normal solution build generates UI/Core/Common resources from the shared language catalog and mappings. Artifact tests use embedded source and mapping snapshots to validate every catalog locale's packaged generated keys and values without relying on resource comments. See [localization resources](../localization/README.md) for editing and standalone generation/check commands.

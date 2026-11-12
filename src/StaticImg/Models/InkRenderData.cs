@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
-using Microsoft.UI;
+using Windows.UI;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils.Archive;
 using VirtualPaper.UIComponent.Utils;
@@ -165,7 +165,7 @@ namespace Workloads.Creation.StaticImg.Models {
                     fileStream.AsRandomAccessStream());
 
                 using (var ds = RenderTarget.CreateDrawingSession()) {
-                    ds.Clear(Colors.Transparent);
+                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
                     ds.DrawImage(bitmap);
                 }
             }
@@ -202,7 +202,7 @@ namespace Workloads.Creation.StaticImg.Models {
             ct.ThrowIfCancellationRequested();
 
             using var ds = RenderTarget.CreateDrawingSession();
-            ds.Clear(Colors.Transparent);
+            ds.Clear(Color.FromArgb(0, 0, 0, 0));
             ds.DrawImage(bitmap);
             inputStream.Position = checked(pngStart + pngLength);
         }
@@ -210,9 +210,10 @@ namespace Workloads.Creation.StaticImg.Models {
 
         private void InitializeBlankRenderTarget() {
             using var ds = RenderTarget.CreateDrawingSession();
+            // Color values keep model rendering independent of WinUI activation.
             // CanvasRenderTarget 的初始内容未定义。普通新图层也必须显式清空，
             // 否则复用的 GPU 内存可能呈现为刚刚操作过的图层内容。
-            ds.Clear(IsNeedBackground ? Colors.White : Colors.Transparent);
+            ds.Clear(IsNeedBackground ? Color.FromArgb(255, 255, 255, 255) : Color.FromArgb(0, 0, 0, 0));
         }
 
         internal InkRenderData Clone() {
@@ -282,7 +283,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 CanvasAlphaMode.Premultiplied);
 
             using (var ds = RenderTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
+                ds.Clear(Color.FromArgb(0, 0, 0, 0));
 
                 if (oldTarget != null) {
                     var destRect = new Rect(0, 0, arcSize.Width, arcSize.Height);
@@ -306,7 +307,7 @@ namespace Workloads.Creation.StaticImg.Models {
                 CanvasAlphaMode.Premultiplied);
 
             using (var ds = RenderTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
+                ds.Clear(Color.FromArgb(0, 0, 0, 0));
 
                 if (oldTarget != null) {
                     // 废弃原先复杂的 DPI 计算和 contentRect
@@ -325,7 +326,7 @@ namespace Workloads.Creation.StaticImg.Models {
             var newTarget = CreateNewRenderTarget(targetArcSize, original);
             try {
                 using (var ds = newTarget.CreateDrawingSession()) {
-                    ds.Clear(Colors.Transparent);
+                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
 
                     // 使用标准的 90 度边缘映射矩阵，避免 width/2f 带来的浮点数漂移
                     if (targetArcSize.Rebuild == RebuildMode.RotateLeft) {
@@ -356,7 +357,7 @@ namespace Workloads.Creation.StaticImg.Models {
             var newTarget = CreateNewRenderTarget(targetArcSize, original);
             try {
                 using (var ds = newTarget.CreateDrawingSession()) {
-                    ds.Clear(Colors.Transparent);
+                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
 
                     float width = (float)Math.Round(original.Size.Width);
                     float height = (float)Math.Round(original.Size.Height);

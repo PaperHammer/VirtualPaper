@@ -120,8 +120,10 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
                 // Save through project utility
                 (var flag, var filePath) = await session.DesignFileUtil.SaveAsync(CanvasSize, businessData, layers);                
-                session.DesignFileUtil.IsSaveFromInit = true;
-                session.UnReUtil.MarkAsSaved();
+                if (flag) {
+                    session.DesignFileUtil.IsSaveFromInit = true;
+                    session.UnReUtil.MarkAsSaved();
+                }
 
                 return (flag, filePath);
             }

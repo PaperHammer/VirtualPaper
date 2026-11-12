@@ -94,7 +94,9 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     header.Version);
 
                 UpdateCache(header, businessData, layers);
-                _loadFailed = false;
+                // Recovered layers remain available for Save As, but must never
+                // silently replace the original project after a partial read.
+                _loadFailed = layers.Count != header.LayerCount;
                 return (header, businessData, layers);
 
             }

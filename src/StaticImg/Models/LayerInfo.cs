@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.UI;
+using Windows.UI;
 using Microsoft.UI.Xaml.Media;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -126,7 +126,7 @@ namespace Workloads.Creation.StaticImg.Models {
                     96);
 
                 using (var ds = offscreenRT.CreateDrawingSession()) {
-                    ds.Clear(Colors.Transparent);
+                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
                     ds.DrawImage(
                         source,
                         offscreenRT.Bounds,
@@ -152,8 +152,8 @@ namespace Workloads.Creation.StaticImg.Models {
                             LayerThum = _thumbSource;
                         }
 
-                        using (var ds = _thumbSource.CreateDrawingSession(Colors.Transparent)) {
-                            ds.Clear(Colors.Transparent);
+                        using (var ds = _thumbSource.CreateDrawingSession(Color.FromArgb(0, 0, 0, 0))) {
+                            ds.Clear(Color.FromArgb(0, 0, 0, 0));
                             ds.DrawImage(completedThumbnail);
                         }
                     }

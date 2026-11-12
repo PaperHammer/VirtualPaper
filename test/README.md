@@ -147,6 +147,10 @@ Independent UI can be skipped when no suitable desktop is available, and summari
 
 Core tests use an isolated loopback HTTP server for single/batch download bytes and progress, HTTP failures, pause/resume, cancellation followed by reuse, checksum responses and dependency-container disposal. Plugin installation tests use a separate application directory, real ZIP files and SHA256 verification. They check successful replacement, verification failure, partial backup failure, rollback after a partial replacement or manifest update, newly added/removed plugins, retained backups after failed recovery, cancellation and cleanup failures after commit. Assertions compare original file contents and manifests; plugin process control is mocked, and no installed application or real UI is touched.
 
+### Image project persistence
+
+Image project tests use offscreen Win2D canvases to verify multi-layer VPD save/reopen, pixel bytes, visibility/order, selected-layer and palette data, v1 encoding preservation and v2 upgrades. They exercise incremental business/layer saves, locked destinations, unchanged originals/caches and staging cleanup, recovered layers saved to a new file, and preserving the unsaved state after a failed write. Layer deletion and rotation are undone/redone and then saved/reopened. No editor window or file picker is opened.
+
 ### Live language changes
 
 Source translations live only in `localization/Strings`; the normal solution build generates UI/Core/Common resources from the shared language catalog and mappings. Artifact tests use embedded source and mapping snapshots to validate every catalog locale's packaged generated keys and values without relying on resource comments. See [localization resources](../localization/README.md) for editing and standalone generation/check commands.

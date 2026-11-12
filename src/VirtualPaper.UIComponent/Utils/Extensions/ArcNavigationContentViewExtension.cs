@@ -7,7 +7,6 @@ using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Attributes;
 using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
-using Windows.UI.ViewManagement;
 
 namespace VirtualPaper.UIComponent.Utils.Extensions {
     public static class ArcNavigationContentViewExtension {
@@ -24,7 +23,7 @@ namespace VirtualPaper.UIComponent.Utils.Extensions {
                 ArcPage newPage = GetBackgroundPage(navView.PageMap, targetPageType) ?? ResolvePageInstance(targetPageType);
                 payload = payload.Merge(newPage.Payload);
 
-                bool useAnimation = options != null && oldPage != null && !ReferenceEquals(oldPage, newPage) && new UISettings().AnimationsEnabled;
+                bool useAnimation = options != null && oldPage != null && !ReferenceEquals(oldPage, newPage) && UiAnimation.IsEnabled;
                 if (!useAnimation) NavigateRootWithoutAnimation(navView, oldPage, newPage, payload);
                 else NavigateRootWithAnimation(navView, oldPage, newPage, payload, options!.Transition);
             });

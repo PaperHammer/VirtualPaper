@@ -5,9 +5,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIComponent.Styles {
-    public sealed partial class ImageCompareSlider : UserControl {
+    public sealed partial class ImageCompareSlider : UserControl, IUiAnimationController {
         // 把手宽度，DividerPanel.Width 要与之一致
         private const float DividerPanelWidth = 28f;
 
@@ -62,6 +63,7 @@ namespace VirtualPaper.UIComponent.Styles {
             InitializeComponent();
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
+            UiAnimation.Attach(this);
         }
 
         #region Lifecycle
@@ -69,20 +71,23 @@ namespace VirtualPaper.UIComponent.Styles {
         private void OnLoaded(object sender, RoutedEventArgs e) {
             EnsureComposition();
             ApplyStaticPosition(_currentRatio);
-
-            if (AutoAnimate && !_isDragging) {
-                if (_isFirstLoad) {
-                    _isFirstLoad = false;
-                    StartCompositionAnimation(_currentRatio, true, PauseDuration);
-                }
-                else {
-                    StartCompositionAnimation(_currentRatio, _lastDirectionIsRight);
-                }
-            }
         }
 
         private void OnUnloaded(object sender, RoutedEventArgs e) {
             StopCompositionAnimation();
+        }
+
+        public void SetAnimationsEnabled(bool enabled) {
+            _animationsEnabled = enabled;
+            StopCompositionAnimation();
+            ApplyStaticPosition(_currentRatio);
+            if (enabled && AutoAnimate && !_isDragging) {
+                if (_isFirstLoad) {
+                    _isFirstLoad = false;
+                    StartCompositionAnimation(_currentRatio, true, PauseDuration);
+                }
+                else StartCompositionAnimation(_currentRatio, _lastDirectionIsRight);
+            }
         }
 
         private void OnSizeChanged(object sender, SizeChangedEventArgs e) {
@@ -147,6 +152,7 @@ namespace VirtualPaper.UIComponent.Styles {
         /// <param name="goRightFirst">true = 先向右移动，false = 先向左移动</param>
         /// <param name="initialDelay">动画启动前的延迟时间（仅首次生效）</param>
         private void StartCompositionAnimation(double startRatio = 0.0, bool goRightFirst = true, TimeSpan? initialDelay = null) {
+            if (!IsLoaded || !_animationsEnabled || !AutoAnimate || _isDragging) return;
             if (_compositor == null || _width <= 0) return;
             StopCompositionAnimation();
 
@@ -367,6 +373,7 @@ namespace VirtualPaper.UIComponent.Styles {
         /// 标记是否为首次加载，首次加载时动画延迟启动。
         /// </summary>
         private bool _isFirstLoad = true;
+        private bool _animationsEnabled = UiAnimation.IsEnabled;
         private Compositor? _compositor;
         private Visual? _afterVisual;
         private Visual? _dividerVisual;

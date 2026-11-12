@@ -1,19 +1,23 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VirtualPaper.UIComponent.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace VirtualPaper.IntelligentPanel.Views.StyleTransferComp {
-    public sealed partial class StyleTransferIntroduction : UserControl {
+    public sealed partial class StyleTransferIntroduction : UserControl, IUiAnimationController {
         public StyleTransferIntroduction() {
             InitializeComponent();
-            Loaded += OnLoaded;
+            UiAnimation.Attach(this);
             Unloaded += OnUnloaded;
         }
 
-        private void OnLoaded(object sender, RoutedEventArgs e) {
-            demoCrossfadeStoryboard.Begin();
+        public void SetAnimationsEnabled(bool enabled) {
+            demoCrossfadeStoryboard.Stop();
+            originImage.Opacity = enabled ? 1 : 0;
+            resultImage.Opacity = enabled ? 0 : 1;
+            if (enabled) demoCrossfadeStoryboard.Begin();
         }
 
         private void IntroductionRoot_SizeChanged(object sender, SizeChangedEventArgs e) {

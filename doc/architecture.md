@@ -59,6 +59,16 @@ UI / Panels / Workloads
 
 `UiWebViewEnvironment` 统一创建 UI 使用的 WebView2 环境并复用同一分区的初始化任务。UI 数据目录位于原 WebView2 根目录的 `UI/GPU` 或 `UI/Software` 下，Markdown 预览再使用独立子分区。软件模式增加 `--disable-gpu` 启动参数；按模式隔离目录可以避免重开 UI 时旧浏览器进程尚未退出造成选项冲突。桌面播放器与屏保不消费 UI 策略，继续使用原有目录。这里目前仅接入 UI WebView；AI 推理和绘画设备将在各自模块后续接入同一策略。
 
+## 主 UI 界面动画
+
+主 UI 的“性能 → 界面动画”统一控制导航、主题切换、壁纸卡片、智能演示及接入共享样式的控件过渡。沿用 `NavigationAnimationsEnabled` JSON/RPC 字段以保留旧偏好；界面和 ViewModel 使用 `InterfaceAnimationsEnabled` 表达扩大后的范围。`UiAnimationPolicy` 合并应用偏好与 Windows 动画设置，`UiAnimation` 将系统通知调度回 UI 线程，关闭 UI 时解除监听。
+
+需要动画控制的组件显式实现 `IUiAnimationController.SetAnimationsEnabled(bool)`。`UiAnimation.Attach(this)` 仅绑定该组件的 Loaded/Unloaded：加载时订阅策略并立即应用当前值，卸载时释放订阅。策略变化只通知已注册组件，不扫描页面、不反射查找子控件，也不为普通页面或窗口宿主安装通用行为。`ArcWindow` 按窗口关闭生命周期释放订阅。
+
+组件自己停止、恢复动画并呈现最终状态：壁纸库维护当前已实现卡片的动画对象，对比滑块和智能演示管理自身时间线。`ArcExpander` 位于 `VirtualPaper.UIComponent.Layout`，XAML 统一使用 `layout:ArcExpander`。它保留 WinUI 原生模板与交互，只访问自己明确的模板根、标题和箭头；`ArcContentDialog` 只适配自身的 Container 模板根。二者使用的状态管理器仅处理当前组件自身的有限过渡，不递归查找内容区；持续加载反馈不受影响。Expander 复用静态箭头，卸载只清理模板接入和菜单租约，不重新启用箭头动画；重新加载时再应用当前策略。它显式管理自己的菜单；共享菜单在最后一个使用者释放后恢复原值。新增含动画的组件应实现接口并管理自己的动画、菜单与卸载清理。
+
+动画偏好与硬件加速偏好互相独立，动画设置立即生效；WinUI 合成器继续使用框架的硬件加速能力。关闭产品中的硬件加速不会强制 WinUI 合成器改用软件渲染，也不会关闭界面动画。
+
 ## 文件变化与保存
 
 共享的 `VirtualPaper.Common.Utils.ProjectSystem` 提供文件系统监听和文档状态跟踪。WebBackdrop 在其上增加 `ProjectFileManager`：

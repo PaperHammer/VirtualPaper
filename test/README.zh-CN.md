@@ -182,12 +182,14 @@ Core 测试通过隔离的本地 HTTP 服务验证单／多文件下载的字节
 
 1. 启动真实 `VirtualPaper.exe`，通过带超时的设置 RPC 等待就绪。
 2. 使用正式 ShowUI RPC 启动 `VirtualPaper.UI.exe`，仅接受当前 Core 的直接子进程。
-3. 通过跨进程 UI Automation 导航并关闭导航动画，不直接调用 ViewModel 或 SetSettings。
+3. 通过跨进程 UI Automation 导航至性能页并关闭界面动画，不直接调用 ViewModel 或 SetSettings。
 4. 独立检查后台 RPC 和持久化 JSON。
 5. 正常关闭 UI，请求 Core 启动另一个 UI 进程，检查开关仍为关闭。
 6. 正常关闭 UI、Core 并检查退出码，记录 PID、持久化值和关闭结果。
 
 重新打开时会等待真实窗口就绪。若操作系统已报告进程退出，但 Core 的退出回调尚未完成，脚本会有限重试幂等的 ShowUI 命令。`ShowUiRequests` 记录这些尝试；仅收到 RPC 响应并不代表窗口已经就绪。
+
+同一验收项还检查显式接入接口的 ArcExpander 原生 WinUI 模板：开启动画时首次加载/重新加载不接入模板拦截、关闭后立即展开/收起、复用静态箭头、重新开启后恢复模板和共享弹出动画、展开途中关闭，以及卸载/重新加载后的清理，确保卸载时不会重新启动动画箭头。这些新增原生断言目前仅完成编译，尚未执行。无界面测试覆盖应用/系统偏好组合、即时策略切换及与硬件加速偏好的独立性，以及接口订阅的初始化、释放、重新加载与首次回调失败后的清理。为兼容旧配置，JSON/protobuf 字段继续使用 `NavigationAnimationsEnabled`。
 
 ### 性能设置
 

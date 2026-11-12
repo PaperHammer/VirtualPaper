@@ -99,6 +99,7 @@ namespace VirtualPaper.UI {
             SetupUnhandledExceptionLogging();
 
             _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
+            UiAnimation.Initialize(_userSettings.Settings.NavigationAnimationsEnabled);
             _ = AppServiceLocator.Services.GetRequiredService<UiHardwareAccelerationPolicy>();
         }
 
@@ -248,6 +249,7 @@ namespace VirtualPaper.UI {
         }
 
         public static void ShutDown() {
+            UiAnimation.Shutdown();
             // The last window can end the WinUI application lifetime before an
             // async Closed handler resumes. TwoWayClient's synchronous Dispose
             // drains its stream without capturing the UI synchronization context.

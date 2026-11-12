@@ -3,6 +3,7 @@
     x:Class="VirtualPaper.IntelligentPanel.Views.StyleTransferComp.StyleTransferTasksView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:layout="using:VirtualPaper.UIComponent.Layout"
     xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:VirtualPaper.IntelligentPanel.Views.StyleTransferComp"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -36,7 +37,7 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <Expander
+                        <layout:ArcExpander
                             HorizontalAlignment="Stretch"
                             HorizontalContentAlignment="Stretch"
                             Padding="20 0"
@@ -44,7 +45,7 @@
                             BorderBrush="{ThemeResource CardStrokeColorDefault}"
                             BorderThickness="1">
 
-                            <Expander.Header>
+                            <layout:ArcExpander.Header>
                                 <Grid>
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="*"/>
@@ -156,9 +157,9 @@
                                         HorizontalAlignment="Right"
                                         VerticalAlignment="Bottom"/>
                                 </Grid>
-                            </Expander.Header>
+                            </layout:ArcExpander.Header>
 
-                            <Expander.Content>
+                            <layout:ArcExpander.Content>
                                 <StackPanel
                                     Padding="16,12"
                                     MinHeight="120"
@@ -369,8 +370,8 @@
                                         </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
-                            </Expander.Content>
-                        </Expander>
+                            </layout:ArcExpander.Content>
+                        </layout:ArcExpander>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

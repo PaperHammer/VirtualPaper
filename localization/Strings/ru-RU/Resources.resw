@@ -1917,8 +1917,8 @@ Virtual Paper — бесплатное и лёгкое приложение дл
   <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>Не удалось улучшить изображение. Отключите улучшение и повторите с оригиналом.</value></data>
   <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>Не удалось импортировать или применить обои. Повторите попытку.</value></data>
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>Эта версия поддерживает независимые мониторы. Переключитесь на режим «Отдельно» в управлении экранами и снова откройте инструмент.</value></data>
-  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Включить анимацию переходов</value></data>
-  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Анимирует смену страниц. Также необходимо включить эффекты анимации в специальных возможностях Windows.</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>Анимация интерфейса</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>Анимация переходов, карточек и элементов управления. Применяется сразу с учётом настройки анимации Windows.</value></data>
   <data name="ScreenSaver_Remove" xml:space="preserve"><value>Удалить из списка исключений</value></data>
   <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>Приложения ещё не добавлены</value></data>
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Добавьте приложения, при работе которых на переднем плане заставка не должна запускаться.</value></data>

@@ -36,7 +36,6 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
 
             _settings.SetupProperty(s => s.IsAutoStart, false);
             _settings.SetupProperty(s => s.SystemBackdrop, AppSystemBackdrop.Default);
-            _settings.SetupProperty(s => s.NavigationAnimationsEnabled, true);
             _settings.SetupProperty(s => s.Language, "en-US");
             _settings.SetupProperty(s => s.WallpaperDir, @"C:\Wallpapers");
             _settings.SetupProperty(s => s.BuiltInWallpapersDir, @"C:\BuiltInWallpapers");
@@ -128,22 +127,6 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _settings.Object.IsAutoStart = false;
             _vm.IsAutoStart = true;
 
-            _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
-        }
-
-        [TestMethod]
-        public void NavigationAnimations_WhenChanged_SavesAndNotifiesOnlyOnce() {
-            int notifications = 0;
-            _vm.PropertyChanged += (_, args) => {
-                if (args.PropertyName == nameof(_vm.NavigationAnimationsEnabled)) notifications++;
-            };
-
-            Assert.IsTrue(_vm.NavigationAnimationsEnabled);
-            _vm.NavigationAnimationsEnabled = false;
-            _vm.NavigationAnimationsEnabled = false;
-
-            Assert.IsFalse(_settings.Object.NavigationAnimationsEnabled);
-            Assert.AreEqual(1, notifications);
             _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
         }
 

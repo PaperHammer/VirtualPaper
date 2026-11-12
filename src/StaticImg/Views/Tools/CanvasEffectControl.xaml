@@ -3,6 +3,7 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.CanvasEffectControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:layout="using:VirtualPaper.UIComponent.Layout"
     xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -174,11 +175,11 @@
 
     </UserControl.Resources>
 
-    <Expander Style="{StaticResource RightExpanderStyle}">
-        <Expander.Header>
+    <layout:ArcExpander Style="{StaticResource RightExpanderStyle}">
+        <layout:ArcExpander.Header>
             <TextBlock l:Uids.Uid="Ui_Project_StaticImg_ToolName_CanvasEffect_Text"/>
-        </Expander.Header>
-        <Expander.Content>
+        </layout:ArcExpander.Header>
+        <layout:ArcExpander.Content>
             <StackPanel Orientation="Vertical" Spacing="8">
 
                 <!--  顶部操作区  -->
@@ -274,6 +275,6 @@
                 </StackPanel>
 
             </StackPanel>
-        </Expander.Content>
-    </Expander>
+        </layout:ArcExpander.Content>
+    </layout:ArcExpander>
 </UserControl>

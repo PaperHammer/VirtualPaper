@@ -34,7 +34,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class LibraryContents : ArcPage {
+    public sealed partial class LibraryContents : ArcPage, IUiAnimationController {
         public override Type ArcType => typeof(LibraryContents);
 
         public LibraryContents() {
@@ -47,6 +47,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             _hoverTimer.IsRepeating = false;
             _hoverTimer.Tick += HoverTimer_Tick;
             this.DataContext = _viewModel;
+            UiAnimation.Attach(this);
         }
 
         private void LibraryContents_Loaded(object sender, RoutedEventArgs e) {
@@ -70,6 +71,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             _viewModel.QueryReset -= ViewModel_QueryReset;
             _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
             LanguageUtil.LanguageUpdated -= ViewModel_OrganizationChanged;
+            _scaleContexts.Clear();
             ClearCardHover();
             if (_scrollViewer != null) _scrollViewer.ViewChanged -= WallpaperLibScrollViewer_ViewChanged;
             _scrollViewer = null;
@@ -395,9 +397,15 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             UpdateActionAvailability(actions, false);
         }
 
-        private static void ShowCardActions(FrameworkElement actions) {
+        private void ShowCardActions(FrameworkElement actions) {
             var transform = (TranslateTransform)actions.RenderTransform;
             (actions.Tag as Storyboard)?.Stop();
+            if (!_animationsEnabled) {
+                actions.Tag = null;
+                actions.Opacity = 1;
+                transform.X = 0;
+                return;
+            }
             var duration = new Duration(TimeSpan.FromMilliseconds(160));
             var slide = new DoubleAnimation { From = 48, To = 0, Duration = duration,
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut } };
@@ -514,6 +522,7 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple
                     ? wallpapersLibView.SelectedItems.OfType<IWpBasicData>() : []);
             var flyout = (MenuFlyout)Resources["WallpaperContextFlyout"];
+            flyout.AreOpenCloseAnimationsEnabled = _animationsEnabled;
             foreach (var item in flyout.Items.OfType<MenuFlyoutItem>()) item.DataContext = data;
             flyout.ShowAt(target, new FlyoutShowOptions { Position = position });
         }
@@ -595,7 +604,10 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             }
 
             visual.Scale = Vector3.One;
-            if (root.Tag is ScaleAnimationContext existing && ReferenceEquals(existing.Visual, visual)) return;
+            if (root.Tag is ScaleAnimationContext existing && ReferenceEquals(existing.Visual, visual)) {
+                _scaleContexts.Add(existing);
+                return;
+            }
 
             var compositor = visual.Compositor;
             var ease = compositor.CreateCubicBezierEasingFunction(
@@ -611,6 +623,11 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             var context = new ScaleAnimationContext(visual, CreateScaleAnim(1.0f), CreateScaleAnim(0.98f));
 
             root.Tag = context;
+            _scaleContexts.Add(context);
+        }
+
+        private void GridViewItem_Unloaded(object sender, RoutedEventArgs args) {
+            if (sender is Grid { Tag: ScaleAnimationContext context }) _scaleContexts.Remove(context);
         }
 
         private void CardPresenter_SizeChanged(object sender, SizeChangedEventArgs args) {
@@ -618,12 +635,28 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             visual.CenterPoint = new Vector3((float)args.NewSize.Width * 0.5f, (float)args.NewSize.Height * 0.5f, 0f);
         }
 
-        private static void AnimateScale(object sender, bool hover) {
+        private void AnimateScale(object sender, bool hover) {
             if (sender is not Grid root || root.Tag is not ScaleAnimationContext ctx)
                 return;
 
             var visual = ctx.Visual;
+            if (!_animationsEnabled) {
+                visual.StopAnimation(nameof(visual.Scale));
+                visual.Scale = Vector3.One;
+                return;
+            }
             visual.StartAnimation(nameof(visual.Scale), hover ? ctx.ScaleToHover : ctx.ScaleToNormal);
+        }
+
+        public void SetAnimationsEnabled(bool enabled) {
+            _animationsEnabled = enabled;
+            if (enabled) return;
+            if (_visibleActions is { } actions) ShowCardActions(actions);
+            // 容器加载/回收时维护当前动画对象，切换策略不再查找可视树。
+            foreach (var context in _scaleContexts) {
+                context.Visual.StopAnimation(nameof(context.Visual.Scale));
+                context.Visual.Scale = Vector3.One;
+            }
         }
 
         private static ScrollViewer? FindScrollViewer(DependencyObject root) {
@@ -658,6 +691,8 @@ namespace VirtualPaper.WpSettingsPanel.Views {
 
         private readonly LibraryContentsViewModel _viewModel;
         private readonly HashSet<ToggleButton> _favoriteButtons = [];
+        private readonly HashSet<ScaleAnimationContext> _scaleContexts = [];
+        private bool _animationsEnabled = UiAnimation.IsEnabled;
         private readonly DispatcherQueueTimer _hoverTimer;
         private FrameworkElement? _hoveredCard;
         private StackPanel? _visibleActions;

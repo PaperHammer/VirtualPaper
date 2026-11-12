@@ -52,6 +52,7 @@
                         <Grid x:Name="rootGrid"
                             Background="Transparent"
                             Loaded="GridViewItem_Loaded"
+                            Unloaded="GridViewItem_Unloaded"
                             PointerEntered="GridViewItem_PointerEntered"
                             PointerExited="GridViewItem_PointerExited"
                             PointerCanceled="GridViewItem_PointerCanceled">

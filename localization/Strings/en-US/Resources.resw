@@ -1925,8 +1925,8 @@ The following words cannot be used as usernames:
   <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>Enhancement failed. Turn off enhancement to retry with the original image.</value></data>
   <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>Unable to import or apply the wallpaper. Please retry.</value></data>
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>This version supports independent displays. Switch to Per display in display controls, then reopen this tool.</value></data>
-  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Enable navigation animations</value></data>
-  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Animate page changes. Also requires Animation effects in Windows accessibility settings.</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>Interface animations</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>Animate navigation, cards and controls. Takes effect immediately and follows the Windows animation setting.</value></data>
   <data name="ScreenSaver_Remove" xml:space="preserve"><value>Remove from whitelist</value></data>
   <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>No apps added yet</value></data>
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Add apps to prevent the screen saver from starting while they are in the foreground.</value></data>

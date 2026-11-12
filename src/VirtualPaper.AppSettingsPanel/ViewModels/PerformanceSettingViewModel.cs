@@ -7,6 +7,18 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class PerformanceSettingViewModel : ObservableObject {
+        public bool InterfaceAnimationsEnabled {
+            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
+            set {
+                if (InterfaceAnimationsEnabled == value) return;
+                // 沿用已有持久化字段，升级后保留用户原先的动画偏好。
+                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
+                UiAnimation.Policy.SetRequested(value);
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+            }
+        }
+
         public bool UiHardwareAccelerationEnabled {
             get => _userSettingsClient.Settings.UiHardwareAccelerationEnabled;
             set {

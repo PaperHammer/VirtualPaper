@@ -143,9 +143,9 @@
   <Resource Name="Ui_Settings_General_AppearanceAndAction_AppSystemBackdrop_Text.Text" Source="Settings_General_AppearanceAndAction_AppSystemBackdrop" />
   <Resource Name="Ui_Settings_General_AppearanceAndAction_AutoStart_Text.Text" Source="Settings_General_AppearanceAndAction_AutoStart" />
   <Resource Name="Ui_Settings_General_AppearanceAndAction_AutoStatExplain_Text.Text" Source="Settings_General_AppearanceAndAction_AutoStatExplain" />
-  <Resource Name="Ui_Settings_General_NavigationAnimations_AutomationProperties_Name.AutomationProperties.Name" Source="Settings_General_NavigationAnimations" />
-  <Resource Name="Ui_Settings_General_NavigationAnimations_Description_Text.Text" Source="Settings_General_NavigationAnimations_Description" />
-  <Resource Name="Ui_Settings_General_NavigationAnimations_Text.Text" Source="Settings_General_NavigationAnimations" />
+  <Resource Name="Ui_Settings_Performance_InterfaceAnimationsToggle.AutomationProperties.Name" Source="Settings_Performance_InterfaceAnimations" />
+  <Resource Name="Ui_Settings_Performance_InterfaceAnimationsExplain.Text" Source="Settings_Performance_InterfaceAnimationsExplain" />
+  <Resource Name="Ui_Settings_Performance_InterfaceAnimations.Text" Source="Settings_Performance_InterfaceAnimations" />
   <Resource Name="Ui_Settings_General_Text_AppearanceAndAction_Text.Text" Source="Settings_General_Text_AppearanceAndAction" />
   <Resource Name="Ui_Settings_General_Text_Version_Text.Text" Source="Settings_General_Text_Version" />
   <Resource Name="Ui_Settings_General_Version_DownloadStart_Content.Content" Source="Settings_General_Version_DownloadStart" />

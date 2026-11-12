@@ -182,12 +182,14 @@ For desktop layout review, also switch to German, French and Russian and resize 
 
 1. Start real `VirtualPaper.exe` and wait for readiness through a settings RPC with a timeout.
 2. Use production ShowUI RPC to launch `VirtualPaper.UI.exe`, accepting only a direct child of this Core.
-3. Navigate through cross-process UI Automation and disable navigation animations without calling the ViewModel or SetSettings directly.
+3. Navigate to Performance through cross-process UI Automation and disable interface animations without calling the ViewModel or SetSettings directly.
 4. Independently check the backend RPC and persisted JSON.
 5. Close UI normally, ask Core to start another UI process, and check that the switch remains off.
 6. Close UI and Core normally and check exit codes. Record PIDs, persisted values, and shutdown results.
 
 Reopening waits for the real window to become ready. If the OS reports process exit before Core finishes its exit callback, the runner makes bounded retries of the idempotent ShowUI command. `ShowUiRequests` records these attempts; an RPC response alone does not mean the window is ready.
+
+The same case verifies the explicit ArcExpander adapter with the native WinUI template: no template interception on enabled startup/reload, immediate expand/collapse when disabled, reuse of the static arrow, restoring template and shared-flyout defaults, disabling during expansion, and unload/reload cleanup without restarting the animated chevron during unload. These new native assertions are compiled but have not been executed. Headless tests cover the app/system preference combinations, immediate policy changes without changing the hardware preference, interface subscription initialization/disposal/reload, and cleanup after an initial controller failure. The existing JSON/protobuf field name remains `NavigationAnimationsEnabled` for compatibility.
 
 ### Performance settings
 

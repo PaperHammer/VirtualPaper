@@ -10,6 +10,7 @@ namespace VirtualPaper.UIOperationTest.Cases;
 
 internal static class NavigationSettingsTests {
     public static async Task SaveAndReopenAsync(UiTestContext context) {
+        await InterfaceAnimationTests.VerifyControlsAsync(context);
         await using var session = new AppProcessSession();
         await session.StartAsync();
         context.Evidence["CoreProcessId"] = session.CoreId;
@@ -40,7 +41,8 @@ internal static class NavigationSettingsTests {
     private static void ToggleNavigation(Process ui, bool expected, bool toggle = true) {
         var root = AutomationElement.FromHandle(ui.MainWindowHandle);
         ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Settings"));
-        var control = ApplicationUi.Find(root, "Settings.General.NavigationAnimations");
+        ApplicationUi.Select(ApplicationUi.Find(root, "Settings.Tab.Performance"));
+        var control = ApplicationUi.Find(root, "Settings.Performance.InterfaceAnimations");
         ApplicationUi.BringIntoView(control);
         var pattern = (TogglePattern)control.GetCurrentPattern(TogglePattern.Pattern);
         Check(pattern.Current.ToggleState == (expected ? ToggleState.On : ToggleState.Off), "UI toggle did not display the expected saved value");

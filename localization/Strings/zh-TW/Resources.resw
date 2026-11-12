@@ -1936,8 +1936,8 @@ Virtual Paper 是一款免費、執行在 Windows 上的輕量級桌布軟體，
   <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>高清增強失敗。可關閉增強後使用原圖重試。</value></data>
   <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>入庫或應用失敗，請重試。</value></data>
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>首版僅支援獨立顯示。請先在顯示器控制中切換為獨立顯示，再開啟此功能。</value></data>
-  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>啟用導航動畫</value></data>
-  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>切換頁面時顯示過渡動畫，需同時開啟 Windows 輔助功能中的“動畫效果”。</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>介面動畫</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>為頁面切換、卡片與控制項顯示轉場動畫。立即生效，並遵循 Windows 動畫設定。</value></data>
   <data name="ScreenSaver_Remove" xml:space="preserve"><value>從白名單移除</value></data>
   <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>尚未新增應用</value></data>
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>新增應用後，該應用在前臺執行時將不會觸發屏保。</value></data>

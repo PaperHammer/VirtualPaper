@@ -1917,8 +1917,8 @@ El archivo está dañado. Repáralo o restáuralo antes de modificarlo.</value><
   <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>La mejora ha fallado. Desactívala para reintentar con la imagen original.</value></data>
   <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>No se pudo importar o aplicar el fondo. Inténtalo de nuevo.</value></data>
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>Esta versión admite pantallas independientes. Cambia a Por pantalla en los controles de pantalla y vuelve a abrir esta herramienta.</value></data>
-  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Activar animaciones de navegación</value></data>
-  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Anima los cambios de página. También requiere activar Efectos de animación en la accesibilidad de Windows.</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>Animaciones de la interfaz</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>Animar la navegación, las tarjetas y los controles. Se aplica al instante y respeta la configuración de animación de Windows.</value></data>
   <data name="ScreenSaver_Remove" xml:space="preserve"><value>Quitar de la lista de permitidos</value></data>
   <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>Aún no hay aplicaciones</value></data>
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Añade aplicaciones para impedir que se inicie el salvapantallas mientras estén en primer plano.</value></data>

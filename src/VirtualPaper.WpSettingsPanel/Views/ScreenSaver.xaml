@@ -3,6 +3,7 @@
     x:Class="VirtualPaper.WpSettingsPanel.Views.ScreenSaver"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:layout="using:VirtualPaper.UIComponent.Layout"
     xmlns:l="using:WinUI3Localizer"
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     Loaded="Page_Loaded" Unloaded="Page_Unloaded" NavigationCacheMode="Enabled">
@@ -20,12 +21,12 @@
 
     <ScrollView>
         <StackPanel x:Name="VirtualPaperScreenSaver" Margin="16 12 16 16" Spacing="16">
-            <Expander Padding="20 0" CornerRadius="12"
+            <layout:ArcExpander Padding="20 0" CornerRadius="12"
                 AutomationProperties.AutomationId="ScreenSaver.Options"
                 HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
                 Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <Expander.Header>
+                <layout:ArcExpander.Header>
                     <Grid MinHeight="90" ColumnSpacing="20">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="24"/>
@@ -44,8 +45,8 @@
                             IsChecked="{x:Bind _viewModel.IsScreenSaverOn, Mode=TwoWay}"
                             l:Uids.Uid="Ui_ScreenSaver_Server_AutomationProperties_Name"/>
                     </Grid>
-                </Expander.Header>
-                <Expander.Content>
+                </layout:ArcExpander.Header>
+                <layout:ArcExpander.Content>
                     <ContentControl IsEnabled="{x:Bind _viewModel.IsScreenSaverOn, Mode=OneWay}"
                         HorizontalContentAlignment="Stretch">
                         <StackPanel Margin="44 4 0 16" Spacing="16">
@@ -72,8 +73,8 @@
                             </StackPanel>
                         </StackPanel>
                     </ContentControl>
-                </Expander.Content>
-            </Expander>
+                </layout:ArcExpander.Content>
+            </layout:ArcExpander>
 
             <Border x:Name="WhiteList" Padding="20" CornerRadius="12"
                 Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"

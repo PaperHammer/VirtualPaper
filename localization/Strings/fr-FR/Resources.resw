@@ -1917,8 +1917,8 @@ Les récupérer ?</value></data>
   <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>Échec de l'amélioration. Désactivez-la pour réessayer avec l'image d'origine.</value></data>
   <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>Impossible d'importer ou d'appliquer le fond d'écran. Réessayez.</value></data>
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>Cette version prend en charge les écrans indépendants. Passez en mode Par écran dans les commandes des écrans, puis rouvrez cet outil.</value></data>
-  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Activer les animations de navigation</value></data>
-  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Anime les changements de page. Nécessite aussi les effets d'animation dans les paramètres d'accessibilité de Windows.</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>Animations de l’interface</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>Animer la navigation, les cartes et les commandes. Effet immédiat, selon le réglage des animations de Windows.</value></data>
   <data name="ScreenSaver_Remove" xml:space="preserve"><value>Retirer de la liste d'exceptions</value></data>
   <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>Aucune application ajoutée</value></data>
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Ajoutez des applications pour empêcher le démarrage de l'écran de veille lorsqu'elles sont au premier plan.</value></data>

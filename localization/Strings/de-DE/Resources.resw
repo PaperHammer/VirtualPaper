@@ -1917,8 +1917,8 @@ Wiederherstellen?</value></data>
   <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>Verbesserung fehlgeschlagen. Deaktivieren Sie sie, um es mit dem Originalbild erneut zu versuchen.</value></data>
   <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>Hintergrundbild konnte nicht importiert oder angewendet werden. Bitte erneut versuchen.</value></data>
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>Diese Version unterstützt einzelne Bildschirme. In der Bildschirmsteuerung auf „Einzeln“ umschalten und das Werkzeug erneut öffnen.</value></data>
-  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>Navigationsanimationen aktivieren</value></data>
-  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>Animiert Seitenwechsel. Erfordert aktivierte Animationseffekte in den Windows-Einstellungen für Barrierefreiheit.</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>Oberflächenanimationen</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>Übergänge, Karten und Steuerelemente animieren. Gilt sofort und berücksichtigt die Windows-Animationseinstellung.</value></data>
   <data name="ScreenSaver_Remove" xml:space="preserve"><value>Aus Ausnahmeliste entfernen</value></data>
   <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>Noch keine Apps hinzugefügt</value></data>
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>Fügen Sie Apps hinzu, bei denen der Bildschirmschoner im Vordergrund nicht starten soll.</value></data>

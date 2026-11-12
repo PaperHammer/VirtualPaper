@@ -1,13 +1,14 @@
 using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIComponent.Dialogs {
     /// <summary>
     /// Shared dialog chrome. Only the body scrolls; title and native command buttons stay visible.
     /// Dialog dimensions include the title, content padding and footer, and fit within the XamlRoot.
     /// </summary>
-    public partial class ArcContentDialog : ContentDialog {
+    public partial class ArcContentDialog : ContentDialog, IUiAnimationController {
         public double DialogWidth { get => (double)GetValue(DialogWidthProperty); set => SetValue(DialogWidthProperty, value); }
         public static readonly DependencyProperty DialogWidthProperty = DependencyProperty.Register(
             nameof(DialogWidth), typeof(double), typeof(ArcContentDialog), new PropertyMetadata(double.NaN, OnSizeChanged));
@@ -26,20 +27,32 @@ namespace VirtualPaper.UIComponent.Dialogs {
 
         private Border? _background;
         private XamlRoot? _viewport;
+        private FrameworkElement? _animationRoot;
+        private bool _animationsEnabled = UiAnimation.IsEnabled;
 
         public ArcContentDialog() {
             Resources.MergedDictionaries.Add(new ResourceDictionary {
                 Source = new Uri("ms-appx:///VirtualPaper.UIComponent/Dialogs/ArcContentDialog.xaml")
             });
             Style = (Style)Resources["ArcContentDialogStyle"];
+            UiAnimation.Attach(this);
+            Unloaded += (_, _) => UiAnimationStateManager.Apply(_animationRoot, true);
             Opened += Dialog_Opened;
             Closed += Dialog_Closed;
         }
 
         protected override void OnApplyTemplate() {
+            UiAnimationStateManager.Apply(_animationRoot, true);
             base.OnApplyTemplate();
+            _animationRoot = GetTemplateChild("Container") as FrameworkElement;
+            SetAnimationsEnabled(_animationsEnabled);
             _background = GetTemplateChild("BackgroundElement") as Border;
             UpdateBounds();
+        }
+
+        public void SetAnimationsEnabled(bool enabled) {
+            _animationsEnabled = enabled;
+            UiAnimationStateManager.Apply(_animationRoot, enabled);
         }
 
         private static void OnSizeChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) {

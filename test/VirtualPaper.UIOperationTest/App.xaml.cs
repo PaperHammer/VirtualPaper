@@ -71,6 +71,7 @@ public partial class App : Application {
         var results = new List<UiTestResult>();
         try {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());
+            UiAnimation.Initialize(true);
             await LanguageUtil.InitializeLocalizerForUnpackaged("en-US");
             _window = new Window { Title = "VirtualPaper UI operation tests" };
             // Keep the same UI thread and window alive; each case owns its page and files.
@@ -105,6 +106,7 @@ public partial class App : Application {
             }
             finally {
                 _window?.Close();
+                UiAnimation.Shutdown();
                 Exit();
             }
         }

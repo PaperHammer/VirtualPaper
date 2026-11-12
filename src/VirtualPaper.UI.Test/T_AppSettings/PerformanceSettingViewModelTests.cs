@@ -25,6 +25,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _settings.SetupProperty(s => s.StatuMechanism, StatuMechanismEnum.Per);
             _settings.SetupProperty(s => s.IsAudioOnlyOnDesktop, false);
             _settings.SetupProperty(s => s.UiHardwareAccelerationEnabled, true);
+            _settings.SetupProperty(s => s.NavigationAnimationsEnabled, true);
 
             _userSettingsClient.Setup(u => u.Settings).Returns(_settings.Object);
 
@@ -32,6 +33,34 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         }
 
         // ── AppWpRunRulesEnum setter 参数化测试 ───────────────────────
+
+        [TestMethod]
+        public void InterfaceAnimations_WhenChanged_PreservesLegacyFieldAndUpdatesPolicyImmediately() {
+            int notifications = 0;
+            _vm.PropertyChanged += (_, args) => {
+                if (args.PropertyName == nameof(_vm.InterfaceAnimationsEnabled)) notifications++;
+            };
+            UiAnimation.Policy.SetSystemEnabled(true);
+            UiAnimation.Policy.SetRequested(true);
+            try {
+                Assert.IsTrue(_vm.InterfaceAnimationsEnabled);
+                _vm.InterfaceAnimationsEnabled = false;
+                _vm.InterfaceAnimationsEnabled = false;
+                Assert.IsFalse(_settings.Object.NavigationAnimationsEnabled);
+                Assert.IsFalse(UiAnimation.IsEnabled);
+                Assert.AreEqual(1, notifications);
+                Assert.IsFalse(_vm.IsUiRestartRequired);
+                _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
+
+                // GPU 开关变化不会覆盖动画偏好，反之亦然。
+                _vm.UiHardwareAccelerationEnabled = false;
+                _vm.InterfaceAnimationsEnabled = true;
+                Assert.IsTrue(UiAnimation.IsEnabled);
+                Assert.IsFalse(_settings.Object.UiHardwareAccelerationEnabled);
+                Assert.IsTrue(_vm.IsUiRestartRequired);
+            }
+            finally { UiAnimation.Policy.SetRequested(true); }
+        }
 
         [TestMethod]
         [DataRow("SelectedFullScreenPlayStatuIndex", nameof(ISettings.AppFullscreen))]

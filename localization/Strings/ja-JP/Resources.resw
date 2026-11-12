@@ -1917,8 +1917,8 @@ Virtual Paper は、Windows 10 以降で壁紙の管理やデスクトップの�
   <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>高画質化できませんでした。高画質化をオフにすると元画像で再試行できます。</value></data>
   <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>壁紙をインポートまたは適用できませんでした。再試行してください。</value></data>
   <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>このバージョンでは個別表示に対応しています。画面設定で「個別」に切り替えてから、このツールを開き直してください。</value></data>
-  <data name="Settings_General_NavigationAnimations" xml:space="preserve"><value>画面切り替えアニメーションを有効にする</value></data>
-  <data name="Settings_General_NavigationAnimations_Description" xml:space="preserve"><value>ページ切り替え時にアニメーションを表示します。Windows のアクセシビリティ設定でアニメーション効果を有効にする必要があります。</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>インターフェイスのアニメーション</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>画面切り替え、カード、コントロールにアニメーションを表示します。すぐに適用され、Windows のアニメーション設定に従います。</value></data>
   <data name="ScreenSaver_Remove" xml:space="preserve"><value>許可リストから削除</value></data>
   <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>アプリがまだ追加されていません</value></data>
   <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>アプリを追加すると、そのアプリが前面にある間はスクリーンセーバーを開始しません。</value></data>

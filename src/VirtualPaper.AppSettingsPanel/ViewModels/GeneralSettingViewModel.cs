@@ -178,20 +178,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
-        public string NavigationAnimationsStatus => LanguageUtil.GetI18n(
-            NavigationAnimationsEnabled ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
-
-        public bool NavigationAnimationsEnabled {
-            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
-            set {
-                if (_userSettingsClient.Settings.NavigationAnimationsEnabled == value) return;
-                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
-                UpdateSettingsConfigFile();
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(NavigationAnimationsStatus));
-            }
-        }
-
         private int _seletedSystemBackdropIndx;
         public int SeletedSystemBackdropIndx {
             get => _seletedSystemBackdropIndx;
@@ -315,7 +301,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 OnPropertyChanged(nameof(SystemBackdrops));
                 OnPropertyChanged(nameof(SeletedSystemBackdropIndx));
                 ChangeAutoShartStatu(_isAutoStart);
-                OnPropertyChanged(nameof(NavigationAnimationsStatus));
                 OnPropertyChanged(nameof(IntelligentResultReminderStatus));
                 OnPropertyChanged(nameof(AppVersionText));
                 MenuUpdate(_lastUpdateStatus, _lastUpdateRelease);

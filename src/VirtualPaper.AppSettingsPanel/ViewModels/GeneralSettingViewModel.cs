@@ -27,6 +27,31 @@ using Windows.System;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class GeneralSettingViewModel : ObservableObject, IDisposable {
+        public bool InterfaceAnimationsEnabled {
+            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
+            set {
+                if (InterfaceAnimationsEnabled == value) return;
+                // 沿用已有持久化字段，升级后保留用户原先的动画偏好。
+                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
+                UiAnimation.Policy.SetRequested(value);
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool UiHardwareAccelerationEnabled {
+            get => _userSettingsClient.Settings.UiHardwareAccelerationEnabled;
+            set {
+                if (UiHardwareAccelerationEnabled == value) return;
+                _userSettingsClient.Settings.UiHardwareAccelerationEnabled = value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsUiRestartRequired));
+            }
+        }
+
+        public bool IsUiRestartRequired => UiHardwareAccelerationEnabled != _startupPolicy.IsEnabled;
+
         public event EventHandler? WallpaperInstallDirChanged;
 
         public bool IsWinStore => Constants.ApplicationType.IsMSIX;
@@ -276,11 +301,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             IAppUpdaterClient appUpdater,
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
-            ICommandsClient commandsClient) {
+            ICommandsClient commandsClient, UiHardwareAccelerationPolicy startupPolicy) {
             _appUpdater = appUpdater;
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
             _commandsClient = commandsClient;
+            _startupPolicy = startupPolicy;
 
             InitText();
             InitCollections();
@@ -634,6 +660,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly ICommandsClient _commandsClient;
+        private readonly UiHardwareAccelerationPolicy _startupPolicy;
         private AppBuildInfo? _buildInfo;
     }
 

@@ -137,11 +137,7 @@ try {
     if (-not (Test-Path -LiteralPath $reportFullPath)) { throw "Host exited without a report (exit $($process.ExitCode))" }
     $report = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
     if ($Suite -eq 'Extended') {
-        foreach ($moduleName in @('ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
-            if (@($report.Results | Where-Object { $_.Name -like "Application.$moduleName.*" }).Count -lt 1) {
-                throw "Extended acceptance is missing the $moduleName case."
-            }
-        }
+        Assert-ExtendedUIModules $report
     }
     $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
     if ($process.ExitCode -ne 0 -or (Get-UIOperationReportOutcome $report) -ne 'Passed') {

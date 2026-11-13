@@ -128,9 +128,15 @@ function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
 # acceptance additionally requires every application module, regardless of counts.
 function Assert-ExtendedUIModules($Report) {
     foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor',
-        'ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
+        'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration')) {
         if (@($Report.Results | Where-Object Name -Like "Application.$module.*").Count -lt 1) {
             throw "Missing required installed UI module: $module"
+        }
+    }
+    foreach ($case in @('StartupPolicyAndOptions', 'SoftwareDrawingSaveReopenAndExport',
+        'SoftwareWebEditSaveReopenAndExport', 'DeviceChoiceAndEnhancement')) {
+        if (@($Report.Results | Where-Object Name -CEQ "Application.HardwareAcceleration.$case").Count -ne 1) {
+            throw "Missing or duplicate required hardware acceleration UI case: $case"
         }
     }
 }

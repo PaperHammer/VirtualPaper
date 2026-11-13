@@ -7,31 +7,6 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class PerformanceSettingViewModel : ObservableObject {
-        public bool InterfaceAnimationsEnabled {
-            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
-            set {
-                if (InterfaceAnimationsEnabled == value) return;
-                // 沿用已有持久化字段，升级后保留用户原先的动画偏好。
-                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
-                UiAnimation.Policy.SetRequested(value);
-                UpdateSettingsConfigFile();
-                OnPropertyChanged();
-            }
-        }
-
-        public bool UiHardwareAccelerationEnabled {
-            get => _userSettingsClient.Settings.UiHardwareAccelerationEnabled;
-            set {
-                if (UiHardwareAccelerationEnabled == value) return;
-                _userSettingsClient.Settings.UiHardwareAccelerationEnabled = value;
-                UpdateSettingsConfigFile();
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsUiRestartRequired));
-            }
-        }
-
-        public bool IsUiRestartRequired => UiHardwareAccelerationEnabled != _startupPolicy.IsEnabled;
-
         public List<string>? PlayStatus { get; set; }
         public List<string>? StatuMechanisms { get; set; }       
 
@@ -134,9 +109,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
 
         public PerformanceSettingViewModel(
-            IUserSettingsClient userSettingsClient, UiHardwareAccelerationPolicy startupPolicy) {
+            IUserSettingsClient userSettingsClient) {
             _userSettingsClient = userSettingsClient;
-            _startupPolicy = startupPolicy;
             InitText();
             InitCollections();
             InitContent();
@@ -179,6 +153,5 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private string _statuMechanism_per = string.Empty;
         private string _statuMechanism_all = string.Empty;
         private readonly IUserSettingsClient _userSettingsClient;
-        private readonly UiHardwareAccelerationPolicy _startupPolicy;
     }
 }

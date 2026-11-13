@@ -12,12 +12,15 @@ internal static class WebEditorTests {
     private const string ProjectName = "ui-web-project";
     private const string Marker = "UI_OPERATION_WEB_EDIT";
 
-    public static async Task CreateFilesSaveReopenAndExportAsync(UiTestContext context) {
+    public static async Task CreateFilesSaveReopenAndExportAsync(UiTestContext context, bool hardwareAccelerationEnabled = true) {
         string folder = Path.Combine(context.Root, ProjectName);
         string manifest = Path.Combine(folder, ProjectName + ".vpw");
         string output = Path.Combine(context.Root, "web-project-full.zip");
         await using var session = new AppProcessSession();
-        await session.StartAsync();
+        await session.StartAsync(settings => settings.UiHardwareAccelerationEnabled = hardwareAccelerationEnabled);
+        await AppProcessSession.WaitForJsonAsync(session.SettingsPath,
+            json => json["UiHardwareAccelerationEnabled"]?.GetValue<bool>() == hardwareAccelerationEnabled);
+        context.Evidence["HardwareAccelerationStartupPreference"] = hardwareAccelerationEnabled;
         context.Evidence["CoreProcessId"] = session.CoreId;
         var ui = await session.OpenUiAsync();
         nint ownerWindow = ui.MainWindowHandle;
@@ -64,6 +67,7 @@ internal static class WebEditorTests {
             ApplicationUi.ClickPointerElement(ownerWindow, FindItem(root, "index.html"));
         });
         await WaitForEditorStatusAsync(root, "Saved");
+        await HardwareAccelerationTests.VerifyWebViewAsync(context, ui, hardwareAccelerationEnabled);
         await Task.Run(() => ApplicationUi.TypeAtEditorSurface(ownerWindow,
             ApplicationUi.Find(root, "WebEditor.CodeSurface", visible: true), "<!-- " + Marker + " -->"));
         await WaitForEditorStatusAsync(root, "Unsaved");

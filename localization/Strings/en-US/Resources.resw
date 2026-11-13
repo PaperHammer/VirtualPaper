@@ -370,7 +370,7 @@ The file cannot be imported: </value>
     <value>Windows Theme Settings</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
-    <value>Starts automatically when the device is turned on</value>
+    <value>Start automatically</value>
   </data>
   <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
     <value>Virtual Paper automatically launches to automatically restore wallpaper settings when powered on</value>

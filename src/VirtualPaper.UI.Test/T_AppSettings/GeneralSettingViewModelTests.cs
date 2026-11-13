@@ -13,6 +13,7 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Events;
 using VirtualPaper.UI.Test.Utils;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UI.Test.T_AppSettings {
     [TestClass]
@@ -35,6 +36,8 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _commandsClient = new Mock<ICommandsClient>();
 
             _settings.SetupProperty(s => s.IsAutoStart, false);
+            _settings.SetupProperty(s => s.UiHardwareAccelerationEnabled, true);
+            _settings.SetupProperty(s => s.NavigationAnimationsEnabled, true);
             _settings.SetupProperty(s => s.SystemBackdrop, AppSystemBackdrop.Default);
             _settings.SetupProperty(s => s.Language, "en-US");
             _settings.SetupProperty(s => s.WallpaperDir, @"C:\Wallpapers");
@@ -49,12 +52,80 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 _appUpdater.Object,
                 _userSettingsClient.Object,
                 _wpControlClient.Object,
-                _commandsClient.Object);
+                _commandsClient.Object, new UiHardwareAccelerationPolicy(true));
         }
 
         [TestCleanup]
         public void Cleanup() {
             _vm.Dispose();
+        }
+
+        [TestMethod]
+        public void InterfaceAnimations_WhenChanged_PreservesLegacyFieldAndUpdatesPolicyImmediately() {
+            int notifications = 0;
+            _vm.PropertyChanged += (_, args) => {
+                if (args.PropertyName == nameof(_vm.InterfaceAnimationsEnabled)) notifications++;
+            };
+            UiAnimation.Policy.SetSystemEnabled(true);
+            UiAnimation.Policy.SetRequested(true);
+            try {
+                Assert.IsTrue(_vm.InterfaceAnimationsEnabled);
+                _vm.InterfaceAnimationsEnabled = false;
+                _vm.InterfaceAnimationsEnabled = false;
+                Assert.IsFalse(_settings.Object.NavigationAnimationsEnabled);
+                Assert.IsFalse(UiAnimation.IsEnabled);
+                Assert.AreEqual(1, notifications);
+                Assert.IsFalse(_vm.IsUiRestartRequired);
+                _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
+
+                // GPU 开关变化不会覆盖动画偏好，反之亦然。
+                _vm.UiHardwareAccelerationEnabled = false;
+                _vm.InterfaceAnimationsEnabled = true;
+                Assert.IsTrue(UiAnimation.IsEnabled);
+                Assert.IsFalse(_settings.Object.UiHardwareAccelerationEnabled);
+                Assert.IsTrue(_vm.IsUiRestartRequired);
+            }
+            finally { UiAnimation.Policy.SetRequested(true); }
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_ChangesPreferenceWithoutChangingStartupPolicy_AndCanRevert() {
+            var policy = new UiHardwareAccelerationPolicy(true);
+            using var viewModel = new GeneralSettingViewModel(_appUpdater.Object, _userSettingsClient.Object, _wpControlClient.Object, _commandsClient.Object, policy);
+            var notifications = new List<string?>();
+            viewModel.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+            Assert.IsFalse(viewModel.IsUiRestartRequired);
+
+            viewModel.UiHardwareAccelerationEnabled = false;
+            Assert.IsFalse(_settings.Object.UiHardwareAccelerationEnabled);
+            Assert.IsTrue(viewModel.IsUiRestartRequired);
+            Assert.IsTrue(policy.IsEnabled);
+            Assert.DoesNotContain("--disable-gpu", policy.WebView2BrowserArguments.Split(' '));
+            Assert.Contains(nameof(viewModel.IsUiRestartRequired), notifications);
+
+            viewModel.UiHardwareAccelerationEnabled = true;
+            Assert.IsFalse(viewModel.IsUiRestartRequired);
+            _userSettingsClient.Verify(client => client.SaveAsync<ISettings>(), Times.Exactly(2));
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_SameValue_DoesNotSaveOrRequireRestart() {
+            _vm.UiHardwareAccelerationEnabled = true;
+            Assert.IsFalse(_vm.IsUiRestartRequired);
+            _userSettingsClient.Verify(client => client.SaveAsync<ISettings>(), Times.Never);
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_NewStartupUsesSavedChoice_AndReturningToEnabledRequiresRestart() {
+            _vm.UiHardwareAccelerationEnabled = false;
+            var policy = new UiHardwareAccelerationPolicy(_settings.Object.UiHardwareAccelerationEnabled);
+            using var reopened = new GeneralSettingViewModel(_appUpdater.Object, _userSettingsClient.Object, _wpControlClient.Object, _commandsClient.Object, policy);
+            Assert.IsFalse(reopened.IsUiRestartRequired);
+            Assert.Contains("--disable-gpu", policy.WebView2BrowserArguments.Split(' '));
+
+            reopened.UiHardwareAccelerationEnabled = true;
+            Assert.IsTrue(reopened.IsUiRestartRequired);
+            Assert.IsFalse(policy.IsEnabled);
         }
 
         // ── MenuUpdate ───────────────────────────────────────────────

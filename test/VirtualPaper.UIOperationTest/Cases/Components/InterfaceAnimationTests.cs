@@ -21,6 +21,7 @@ internal static class InterfaceAnimationTests {
             await context.WaitAsync(() => expander.IsLoaded && VisualTreeHelper.GetChildrenCount(expander) > 0);
             await context.WaitForLayoutAsync();
             var root = (FrameworkElement)VisualTreeHelper.GetChild(expander, 0);
+            var icon = Descendants<AnimatedIcon>(expander).First();
             Check(VisualStateManager.GetCustomVisualStateManager(root) == null,
                 "Enabled animations unnecessarily installed a template state manager");
             Check(flyout.AreOpenCloseAnimationsEnabled, "Enabled animations changed the default flyout behavior");
@@ -44,24 +45,27 @@ internal static class InterfaceAnimationTests {
             Check(content.RenderTransform is CompositeTransform { TranslateY: 0 }, "Expansion did not reach its final position immediately");
             expander.IsExpanded = false;
             Check(content.Visibility == Visibility.Collapsed, "Animation-off collapse still waited for the closing animation");
-            var icon = Descendants<AnimatedIcon>(expander).First();
-            Check(icon.Source == null && icon.FallbackIconSource is FontIconSource { Glyph: "\uE70D" },
+            await context.WaitForLayoutAsync();
+            var staticArrow = Descendants<FontIcon>(expander).Single(item => item.Name == "StaticExpandCollapseChevron");
+            Check(icon.Source == null && staticArrow is { Glyph: "\uE70D", IsLoaded: true, ActualWidth: > 0, ActualHeight: > 0 },
                 "Collapsed expander did not show its static direction");
-            var staticArrow = icon.FallbackIconSource;
             expander.IsExpanded = true;
-            Check(ReferenceEquals(staticArrow, icon.FallbackIconSource) && staticArrow is FontIconSource { Glyph: "\uE70E" },
+            Check(ReferenceEquals(staticArrow, Descendants<FontIcon>(expander).Single(item => item.Name == "StaticExpandCollapseChevron"))
+                && staticArrow.Glyph == "\uE70E",
                 "Expanding allocated another static arrow instead of updating its direction");
             expander.IsExpanded = false;
 
             UiAnimation.Policy.SetRequested(true);
-            Check(icon.Source != null, "Re-enabling animation did not restore the animated chevron");
+            Check(icon.Source != null && icon.Visibility == Visibility.Visible && staticArrow.Visibility == Visibility.Collapsed,
+                "Re-enabling animation did not restore the animated chevron");
             Check(VisualStateManager.GetCustomVisualStateManager(root) == null && flyout.AreOpenCloseAnimationsEnabled,
                 "Re-enabling animation retained template interception or changed the flyout default");
             expander.IsExpanded = true;
             UiAnimation.Policy.SetRequested(false);
             Check(content.Visibility == Visibility.Visible && content.RenderTransform is CompositeTransform { TranslateY: 0 },
                 "Disabling during expansion did not finish the transition");
-            Check(icon.FallbackIconSource is FontIconSource { Glyph: "\uE70E" }, "Expanded arrow points in the wrong direction");
+            Check(staticArrow.Glyph == "\uE70E" && Descendants<FontIcon>(expander).Contains(staticArrow),
+                "Expanded arrow points in the wrong direction");
 
             page.TestSurface.Child = null;
             await context.WaitAsync(() => !expander.IsLoaded);
@@ -86,6 +90,10 @@ internal static class InterfaceAnimationTests {
             UiAnimation.Policy.SetRequested(false);
             page.TestSurface.Child = stack;
             await context.WaitAsync(() => expander.IsLoaded && second.IsLoaded);
+            await context.WaitForLayoutAsync();
+            Check(Descendants<FontIcon>(second).Single(item => item.Name == "StaticExpandCollapseChevron")
+                is { Glyph: "\uE70D", IsLoaded: true, ActualWidth: > 0, ActualHeight: > 0 },
+                "An expander first loaded with animations disabled has no visible arrow");
             stack.Children.Remove(second);
             await context.WaitAsync(() => !second.IsLoaded);
             Check(!flyout.AreOpenCloseAnimationsEnabled, "Unloading one owner restored a shared flyout too early");

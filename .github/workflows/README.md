@@ -62,6 +62,8 @@ Pre-merge excludes ML tests categorized as `Integration` by default; select **Al
 dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --filter "TestCategory=Integration" --settings src/test.runsettings
 ```
 
+Both package channels also require all four `HardwareAcceleration` UI cases in extended acceptance: deferred startup-policy changes, software Web/drawing flows, and real CPU/GPU-requested super-resolution plus style enhancement. The models must be packaged, including AdaIN external weights. Reports distinguish successful GPU completion from CPU fallback; fallback is valid behavior on unsupported hardware and must not be presented as successful GPU execution. See the [hardware UI acceptance guide](../../test/README.md#hardware-acceleration).
+
 Closed, merged, or fork PR inputs are rejected without altering prior check status. For a valid open PR, the workflow sets `pre-merge-check: pending` on its head SHA. Before setting success/failure, it rechecks the PR commit, base, and version label. The status belongs to the PR commit, not the branch selected in the dispatch form. See the [GitHub commit status API](https://docs.github.com/en/rest/commits/statuses).
 
 After a new PR commit, rerun manually: success on an earlier SHA does not satisfy the new commit's required check. Label changes neither start runs nor invalidate existing success on the same SHA, so rerun manually after changing labels too. The release entry point checks labels again.

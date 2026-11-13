@@ -41,8 +41,8 @@ internal static class NavigationSettingsTests {
     private static void ToggleNavigation(Process ui, bool expected, bool toggle = true) {
         var root = AutomationElement.FromHandle(ui.MainWindowHandle);
         ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Settings"));
-        ApplicationUi.Select(ApplicationUi.Find(root, "Settings.Tab.Performance"));
-        var control = ApplicationUi.Find(root, "Settings.Performance.InterfaceAnimations");
+        ApplicationUi.Select(ApplicationUi.Find(root, "Settings.Tab.General"));
+        var control = ApplicationUi.Find(root, "Settings.General.InterfaceAnimations");
         ApplicationUi.BringIntoView(control);
         var pattern = (TogglePattern)control.GetCurrentPattern(TogglePattern.Pattern);
         Check(pattern.Current.ToggleState == (expected ? ToggleState.On : ToggleState.Off), "UI toggle did not display the expected saved value");

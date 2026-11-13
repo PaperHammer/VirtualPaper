@@ -11,14 +11,17 @@ using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 namespace VirtualPaper.UIOperationTest.Cases;
 
 internal static class StaticEditorTests {
-    public static async Task RotateCancelSaveReopenAndExportAsync(UiTestContext context) {
+    public static async Task RotateCancelSaveReopenAndExportAsync(UiTestContext context, bool hardwareAccelerationEnabled = true) {
         string source = Path.Combine(context.Root, "source.png");
         string design = Path.Combine(context.Root, "rotated.vpd");
         string output = Path.Combine(context.Root, "exported.png");
         WallpaperLibraryTests.WriteImage(source);
         byte[] sourceHash = SHA256.HashData(await File.ReadAllBytesAsync(source));
         await using var session = new AppProcessSession();
-        await session.StartAsync();
+        await session.StartAsync(settings => settings.UiHardwareAccelerationEnabled = hardwareAccelerationEnabled);
+        await AppProcessSession.WaitForJsonAsync(session.SettingsPath,
+            json => json["UiHardwareAccelerationEnabled"]?.GetValue<bool>() == hardwareAccelerationEnabled);
+        context.Evidence["HardwareAccelerationStartupPreference"] = hardwareAccelerationEnabled;
         context.Evidence["CoreProcessId"] = session.CoreId;
         var ui = await session.OpenUiAsync();
         nint ownerWindow = ui.MainWindowHandle;

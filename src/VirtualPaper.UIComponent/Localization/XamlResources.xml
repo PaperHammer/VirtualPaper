@@ -149,9 +149,11 @@
   <Resource Name="Ui_Settings_General_AppearanceAndAction_AppSystemBackdrop_Text.Text" Source="Settings_General_AppearanceAndAction_AppSystemBackdrop" />
   <Resource Name="Ui_Settings_General_AppearanceAndAction_AutoStart_Text.Text" Source="Settings_General_AppearanceAndAction_AutoStart" />
   <Resource Name="Ui_Settings_General_AppearanceAndAction_AutoStatExplain_Text.Text" Source="Settings_General_AppearanceAndAction_AutoStatExplain" />
-  <Resource Name="Ui_Settings_Performance_InterfaceAnimationsToggle.AutomationProperties.Name" Source="Settings_Performance_InterfaceAnimations" />
-  <Resource Name="Ui_Settings_Performance_InterfaceAnimationsExplain.Text" Source="Settings_Performance_InterfaceAnimationsExplain" />
-  <Resource Name="Ui_Settings_Performance_InterfaceAnimations.Text" Source="Settings_Performance_InterfaceAnimations" />
+  <Resource Name="Ui_Settings_General_InterfaceAnimationsToggle.AutomationProperties.Name" Source="Settings_Performance_InterfaceAnimations" />
+  <Resource Name="Ui_Settings_General_InterfaceAnimationsExplain.Text" Source="Settings_Performance_InterfaceAnimationsExplain" />
+  <Resource Name="Ui_Settings_General_InterfaceAnimations.Text" Source="Settings_Performance_InterfaceAnimations" />
+  <Resource Name="Ui_Text_On_Text.Text" Source="Text_On" />
+  <Resource Name="Ui_Text_Off_Text.Text" Source="Text_Off" />
   <Resource Name="Ui_Settings_General_Text_AppearanceAndAction_Text.Text" Source="Settings_General_Text_AppearanceAndAction" />
   <Resource Name="Ui_Settings_General_Text_Version_Text.Text" Source="Settings_General_Text_Version" />
   <Resource Name="Ui_Settings_General_Version_DownloadStart_Content.Content" Source="Settings_General_Version_DownloadStart" />
@@ -435,8 +437,8 @@
   <Resource Name="Ui_EffectPreset_Selector.Header" Source="EffectPreset_Selector" />
   <Resource Name="Ui_EffectPreset_TrialHint.Text" Source="EffectPreset_TrialHint" />
   <Resource Name="Ui_EffectPreset_CancelTrial.Content" Source="EffectPreset_CancelTrial" />
-  <Resource Name="Ui_Settings_Performance_HardwareAcceleration.Text" Source="Settings_Performance_HardwareAcceleration" />
-  <Resource Name="Ui_Settings_Performance_HardwareAccelerationExplain.Text" Source="Settings_Performance_HardwareAccelerationExplain" />
-  <Resource Name="Ui_Settings_Performance_HardwareAccelerationToggle.AutomationProperties.Name" Source="Settings_Performance_HardwareAcceleration" />
-  <Resource Name="Ui_Settings_Performance_HardwareAccelerationRestart.Message" Source="Settings_Performance_HardwareAccelerationRestart" />
+  <Resource Name="Ui_Settings_General_HardwareAcceleration.Text" Source="Settings_Performance_HardwareAcceleration" />
+  <Resource Name="Ui_Settings_General_HardwareAccelerationExplain.Text" Source="Settings_Performance_HardwareAccelerationExplain" />
+  <Resource Name="Ui_Settings_General_HardwareAccelerationToggle.AutomationProperties.Name" Source="Settings_Performance_HardwareAcceleration" />
+  <Resource Name="Ui_Settings_General_HardwareAccelerationRestart.Message" Source="Settings_Performance_HardwareAccelerationRestart" />
 </Resources>

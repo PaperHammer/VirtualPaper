@@ -24,7 +24,10 @@ internal static class ModelInferenceTests {
         string output = Path.Combine(context.Root, "enhanced.png");
         byte[] originalHash = SHA256.HashData(await File.ReadAllBytesAsync(inputs[0]));
         await using var session = new AppProcessSession();
-        await session.StartAsync();
+        // Keep queue/cancellation acceptance on CPU; GPU choice has an independent
+        // case and must not make the three-task queue depend on a fast GPU's timing.
+        await session.StartAsync(settings => settings.UiHardwareAccelerationEnabled = false);
+        context.Evidence["HardwareAccelerationStartupPreference"] = false;
         context.Evidence["CoreProcessId"] = session.CoreId;
         var ui = await session.OpenUiAsync();
         nint owner = ui.MainWindowHandle;
@@ -78,6 +81,10 @@ internal static class ModelInferenceTests {
             return state == LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed);
         }), "Real model result completed", TimeSpan.FromMinutes(6));
         context.Evidence["InferenceMilliseconds"] = timer.ElapsedMilliseconds;
+        await Task.Run(() => Check(!Row(root, inputs[0]).FindAll(TreeScope.Descendants,
+            new PropertyCondition(AutomationElement.AutomationIdProperty, "Intelligent.Task.Backend"))
+            .Cast<AutomationElement>().Any(element => element.Current.BoundingRectangle is { Width: > 0, Height: > 0 }),
+            "Hardware-disabled inference still displays backend information"));
         await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_Temporary);
         await VerifyLocalizedCloseDialogsAsync(context, ui, root);
         // Ticking the suppression box and returning must neither save the

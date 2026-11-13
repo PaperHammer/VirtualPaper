@@ -156,8 +156,12 @@ try {
     $installer | Add-Member NoteProperty PackageVersion '0.6.0.0'
     Save-Json $installer "$raw/test-results-installer/installer-results.json"
     Save-Json $installer "$raw/test-results-ui-operation/installed-acceptance.json"
-    $ui = @{ Passed = $true; ExpectedCount = 7; Results = @(@('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering') | ForEach-Object {
-        @{ Name = "Application.$_.Fixture"; Passed = $true; Evidence = @{ CoreProcessId = 1; UiProcessIds = @(2); ProcessesExitedNormally = $true
+    $uiModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering')
+    $hardwareCases = @('StartupPolicyAndOptions','SoftwareDrawingSaveReopenAndExport','SoftwareWebEditSaveReopenAndExport','DeviceChoiceAndEnhancement')
+    $uiCases = @($uiModules | ForEach-Object { "Application.$_.Fixture" }) +
+        @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" })
+    $ui = @{ Passed = $true; ExpectedCount = $uiCases.Count; Results = @($uiCases | ForEach-Object {
+        @{ Name = $_; Passed = $true; Evidence = @{ CoreProcessId = 1; UiProcessIds = @(2); ProcessesExitedNormally = $true
             PackageFullName = 'owned_1.2611.1.0_x64__publisher'; PackageActivation = 'AUMID'; UnitTestBehaviorOverridesEnabled = $false } }
     }) }
     Save-Json $ui "$raw/test-results-ui-operation/ui-operation-results.json"
@@ -232,10 +236,17 @@ try {
     # Counts alone cannot distinguish a reduced UI suite from full installed acceptance.
     foreach ($path in @('test-results-ui-operation/ui-operation-results.json', 'test-results-msix-ui/extended-ui/ui-operation-results.json')) {
         $check = if ($path.StartsWith('test-results-msix-')) { $msixCheck } else { 'EXE artifact identity' }
-        foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor', 'ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
+        foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor', 'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration')) {
             Reject-ChangedReport "$raw/$path" $check {
                 param($report)
                 $report.Results = @($report.Results | Where-Object Name -NotLike "Application.$module.*")
+                $report.ExpectedCount = $report.Results.Count
+            }
+        }
+        foreach ($case in $hardwareCases) {
+            Reject-ChangedReport "$raw/$path" $check {
+                param($report)
+                $report.Results = @($report.Results | Where-Object Name -CNE "Application.HardwareAcceleration.$case")
                 $report.ExpectedCount = $report.Results.Count
             }
         }

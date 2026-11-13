@@ -76,4 +76,29 @@ $report = New-PassReport
 $report.Results[0].Evidence.ProcessesExitedNormally = $false
 Assert-Rejected $report 'Abnormal process exit must fail'
 Assert-Rejected $null 'Missing report must fail'
+$extendedModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering')
+$hardwareCases = @('StartupPolicyAndOptions','SoftwareDrawingSaveReopenAndExport','SoftwareWebEditSaveReopenAndExport','DeviceChoiceAndEnhancement')
+$extendedCases = @($extendedModules | ForEach-Object { "Application.$_.Fixture" }) +
+    @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" })
+$extended = New-PassReport
+$extended.Results = @($extendedCases | ForEach-Object {
+    [pscustomobject]@{ Name = $_; Passed = $true
+        Evidence = [pscustomobject]@{ CoreProcessId = 10; UiProcessIds = @(11); ProcessesExitedNormally = $true } }
+})
+$extended.ExpectedCount = $extended.Results.Count
+Assert-ExtendedUIModules $extended
+$completeResults = $extended.Results
+$extended.Results = @($extended.Results | Where-Object Name -NotLike 'Application.HardwareAcceleration.*')
+$extended.ExpectedCount = $extended.Results.Count
+$rejected = $false
+try { Assert-ExtendedUIModules $extended } catch { $rejected = $true }
+Assert-Equal $rejected $true 'Installed extended acceptance must reject a missing hardware-acceleration module'
+foreach ($case in $hardwareCases) {
+    $extended.Results = @($completeResults | Where-Object Name -CNE "Application.HardwareAcceleration.$case")
+    $extended.ExpectedCount = $extended.Results.Count
+    Assert-Equal (Get-UIOperationReportOutcome $extended) 'Passed' 'Reduced report still has consistent counts and outcomes'
+    $rejected = $false
+    try { Assert-ExtendedUIModules $extended } catch { $rejected = $true }
+    Assert-Equal $rejected $true "Installed extended acceptance must reject missing hardware case: $case"
+}
 Write-Host '[OK] UI desktop eligibility and report validation contracts passed (no UI, lock or registry operations).'

@@ -31,7 +31,8 @@
 
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="lcl_models:StyleTransferTaskItem">
-                    <Grid>
+                    <Grid AutomationProperties.AutomationId="Intelligent.StyleTransfer.Task"
+                        AutomationProperties.Name="{x:Bind SourceFilePath}">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
@@ -96,6 +97,7 @@
                                             Spacing="2">
                                             <StackPanel Spacing="6">
                                                 <TextBlock
+                                                    AutomationProperties.AutomationId="Intelligent.Task.Status"
                                                     Text="{x:Bind StatusText, Mode=OneWay}"
                                                     TextWrapping="Wrap" MaxWidth="240"
                                                     FontSize="14"
@@ -136,6 +138,7 @@
                                             </input:ArcButton>
 
                                             <input:ArcButton Grid.Column="2" Command="{x:Bind SaveCommand}"
+                                                AutomationProperties.AutomationId="Intelligent.Task.Save"
                                                 Height="Auto" MinHeight="32" MinWidth="76" MaxWidth="220" Padding="12,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center">
                                                 <TextBlock l:Uids.Uid="Ui_Text_Save_Text" FontSize="14" TextWrapping="Wrap" TextAlignment="Center"/>
                                             </input:ArcButton>
@@ -143,6 +146,7 @@
                                             <input:ArcButton
                                                 Grid.Column="3" Height="Auto" MinHeight="32" MinWidth="76" MaxWidth="220" Padding="12,6" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center"
                                                 Command="{x:Bind RemoveCommand}"
+                                                AutomationProperties.AutomationId="Intelligent.Task.Remove"
                                                 BorderBrush="#FFE0B0B0"
                                                 Background="#20FF4D6A"
                                                 Foreground="#FFD13438">

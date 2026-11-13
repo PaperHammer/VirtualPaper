@@ -39,8 +39,8 @@ internal static class MsixProfileTests {
             ApplicationUi.Select(ApplicationUi.Find(window, "App.Navigation.Settings"));
             Check(ApplicationUi.Find(window, "Settings.Tab.General").Current.Name ==
                 expectedTab, "The installed first-run/profile UI is not localized.");
-            ApplicationUi.Select(ApplicationUi.Find(window, "Settings.Tab.Performance"));
-            var control = ApplicationUi.Find(window, "Settings.Performance.InterfaceAnimations");
+            ApplicationUi.Select(ApplicationUi.Find(window, "Settings.Tab.General"));
+            var control = ApplicationUi.Find(window, "Settings.General.InterfaceAnimations");
             ApplicationUi.BringIntoView(control);
             var toggle = (TogglePattern)control.GetCurrentPattern(TogglePattern.Pattern);
             Check(toggle.Current.ToggleState == (expectedNavigation ? ToggleState.On : ToggleState.Off),

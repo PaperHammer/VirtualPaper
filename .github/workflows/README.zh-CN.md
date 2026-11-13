@@ -62,6 +62,8 @@ Pre-merge 默认排除分类为 `Integration` 的 ML 测试，勾选 **Also run 
 dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration Release --filter "TestCategory=Integration" --settings src/test.runsettings
 ```
 
+两个安装包渠道的扩展验收还强制要求四项 `HardwareAcceleration` UI 用例齐全：延迟到重启生效的启动策略、软件模式 Web/绘图链路，以及实际 CPU/请求 GPU 的超分与风格迁移后高清处理。模型必须随包提供，包括 AdaIN 外部权重。报告区分 GPU 成功执行和 CPU 回退；不支持 GPU 的硬件可验证正常回退，但不能记为 GPU 执行成功。详见[硬件加速 UI 验收说明](../../test/README.zh-CN.md#硬件加速)。
+
 已关闭、已合并或 fork PR 的输入会被拒绝，且不改变之前的检查状态。对于有效的未合并 PR，工作流在其 head SHA 上设置 `pre-merge-check: pending`。写入成功或失败之前，会再次核验 PR 提交、目标和版本标签。状态属于 PR 提交，而非手动运行表单所选分支。参阅 [GitHub commit status API](https://docs.github.com/en/rest/commits/statuses)。
 
 PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提交的必需检查。修改标签既不会触发运行，也不会使同一 SHA 上已有的成功状态失效，因此修改标签后同样需要手动重跑。发布入口还会再次核验标签。

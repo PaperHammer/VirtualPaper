@@ -72,5 +72,5 @@ $srcImg.Dispose()
 
 Write-Host ""
 Write-Host "Done: $dst" -ForegroundColor Green
-Write-Host "Size: $([math]::Round($info.Length / 1024, 1)) KB"
+Write-Host "Size: $([math]::Round((Get-Item -LiteralPath $dst).Length / 1024, 1)) KB"
 Write-Host "Resolutions: $($sizes -join ', ')"

@@ -13,6 +13,7 @@ The detailed guides linked below are currently in Chinese.
 - [Development and builds](development-guide.md): prerequisites, builds, tests, and a suggested reading order.
 - [Microsoft Store MSIX](../Msix/README.md): Core-first packaging, local preview and Store identity parameters.
 - [WebBackdrop](webbackdrop.md): Web wallpaper project formats, the editor, file tree, preview, and saving.
+- [Asset tools](../resources/tools/README.md): bundled wallpaper and application icon generation.
 
 ## Source entry points
 

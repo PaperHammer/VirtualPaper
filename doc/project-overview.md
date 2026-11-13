@@ -34,13 +34,19 @@ VirtualPaper 是面向 Windows 10 及以上系统的开源动态壁纸管理软�
 VirtualPaper/
 ├─ src/                 解决方案、产品项目及 MSTest 项目
 ├─ test/                完整本地入口、项目测试脚本、真实 UI 和安装验收宿主
-├─ .agents/skills/      仓库级 AI 测试指引
-├─ resources/           README 图片、Logo 等仓库级资源
-├─ InnoSetup/           安装包定义
-├─ scripts/             本地辅助脚本（不纳入版本控制；CI 脚本位于 .github/scripts）
-├─ .github/workflows/   CI、版本和发布流水线
-└─ doc/                 开发者文档
+├─ localization/        共享源文案、语言目录和各渠道资源生成
+├─ resources/           内置壁纸、README 图片、图标和 Logo
+│  └─ tools/            壁纸与图标素材生成工具
+├─ InnoSetup/           EXE 安装包定义及安装器资源
+├─ Msix/                MSIX 打包工程、清单和发布配置
+├─ doc/                 开发者文档
+├─ .github/             工作流及 CI、打包、版本和发布脚本
+└─ .agents/skills/      仓库级 AI 开发、审查和测试指引
 ```
+
+根目录保留 `README.md`、`LICENSE`、`AGENTS.md` 及 Git 配置入口。资源工具及使用方法见[素材生成工具](../resources/tools/README.zh-CN.md)。
+
+`scripts/` 仅存放不纳入版本控制的本地临时工具；`TestResults/` 存放本地验证报告，`bin/`、`obj/`、安装器输出等由对应构建流程生成。CI 与本地验收共用的工作流契约入口为 `.github/scripts/validate-test-workflow.ps1`。EXE 和 MSIX 打包目录目前分别保留，目录迁移需同步构建、发布和验收引用。
 
 ## 主要功能到模块的映射
 
@@ -54,7 +60,7 @@ VirtualPaper/
 | 草稿工作区 | `VirtualPaper.EditPanel/` |
 | 风格迁移、超分辨率、深度估计 | `VirtualPaper.ML/`, `VirtualPaper.IntelligentPanel/` |
 | 屏保 | `VirtualPaper.ScreenSaver/` |
-| 应用更新与安装 | `VirtualPaper/Cores/AppUpdate/`, `InnoSetup/`, `.github/workflows/` |
+| 应用更新与安装 | `VirtualPaper/Cores/AppUpdate/`, `InnoSetup/`, `Msix/`, `.github/workflows/` |
 
 ## 设计特点
 

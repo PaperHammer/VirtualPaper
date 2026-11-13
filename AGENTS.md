@@ -13,7 +13,8 @@ VirtualPaper is a Windows wallpaper application built with .NET 8, WPF, WinUI 3 
 | AI tasks and inference | `src/VirtualPaper.IntelligentPanel`, `src/VirtualPaper.ML` |
 | Wallpaper playback and screen saver | `src/VirtualPaper.PlayerWeb`, `src/VirtualPaper.PlayerWeb.Core`, `src/VirtualPaper.ScreenSaver` |
 | Shared models, infrastructure and RPC | `src/VirtualPaper.Common`, `src/VirtualPaper.Models`, `src/VirtualPaper.UIComponent`, `src/VirtualPaper.Grpc.*` |
-| Packaging and automation | `InnoSetup/setup.iss`, `test`, `.github/scripts`, `.github/workflows` |
+| Packaging and automation | `InnoSetup/setup.iss`, `Msix/VirtualPaper.Package.wapproj`, `test`, `.github/scripts`, `.github/workflows` |
+| Repository asset tools | `resources/tools` |
 
 Read [developer documentation](doc/README.md) for architecture and module details. Read source implementations when deciding behavior; generated output is not the source of truth.
 
@@ -48,4 +49,4 @@ Installer acceptance changes real installed files, shortcuts and uninstall regis
 
 Real UI acceptance requires the active, unlocked Windows desktop and may occupy the foreground. An unavailable desktop is an explicit **skip**, not a passing UI result. Do not weaken detection to make a run green. Session locking, startup registration and persistent system-setting UI cases remain excluded; real idle testing is opt-in.
 
-Keep `TestResults`, `bin`, `obj`, `Plugins`, installer output and downloaded/generated third-party assets out of commits. Root `scripts/` is ignored local tooling; tracked reusable automation belongs under `test/` or `.github/scripts/`. Describe actual validation, skipped coverage and remaining failures separately.
+Keep `TestResults`, `bin`, `obj`, `Plugins`, installer output and downloaded/generated third-party assets out of commits. Root `scripts/` is ignored local tooling; tracked test/release automation belongs under `test/` or `.github/scripts/`, and asset-generation tools under `resources/tools/`. Describe actual validation, skipped coverage and remaining failures separately.

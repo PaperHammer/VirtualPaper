@@ -273,6 +273,11 @@
             </StackPanel>
         </Border>
 
+        <InfoBar x:Name="drawingDeviceError"
+            x:Uid="Ui_StaticImg_DrawingDeviceLost_Message"
+            IsOpen="False" IsClosable="False" Severity="Error"
+            VerticalAlignment="Center" Margin="24"/>
+
         <staticImgTools:BottomDataBarControl x:Name="bottomDataBarControl"
             Grid.Row="1"
             FitViewRequest="BottomDataBarControl_FitViewRequest"

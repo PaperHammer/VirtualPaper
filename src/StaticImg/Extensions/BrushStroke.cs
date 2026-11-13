@@ -8,10 +8,6 @@ namespace Workloads.Creation.StaticImg.Extensions {
     public sealed partial record BrushStroke : StrokeBase {
         public BrushStroke(BrushGenerateArgs args) : base(args) { }
 
-        public override void InitInkBrush(CanvasDevice device) {
-            InkBrush = BrushManager.GetBrush(BrushArgs, device);
-        }
-
         //public override void Render(CanvasDrawingSession dsTemp, CanvasGeometry? geometry, Rect? bounds, CanvasRenderTarget? snapshot, CanvasRenderTarget? temp) {
         //    if (InkBrush == null) return;
 

@@ -2137,4 +2137,5 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU 処理</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · CPU 処理に切り替え済み</value></data>
+  <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>グラフィックス デバイスでエラーが発生しました。プロジェクトを保護するため、編集と保存を停止しました。最後に保存したバージョンを開き直してください。未保存の変更は復元できません。</value></data>
 </root>

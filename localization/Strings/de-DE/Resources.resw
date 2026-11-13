@@ -2137,4 +2137,5 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU-Verarbeitung</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Auf CPU zurückgefallen</value></data>
+  <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>Beim Grafikgerät ist ein Fehler aufgetreten. Zum Schutz Ihres Projekts wurden Bearbeitung und Speichern angehalten. Öffnen Sie die zuletzt gespeicherte Version erneut. Nicht gespeicherte Änderungen können nicht wiederhergestellt werden.</value></data>
 </root>

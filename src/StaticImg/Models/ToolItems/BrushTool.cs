@@ -15,7 +15,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 Thickness: (float)data.BrushThickness, 
                 Opacity: (float)(data.BrushOpacity / 100f));
             CurrentStroke = new BrushStroke(brushArgs);
-            CurrentStroke.InitInkBrush(InkProjectSession.SharedDevice);
+            CurrentStroke.InkBrush = data.Session.Brushes.GetBrush(brushArgs);
         }
     }
 }

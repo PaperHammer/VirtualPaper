@@ -18,6 +18,8 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
         public async Task<bool> LoadAsync(InkProjectSession session) {
             try {
                 var (header, businessData, layers) = await session.DesignFileUtil.LoadAsync(session);
+                session.EnsureDrawingAvailable();
+                if (!header.HasValue || layers == null) return false;
 
                 if (header.HasValue) {
                     CanvasSize = new ArcSize(header.Value.CanvasWidth, header.Value.CanvasHeight, header.Value.Dpi, RebuildMode.None);
@@ -67,12 +69,14 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<MainPage>().Error($"Load failed: {ex.Message}");
+                if (session.IsDeviceLostException(ex)) session.ReportDeviceLost();
+                ArcLog.GetLogger<MainPage>().Error("Load failed", ex);
                 return false;
             }
         }
 
         public async Task<(bool Success, string? FinalPath)> SaveAtEmergencyAsync(InkProjectSession session) {
+            session.EnsureDrawingAvailable();
             if (!session.DesignFileUtil.IsValidVpdFile || session.DesignFileUtil.IsLoadFailed) {
                 string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
                 string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
@@ -86,6 +90,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
 
         public async Task<(bool Success, string? FinalPath)> SaveAsync(InkProjectSession session) {
             try {
+                session.EnsureDrawingAvailable();
                 if (!session.DesignFileUtil.IsValidVpdFile) {
                     var suggestedName = string.Concat(Path.GetFileNameWithoutExtension(session.DesignFileUtil.FilePath), FileExtension.FE_Design);
                     var saveFile = await WindowsStoragePickers.PickSaveFileAsync(
@@ -128,6 +133,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return (flag, filePath);
             }
             catch (Exception ex) {
+                if (session.IsDeviceLostException(ex)) session.ReportDeviceLost();
                 ArcLog.GetLogger<MainPage>().Error($"Save failed: {ex.Message}");
                 return (false, null);
             }

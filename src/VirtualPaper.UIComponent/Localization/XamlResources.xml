@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- XAML property key -> source string key. Translations live in localization/Strings/<locale>/Resources.resw. -->
 <Resources>
+  <Resource Name="Ui_StaticImg_DrawingDeviceLost_Message.Message" Source="StaticImg_DrawingDeviceLost" />
   <Resource Name="Ui_Add_To_Lib_AddWallpaperDrop_Text.Text" Source="Add_To_Lib_AddWallpaperDrop" />
   <Resource Name="Ui_Add_To_Lib_DragDropFile_Text.Text" Source="Add_To_Lib_DragDropFile" />
   <Resource Name="Ui_Add_To_Lib_SelectFiles_Explain_Text.Text" Source="Add_To_Lib_SelectFiles_Explain" />

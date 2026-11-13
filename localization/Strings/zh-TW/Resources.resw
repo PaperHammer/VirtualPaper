@@ -2156,4 +2156,5 @@ Windows 資源管理器在過去 30 秒內重新啟動兩次！這可能是 Virt
   <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU 處理</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · 已改用 CPU</value></data>
+  <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>圖形裝置出現異常。為保護專案，已停止編輯與儲存。請重新開啟上次儲存的版本。未儲存的變更無法復原。</value></data>
 </root>

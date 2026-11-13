@@ -207,6 +207,11 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     }
                     layers.Add(layer);
                 }
+                catch (Exception ex) when (session.IsDrawingUnavailable || session.IsDeviceLostException(ex)) {
+                    if (!session.IsDrawingUnavailable) session.ReportDeviceLost();
+                    foreach (var layer in layers) layer.Dispose();
+                    throw;
+                }
                 catch (Exception ex) when (i < layerCount - 1) {                    
                     ArcLog.GetLogger<MainPage>().Error($"Layer {i} deserialization failed: {ex.Message}");
 

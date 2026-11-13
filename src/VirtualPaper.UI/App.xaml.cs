@@ -43,6 +43,7 @@ using Workloads.Entry.FileLoaders;
 using Workloads.Entry.FileLoaders.Specific;
 using Workloads.Entry.Interfaces;
 using Workloads.Creation.WebBackdrop.ViewModels;
+using Workloads.Creation.StaticImg.Core.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -101,7 +102,8 @@ namespace VirtualPaper.UI {
 
             _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
             UiAnimation.Initialize(_userSettings.Settings.NavigationAnimationsEnabled);
-            _ = AppServiceLocator.Services.GetRequiredService<UiHardwareAccelerationPolicy>();
+            DrawingDeviceManager.Current.Initialize(
+                AppServiceLocator.Services.GetRequiredService<UiHardwareAccelerationPolicy>().IsEnabled);
         }
 
         private ServiceProvider ConfigureServices() {

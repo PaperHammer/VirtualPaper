@@ -2144,4 +2144,5 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU processing</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · CPU fallback</value></data>
+  <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>The graphics device has encountered an error. Editing and saving have stopped to protect your project. Please reopen the last saved version. Unsaved changes cannot be recovered.</value></data>
 </root>

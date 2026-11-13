@@ -2137,4 +2137,5 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>Обработка на ЦП</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Переход на ЦП</value></data>
+  <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>Произошла ошибка графического устройства. Редактирование и сохранение остановлены для защиты проекта. Откройте последнюю сохранённую версию. Несохранённые изменения невозможно восстановить.</value></data>
 </root>

@@ -9,6 +9,8 @@ using VirtualPaper.Shader;
 using VirtualPaper.Shader.Core;
 using VirtualPaper.Shader.Models;
 using Workloads.Creation.StaticImg.Models.Specific;
+using Workloads.Creation.StaticImg.Extensions;
+using Windows.UI;
 
 namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
     /// <summary>
@@ -53,14 +55,12 @@ namespace Workloads.Creation.StaticImg.Core.UndoRedoCommand {
             if (renderData?.RenderTarget == null) return;
 
             var rt = renderData.RenderTarget;
-            using var temp = new CanvasRenderTarget(rt, rt.SizeInPixels.Width, rt.SizeInPixels.Height, rt.Dpi, rt.Format, rt.AlphaMode);
-            using (var ds = temp.CreateDrawingSession())
-                ds.DrawImage(rt);
+            using var temp = rt.Clone();
 
             var result = EffectApplier.Apply(_shaderType, effectParams, temp);
             try {
                 using (var ds = rt.CreateDrawingSession()) {
-                    ds.Clear(Microsoft.UI.Colors.Transparent);
+                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
                     ds.DrawImage(result);
                 }
             }

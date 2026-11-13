@@ -70,6 +70,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             await _ioLock.WaitAsync();
 
             try {
+                session.EnsureDrawingAvailable();
                 using var fs = CreateFileStream(FilePath, FileMode.Open, autoCheckHeaderOnOpenMode: true);
 
                 // Read and validate header
@@ -102,6 +103,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             }
             catch (Exception ex) {
                 _loadFailed = true;
+                if (session.IsDeviceLostException(ex)) session.ReportDeviceLost();
                 ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return (null, null, null);
             }

@@ -2137,4 +2137,5 @@ Si no funciona, reinicia Windows. Algunas versiones preliminares de Windows 10 n
   <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>Procesamiento con CPU</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Reversión a CPU</value></data>
+  <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>Se ha producido un error en el dispositivo gráfico. Se han detenido la edición y el guardado para proteger el proyecto. Vuelva a abrir la última versión guardada. Los cambios sin guardar no se pueden recuperar.</value></data>
 </root>

@@ -24,7 +24,10 @@ namespace Workloads.Creation.StaticImg.Models {
         public TaskCompletionSource<bool> IsInited => _isInited;
         public TaskCompletionSource<bool> IsReady => _isReady;
 
-        public InkRenderData(InkProjectSession session, ArcSize arcSize, bool isNeedBackground = false) {
+        public InkRenderData(InkProjectSession session, ArcSize arcSize, bool isNeedBackground = false)
+            : this(session, arcSize, isNeedBackground, null) { }
+
+        private InkRenderData(InkProjectSession session, ArcSize arcSize, bool isNeedBackground, CanvasRenderTarget? initialTarget) {
             _session = session;
             ResetSize(arcSize);
             IsNeedBackground = isNeedBackground;
@@ -33,13 +36,19 @@ namespace Workloads.Creation.StaticImg.Models {
                     HandleOnceRenderCompleted();
                 }
             });
-            Init();
+            if (initialTarget == null) Init();
+            else {
+                // 接管已克隆的目标，不再额外分配、清空一张完整位图。
+                RenderTarget = initialTarget;
+                IsInited.TrySetResult(true);
+            }
         }
 
         public void Init() {
+            _session.EnsureDrawingAvailable();
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                InkProjectSession.SharedDevice,
+                _session.Device,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
@@ -61,8 +70,9 @@ namespace Workloads.Creation.StaticImg.Models {
             Stream outputStream,
             IProgress<double>? progress = null,
             CancellationToken ct = default) {
+            _session.EnsureDrawingAvailable();
             using var pngStream = new InMemoryRandomAccessStream();
-            await RenderTarget.SaveAsync(pngStream, CanvasBitmapFileFormat.Png);
+            await EncodePngAsync(pngStream);
 
             long totalBytes = (long)pngStream.Size;
             long processedBytes = 0;
@@ -99,6 +109,7 @@ namespace Workloads.Creation.StaticImg.Models {
         internal async Task SavePngAsync(
             Stream outputStream,
             CancellationToken ct = default) {
+            _session.EnsureDrawingAvailable();
             ArgumentNullException.ThrowIfNull(outputStream);
             if (!outputStream.CanWrite || !outputStream.CanSeek)
                 throw new ArgumentException("PNG 流必须可写且可寻址。", nameof(outputStream));
@@ -107,9 +118,20 @@ namespace Workloads.Creation.StaticImg.Models {
             long pngStart = outputStream.Position;
             using var pngSegment = new RelativeStream(outputStream, pngStart, leaveOpen: true);
             using var randomAccessStream = pngSegment.AsRandomAccessStream();
-            await RenderTarget.SaveAsync(randomAccessStream, CanvasBitmapFileFormat.Png);
+            await EncodePngAsync(randomAccessStream);
             ct.ThrowIfCancellationRequested();
             outputStream.Position = checked(pngStart + pngSegment.Length);
+        }
+
+        private async Task EncodePngAsync(IRandomAccessStream stream) {
+            try {
+                await RenderTarget.SaveAsync(stream, CanvasBitmapFileFormat.Png);
+                _session.EnsureDrawingAvailable();
+            }
+            catch (Exception ex) when (_session.IsDeviceLostException(ex)) {
+                _session.ReportDeviceLost();
+                throw;
+            }
         }
 
         /// <summary>
@@ -161,13 +183,10 @@ namespace Workloads.Creation.StaticImg.Models {
                 // 加载到渲染目标
                 using var fileStream = File.OpenRead(tempFile);
                 using var bitmap = await CanvasBitmap.LoadAsync(
-                    InkProjectSession.SharedDevice,
+                    _session.Device,
                     fileStream.AsRandomAccessStream());
 
-                using (var ds = RenderTarget.CreateDrawingSession()) {
-                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
-                    ds.DrawImage(bitmap);
-                }
+                CopyDecodedPixels(bitmap);
             }
             finally {
                 if (File.Exists(tempFile))
@@ -197,14 +216,27 @@ namespace Workloads.Creation.StaticImg.Models {
                 leaveOpen: true);
             using var randomAccessStream = pngSegment.AsRandomAccessStream();
             using var bitmap = await CanvasBitmap.LoadAsync(
-                InkProjectSession.SharedDevice,
+                _session.Device,
                 randomAccessStream);
             ct.ThrowIfCancellationRequested();
 
-            using var ds = RenderTarget.CreateDrawingSession();
-            ds.Clear(Color.FromArgb(0, 0, 0, 0));
-            ds.DrawImage(bitmap);
+            CopyDecodedPixels(bitmap);
             inputStream.Position = checked(pngStart + pngLength);
+        }
+
+        private void CopyDecodedPixels(CanvasBitmap bitmap) {
+            var sourceSize = bitmap.SizeInPixels;
+            var targetSize = RenderTarget.SizeInPixels;
+            if (sourceSize.Width == targetSize.Width && sourceSize.Height == targetSize.Height) {
+                RenderTarget.CopyPixelsFromBitmap(bitmap);
+                return;
+            }
+            // Older high-DPI clones could save an oversized backing bitmap.
+            // Keep the canvas's pixel region without scaling it a second time.
+            using (var ds = RenderTarget.CreateDrawingSession()) { ds.Clear(Color.FromArgb(0, 0, 0, 0)); }
+            RenderTarget.CopyPixelsFromBitmap(bitmap, 0, 0, 0, 0,
+                (int)Math.Min(sourceSize.Width, targetSize.Width),
+                (int)Math.Min(sourceSize.Height, targetSize.Height));
         }
         #endregion
 
@@ -217,11 +249,8 @@ namespace Workloads.Creation.StaticImg.Models {
         }
 
         internal InkRenderData Clone() {
-            var newRender = new InkRenderData(_session, _arcSize) {
-                RenderTarget = this.RenderTarget.Clone(),
-            };
-            
-            return newRender;
+            _session.EnsureDrawingAvailable();
+            return new InkRenderData(_session, _arcSize, IsNeedBackground, RenderTarget.Clone());
         }
 
         public void ResizeAndSetPixels(ArcSize newSize, byte[]? pixels) {
@@ -234,7 +263,7 @@ namespace Workloads.Creation.StaticImg.Models {
             ResetSize(newSize);
             RenderTarget?.Dispose();
             RenderTarget = new CanvasRenderTarget(
-                InkProjectSession.SharedDevice,
+                _session.Device,
                 (float)_arcSize.Width,
                 (float)_arcSize.Height,
                 _arcSize.Dpi,
@@ -275,7 +304,7 @@ namespace Workloads.Creation.StaticImg.Models {
         private void ResizeRenderTargetWithScale(ArcSize arcSize) {            
             var oldTarget = RenderTarget;
             RenderTarget = new CanvasRenderTarget(
-                InkProjectSession.SharedDevice,
+                _session.Device,
                 (float)arcSize.Width,
                 (float)arcSize.Height,
                 arcSize.Dpi,
@@ -299,7 +328,7 @@ namespace Workloads.Creation.StaticImg.Models {
         private void ResizeRenderTargetWithExpand(ArcSize arcSize) {            
             var oldTarget = RenderTarget;
             RenderTarget = new CanvasRenderTarget(
-                InkProjectSession.SharedDevice,
+                _session.Device,
                 (float)arcSize.Width,
                 (float)arcSize.Height,
                 arcSize.Dpi,

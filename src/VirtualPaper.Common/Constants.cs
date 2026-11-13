@@ -275,6 +275,7 @@ namespace VirtualPaper.Common {
             public const string Project_Unsave_Intercept_Title = nameof(Project_Unsave_Intercept_Title);
             public const string Project_Export_Success = nameof(Project_Export_Success);
             public const string Project_Export_Failed = nameof(Project_Export_Failed);
+            public const string StaticImg_DrawingDeviceLost = nameof(StaticImg_DrawingDeviceLost);
             public const string Project_Export_PathNotBeNone = nameof(Project_Export_PathNotBeNone);
             public const string Project_Export_InternalError = nameof(Project_Export_InternalError);
             public const string Project_SI_FileTypeMismatch = nameof(Project_SI_FileTypeMismatch);

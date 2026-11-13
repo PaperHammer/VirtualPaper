@@ -14,7 +14,7 @@
 #define MyAppDataFolderName "VirtualPaper"
 
 ; Generate on every compile, including direct compilation in the Inno Setup IDE.
-#define LocalizationScript SourcePath + "..\localization\Generate-Resources.ps1"
+#define LocalizationScript SourcePath + "..\..\localization\Generate-Resources.ps1"
 #define LocalizationOutput SourcePath + "obj\Localization"
 #if Exec("powershell.exe", "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File " + AddQuotes(LocalizationScript) + " -Target Installer -OutputRoot " + AddQuotes(LocalizationOutput), SourcePath, 1) != 0
   #error "Localization generation failed."
@@ -62,7 +62,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 #include "BuiltInWallpapers.iss"
 
 [Files]
-Source: "..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.WebView2,*.WebView2\*,BuiltInWallpapers\*"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.WebView2,*.WebView2\*,BuiltInWallpapers\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]

@@ -13,7 +13,7 @@ VirtualPaper is a Windows wallpaper application built with .NET 8, WPF, WinUI 3 
 | AI tasks and inference | `src/VirtualPaper.IntelligentPanel`, `src/VirtualPaper.ML` |
 | Wallpaper playback and screen saver | `src/VirtualPaper.PlayerWeb`, `src/VirtualPaper.PlayerWeb.Core`, `src/VirtualPaper.ScreenSaver` |
 | Shared models, infrastructure and RPC | `src/VirtualPaper.Common`, `src/VirtualPaper.Models`, `src/VirtualPaper.UIComponent`, `src/VirtualPaper.Grpc.*` |
-| Packaging and automation | `InnoSetup/setup.iss`, `Msix/VirtualPaper.Package.wapproj`, `test`, `.github/scripts`, `.github/workflows` |
+| Packaging and automation | `packaging/inno/setup.iss`, `packaging/msix/VirtualPaper.Package.wapproj`, `test`, `.github/scripts`, `.github/workflows` |
 | Repository asset tools | `resources/tools` |
 
 Read [developer documentation](doc/README.md) for architecture and module details. Read source implementations when deciding behavior; generated output is not the source of truth.

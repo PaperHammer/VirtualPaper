@@ -35,7 +35,7 @@ if (-not $NoBuild) {
 if (-not (Test-Path -LiteralPath $probe)) { throw "Installer lifecycle probe not found: $probe" }
 # The production AppId is shared with a user's existing installation. Read all registry
 # views before installing, so this acceptance run cannot overwrite a daily installation.
-$setupScriptPath = Join-Path $repositoryRoot 'InnoSetup/setup.iss'
+$setupScriptPath = Join-Path $repositoryRoot 'packaging/inno/setup.iss'
 Assert-CleanInstallerEnvironment $setupScriptPath
 $appId = Get-InstallerAppId $setupScriptPath
 $shortcutPaths = @(Get-InstallerShortcutPaths)

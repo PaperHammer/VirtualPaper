@@ -19,7 +19,7 @@ pwsh -NoProfile -File localization/Generate-Resources.ps1 -OutputRoot TestResult
 
 MSBuild 在项目各自的 `obj` 下生成 UI/Core/Common 资源。UI 沿用 WinUI3Localizer 和原有 `VirtualPaper.UIComponent/Strings` 运行目录。Core/Common 沿用 ResourceManager 名称及卫星程序集，英文作为中性资源，其他语种使用显式卫星资源。直接编译 ISS 时也会先生成忽略提交的 `obj/Localization` include。WAP 从语言清单生成真正的 MSIX manifest，再填入包身份与版本；仓库中的 manifest 为模板。
 
-繁体中文 Inno 文件来自 [Inno 官方翻译页面](https://jrsoftware.org/files/istrans/)，为 GoneTone 及文件中列出的贡献者维护的原始文件，内容未作修改。原始下载文件的 SHA-256 为 `031684fc769259291fd563338b5abe20b7753c88ab5a2976b83a80788deb8455`，保留原作者声明，并附带 [Inno Setup 许可证](../InnoSetup/Languages/LICENSE-InnoSetup.txt)。其他新增安装语言使用 Inno Setup 自带的语言文件。
+繁体中文 Inno 文件来自 [Inno 官方翻译页面](https://jrsoftware.org/files/istrans/)，为 GoneTone 及文件中列出的贡献者维护的原始文件，内容未作修改。原始下载文件的 SHA-256 为 `031684fc769259291fd563338b5abe20b7753c88ab5a2976b83a80788deb8455`，保留原作者声明，并附带 [Inno Setup 许可证](../packaging/inno/Languages/LICENSE-InnoSetup.txt)。其他新增安装语言使用 Inno Setup 自带的语言文件。
 
 生成器拒绝重复 key／别名／映射、缺失的代码或 XAML 文案、格式占位符索引不一致、非空英文对应的空翻译、未登记的源语种目录，以及没有映射的静态 XAML UID。`-Check` 只校验，不修复文件。内容未变化时保留输出时间戳；仅清理已退役的生成资源，不删除无关文件或源文件。
 

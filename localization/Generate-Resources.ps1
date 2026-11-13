@@ -19,7 +19,7 @@ if (-not $CatalogPath) { $CatalogPath = Join-Path $PSScriptRoot 'LanguageCatalog
 if (-not $ResourceMappingFile) { $ResourceMappingFile = Join-Path $PSScriptRoot 'ResourceMappings.xml' }
 if (-not $MappingFile) { $MappingFile = Join-Path $PSScriptRoot '../src/VirtualPaper.UIComponent/Localization/XamlResources.xml' }
 if (-not $XamlRoot) { $XamlRoot = Join-Path $PSScriptRoot '../src' }
-if (-not $ManifestTemplate) { $ManifestTemplate = Join-Path $PSScriptRoot '../Msix/Package.appxmanifest' }
+if (-not $ManifestTemplate) { $ManifestTemplate = Join-Path $PSScriptRoot '../packaging/msix/Package.appxmanifest' }
 . (Join-Path $PSScriptRoot 'LanguageCatalog.ps1')
 $catalog = Get-LanguageCatalog $CatalogPath
 $sourceRootPath = [IO.Path]::GetFullPath($SourceRoot).TrimEnd([IO.Path]::DirectorySeparatorChar)

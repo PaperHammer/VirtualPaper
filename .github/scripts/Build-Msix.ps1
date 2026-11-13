@@ -29,9 +29,9 @@ $msbuild = & $vswherePath -latest -products * -requires Microsoft.Component.MSBu
     Select-Object -First 1
 if (-not $msbuild) { throw 'Visual Studio MSBuild was not found.' }
 $runName = "msix-$PackageVersion-$([guid]::NewGuid().ToString('N'))"
-$workDirectory = Join-Path $repositoryRoot "Msix/obj/$runName"
+$workDirectory = Join-Path $repositoryRoot "packaging/msix/obj/$runName"
 $payload = Join-Path $workDirectory 'Payload'
-if (-not $OutputDirectory) { $OutputDirectory = Join-Path $repositoryRoot "Msix/AppPackages/$runName" }
+if (-not $OutputDirectory) { $OutputDirectory = Join-Path $repositoryRoot "packaging/msix/AppPackages/$runName" }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 if (Test-Path -LiteralPath $OutputDirectory) { throw 'OutputDirectory must be new; existing packages are never overwritten.' }
 [void](New-Item -ItemType Directory -Path $payload, $OutputDirectory)
@@ -86,11 +86,11 @@ try {
             '/p:PlatformTarget=x64', '/p:AppendRuntimeIdentifierToOutputPath=false',
             '/p:SelfContained=true', '/p:WindowsAppSDKSelfContained=true', '/p:WindowsPackageType=None',
             '/p:GenerateAppxPackageOnBuild=false', '/p:IsMsixRelease=false', '/p:BuildProjectReferences=false',
-            "/p:CustomAfterMicrosoftCommonTargets=$repositoryRoot\Msix\Publish.props",
+            "/p:CustomAfterMicrosoftCommonTargets=$repositoryRoot\packaging\msix\Publish.props",
             "/p:MsixPublishProject=$($process.Project)", "/p:MsixPublishOutputRoot=$workDirectory\ProcessBuild",
             "/p:PublishDir=$publishDirectory\")
         # WinUI's MSIX SDK owns CustomBeforeMicrosoftCommonTargets itself.
-        if ($process.Wpf) { $publishArguments += "/p:CustomBeforeMicrosoftCommonTargets=$repositoryRoot\Msix\Publish.Intermediate.props" }
+        if ($process.Wpf) { $publishArguments += "/p:CustomBeforeMicrosoftCommonTargets=$repositoryRoot\packaging\msix\Publish.Intermediate.props" }
         Invoke-MsBuild $publishArguments
         if ($process.Project -eq 'VirtualPaper') {
             $stream = [IO.File]::OpenRead((Join-Path $payload 'VirtualPaper.dll'))
@@ -137,7 +137,7 @@ try {
     }
     [System.Xml.Linq.XElement]::new([System.Xml.Linq.XName]::Get('Project'), $properties).Save($identityProps)
     $mode = if ($Store) { 'StoreUpload' } else { 'SideloadOnly' }
-    $packageArguments = @('Msix/VirtualPaper.Package.wapproj', '/restore', '/t:Build', '/p:Configuration=Release', '/p:Platform=x64',
+    $packageArguments = @('packaging/msix/VirtualPaper.Package.wapproj', '/restore', '/t:Build', '/p:Configuration=Release', '/p:Platform=x64',
         "/p:MsixPayloadDirectory=$payload", "/p:MsixIdentityProps=$identityProps", "/p:AppxPackageDir=$OutputDirectory\",
         "/p:UapAppxPackageBuildMode=$mode")
     if ($CertificateThumbprint) {

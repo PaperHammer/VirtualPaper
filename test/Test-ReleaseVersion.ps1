@@ -31,9 +31,9 @@ try {
     Invoke-ReleaseGit @('config', 'user.name', 'Release test')
     Invoke-ReleaseGit @('config', 'core.autocrlf', 'false')
     Invoke-ReleaseGit @('remote', 'add', 'origin', $remote)
-    New-Item -ItemType Directory -Path 'src/VirtualPaper', 'InnoSetup' -Force | Out-Null
+    New-Item -ItemType Directory -Path 'src/VirtualPaper', 'packaging/inno' -Force | Out-Null
     [IO.File]::WriteAllText((Join-Path $repo 'src/VirtualPaper/VirtualPaper.csproj'), "<Project>`r`n<AssemblyVersion>0.5.2.0</AssemblyVersion>`r`n<!-- keep main -->`r`n</Project>`r`n")
-    [IO.File]::WriteAllText((Join-Path $repo 'InnoSetup/setup.iss'), "#define MyAppVersion `"0.5.2.0`"`r`n#define MyAppVersionText `"0_5_2_0`"`r`n; keep setup`r`n")
+    [IO.File]::WriteAllText((Join-Path $repo 'packaging/inno/setup.iss'), "#define MyAppVersion `"0.5.2.0`"`r`n#define MyAppVersionText `"0_5_2_0`"`r`n; keep setup`r`n")
     [IO.File]::WriteAllText((Join-Path $repo 'README.md'), "https://img.shields.io/badge/release-v0.5.2.0-blue`r`nkeep README`r`n")
     [IO.File]::WriteAllText((Join-Path $repo 'feature.txt'), 'main feature')
     [IO.File]::WriteAllText((Join-Path $repo 'main-delete.txt'), 'shared file')
@@ -84,7 +84,7 @@ try {
     if (-not $readme.Contains('new dev documentation') -or -not $readme.Contains('release-v0.5.3.0-blue')) {
         throw 'Version synchronization lost dev README changes.'
     }
-    $bytes = [IO.File]::ReadAllText((Join-Path $repo 'InnoSetup/setup.iss'))
+    $bytes = [IO.File]::ReadAllText((Join-Path $repo 'packaging/inno/setup.iss'))
     Assert-Equal $bytes "#define MyAppVersion `"0.5.3.0`"`r`n#define MyAppVersionText `"0_5_3_0`"`r`n; keep setup`r`n" 'Non-version bytes and CRLF preserved'
     $devSha = Invoke-ReleaseGit @('rev-parse', 'origin/dev')
     $retry = Sync-ReleaseVersion -Root $repo -MergeSha $mergeSha -Version '0.5.3.0' -ExpectedVersion '0.5.2.1'
@@ -102,9 +102,9 @@ try {
 
     # A failed validation must not partially change any local file.
     [IO.File]::WriteAllText((Join-Path $repo 'README.md'), 'missing badge')
-    $before = [IO.File]::ReadAllText((Join-Path $repo 'InnoSetup/setup.iss'))
+    $before = [IO.File]::ReadAllText((Join-Path $repo 'packaging/inno/setup.iss'))
     Assert-Throws { Set-ReleaseVersion $repo '0.5.4.0' '0.5.3.0' } 'Missing version field'
-    Assert-Equal ([IO.File]::ReadAllText((Join-Path $repo 'InnoSetup/setup.iss'))) $before 'Validate before writing'
+    Assert-Equal ([IO.File]::ReadAllText((Join-Path $repo 'packaging/inno/setup.iss'))) $before 'Validate before writing'
     Invoke-ReleaseGit @('restore', 'README.md')
     Assert-Throws { Set-ReleaseVersion $repo '0.5.4.0' '0.5.1.0' } 'Unexpected version rejected'
 

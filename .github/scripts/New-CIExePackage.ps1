@@ -15,7 +15,7 @@ $actualVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $paylo
 if ($Version -and [version]$actualVersion -ne [version]$Version) { throw 'Build and requested installer version differ.' }
 $Version = $actualVersion
 if (Test-Path -LiteralPath $OutputDirectory) { throw 'Use a fresh EXE artifact directory.' }
-$setup = Join-Path $repositoryRoot 'InnoSetup/setup.iss'
+$setup = Join-Path $repositoryRoot 'packaging/inno/setup.iss'
 $originalSetup = [IO.File]::ReadAllBytes($setup)
 $content = Get-Content -LiteralPath $setup -Raw
 $content = $content -replace '#define MyAppVersion "[\d.]+"', "#define MyAppVersion `"$Version`""
@@ -30,7 +30,7 @@ try {
     & $InnoSetupCompiler $setup /O+
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup compilation failed.' }
 } finally { [IO.File]::WriteAllBytes($setup, $originalSetup) }
-$installers = @(Get-ChildItem "$repositoryRoot/InnoSetup/Output" -Filter '*.exe' -File)
+$installers = @(Get-ChildItem "$repositoryRoot/packaging/inno/Output" -Filter '*.exe' -File)
 if ($installers.Count -ne 1) { throw 'Expected one freshly generated EXE installer.' }
 [void](New-Item -ItemType Directory -Path $OutputDirectory)
 $installer = Copy-Item -LiteralPath $installers[0].FullName -Destination $OutputDirectory -PassThru

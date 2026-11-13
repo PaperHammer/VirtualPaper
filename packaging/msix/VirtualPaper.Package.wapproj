@@ -55,7 +55,7 @@
     <Error Condition="'$(Platform)' != 'x64'" Text="VirtualPaper MSIX currently supports x64 only." />
     <Error Condition="!Exists('$(MsixPayloadDirectory)\VirtualPaper.exe')" Text="Run .github/scripts/Build-Msix.ps1 to publish the Core-first payload before packaging." />
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(MsixGeneratedManifest)'))" />
-    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\localization\Generate-Resources.ps1&quot; -Target Manifest -OutputRoot &quot;$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization&quot;" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\..\localization\Generate-Resources.ps1&quot; -Target Manifest -OutputRoot &quot;$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization&quot;" />
     <XmlPeek XmlInputPath="$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization\Languages.props" Query="/Project/PropertyGroup/DefaultLanguage/text()">
       <Output TaskParameter="Result" PropertyName="DefaultLanguage" />
     </XmlPeek>

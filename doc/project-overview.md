@@ -37,8 +37,9 @@ VirtualPaper/
 ├─ localization/        共享源文案、语言目录和各渠道资源生成
 ├─ resources/           内置壁纸、README 图片、图标和 Logo
 │  └─ tools/            壁纸与图标素材生成工具
-├─ InnoSetup/           EXE 安装包定义及安装器资源
-├─ Msix/                MSIX 打包工程、清单和发布配置
+├─ packaging/           两种发布渠道的打包定义
+│  ├─ inno/             EXE 安装包脚本及安装器资源
+│  └─ msix/             MSIX 打包工程、清单和发布配置
 ├─ doc/                 开发者文档
 ├─ .github/             工作流及 CI、打包、版本和发布脚本
 └─ .agents/skills/      仓库级 AI 开发、审查和测试指引
@@ -46,7 +47,7 @@ VirtualPaper/
 
 根目录保留 `README.md`、`LICENSE`、`AGENTS.md` 及 Git 配置入口。资源工具及使用方法见[素材生成工具](../resources/tools/README.zh-CN.md)。
 
-`scripts/` 仅存放不纳入版本控制的本地临时工具；`TestResults/` 存放本地验证报告，`bin/`、`obj/`、安装器输出等由对应构建流程生成。CI 与本地验收共用的工作流契约入口为 `.github/scripts/validate-test-workflow.ps1`。EXE 和 MSIX 打包目录目前分别保留，目录迁移需同步构建、发布和验收引用。
+`scripts/` 仅存放不纳入版本控制的本地临时工具；`TestResults/` 存放本地验证报告，`bin/`、`obj/`、安装器输出等由对应构建流程生成。CI 与本地验收共用的工作流契约入口为 `.github/scripts/validate-test-workflow.ps1`。EXE 与 MSIX 的打包入口、输出位置和验证方式见[打包说明](../packaging/README.zh-CN.md)。
 
 ## 主要功能到模块的映射
 
@@ -60,7 +61,7 @@ VirtualPaper/
 | 草稿工作区 | `VirtualPaper.EditPanel/` |
 | 风格迁移、超分辨率、深度估计 | `VirtualPaper.ML/`, `VirtualPaper.IntelligentPanel/` |
 | 屏保 | `VirtualPaper.ScreenSaver/` |
-| 应用更新与安装 | `VirtualPaper/Cores/AppUpdate/`, `InnoSetup/`, `Msix/`, `.github/workflows/` |
+| 应用更新与安装 | `VirtualPaper/Cores/AppUpdate/`, `packaging/inno/`, `packaging/msix/`, `.github/workflows/` |
 
 ## 设计特点
 

@@ -39,7 +39,7 @@ test/
 | 单个项目回归 | `test/Run-ProjectTests.ps1 -JobId <id>` | 使用已有 Release 产物，不构建 |
 | 真实 UI 模块或测试集 | `test/Run-UIOperationTests.ps1` | 默认先构建解决方案，`-NoBuild` 跳过构建 |
 | 已有安装包 | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | 必需安装冒烟：真实安装/覆盖安装、启动/正常退出、语言/数据保留及卸载 |
-| MSIX 包内容 | `test/Test-MsixPackage.ps1 -PackagePath <application.msix>` | 检查实际包，不执行安装或 UI 验收，详见 [MSIX 打包](../Msix/README.zh-CN.md)。 |
+| MSIX 包内容 | `test/Test-MsixPackage.ps1 -PackagePath <application.msix>` | 检查实际包，不执行安装或 UI 验收，详见 [MSIX 打包](../packaging/msix/README.zh-CN.md)。 |
 | MSIX 完整验收 | `test/Run-MsixTests.ps1` | Release 重建、八组项目测试、签名测试包、真实首次启动／扩展 UI／重装／数据保留／卸载；需要管理员和未锁定桌面 |
 | 工作流与脚本契约 | `.github/scripts/validate-test-workflow.ps1` | 隔离校验，不安装、不执行真实 UI |
 

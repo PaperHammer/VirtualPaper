@@ -41,7 +41,7 @@ Never compile the manifest template directly; its language declarations are gene
 The Traditional Chinese Inno file is the unmodified official translation by GoneTone
 and its credited contributors, downloaded from the [Inno translations page](https://jrsoftware.org/files/istrans/).
 The upstream download SHA-256 is `031684fc769259291fd563338b5abe20b7753c88ab5a2976b83a80788deb8455`.
-Copyright notices remain in the file and the [Inno Setup license](../InnoSetup/Languages/LICENSE-InnoSetup.txt)
+Copyright notices remain in the file and the [Inno Setup license](../packaging/inno/Languages/LICENSE-InnoSetup.txt)
 is included alongside it. Other new installer languages use the files bundled with Inno Setup.
 
 The generator rejects duplicate keys/aliases/mappings, missing code-only or mapped

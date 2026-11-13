@@ -83,7 +83,7 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 独立插件更新使用 `update-plugins` 或 `update-plugin-ui/playerweb/scrsaver/ml/shaders`，保留既有插件构建号和兼容客户端的标签格式。带有插件更新标签时，产品版本保持不变，也不创建产品版本同步提交。`dev → main` PR 仍需恰好选择一个四段版本标签。
 
-产品版本同步仅修改 `src/VirtualPaper/VirtualPaper.csproj` 中的 `AssemblyVersion`、`InnoSetup/setup.iss` 中的 `MyAppVersion`/`MyAppVersionText`，以及 `README.md` 的版本徽章。`.sln` 没有产品版本，`app_comp_manifest.json` 是生成产物。main 的版本提交合回 dev，不再单独生成 dev 版本提交；下一次 dev 合入 main 时沿用这段共同的发布历史。
+产品版本同步仅修改 `src/VirtualPaper/VirtualPaper.csproj` 中的 `AssemblyVersion`、`packaging/inno/setup.iss` 中的 `MyAppVersion`/`MyAppVersionText`，以及 `README.md` 的版本徽章。`.sln` 没有产品版本，`app_comp_manifest.json` 是生成产物。main 的版本提交合回 dev，不再单独生成 dev 版本提交；下一次 dev 合入 main 时沿用这段共同的发布历史。
 
 组件清单仅生成一次，供发布附件和插件补丁复用，并通过 `GITHUB_TOKEN` 获取；网络、权限、下载或解析错误会停止发布。历史发布缺少清单时，可通过完整发布建立基线；插件补丁必须有有效的已发布基线，已有清单损坏时不得退回无基线处理。完整发布更新所有随包插件构建号，插件发布仅更新选定项。月内序号达到 R99 后停止，新月份重新开始，构建机器时钟落后于历史编号时也会报错。
 

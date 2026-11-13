@@ -25,8 +25,8 @@ function Set-ReleaseVersion {
     }
     $specs = @(
         @{ Path = 'src/VirtualPaper/VirtualPaper.csproj'; Pattern = '(<AssemblyVersion>)(\d+\.\d+\.\d+\.\d+)(</AssemblyVersion>)'; Underscore = $false },
-        @{ Path = 'InnoSetup/setup.iss'; Pattern = '(?m)^(#define MyAppVersion ")(\d+\.\d+\.\d+\.\d+)(")'; Underscore = $false },
-        @{ Path = 'InnoSetup/setup.iss'; Pattern = '(?m)^(#define MyAppVersionText ")(\d+_\d+_\d+_\d+)(")'; Underscore = $true },
+        @{ Path = 'packaging/inno/setup.iss'; Pattern = '(?m)^(#define MyAppVersion ")(\d+\.\d+\.\d+\.\d+)(")'; Underscore = $false },
+        @{ Path = 'packaging/inno/setup.iss'; Pattern = '(?m)^(#define MyAppVersionText ")(\d+_\d+_\d+_\d+)(")'; Underscore = $true },
         @{ Path = 'README.md'; Pattern = '(img\.shields\.io/badge/release-v)(\d+\.\d+\.\d+\.\d+)(-blue)'; Underscore = $false }
     )
     $pending = @{}
@@ -92,7 +92,7 @@ function Sync-ReleaseVersion {
             $subject = Invoke-ReleaseGit @('log', '-1', '--format=%s', 'origin/main')
             if ($parent -ne $MergeSha -or $subject -ne $message) { throw 'main changed; publish the latest merged PR instead.' }
             $changed = @(Invoke-ReleaseGit @('diff', '--name-only', "$MergeSha..origin/main"))
-            if (@($changed | Where-Object { $_ -notin @('src/VirtualPaper/VirtualPaper.csproj', 'InnoSetup/setup.iss', 'README.md') }).Count) {
+            if (@($changed | Where-Object { $_ -notin @('src/VirtualPaper/VirtualPaper.csproj', 'packaging/inno/setup.iss', 'README.md') }).Count) {
                 throw 'The existing bump commit changed files outside the version sync scope.'
             }
         }
@@ -100,7 +100,7 @@ function Sync-ReleaseVersion {
         Invoke-ReleaseGit @('checkout', '-B', 'main', 'origin/main') | Out-Host
         Set-ReleaseVersion -Root $Root -Version $Version -ExpectedVersion $ExpectedVersion
         if (Invoke-ReleaseGit @('status', '--porcelain')) {
-            Invoke-ReleaseGit @('add', 'src/VirtualPaper/VirtualPaper.csproj', 'InnoSetup/setup.iss', 'README.md') | Out-Host
+            Invoke-ReleaseGit @('add', 'src/VirtualPaper/VirtualPaper.csproj', 'packaging/inno/setup.iss', 'README.md') | Out-Host
             Invoke-ReleaseGit @('commit', '-m', $message) | Out-Host
         }
         # Share main's release history instead of creating a second version commit on dev.

@@ -39,7 +39,7 @@ Run commands from the repository root. AI agents should start with [AGENTS.md](.
 | Focused project regression | `test/Run-ProjectTests.ps1 -JobId <id>` | One project using existing Release output; no build |
 | Real UI module or suite | `test/Run-UIOperationTests.ps1` | Builds the solution unless `-NoBuild`; runs component/application cases |
 | Existing installer | `test/Run-InstallerTests.ps1 -InstallerPath <setup.exe>` | Required installer smoke: real install/reinstall, startup/normal exit, language/data retention and uninstall |
-| MSIX payload | `test/Test-MsixPackage.ps1 -PackagePath <application.msix>` | Checks the archive; no installation/UI acceptance. See [MSIX packaging](../Msix/README.md). |
+| MSIX payload | `test/Test-MsixPackage.ps1 -PackagePath <application.msix>` | Checks the archive; no installation/UI acceptance. See [MSIX packaging](../packaging/msix/README.md). |
 | Complete MSIX acceptance | `test/Run-MsixTests.ps1` | Release rebuild, eight project jobs, signed test MSIX, installed first-run/extended UI/reinstall/profile retention/uninstall; administrator and unlocked desktop required |
 | Workflow/script contracts | `.github/scripts/validate-test-workflow.ps1` | Isolated checks; no install or real UI |
 

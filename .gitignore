@@ -384,7 +384,7 @@ Bundle/
 Plugins/
 Build/
 Shaders/*.bin
-InnoSetup/Output/
+packaging/inno/Output/
 
 # Monaco editor bundled assets
 src/WebBackdrop/Assets/monaco-editor-*/package/dev/

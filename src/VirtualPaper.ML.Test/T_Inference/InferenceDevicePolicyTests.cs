@@ -5,6 +5,21 @@ namespace VirtualPaper.ML.Test.T_Inference;
 [TestClass]
 public class InferenceDevicePolicyTests {
     [TestMethod]
+    public void TaskPreference_IsImmutable_AndSharesFailureOnlyWithTheSameModel() {
+        var policies = new InferenceDevicePolicies(true);
+        var cpu = policies.SuperResolution.WithPreference(InferenceDevicePreference.CpuPreferred);
+        var gpu = cpu.WithPreference(InferenceDevicePreference.GpuPreferred);
+        gpu.DisableGpu();
+        Assert.AreEqual(InferenceDevicePreference.GpuPreferred, policies.SuperResolution.Preference);
+        Assert.AreEqual(InferenceDevicePreference.CpuPreferred, cpu.Preference);
+        Assert.AreEqual(InferenceSelectionReason.CpuPreferred, cpu.SelectDevice().Reason);
+        Assert.IsFalse(cpu.SelectDevice().IsCpuFallback);
+        Assert.IsTrue(policies.SuperResolution.SelectDevice().IsCpuFallback);
+        Assert.AreEqual(InferenceSelectionReason.CpuPreferred, policies.DepthEstimate.SelectDevice().Reason);
+        Assert.AreEqual(InferenceDevice.DirectML, new InferenceDevicePolicy(true).SelectDevice().Device);
+    }
+
+    [TestMethod]
     [DataRow(false, InferenceDevicePreference.CpuPreferred, true, InferenceDevice.Cpu, InferenceSelectionReason.HardwareAccelerationDisabled)]
     [DataRow(false, InferenceDevicePreference.GpuPreferred, true, InferenceDevice.Cpu, InferenceSelectionReason.HardwareAccelerationDisabled)]
     [DataRow(false, InferenceDevicePreference.GpuPreferred, false, InferenceDevice.Cpu, InferenceSelectionReason.HardwareAccelerationDisabled)]

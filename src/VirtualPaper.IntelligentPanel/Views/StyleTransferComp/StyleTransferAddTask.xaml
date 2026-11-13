@@ -340,6 +340,27 @@
                 </Button>
             </Grid>
 
+            <Border Padding="16" CornerRadius="8" Margin="0,12,0,0"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                Visibility="{x:Bind _viewModel.ShowGpuOptions, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                <StackPanel Spacing="8">
+                    <CheckBox IsEnabled="False" IsChecked="False" HorizontalContentAlignment="Stretch"
+                        AutomationProperties.AutomationId="Intelligent.StyleTransfer.UseGpu">
+                        <TextBlock l:Uids.Uid="Ui_Inference_UseGpu" TextWrapping="Wrap"/>
+                    </CheckBox>
+                    <TextBlock l:Uids.Uid="Ui_Inference_StyleGpuUnavailable" TextWrapping="Wrap"
+                        FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <CheckBox IsChecked="{x:Bind _viewModel.UseGpu, Mode=TwoWay}"
+                        AutomationProperties.AutomationId="Intelligent.StyleTransfer.UseGpuForEnhancement"
+                        HorizontalContentAlignment="Stretch">
+                        <TextBlock l:Uids.Uid="Ui_Inference_EnhancementUseGpu" TextWrapping="Wrap"/>
+                    </CheckBox>
+                    <TextBlock l:Uids.Uid="Ui_Inference_EnhancementGpuHint" TextWrapping="Wrap"
+                        FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+
             <StackPanel HorizontalAlignment="Center">
                 <StackPanel 
                     Orientation="Horizontal"

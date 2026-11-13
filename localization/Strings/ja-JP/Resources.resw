@@ -2138,4 +2138,19 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · CPU 処理に切り替え済み</value></data>
   <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>グラフィックス デバイスでエラーが発生しました。プロジェクトを保護するため、編集と保存を停止しました。最後に保存したバージョンを開き直してください。未保存の変更は復元できません。</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>GPU アクセラレーションを使用</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>有効にすることを推奨します。処理が速くなる場合がありますが、ビデオメモリの使用量が増えます。利用できない場合は自動的に CPU に切り替えます。</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>現在のスタイル変換モデルは CPU を使用します。GPU は後続の高画質化に使用できます。</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>高画質化に GPU を使用</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>有効にすることを推奨します。高画質化にのみ適用され、スタイル変換は CPU を使用します。GPU を利用できない場合は CPU に切り替えます。</value>
+  </data>
 </root>

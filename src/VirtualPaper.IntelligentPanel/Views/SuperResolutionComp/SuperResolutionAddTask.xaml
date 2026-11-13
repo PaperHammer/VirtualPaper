@@ -260,6 +260,21 @@
                 </StackPanel>
             </Border>
 
+            <Border Padding="16" CornerRadius="8"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                Visibility="{x:Bind _viewModel.ShowGpuOptions, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                <StackPanel Spacing="6">
+                    <CheckBox IsChecked="{x:Bind _viewModel.UseGpu, Mode=TwoWay}"
+                        AutomationProperties.AutomationId="Intelligent.SuperResolution.UseGpu"
+                        HorizontalContentAlignment="Stretch">
+                        <TextBlock l:Uids.Uid="Ui_Inference_UseGpu" TextWrapping="Wrap"/>
+                    </CheckBox>
+                    <TextBlock l:Uids.Uid="Ui_Inference_SuperResolutionGpuHint" TextWrapping="Wrap"
+                        FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </Border>
+
             <Border
                 Padding="12,10"
                 CornerRadius="8"

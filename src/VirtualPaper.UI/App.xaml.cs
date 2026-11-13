@@ -159,8 +159,8 @@ namespace VirtualPaper.UI {
                     services.GetRequiredService<InferenceDevicePolicies>().DepthEstimate))
                 .AddSingleton<IStyleTransfer>(services => new AdaIn(
                     services.GetRequiredService<InferenceDevicePolicies>().StyleTransfer))
-                .AddSingleton<ISuperResolution>(services => new Realesrgan(
-                    services.GetRequiredService<InferenceDevicePolicies>().SuperResolution))
+                .AddSingleton<IInferenceModelProvider<ISuperResolution>>(services => new InferenceModelPool<ISuperResolution>(
+                    services.GetRequiredService<InferenceDevicePolicies>().SuperResolution, policy => new Realesrgan(policy)))
 
                 .AddTransient<Workloads.Creation.StaticImg.MainPage>()
                 .AddTransient<Workloads.Creation.WebBackdrop.MainPage>()

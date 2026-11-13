@@ -2138,4 +2138,19 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Repli sur le processeur</value></data>
   <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>Le périphérique graphique a rencontré une erreur. La modification et l’enregistrement ont été arrêtés pour protéger votre projet. Rouvrez la dernière version enregistrée. Les modifications non enregistrées ne peuvent pas être récupérées.</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>Utiliser l’accélération GPU</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>Recommandé. Le GPU peut accélérer le traitement, mais utilise davantage de mémoire vidéo. S’il est indisponible, le traitement passe automatiquement au CPU.</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>Le modèle actuel de transfert de style utilise le CPU. Le GPU peut servir à l’amélioration d’image qui suit.</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>Utiliser le GPU pour l’amélioration</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>Recommandé. S’applique uniquement à l’amélioration d’image ; le transfert de style utilise le CPU. Si le GPU est indisponible, le CPU prend le relais.</value>
+  </data>
 </root>

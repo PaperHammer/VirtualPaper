@@ -2138,4 +2138,19 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Auf CPU zurückgefallen</value></data>
   <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>Beim Grafikgerät ist ein Fehler aufgetreten. Zum Schutz Ihres Projekts wurden Bearbeitung und Speichern angehalten. Öffnen Sie die zuletzt gespeicherte Version erneut. Nicht gespeicherte Änderungen können nicht wiederhergestellt werden.</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>GPU-Beschleunigung verwenden</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>Empfohlen. Die GPU kann die Verarbeitung beschleunigen, benötigt aber mehr Grafikspeicher. Ist sie nicht verfügbar, wird automatisch die CPU verwendet.</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>Das aktuelle Modell zur Stilübertragung nutzt die CPU. Die GPU kann für die anschließende Bildverbesserung verwendet werden.</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>GPU zur Bildverbesserung verwenden</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>Empfohlen. Gilt nur für die Bildverbesserung; die Stilübertragung nutzt die CPU. Ist die GPU nicht verfügbar, wird die CPU verwendet.</value>
+  </data>
 </root>

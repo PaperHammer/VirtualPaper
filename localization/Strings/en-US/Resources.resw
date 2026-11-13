@@ -2145,4 +2145,19 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · CPU fallback</value></data>
   <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>The graphics device has encountered an error. Editing and saving have stopped to protect your project. Please reopen the last saved version. Unsaved changes cannot be recovered.</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>Use GPU acceleration</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>Recommended. GPU processing can be faster but uses more video memory. If unavailable, processing automatically falls back to the CPU.</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>The current style transfer model uses the CPU. GPU acceleration is available for the enhancement stage.</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>Use GPU for enhancement</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>Recommended. Applies only to enhancement; style transfer uses the CPU. If GPU processing is unavailable, enhancement falls back to the CPU.</value>
+  </data>
 </root>

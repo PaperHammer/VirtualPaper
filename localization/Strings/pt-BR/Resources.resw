@@ -2138,4 +2138,19 @@ Se não funcionar, reinicie o Windows. Algumas versões de prévia do Windows 10
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Retorno à CPU</value></data>
   <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>Ocorreu um erro no dispositivo gráfico. A edição e o salvamento foram interrompidos para proteger o projeto. Reabra a última versão salva. As alterações não salvas não podem ser recuperadas.</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>Usar aceleração por GPU</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>Recomendado. A GPU pode acelerar o processamento, mas usa mais memória de vídeo. Se ela estiver indisponível, a CPU será usada automaticamente.</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>O modelo atual de transferência de estilo usa a CPU. A GPU pode ser usada na etapa seguinte de melhoria da imagem.</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>Usar GPU para melhorar a imagem</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>Recomendado. Aplica-se apenas à melhoria da imagem; a transferência de estilo usa a CPU. Se a GPU estiver indisponível, a CPU será usada.</value>
+  </data>
 </root>

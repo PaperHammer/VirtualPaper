@@ -14,6 +14,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
@@ -84,16 +85,18 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             try {
                 ct.ThrowIfCancellationRequested();
 
-                taskItem.Status = TaskStatus.Running;
-
                 var data = taskItem.Data;
+                using var model = await AppServiceLocator.Services.GetRequiredService<IInferenceModelProvider<ISuperResolution>>()
+                    .AcquireAsync(data.UseGpu, ct);
+                ct.ThrowIfCancellationRequested();
+                taskItem.Status = TaskStatus.Running;
                 tempDir = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName());
                 Directory.CreateDirectory(tempDir);
 
                 string ext = Path.GetExtension(data.SourceFilePath);
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
-                var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
+                var superResolution = model.Model;
                 using (taskItem.ObserveInference(superResolution)) {
                     await Task.Run(() => {
                         ct.ThrowIfCancellationRequested();

@@ -4,6 +4,8 @@
 
 The local test chain combines MSTest project tests, real installer acceptance and WinUI interaction tests. Start with `Run-Tests.ps1` for the complete flow; the focused runners below reuse its individual stages.
 
+For manual FP32/FP16 model measurements without application/UI startup, see [InferencePrecision](InferencePrecision/README.md). This separate headless probe uses actual Release native runtimes and does not replace project tests or installed acceptance.
+
 `VirtualPaper.UIOperationTest` is a standalone, unpackaged WinUI executable that also serves as the test host. Component cases load production pages through project references. Application cases start an isolated, real Core process, which launches the real UI. Neither uses Sandbox or connects to a user's running VirtualPaper instance.
 
 ## Layout
@@ -457,6 +459,8 @@ The workflow contracts include isolated Git tests for a single version commit on
 Package summary contracts also reject mismatched installer hashes/versions, MSIX source snapshots and package identities, missing profile reports, and incomplete built-in wallpaper evidence. Both channels require all seven installed extended UI modules even when a reduced report claims that every expected case passed. Positive fixtures are restored and rechecked after negative cases; these contracts perform no real installation or UI interaction.
 
 ## Adding coverage
+
+AI device-choice regression runs in the headless ML and UI logic projects: startup permission/defaults, per-task choice snapshots, forwarding to enhancement, same-device reuse, waiting/canceling before a backend switch, disposal and shared GPU failure memory. Depth generation retains its existing UI and policy. Real desktop checkbox layout and interaction remain part of separately authorized UI acceptance.
 
 Localization sources and language metadata live in [`localization`](../localization/README.md). `Test-LocalizationResources.ps1` runs inside workflow contracts without UI or installation. Core tests exercise matching, legacy/canonical installer markers, first-run preference ordering, upgrade retention and neutral/satellite fallback. Artifact tests compare all advertised UI locales with embedded source snapshots; MSIX package validation checks the catalog declarations and actual translation files.
 

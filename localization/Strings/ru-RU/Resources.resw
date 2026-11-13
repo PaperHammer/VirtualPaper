@@ -2138,4 +2138,19 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · Переход на ЦП</value></data>
   <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>Произошла ошибка графического устройства. Редактирование и сохранение остановлены для защиты проекта. Откройте последнюю сохранённую версию. Несохранённые изменения невозможно восстановить.</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>Использовать ускорение GPU</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>Рекомендуется. GPU может ускорить обработку, но требует больше видеопамяти. Если он недоступен, обработка автоматически выполняется на CPU.</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>Текущая модель переноса стиля использует CPU. GPU можно использовать на следующем этапе улучшения изображения.</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>Использовать GPU для улучшения</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>Рекомендуется. Применяется только к улучшению изображения; перенос стиля выполняется на CPU. Если GPU недоступен, используется CPU.</value>
+  </data>
 </root>

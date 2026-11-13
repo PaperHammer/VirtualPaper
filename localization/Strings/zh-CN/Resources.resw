@@ -2145,4 +2145,19 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
   <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · 已回退到 CPU</value></data>
   <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>图形设备出现异常。为保护项目，已停止编辑和保存。请重新打开上次保存的版本。未保存的更改无法恢复。</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>使用 GPU 加速</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>建议开启。GPU 通常能缩短处理时间，但会增加显存占用。不可用时会自动改用 CPU。</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>当前风格迁移模型使用 CPU，GPU 可用于后续高清处理。</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>使用 GPU 进行高清处理</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>建议开启。仅用于后续高清处理，风格迁移仍使用 CPU。GPU 不可用时会自动改用 CPU。</value>
+  </data>
 </root>

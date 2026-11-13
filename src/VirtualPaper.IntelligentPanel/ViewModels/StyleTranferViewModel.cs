@@ -15,6 +15,7 @@ using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
@@ -96,7 +97,6 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
                 var adain = AppServiceLocator.Services.GetRequiredService<IStyleTransfer>();
-                var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
                 using (taskItem.ObserveInference(adain)) {
                     await Task.Run(() => {
                         ct.ThrowIfCancellationRequested();
@@ -113,6 +113,9 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                     }, ct);
                 }
 
+                using var model = await AppServiceLocator.Services.GetRequiredService<IInferenceModelProvider<ISuperResolution>>()
+                    .AcquireAsync(data.UseGpu, ct);
+                var superResolution = model.Model;
                 using (taskItem.ObserveInference(superResolution)) {
                     await Task.Run(() => {
                         ct.ThrowIfCancellationRequested();

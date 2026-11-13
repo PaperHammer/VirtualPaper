@@ -8,12 +8,25 @@ using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.ML.Inference;
 
 namespace VirtualPaper.UI.Test.T_Intelligent;
 
 [TestClass]
 [DoNotParallelize]
 public class TaskExecutionTests {
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task EachTask_ForwardsItsOwnGpuChoice_ToTheEnhancementStage(bool style) {
+        await using var fixture = new Fixture(style);
+        var cpu = fixture.Add(useGpu: false);
+        var gpu = fixture.Add(useGpu: true);
+        await Task.WhenAll(cpu.Execution, gpu.Execution).WaitAsync(TimeSpan.FromSeconds(8));
+        Assert.IsTrue(cpu.IsCompleted && gpu.IsCompleted);
+        CollectionAssert.AreEquivalent(new[] { false, true }, fixture.Engine.GpuRequests.ToArray());
+    }
+
     [TestMethod]
     [DataRow(false, 2)]
     [DataRow(true, 3)]
@@ -146,16 +159,16 @@ public class TaskExecutionTests {
             InputBytes = File.ReadAllBytes(input);
             Engine = new Engine(hold);
             _services = new ServiceCollection().AddSingleton<IStyleTransfer>(Engine)
-                .AddSingleton<ISuperResolution>(Engine).BuildServiceProvider();
+                .AddSingleton<IInferenceModelProvider<ISuperResolution>>(Engine).BuildServiceProvider();
             AppServiceLocator.Services = _services;
         }
 
-        public IntelligentTaskItem Add() {
+        public IntelligentTaskItem Add(bool useGpu = true) {
             string path = Path.Combine(_root, $"source-{_next++}.png");
             File.WriteAllBytes(path, InputBytes);
             bool added = _style
-                ? _styles.AddTask(new StyleTransferData(path, "100 B", ".png", 2, 2, path, "Test", "100 B", ".png"))
-                : _super.AddTask(new SuperResolutionData(path, "100 B", ".png", 2, 2, EnhanceMode.SuperResolution, 2, 4, 4));
+                ? _styles.AddTask(new StyleTransferData(path, "100 B", ".png", 2, 2, path, "Test", "100 B", ".png", useGpu: useGpu))
+                : _super.AddTask(new SuperResolutionData(path, "100 B", ".png", 2, 2, EnhanceMode.SuperResolution, 2, 4, 4, useGpu));
             Assert.IsTrue(added);
             IntelligentTaskItem item = _style ? _styles.Tasks[^1] : _super.Tasks[^1];
             _items.Add(item); return item;
@@ -187,7 +200,13 @@ public class TaskExecutionTests {
         }
     }
 
-    private sealed class Engine(bool hold) : IStyleTransfer, ISuperResolution {
+    private sealed class Engine(bool hold) : IStyleTransfer, ISuperResolution, IInferenceModelProvider<ISuperResolution> {
+        public ConcurrentQueue<bool> GpuRequests { get; } = new();
+        public Task<InferenceModelLease<ISuperResolution>> AcquireAsync(bool useGpu, CancellationToken token = default) {
+            token.ThrowIfCancellationRequested();
+            GpuRequests.Enqueue(useGpu);
+            return Task.FromResult(new InferenceModelLease<ISuperResolution>(this, () => { }));
+        }
         private readonly ManualResetEventSlim _release = new(!hold);
         private int _active, _maximum, _runs, _failed;
         private bool _disposed;

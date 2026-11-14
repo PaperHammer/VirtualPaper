@@ -71,7 +71,8 @@ public partial class App : Application {
                 new UiTestCase("Application.MsixProfile.Prepare", MsixProfileTests.PrepareAsync),
                 new UiTestCase("Application.MsixProfile.Verify", MsixProfileTests.VerifyAsync)];
         if (commandLine.Length == 5 && commandLine[3] == "--module")
-            cases = cases.Where(test => test.Name == "Application." + commandLine[4] ||
+            cases = cases.Where(test => test.Name == commandLine[4] || test.Name.StartsWith(commandLine[4] + ".", StringComparison.Ordinal) ||
+                test.Name == "Application." + commandLine[4] ||
                 test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
         else if (commandLine.Length == 5)
             cases = cases.Where(test => !test.RequiresIdleEnvironment).ToArray();

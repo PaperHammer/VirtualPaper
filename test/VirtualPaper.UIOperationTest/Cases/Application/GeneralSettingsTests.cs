@@ -100,11 +100,16 @@ internal static class GeneralSettingsTests {
             Check(!ui.HasExited && ui.Id == languageUiId, "Catalog language switch restarted the UI");
             await Task.Run(() => Check(ApplicationUi.SelectedLabel(ApplicationUi.Find(root, "Settings.General.Language")) == language.Language,
                 "Language selector lost its selected value"));
-            string expectedTooltip = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "SidebarIntelligentFullName");
-            await Task.Run(() => ApplicationUi.VerifyToolTipAsync(ui.MainWindowHandle,
-                ApplicationUi.Find(root, "App.Navigation.Library"), LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "SidebarRepository")));
-            await Task.Run(() => ApplicationUi.VerifyToolTipAsync(ui.MainWindowHandle,
-                ApplicationUi.Find(root, "App.Navigation.Intelligent"), expectedTooltip));
+            foreach (var (item, key) in new[] {
+                ("Library", "SidebarRepository"), ("Projects", "SidebarProject"), ("Intelligent", "SidebarIntelligentFullName")
+            }) {
+                string expected = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, key);
+                await Task.Run(async () => {
+                    var navigation = ApplicationUi.Find(root, "App.Navigation." + item);
+                    Check(navigation.Current.Name == expected, "Localized navigation accessible name: " + item);
+                    await ApplicationUi.VerifyToolTipAsync(ui.MainWindowHandle, navigation, expected);
+                });
+            }
         }
         string finalLanguage = SupportedLanguages.Languages[^1].Codes[0];
         await session.CloseUiAsync();

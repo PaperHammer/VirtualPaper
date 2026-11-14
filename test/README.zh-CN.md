@@ -49,9 +49,11 @@ test/
 
 安装包语言检查按合并 PRI 中的语言限定符逐条核对菜单文案。契约夹具拒绝语种错配、候选缺失／重复、旧文案及错误资源映射身份。MSIX 检查复用一次 PRI 转储验证菜单、内嵌 XAML 和文件路径，并使用传入的 MakePri 工具。
 
-`Application.ProjectActivation.StartForwardReuseAndReopen` 覆盖带中文及空格路径的真实项目打开、EXE 冷启动、主界面出现后 Splash 收起、已有实例转交、图片／Web 重复打开时切换 Tab、未保存修改保留、主界面重开和清空工作区后再打开。已安装 MSIX 仍先通过 AUMID 启动 Core，再用 RPC 提交初始项目，不将其算作资源管理器注册或命令行触发 Splash 的验收。可用 `-Module ProjectActivation` 单独运行；Standard、Extended 均包含此项，Extended 要求该模块存在。
+`Application.ProjectActivation.StartForwardReuseAndReopen` 覆盖带中文及空格路径的真实项目打开、EXE 冷启动、主界面出现后 Splash 收起、已有实例转交、图片／Web 重复打开时切换 Tab、未保存修改保留、主界面重开和清空工作区后再打开。已安装 EXE 通过 `-InstalledExe` 调用 Windows Shell 文件关联，核对安装命令、图标和本地化菜单，不覆盖其他应用的默认选择。已安装 MSIX 从 Windows Shell 文件关联列表中按 AUMID 选中本包的 `IAssocHandler`，执行冷启动及重复打开，不修改用户默认程序；临时使用 `IPackageDebugSettings` 环境与恢复辅助程序保留进程测试隔离，不修改安装包清单，激活后立即关闭调试设置。Release 输出仍通过项目参数启动。可用 `-Module ProjectActivation` 单独运行；Standard、Extended 均包含此项，Extended 要求该模块存在。
 
-MSIX 使用独立完整入口：在未锁定 Windows 桌面以管理员执行 `pwsh -NoProfile -File test/Run-MsixTests.ps1`。流程创建本轮独有的测试包身份和临时签名证书，Release 重建后执行八组项目测试及脚本检查（不允许跳过），构建／检查自包含 MSIX，再安装到当前用户。复用现有扩展 UI 套件，真实走 Shell AUMID 激活 → Core → 生产 UI／播放器；原生 API 校验 Core、UI 及重启 UI 的包身份。必需阶段还包括首次自动打开 UI、真实导入、同包重装、偏好／导入卡片／内置壁纸保留、新配置启动和卸载。重装前后的保留配置与扩展 UI 配置分别隔离。只清理本轮测试包和证书，原始报告及隔离配置保存在新 `TestResults/msix-acceptance-*` 目录。UI 失败、缺失或桌面不可用均不能通过；强制清理进程不能算正常退出。WACK、跨版本升级、干净机器运行依赖、持久开机启动／系统设置仍需单独发布验收。现有两条 GitHub 工作流继续只验收 Inno。
+已安装包的定向诊断可使用 `pwsh -NoProfile -File test/Run-MsixTests.ps1 -Mode Focused -Module ProjectActivation -PackageArtifact dist/msix/package.json`：只安装、卸载所选测试包，并运行指定应用模块。生成的 `Focused` 报告不能替代 `UI`、`Smoke` 或 `Full` 验收；CI 仍强制执行完整 UI 套件。
+
+MSIX 使用独立完整入口：在未锁定 Windows 桌面以管理员执行 `pwsh -NoProfile -File test/Run-MsixTests.ps1`。流程创建本轮独有的测试包身份和临时签名证书，Release 重建后执行八组项目测试及脚本检查（不允许跳过），构建／检查自包含 MSIX，再安装到当前用户。复用现有扩展 UI 套件，真实走 Shell AUMID 激活 → Core → 生产 UI／播放器；原生 API 校验 Core、UI 及重启 UI 的包身份。必需阶段还包括首次自动打开 UI、真实导入、同包重装、偏好／导入卡片／内置壁纸保留、新配置启动和卸载。重装前后的保留配置与扩展 UI 配置分别隔离。只清理本轮测试包和证书，原始报告及隔离配置保存在新 `TestResults/msix-acceptance-*` 目录。UI 失败、缺失或桌面不可用均不能通过；强制清理进程不能算正常退出。WACK、跨版本升级、干净机器运行依赖、持久开机启动／系统设置仍需单独发布验收。CI 的 EXE／MSIX 验收在各自独立的 Windows VM 上顺序完成冒烟卸载与独立扩展 UI，详见下文双渠道流水线。
 
 Inno 本地完整验收使用与 CI 一致的阶段。请以**管理员身份**打开 PowerShell 7.2 或更高版本后运行：
 
@@ -131,6 +133,8 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module WallpaperLibrary
 # 只运行一个具体用例，不重复整个模块：
 ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Module WallpaperLibrary.ImportMultipleFormatsAndReopen
+# 也支持按组件组或完整用例名选择：
+./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Module Localization
 # 安装目录中必须已有 Real-ESRGAN 模型，不会自动下载。
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```
@@ -141,7 +145,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 默认总超时为 180 秒，`-Suite Extended` 为 900 秒。可按需将 `-TimeoutSeconds` 设置为 30 至 900。报告旁的 `.artifacts` 目录会保留隔离设置和 Core/UI 日志，临时运行目录会被清理。
 
-标准测试集包含 25 个用例。扩展测试集共 29 个用例，在此基础上增加真实模型推理与队列取消、CPU/GPU 设备选择和风格迁移后的高清处理、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。内置 3D 壁纸用例需要构建中的 Depth Anything 模型来校验缓存键，但不需要重新推理。扩展集的 Real-ESRGAN、AdaIN（含外部权重）和 Depth Anything 模型必须预先安装；缺失模型会使验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
+标准测试集运行常规组件与应用用例，当前清单以 `VirtualPaper.UIOperationTest/App.xaml.cs` 为准。扩展测试集在此基础上增加真实模型推理与队列取消、CPU/GPU 设备选择和风格迁移后的高清处理、12 轮 UI 打开关闭及屏保页面通知，以及深度推理和渲染帧暂停、恢复检查。内置 3D 壁纸用例需要构建中的 Depth Anything 模型来校验缓存键，但不需要重新推理。扩展集的 Real-ESRGAN、AdaIN（含外部权重）和 Depth Anything 模型必须预先安装；缺失模型会使验收失败，不会静默缩减覆盖范围。CI 运行扩展测试集。真实空闲屏保测试仍需显式选择；锁屏和修改注册表仍不纳入测试。
 
 ### 没有可用桌面的机器
 

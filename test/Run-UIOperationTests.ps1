@@ -3,6 +3,7 @@ param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
     [string]$ReportPath = (Join-Path ([IO.Path]::GetTempPath()) ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
     [string]$CoreExe,
+    [switch]$InstalledExe,
     [string]$HostExe,
     [string]$PackageFullName,
     [string]$CIOwnershipPath,
@@ -15,6 +16,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if ($Module -and $Suite -ne 'Standard') { throw 'Choose either a single module or an extended suite.' }
+if ($InstalledExe -and (-not $CoreExe -or $PackageFullName)) { throw 'Installed EXE acceptance requires its explicit Core executable.' }
 if ($DataRoot -and -not $PackageFullName) { throw 'An external retained DataRoot is only supported for installed MSIX acceptance.' }
 . (Join-Path $PSScriptRoot 'PackageArtifactSupport.ps1')
 $ciArtifact = $null
@@ -112,6 +114,8 @@ New-Item -ItemType Directory -Path $sessionRoot -Force | Out-Null
 $startInfo.Environment['VIRTUALPAPER_TEST_SESSION'] = $sessionId
 $startInfo.Environment['VIRTUALPAPER_TEST_DATA_ROOT'] = $sessionRoot
 $startInfo.Environment['VIRTUALPAPER_TEST_CORE_EXE'] = $CoreExe
+if ($InstalledExe) { $startInfo.Environment['VIRTUALPAPER_TEST_INSTALLED_EXE'] = '1' }
+else { [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_INSTALLED_EXE') }
 if ($BuiltInPayload) {
     $BuiltInPayload = [IO.Path]::GetFullPath($BuiltInPayload)
     if (-not (Test-Path -LiteralPath $BuiltInPayload -PathType Container)) { throw 'Installed built-in wallpaper fixture is missing.' }
@@ -120,9 +124,11 @@ if ($BuiltInPayload) {
 if ($PackageFullName) {
     $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_FULL_NAME'] = $PackageFullName
     $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_AUMID'] = "$($installed[0].PackageFamilyName)!App"
+    $startInfo.Environment['VIRTUALPAPER_TEST_ACTIVATION_RESUMER'] = Join-Path $PSScriptRoot "VirtualPaper.InstallerTest/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.exe"
 } else {
     [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_PACKAGE_FULL_NAME')
     [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_PACKAGE_AUMID')
+    [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_ACTIVATION_RESUMER')
 }
 $process = $null
 try {
@@ -140,7 +146,7 @@ try {
         Assert-ExtendedUIModules $report
     }
     $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
-    if ($process.ExitCode -ne 0 -or (Get-UIOperationReportOutcome $report) -ne 'Passed') {
+    if ($process.ExitCode -ne 0 -or (Get-UIOperationReportOutcome $report -FocusedModule $Module) -ne 'Passed') {
         throw "UI operation tests failed: $($report | ConvertTo-Json -Depth 5)"
     }
     if ($PackageFullName -and @($applicationRuns | Where-Object {

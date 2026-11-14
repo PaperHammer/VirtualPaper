@@ -303,6 +303,31 @@ public class EffectPresetStoreTests {
     }
 
     [TestMethod]
+    public async Task Load_RetriesATransientExclusiveHandleWithoutChangingTheCatalog() {
+        var original = New("Saved preset");
+        await _store.SaveAsync(original);
+        byte[] before = await File.ReadAllBytesAsync(_path);
+        Task<IReadOnlyList<EffectPreset>> reading;
+        using (var locked = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.None)) {
+            reading = _store.LoadAsync();
+            Assert.IsFalse(reading.IsCompleted, "A transient lock must not immediately fail the read.");
+        }
+        var loaded = await reading.WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.AreEqual(original.Id, loaded.Single(item => !item.IsBuiltIn).Id);
+        CollectionAssert.AreEqual(before, await File.ReadAllBytesAsync(_path));
+    }
+
+    [TestMethod]
+    public async Task Load_PermanentExclusiveHandleStillReportsFailure() {
+        await _store.SaveAsync(New("Saved preset"));
+        byte[] before = await File.ReadAllBytesAsync(_path);
+        using (var locked = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.None)) {
+            await Assert.ThrowsExactlyAsync<IOException>(() => _store.LoadAsync().WaitAsync(TimeSpan.FromSeconds(3)));
+        }
+        CollectionAssert.AreEqual(before, await File.ReadAllBytesAsync(_path));
+    }
+
+    [TestMethod]
     public async Task FailedReplacement_KeepsThePreviouslySavedFileAndRemovesTemporaryFiles() {
         var original = New("Original");
         await _store.SaveAsync(original);

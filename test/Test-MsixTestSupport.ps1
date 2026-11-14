@@ -11,6 +11,25 @@ function New-PassReport {
         Stages = @(Get-MsixAcceptanceStages | ForEach-Object { [pscustomobject]@{ Name = $_; Status = 'Passed' } }) }
 }
 Assert-MsixAcceptanceReport (New-PassReport)
+$focused = New-PassReport
+$focused | Add-Member Mode 'Focused'
+$focused | Add-Member Module 'ProjectActivation'
+$focused.Stages = @(Get-MsixAcceptanceStages Focused | ForEach-Object { [pscustomobject]@{ Name = $_; Status = 'Passed' } })
+Assert-MsixAcceptanceReport $focused Focused
+Assert-Rejected { Assert-MsixAcceptanceReport $focused UI }
+Assert-Rejected { Assert-MsixAcceptanceReport $focused Smoke }
+Assert-Rejected { Assert-MsixAcceptanceReport $focused }
+$focused.Mode = 'UI'
+Assert-Rejected { Assert-MsixAcceptanceReport $focused UI }
+$focused.Mode = 'Focused'
+$focused.Module = ''
+Assert-Rejected { Assert-MsixAcceptanceReport $focused Focused }
+$focused.Module = 'ProjectActivation'
+foreach ($stage in $focused.Stages) {
+    $stage.Status = 'Skipped'
+    Assert-Rejected { Assert-MsixAcceptanceReport $focused Focused }
+    $stage.Status = 'Passed'
+}
 $report = New-PassReport
 $report.Stages += [pscustomobject]@{ Name = 'Unknown'; Status = 'Failed' }
 Assert-Rejected { Assert-MsixAcceptanceReport $report }

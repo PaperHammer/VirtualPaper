@@ -4,7 +4,8 @@ param(
     [string] $ResultsRoot = "TestResults/msix-acceptance-$(Get-Date -Format 'yyyyMMdd-HHmmss')-$([guid]::NewGuid().ToString('N').Substring(0, 8))",
     [switch] $IncludeMLIntegration,
     [string] $PackageArtifact,
-    [ValidateSet('Full', 'Smoke', 'UI')][string] $Mode = 'Full'
+    [ValidateSet('Full', 'Smoke', 'UI', 'Focused')][string] $Mode = 'Full',
+    [string] $Module
 )
 $ErrorActionPreference = 'Stop'
 if (-not $IsWindows) { throw 'MSIX acceptance requires Windows.' }
@@ -13,7 +14,8 @@ if (-not $IsWindows) { throw 'MSIX acceptance requires Windows.' }
 . "$PSScriptRoot/MsixTestSupport.ps1"
 . "$PSScriptRoot/BuiltInWallpaperTestSupport.ps1"
 . "$PSScriptRoot/PackageArtifactSupport.ps1"
-if (($Mode -ne 'Full') -ne [bool]$PackageArtifact) { throw 'Smoke/UI modes require an already built package artifact; Full builds its own package.' }
+if (($Mode -ne 'Full') -ne [bool]$PackageArtifact) { throw 'Smoke/UI/Focused modes require an already built package artifact; Full builds its own package.' }
+if (($Mode -eq 'Focused') -ne [bool]$Module) { throw 'Only Focused mode requires and accepts an application Module.' }
 $artifact = if ($PackageArtifact) { Get-PackageArtifact -ManifestPath $PackageArtifact -Channel MSIX } else { $null }
 if ($artifact -and $artifact.IdentityName -notmatch '^PaperHammer\.VirtualPaper\.Test\.[0-9a-f]{16}$' -and
     ($env:GITHUB_ACTIONS -cne 'true' -or $env:RUNNER_ENVIRONMENT -cne 'github-hosted')) {
@@ -31,7 +33,7 @@ if (-not $msbuild) { throw 'Visual Studio MSBuild is required.' }
 Get-Command dotnet.exe,node.exe,Get-AppxPackage,Add-AppxPackage,Remove-AppxPackage,New-SelfSignedCertificate -ErrorAction Stop | Out-Null
 [void](New-Item -ItemType Directory -Path $ResultsRoot)
 $reportPath = Join-Path $ResultsRoot 'msix-acceptance.json'
-$report = [ordered]@{ Passed = $false; Mode = $Mode; SourceSha = $artifact.SourceSha; Framework = $null
+$report = [ordered]@{ Passed = $false; Mode = $Mode; Module = $Module; SourceSha = $artifact.SourceSha; Framework = $null
     PackageFullName = $null; PackageSha256 = $null; BuiltInWallpapers = $null; Stages = @(); Error = $null }
 $runId = [guid]::NewGuid().ToString('N')
 # An identity owned only by this run prevents overwriting a daily preview/Store installation.
@@ -126,7 +128,7 @@ try {
     $environment = Get-UIOperationEnvironment
     $environment | ConvertTo-Json -Depth 6 | Set-Content "$ResultsRoot/environment.json" -Encoding utf8
     if (-not $environment.Available) {
-        $skippedStage = if ($Mode -eq 'UI') { 'ExtendedUI' } else { 'FirstRun' }
+        $skippedStage = if ($Mode -eq 'Focused') { 'FocusedUI' } elseif ($Mode -eq 'UI') { 'ExtendedUI' } else { 'FirstRun' }
         $report.Stages += [ordered]@{ Name = $skippedStage; Status = 'Skipped'; Error = $environment.Reason }
         New-UIOperationSkipReport $environment | ConvertTo-Json -Depth 8 | Set-Content "$ResultsRoot/ui-skipped.json" -Encoding utf8
         throw "Required real MSIX UI acceptance was skipped: $($environment.Reason)"
@@ -146,7 +148,7 @@ try {
                 ConvertTo-Json | Set-Content -LiteralPath $ownershipPath -Encoding utf8NoBOM
         }
     }
-    if ($Mode -ne 'UI') {
+    if ($Mode -notin @('UI', 'Focused')) {
         Invoke-Stage FirstRun {
             Invoke-PackageUI 'first-run' 'MsixProfile.Prepare' $retained
             $script:builtIns = New-BuiltInWallpaperAcceptance (Join-Path $installed.InstallLocation 'BuiltInWallpapers') $retained
@@ -155,8 +157,9 @@ try {
             Initialize-BuiltInWallpaperReinstallFixture $builtIns
         }
     }
-    if ($Mode -ne 'Smoke') { Invoke-Stage ExtendedUI { Invoke-PackageUI 'extended-ui' '' '' -Extended } }
-    if ($Mode -ne 'UI') {
+    if ($Mode -eq 'Focused') { Invoke-Stage FocusedUI { Invoke-PackageUI 'focused-ui' $Module '' } }
+    elseif ($Mode -ne 'Smoke') { Invoke-Stage ExtendedUI { Invoke-PackageUI 'extended-ui' '' '' -Extended } }
+    if ($Mode -notin @('UI', 'Focused')) {
         Invoke-Stage Reinstall {
             Assert-NoMsixTestProcesses $installed.InstallLocation
             if ((Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash -ine $report.PackageSha256) { throw 'The package changed between install/reinstall.' }

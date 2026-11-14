@@ -330,9 +330,9 @@ namespace VirtualPaper.WpSettingsPanel.Views {
         private void WallpaperCard_PointerEntered(object sender, PointerRoutedEventArgs args) {
             if (sender is not FrameworkElement card || ReferenceEquals(card, _hoveredCard)) return;
             ClearCardHover();
-            if (_isOrganizing || wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) return;
+            if (wallpapersLibView.SelectionMode == ListViewSelectionMode.Multiple) return;
             _hoveredCard = card;
-            _hoverTimer.Start();
+            if (!_isOrganizing) _hoverTimer.Start();
         }
 
         private void WallpaperCard_PointerExited(object sender, PointerRoutedEventArgs args) {
@@ -477,7 +477,12 @@ namespace VirtualPaper.WpSettingsPanel.Views {
                 await _viewModel.OrganizeAsync(items, tags: [tags.Text], mode: update);
             }
             catch (Exception ex) { ArcLog.GetLogger<LibraryContents>().Error(ex); GlobalMessageUtil.ShowException(ex); }
-            finally { _isOrganizing = false; RefreshFavoriteButtons(); }
+            finally {
+                _isOrganizing = false;
+                RefreshFavoriteButtons();
+                // Keep an enter received during the async save; a later exit clears it.
+                if (_hoveredCard is { IsLoaded: true }) _hoverTimer.Start();
+            }
         }
 
         private async Task EditInfoAsync(IWpBasicData data) {

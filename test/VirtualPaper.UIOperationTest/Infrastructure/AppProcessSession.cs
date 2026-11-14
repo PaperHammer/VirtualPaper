@@ -69,7 +69,8 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             startInfo.ArgumentList.Add("--open-project");
             foreach (string path in projectPaths) startInfo.ArgumentList.Add(path);
         }
-        _core = PackageActivation.ExpectedFullName != null ? PackageActivation.Start() : Process.Start(startInfo)
+        _core = PackageActivation.ExpectedFullName != null ? PackageActivation.Start(projectPaths?.FirstOrDefault())
+            : InstalledProjectActivation.IsEnabled && projectPaths is { Length: > 0 } ? InstalledProjectActivation.Start(projectPaths[0]) : Process.Start(startInfo)
             ?? throw new InvalidOperationException("Core process could not start.");
 
         await WaitAsync(async () => {
@@ -80,14 +81,29 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             }
             catch (global::Grpc.Core.RpcException) { return false; }
         }, "Core settings RPC readiness");
-        if (PackageActivation.ExpectedFullName != null && projectPaths is { Length: > 0 }) {
-            var request = new Grpc_ProjectPaths();
-            request.Paths.AddRange(projectPaths);
-            await _commands.OpenProjectsAsync(request, deadline: DateTime.UtcNow.AddSeconds(15));
-        }
+        if ((PackageActivation.ExpectedFullName != null || InstalledProjectActivation.IsEnabled) && projectPaths is { Length: > 1 })
+            await ForwardProjectFilesAsync(projectPaths.Skip(1).ToArray());
     }
 
     public async Task ForwardProjectFilesAsync(params string[] paths) {
+        if (PackageActivation.ExpectedFullName != null) {
+            foreach (string path in paths) {
+                using var process = PackageActivation.Start(path);
+                if (process.Id != CoreId) {
+                    await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+                    UiTestContext.Check(process.ExitCode == 0, "The package file-activation forwarder exited abnormally.");
+                }
+            }
+            return;
+        }
+        if (InstalledProjectActivation.IsEnabled) {
+            foreach (string path in paths) {
+                using var process = InstalledProjectActivation.Start(path);
+                await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+                UiTestContext.Check(process.ExitCode == 0, "The Shell project forwarder exited abnormally.");
+            }
+            return;
+        }
         string coreExe = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE")!;
         var start = new ProcessStartInfo(coreExe) { UseShellExecute = false,
             WorkingDirectory = Path.GetDirectoryName(coreExe)!, WindowStyle = ProcessWindowStyle.Hidden };

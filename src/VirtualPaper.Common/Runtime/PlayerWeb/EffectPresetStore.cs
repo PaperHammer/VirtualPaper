@@ -14,7 +14,10 @@ public sealed class EffectPresetStore {
     private async Task<List<EffectPreset>> ReadUserPresetsAsync() {
         if (!File.Exists(_path)) return [];
         // Preview windows may read while the manager atomically replaces the catalog.
-        await using var stream = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete, 4096, FileOptions.Asynchronous);
+        // ReplaceFile can briefly hold an exclusive handle on the new snapshot.
+        // Retry opening only; malformed JSON/metadata must still fail immediately.
+        await using var stream = await FileUtil.RetryReadAsync(() => Task.FromResult(
+            new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete, 4096, FileOptions.Asynchronous)));
         var catalog = await JsonSerializer.DeserializeAsync(stream, EffectPresetContext.Default.EffectPresetCatalog)
             ?? throw new InvalidDataException("Effect presets are empty.");
         if (catalog.Version != 1 || catalog.Items == null) throw new InvalidDataException("Unsupported effect preset file.");

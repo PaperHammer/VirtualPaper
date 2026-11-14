@@ -32,7 +32,10 @@
                         Icon="Library"
                         IsSelected="True">
                     </NavigationViewItem>-->
-                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Library">
+                    <NavigationViewItem x:Name="Nav_WpSettings" IsSelected="True" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Library" l:Uids.Uid="Ui_SidebarRepository_Navigation">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Visibility="Visible" l:Uids.Uid="Ui_SidebarRepository_ToolTip"/>
+                        </ToolTipService.ToolTip>
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate x:DataType="local:MainWindow">
                                 <StackPanel Orientation="Vertical" Width="52" Margin="-10,4,0,4">
@@ -42,7 +45,10 @@
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Edit" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Projects">
+                    <NavigationViewItem x:Name="Nav_Edit" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Projects" l:Uids.Uid="Ui_SidebarProject_Navigation">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Visibility="Visible" l:Uids.Uid="Ui_SidebarProject_ToolTip"/>
+                        </ToolTipService.ToolTip>
                         <!--TODO：IsSelected = true 时，若直接设置 Content 为 非IconElement or 非String 时会报错 -->
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
@@ -53,7 +59,10 @@
                             </DataTemplate>
                         </NavigationViewItem.ContentTemplate>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="Nav_Intelligent" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Intelligent">
+                    <NavigationViewItem x:Name="Nav_Intelligent" MinHeight="64" Padding="0" HorizontalContentAlignment="Center" AutomationProperties.AutomationId="App.Navigation.Intelligent" l:Uids.Uid="Ui_SidebarIntelligentFullName_Navigation">
+                        <ToolTipService.ToolTip>
+                            <ToolTip Visibility="Visible" l:Uids.Uid="Ui_SidebarIntelligentFullName_ToolTip"/>
+                        </ToolTipService.ToolTip>
                         <NavigationViewItem.ContentTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical" Width="52" Margin="-10,4,0,4">

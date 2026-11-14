@@ -99,9 +99,10 @@ internal static class ProjectActivationTests {
         await session.StopAsync();
         session.RecordEvidence(context);
         Check(((string[])context.Evidence["RuntimeErrors"]!).Length == 0, "Project activation logged runtime errors.");
-        context.Evidence["ColdCoreActivation"] = PackageActivation.ExpectedFullName == null ? "ProjectArguments" : "AUMIDThenProjectRpc";
+        context.Evidence["ColdCoreActivation"] = PackageActivation.ExpectedFullName != null || InstalledProjectActivation.IsEnabled
+            ? "WindowsShellAssociation" : "ProjectArguments";
         context.Evidence["UiClosedActivationAndClearedWorkspaceVerified"] = true;
-        context.Evidence["ExplorerRegistrationExercised"] = false;
+        context.Evidence["ExplorerRegistrationExercised"] = PackageActivation.ExpectedFullName != null || InstalledProjectActivation.IsEnabled;
     }
 
     private static List<AutomationElement> Tabs(AutomationElement root, string path) => root.FindAll(TreeScope.Descendants,

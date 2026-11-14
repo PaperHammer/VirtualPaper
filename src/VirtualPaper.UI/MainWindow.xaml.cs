@@ -41,8 +41,6 @@ namespace VirtualPaper.UI {
             _userSettings = userSettings;
             _intelligentTasks = intelligentTasks;
             this.InitializeComponent();
-            RefreshNavigationToolTips();
-            LanguageUtil.LanguageUpdated += RefreshNavigationToolTips;
             this.InitWindowConst();
             base.InitializeWindow();
 
@@ -162,21 +160,7 @@ namespace VirtualPaper.UI {
         }
 
         private void MainWindow_Closed(object sender, WindowEventArgs args) {
-            LanguageUtil.LanguageUpdated -= RefreshNavigationToolTips;
             App.ShutDown();
-        }
-
-        private void RefreshNavigationToolTips(object? sender = null, EventArgs? args = null) {
-            foreach (var (item, key) in new[] {
-                (Nav_WpSettings, "SidebarRepository"), (Nav_Edit, "SidebarProject"),
-                (Nav_Intelligent, "SidebarIntelligentFullName")
-            }) {
-                string text = LanguageUtil.GetI18n(key);
-                // Sidebar hints opt in to visibility; the shared style hides tooltips elsewhere.
-                if (ToolTipService.GetToolTip(item) is ToolTip tooltip) tooltip.Content = text;
-                else ToolTipService.SetToolTip(item, new ToolTip { Content = text, Visibility = Visibility.Visible });
-                Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(item, text);
-            }
         }
 
         #region ipc

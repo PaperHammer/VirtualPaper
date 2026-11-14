@@ -100,9 +100,13 @@ internal static class LocalizationLayoutTests {
             throw;
         }
         finally {
-            if (page != null) page.TestSurface.Child = null;
+            // Restore language while the fixture is still attached; changing
+            // XAML properties during its teardown can fail in the localizer.
             try { await LanguageUtil.SetLanguageAsync("en-US"); }
-            finally { AppServiceLocator.Services = previousServices; }
+            finally {
+                if (page != null) page.TestSurface.Child = null;
+                AppServiceLocator.Services = previousServices;
+            }
         }
     }
 

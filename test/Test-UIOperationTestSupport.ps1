@@ -50,6 +50,19 @@ foreach ($change in @(
 }
 Assert-Equal (Get-UIOperationReportOutcome (New-SkipReport)) 'Skipped' 'Explicit unavailable-environment report'
 Assert-Equal (Get-UIOperationReportOutcome (New-PassReport)) 'Passed' 'Existing host report remains supported'
+$component = [pscustomobject]@{ Passed = $true; ExpectedCount = 1
+    Results = @([pscustomobject]@{ Name = 'Localization.LongText.Layout'; Passed = $true; Evidence = @{} }) }
+Assert-Rejected $component 'Full acceptance must not accept component-only results'
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization) 'Passed' 'Explicit component group'
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization.LongText.Layout) 'Passed' 'Exact component case'
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule GeneralEffect -AllowFailure) 'Failed' 'Wrong focused group'
+$component.Results[0].Passed = $false
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization -AllowFailure) 'Failed' 'Focused failures remain failures'
+$component.Results[0].Passed = $true; $component.ExpectedCount = 2
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization -AllowFailure) 'Failed' 'Focused reports must be complete'
+$application = New-PassReport
+$application.Results[0].Evidence.ProcessesExitedNormally = $false
+Assert-Equal (Get-UIOperationReportOutcome $application -FocusedModule Example -AllowFailure) 'Failed' 'Focused application exit must remain normal'
 foreach ($mutation in @('Passed','Count','Results','Available','Reason','Code','MissingFlag')) {
     $report = New-SkipReport
     switch ($mutation) {

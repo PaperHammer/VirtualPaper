@@ -200,8 +200,14 @@
   <Resource Name="Ui_Settings_System_Text_Debug_Content.Content" Source="Settings_System_Text_Debug" />
   <Resource Name="Ui_Settings_System_Text_Developer_Text.Text" Source="Settings_System_Text_Developer" />
   <Resource Name="Ui_SidebarIntelligent_Text.Text" Source="SidebarIntelligent" />
+  <Resource Name="Ui_SidebarIntelligentFullName_Navigation.AutomationProperties.Name" Source="SidebarIntelligentFullName" />
+  <Resource Name="Ui_SidebarIntelligentFullName_ToolTip.Content" Source="SidebarIntelligentFullName" />
   <Resource Name="Ui_SidebarProject_Text.Text" Source="SidebarProject" />
+  <Resource Name="Ui_SidebarProject_Navigation.AutomationProperties.Name" Source="SidebarProject" />
+  <Resource Name="Ui_SidebarProject_ToolTip.Content" Source="SidebarProject" />
   <Resource Name="Ui_SidebarRepository_Text.Text" Source="SidebarRepository" />
+  <Resource Name="Ui_SidebarRepository_Navigation.AutomationProperties.Name" Source="SidebarRepository" />
+  <Resource Name="Ui_SidebarRepository_ToolTip.Content" Source="SidebarRepository" />
   <Resource Name="Ui_StaticImg_EffectParam_Amplitude_Text.Text" Source="StaticImg_EffectParam_Amplitude" />
   <Resource Name="Ui_StaticImg_EffectParam_Angle_Text.Text" Source="StaticImg_EffectParam_Angle" />
   <Resource Name="Ui_StaticImg_EffectParam_BlackPoint_Text.Text" Source="StaticImg_EffectParam_BlackPoint" />

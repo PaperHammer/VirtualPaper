@@ -1,16 +1,17 @@
-function Get-MsixAcceptanceStages([ValidateSet('Full', 'Smoke', 'UI')][string] $Mode = 'Full') {
+function Get-MsixAcceptanceStages([ValidateSet('Full', 'Smoke', 'UI', 'Focused')][string] $Mode = 'Full') {
     if ($Mode -eq 'Full') { 'Contracts', 'Build', 'ProjectTests', 'Package' }
     'Install'
-    if ($Mode -ne 'UI') { 'FirstRun' }
-    if ($Mode -ne 'Smoke') { 'ExtendedUI' }
-    if ($Mode -ne 'UI') { 'Reinstall', 'RetainedProfile', 'FreshProfile' }
+    if ($Mode -notin @('UI', 'Focused')) { 'FirstRun' }
+    if ($Mode -eq 'Focused') { 'FocusedUI' }
+    elseif ($Mode -ne 'Smoke') { 'ExtendedUI' }
+    if ($Mode -notin @('UI', 'Focused')) { 'Reinstall', 'RetainedProfile', 'FreshProfile' }
     'Uninstall', 'CertificateCleanup'
 }
 
-function Assert-MsixAcceptanceReport($Report, [ValidateSet('Full', 'Smoke', 'UI')][string] $Mode = 'Full') {
+function Assert-MsixAcceptanceReport($Report, [ValidateSet('Full', 'Smoke', 'UI', 'Focused')][string] $Mode = 'Full') {
     $actualMode = if ($Report.Mode) { $Report.Mode } else { 'Full' }
     if ($Report.Passed -ne $true -or $Report.PackageSha256 -notmatch '^[0-9a-fA-F]{64}$' -or
-        -not $Report.PackageFullName -or $Report.Error -or $actualMode -cne $Mode -or
+        -not $Report.PackageFullName -or $Report.Error -or $actualMode -cne $Mode -or ($Mode -eq 'Focused' -and -not $Report.Module) -or
         @($Report.Stages).Count -ne @(Get-MsixAcceptanceStages $Mode).Count) {
         throw 'MSIX acceptance is incomplete or failed.'
     }

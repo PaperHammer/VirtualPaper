@@ -137,6 +137,9 @@ internal static class ApplicationUi {
             string snapshot = Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "navigation-tooltip.png");
             Directory.CreateDirectory(Path.GetDirectoryName(snapshot)!);
             WindowSnapshot.Save(ownerWindow, snapshot);
+            GetCursorPos(out var actual);
+            File.WriteAllText(Path.ChangeExtension(snapshot, ".txt"),
+                $"Target={point.X},{point.Y}; actual={actual.X},{actual.Y}; hit={AutomationElement.FromPoint(new System.Windows.Point(actual.X, actual.Y)).Current.Name}");
             var nodes = AutomationElement.RootElement.FindAll(TreeScope.Children,
                 new PropertyCondition(AutomationElement.ProcessIdProperty, element.Current.ProcessId))
                 .Cast<AutomationElement>().SelectMany(window => new[] { window }.Concat(window.FindAll(TreeScope.Descendants,
@@ -152,11 +155,18 @@ internal static class ApplicationUi {
     }
 
     private static void HoverAt(NativePoint point) {
-        Check(SetCursorPos(point.X - 1, point.Y), "Could not position the hover pointer");
-        // XAML needs an input event as well as a changed cursor position.
-        var move = new NativeInput { Type = 0, Data = new() { Mouse = new() { X = 1, Flags = 0x0001 } } };
+        // Send one real absolute move in virtual-desktop coordinates. Mixing
+        // SetCursorPos with an accelerated relative move can miss XAML hit tests.
+        int left = GetSystemMetrics(76), top = GetSystemMetrics(77);
+        int width = GetSystemMetrics(78), height = GetSystemMetrics(79);
+        var move = new NativeInput { Type = 0, Data = new() { Mouse = new() {
+            X = (int)(((long)point.X - left) * 65536 / width),
+            Y = (int)(((long)point.Y - top) * 65536 / height), Flags = 0x0001 | 0x4000 | 0x8000
+        } } };
         Check(SendInput(1, [move], Marshal.SizeOf<NativeInput>()) == 1, "Could not send the hover movement");
     }
+
+    [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
 
     public static void SetText(AutomationElement element, string value) {
         BringIntoView(element);
@@ -202,6 +212,12 @@ internal static class ApplicationUi {
 
     public static void OpenPointerContextMenu(nint ownerWindow, AutomationElement element) => ClickPointer(ownerWindow, element, 0x0008, 0x0010);
 
+    public static T OpenPointerContextMenu<T>(nint ownerWindow, AutomationElement element, Func<T> waitForMenu) {
+        T result = default!;
+        ClickPointer(ownerWindow, element, 0x0008, 0x0010, () => result = waitForMenu());
+        return result;
+    }
+
     public static void ClickPointerElement(nint ownerWindow, AutomationElement element) {
         using var foreground = Foreground(ownerWindow);
         ClickPointer(ownerWindow, element, 0x0002, 0x0004);
@@ -218,7 +234,7 @@ internal static class ApplicationUi {
         finally { SetCursorPos(previous.X, previous.Y); }
     }
 
-    private static void ClickPointer(nint ownerWindow, AutomationElement element, uint down, uint up) {
+    private static void ClickPointer(nint ownerWindow, AutomationElement element, uint down, uint up, Action? afterInput = null) {
         BringIntoView(element);
         Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the test UI");
         var bounds = element.Current.BoundingRectangle;
@@ -232,6 +248,9 @@ internal static class ApplicationUi {
         try {
             mouse_event(down, 0, 0, 0, 0);
             mouse_event(up, 0, 0, 0, 0);
+            // Explorer handles notification clicks asynchronously. Keep the
+            // pointer on the icon until the expected menu has actually opened.
+            afterInput?.Invoke();
         }
         finally { SetCursorPos(previous.X, previous.Y); }
     }

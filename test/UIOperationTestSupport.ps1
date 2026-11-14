@@ -96,7 +96,7 @@ function New-UIOperationSkipReport($Environment) {
     }
 }
 
-function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
+function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure, [string]$FocusedModule) {
     if ($Report.Skipped -eq $true -or $Report.Status -eq 'Skipped') {
         $environment = $Report.Environment
         if ($Report.Status -ne 'Skipped' -or $Report.Skipped -cne $true -or $Report.Passed -cne $false -or
@@ -111,11 +111,19 @@ function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
     }
     $names = @($Report.Results | ForEach-Object { $_.Name })
     $applications = @($Report.Results | Where-Object { $_.Name -like 'Application.*' })
+    # Explicit component-only runs do not start Core. Full acceptance still
+    # requires application lifecycle evidence, and focused names must match.
+    $focusMatches = -not $FocusedModule -or @($names | Where-Object {
+        [string]$name = $_
+        $name -ceq $FocusedModule -or $name.StartsWith("$FocusedModule.", [StringComparison]::Ordinal) -or
+        $name -ceq "Application.$FocusedModule" -or $name.StartsWith("Application.$FocusedModule.", [StringComparison]::Ordinal)
+    }).Count -eq $names.Count
     if ($Report.Passed -ne $true -or $Report.ExpectedCount -lt 1 -or
         @($Report.Results).Count -ne $Report.ExpectedCount -or
         @($Report.Results | Where-Object { $_.Passed -ne $true }).Count -gt 0 -or
         @($names | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0 -or
-        @($names | Sort-Object -Unique).Count -ne $names.Count -or $applications.Count -lt 1 -or
+        @($names | Sort-Object -Unique).Count -ne $names.Count -or -not $focusMatches -or
+        ($applications.Count -lt 1 -and -not $FocusedModule) -or
         @($applications | Where-Object { $_.Evidence.CoreProcessId -lt 1 -or
             @($_.Evidence.UiProcessIds).Count -lt 1 -or $_.Evidence.ProcessesExitedNormally -ne $true }).Count -gt 0) {
         if ($AllowFailure) { return 'Failed' }

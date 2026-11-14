@@ -5,10 +5,11 @@ using VirtualPaper.Common;
 
 namespace VirtualPaper.UIOperationTest.Infrastructure;
 
-internal static class PackageActivation {
+internal static partial class PackageActivation {
     public static string? ExpectedFullName => Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_PACKAGE_FULL_NAME");
 
-    public static Process Start() {
+    public static Process Start(string? projectFile = null) {
+        if (projectFile != null) return StartFile(projectFile);
         string appId = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_PACKAGE_AUMID")
             ?? throw new InvalidOperationException("Installed package AUMID is missing.");
         string root = TestProcessEnvironment.DataRoot!;
@@ -45,7 +46,8 @@ internal static class PackageActivation {
     private interface IApplicationActivationManager {
         void ActivateApplication([MarshalAs(UnmanagedType.LPWStr)] string appId,
             [MarshalAs(UnmanagedType.LPWStr)] string arguments, uint options, out uint processId);
-        void ActivateForFile(nint appId, nint items, nint verb, out uint processId);
+        void ActivateForFile([MarshalAs(UnmanagedType.LPWStr)] string appId, nint items,
+            [MarshalAs(UnmanagedType.LPWStr)] string verb, out uint processId);
         void ActivateForProtocol(nint appId, nint items, out uint processId);
     }
 }

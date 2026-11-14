@@ -143,9 +143,11 @@ internal static class LocalizationTests {
             }
         }
         finally {
-            page.TestSurface.Child = null;
             try { await LanguageUtil.SetLanguageAsync("en-US"); }
-            finally { AppServiceLocator.Services = previousServices; }
+            finally {
+                page.TestSurface.Child = null;
+                AppServiceLocator.Services = previousServices;
+            }
         }
     }
 

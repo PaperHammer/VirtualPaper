@@ -120,6 +120,8 @@ Keep the four `version:*` labels and add `channel:msstore`. Branch protection mu
 
 ## Reports and local checks
 
+Cross-version upgrades use the independent local `test/Run-UpgradeTests.ps1` entry with two source/package snapshots and phase-matched test tools. They do not replace mandatory same-package smoke or dispatch either workflow. Regional-format/font cases join the existing real UI inventory; see the [testing guide](../../test/README.md) for preparation and screenshot review.
+
 Raw reports use `test-results-*`; bundles use `test-summary-*`/`release-test-summary`. Summary JSON/Markdown retain channel outcomes and source SHA; package manifests retain versions/hashes. `store-draft.json` records the submission ID, uploaded archive/package hashes and `Committed=false`, without access tokens or SAS URLs. Package/draft/summary artifacts last 30 days; build/raw reports last 7 days. Artifact uploads use overwrite on retries; downloads validate digests.
 
 Run `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` for the DAG (packages → all project jobs → channel calls), fixed hosted-VM isolation, sequential smoke/UI, strict missing/failed/skipped reports, artifact payloads, metadata/version synchronization, plugin package and Store HTTP-mock/retry contracts. It does not install applications or contact Partner Center/GitHub. Local complete acceptance remains `test/Run-Tests.ps1` for EXE and `test/Run-MsixTests.ps1` for MSIX; see the [testing guide](../../test/README.md).

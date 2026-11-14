@@ -28,6 +28,7 @@ For requests to run, select, extend or diagnose tests, read the repository skill
 - Focused project tests: `test/Run-ProjectTests.ps1` after a complete Release solution build.
 - Real UI tests: `test/Run-UIOperationTests.ps1`; application cases start isolated Core and use its production UI launch path.
 - Complete MSIX acceptance: `test/Run-MsixTests.ps1`; requires elevation and an unlocked desktop, uses a per-run signed package identity, all project jobs and installed extended UI, then reinstalls/uninstalls and removes temporary certificate trust. MSIX UI is strict; Inno acceptance remains separate.
+- Independent cross-version upgrade: `test/Run-UpgradeTests.ps1 -Channel EXE|MSIX`; requires two versioned package artifacts and their matching Release test tools. It preserves the same-package smoke entry points and never dispatches CI.
 - Workflow/script contracts: `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1`.
 - Details and prerequisites: [testing guide](test/README.md) / [中文](test/README.zh-CN.md).
 

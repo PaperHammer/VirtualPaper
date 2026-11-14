@@ -1,4 +1,5 @@
 using Grpc.Core;
+using System.Globalization;
 using Moq;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.AppSettingsPanel.Utils;
@@ -129,6 +130,35 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         }
 
         // ── MenuUpdate ───────────────────────────────────────────────
+
+        [TestMethod]
+        [DataRow("zh-CN")]
+        [DataRow("en-US")]
+        [DataRow("de-DE")]
+        [DataRow("fr-FR")]
+        public void MenuUpdate_DateUsesRegionalCultureAndCustomOverrides(string region) {
+            var original = CultureInfo.CurrentCulture;
+            var originalUi = CultureInfo.CurrentUICulture;
+            try {
+                var culture = (CultureInfo)new CultureInfo(region).Clone();
+                culture.DateTimeFormat.ShortDatePattern = "dd'~'MM'~'yyyy";
+                culture.DateTimeFormat.LongTimePattern = "HH'_'mm'_'ss";
+                CultureInfo.CurrentCulture = culture;
+                CultureInfo.CurrentUICulture = new CultureInfo("ja-JP");
+                var time = new DateTime(2026, 11, 14, 16, 27, 38);
+                _appUpdater.Raise(a => a.UpdateChecked += null,
+                    new AppUpdaterEventArgs(AppUpdateStatus.Uptodate, new ReleaseInfo { CheckedTime = time }));
+                StringAssert.EndsWith(_vm.Version_LastCheckDate, "14~11~2026 16_27_38");
+                Assert.AreSame(culture, CultureInfo.CurrentCulture);
+                _appUpdater.Raise(a => a.UpdateChecked += null,
+                    new AppUpdaterEventArgs(AppUpdateStatus.Notchecked, null));
+                Assert.DoesNotContain("14~11~2026", _vm.Version_LastCheckDate);
+            }
+            finally {
+                CultureInfo.CurrentCulture = original;
+                CultureInfo.CurrentUICulture = originalUi;
+            }
+        }
 
         [TestMethod]
         public void MenuUpdate_WhenUptodate_SetsUptoNewest() {

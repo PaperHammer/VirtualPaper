@@ -4,11 +4,9 @@ using NLog;
 using Windows.ApplicationModel.Core;
 
 /*
- * 0.6.1.0 待办：多语言发布验收与商店素材。
+ * 0.6.1.0 待办：多语言发布素材。
  *
- * 多语言发布验收（MSIX 与 EXE）
- *   实机检查字体回退及日期/数字格式。
- *   验证两种安装包的跨版本升级。
+ * 多语言发布素材
  *   准备各语种的商店详情、更新说明和截图。
  *
  * AI 生成壁纸	接入 Stable Diffusion / ComfyUI

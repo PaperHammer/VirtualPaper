@@ -33,7 +33,7 @@ internal static class LocalizationLayoutTests {
                     foreach (int width in new[] { 1440, 800 }) {
                         await context.ResizeAsync(width, 860);
                         foreach (var introduction in new UserControl[] { new StyleTransferIntroduction(), new SuperResolutionIntroduction() }) {
-                            page.TestSurface.Child = introduction;
+                            page.ShowContent(introduction);
                             await context.WaitAsync(() => introduction.IsLoaded && introduction.ActualWidth > 0);
                             await context.WaitForLayoutAsync();
                             var preview = Descendants<Viewbox>(introduction).Single();
@@ -51,7 +51,7 @@ internal static class LocalizationLayoutTests {
                         foreach (var form in new Page[] { new StyleTransferAddTask(), new SuperResolutionAddTask() }) {
                             var scroll = new ScrollViewer { Content = form, HorizontalScrollMode = ScrollMode.Disabled,
                                 HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled, HorizontalContentAlignment = HorizontalAlignment.Stretch };
-                            page.TestSurface.Child = scroll;
+                            page.ShowContent(scroll);
                             await context.WaitAsync(() => form.IsLoaded && form.ActualWidth > 0);
                             await context.WaitForLayoutAsync();
                             var source = Descendants<Button>(form).Single(button =>
@@ -74,7 +74,7 @@ internal static class LocalizationLayoutTests {
                             new StyleTransferTasksView { Tasks = new ObservableCollection<StyleTransferTaskItem> { style } },
                             new SuperResolutionTasksView { Tasks = new ObservableCollection<SuperResolutionTaskItem> { enhance } }
                         }) {
-                            page.TestSurface.Child = tasks;
+                            page.ShowContent(tasks);
                             await context.WaitAsync(() => tasks.IsLoaded && Descendants<Expander>(tasks).Any());
                             await context.WaitForLayoutAsync();
                             var actions = Descendants<ArcButton>(tasks).Take(4).ToArray();
@@ -95,7 +95,8 @@ internal static class LocalizationLayoutTests {
             context.Evidence["IntroductionAspectRatioAndLayoutVerified"] = true;
             context.Evidence["TaskFormsAndSingleRowActionsVerified"] = true;
         }
-        catch {
+        catch (Exception ex) {
+            context.Evidence["LayoutFailure"] = ex.ToString();
             context.SaveFailureSnapshot("localized-layout");
             throw;
         }
@@ -104,7 +105,7 @@ internal static class LocalizationLayoutTests {
             // XAML properties during its teardown can fail in the localizer.
             try { await LanguageUtil.SetLanguageAsync("en-US"); }
             finally {
-                if (page != null) page.TestSurface.Child = null;
+                page?.ShowContent(null);
                 AppServiceLocator.Services = previousServices;
             }
         }

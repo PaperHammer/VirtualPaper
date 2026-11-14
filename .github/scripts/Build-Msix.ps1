@@ -84,6 +84,7 @@ try {
         $publishArguments = @("src/$($process.Project)/$($process.Project).csproj", '/restore', '/t:Rebuild;Publish',
             '/p:Configuration=Release', "/p:Platform=$($process.Platform)", '/p:RuntimeIdentifier=win-x64',
             '/p:PlatformTarget=x64', '/p:AppendRuntimeIdentifierToOutputPath=false',
+            "/p:AssemblyVersion=$productVersion", "/p:FileVersion=$productVersion",
             '/p:SelfContained=true', '/p:WindowsAppSDKSelfContained=true', '/p:WindowsPackageType=None',
             '/p:GenerateAppxPackageOnBuild=false', '/p:IsMsixRelease=false', '/p:BuildProjectReferences=false',
             "/p:CustomAfterMicrosoftCommonTargets=$repositoryRoot\packaging\msix\Publish.props",

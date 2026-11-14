@@ -35,7 +35,7 @@ internal static class LocalizationTests {
         var page = await context.OpenAsync<LocalizationTestPage>(new());
         try {
             var brush = new PaintBrushControl { BrushThickness = 37, BrushOpacity = 65 };
-            page.TestSurface.Child = brush;
+            page.ShowContent(brush);
             await context.WaitAsync(() => brush.IsLoaded && brush.SelectedBrush != null);
             Descendants<Expander>(brush).Single().IsExpanded = true;
             await context.WaitForLayoutAsync();
@@ -57,7 +57,7 @@ internal static class LocalizationTests {
             context.Evidence["BrushSelectionAndSettingsPreserved"] = true;
 
             var addTask = new StyleTransferAddTask();
-            page.TestSurface.Child = addTask;
+            page.ShowContent(addTask);
             await context.WaitAsync(() => addTask.IsLoaded);
             var viewModel = (StyleTransferAddTaskViewModel)addTask.DataContext;
             var options = ((IEnumerable<StyleOptionItem>)((GridView)addTask.FindName("styleGridView")).ItemsSource).ToArray();
@@ -98,7 +98,7 @@ internal static class LocalizationTests {
             bool taskPageUnloaded = false;
             addTask.Unloaded += (_, _) => taskPageUnloaded = true;
             string? detachedPresetName = options[0].Name;
-            page.TestSurface.Child = tasks;
+            page.ShowContent(tasks);
             await context.WaitAsync(() => taskPageUnloaded, "Unload the task page before switching language");
             await context.WaitAsync(() => Descendants<Expander>(tasks).Count() == 3);
             foreach (var expander in Descendants<Expander>(tasks)) expander.IsExpanded = true;
@@ -138,6 +138,8 @@ internal static class LocalizationTests {
                     "Changing UI language replaced regional date/number formatting");
             }
             finally {
+                LocalizationTestPage.ReleaseLocalization(details.Content);
+                LocalizationTestPage.ReleaseLocalization(adjust.Content);
                 details.Close();
                 adjust.Close();
             }
@@ -145,7 +147,7 @@ internal static class LocalizationTests {
         finally {
             try { await LanguageUtil.SetLanguageAsync("en-US"); }
             finally {
-                page.TestSurface.Child = null;
+                page.ShowContent(null);
                 AppServiceLocator.Services = previousServices;
             }
         }

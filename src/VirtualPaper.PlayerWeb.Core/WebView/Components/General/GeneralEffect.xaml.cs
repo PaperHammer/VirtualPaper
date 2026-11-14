@@ -94,7 +94,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Components.General {
                         };
                         var stepJsonNode = item.Value["Step"];
                         if (stepJsonNode != null) {
-                            slider.StepFrequency = double.Parse(stepJsonNode.ToString());
+                            slider.StepFrequency = (double)stepJsonNode;
                         }
                         slider.ValueChanged += Slider_ValueChanged;
                     }

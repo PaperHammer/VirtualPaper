@@ -489,6 +489,35 @@ The workflow contracts include isolated Git tests for a single version commit on
 
 Package summary contracts also reject mismatched installer hashes/versions, MSIX source snapshots and package identities, missing profile reports, and incomplete built-in wallpaper evidence. Both channels require all eight installed extended UI modules, including all four `HardwareAcceleration` cases, even when a reduced report claims that every expected case passed. Positive fixtures are restored and rechecked after negative cases; these contracts perform no real installation or UI interaction.
 
+## Regional formats and cross-version upgrades
+
+`Localization.RegionalFormats` drives the real effects page under Chinese, English, German and French regional cultures. It keeps custom regional overrides while switching UI languages, checks decimal slider steps/labels, saves numeric JSON and reopens the page. UI logic tests separately check the actual update-date label with custom date/time patterns. UI language must not change the user's regional formats; persisted JSON numbers remain culture independent. These cases change process-local cultures only, never Windows regional settings. Combined runs use a dedicated WinUI host for regional mutations and validate its raw result in the parent report.
+
+`Localization.FontFallback` renders Simplified/Traditional Chinese, Japanese, Korean, Cyrillic, accented Latin and mixed symbols using the production text/input styles in light/dark themes. It checks text retention/layout and retains screenshots for glyph inspection in the current Windows environment. Review the images for missing glyphs or incorrect script shapes.
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Module Localization
+```
+
+Cross-version acceptance is independent of same-package installer smoke. Build two different source snapshots with their matching complete Release solutions/test tools; the candidate must have a higher product FileVersion. An invocation-local MSBuild `AssemblyVersion`/`FileVersion` override can version an unpublished candidate without editing tracked version fields. Both snapshots need the installed-profile probes; an older snapshot without Core-first MSIX support cannot be described as a historical Store upgrade.
+
+```powershell
+# Package already-built snapshots; creates one test MSIX family/certificate for the pair.
+./.github/scripts/New-UpgradeTestPackages.ps1 -PreviousRoot <old-checkout> `
+  -PreviousSourceSha <old-sha> -SourceSha <candidate-sha> `
+  -OutputDirectory <new-paired-output> -InnoSetupCompiler <ISCC.exe>
+foreach ($channel in @('EXE', 'MSIX')) {
+  ./test/Run-UpgradeTests.ps1 -Channel $channel `
+    -PreviousArtifact "<paired-output>/previous/$($channel.ToLowerInvariant())/package.json" `
+    -PackageArtifact "<paired-output>/next/$($channel.ToLowerInvariant())/package.json" `
+    -PreviousTestRoot <old-checkout> -ResultsRoot "TestResults/upgrade-$channel"
+}
+```
+
+Run elevated on an unlocked desktop. The EXE clean-install guard remains mandatory. The runner installs the old version, uses its own matching probe/host to persist language/settings and an imported wallpaper, then upgrades without uninstalling, checks retained settings/UID/media bytes and new setting defaults, restarts and finally uninstalls its owned installation. EXE selects English first and Chinese for upgrade while preserving the saved English profile. MSIX requires the same test family/certificate, a strictly higher package version and ordinary `Add-AppxPackage` (no downgrade override). Built-in wallpaper checks preserve edited folders/deleted files, honor the saved library location and append missing/new folders. The public signing certificate is trusted only for the MSIX run and removed afterwards; the package builder deletes its temporary private key.
+
+`upgrade-results.json` records both source revisions, package versions/hashes, phase outcomes and built-in preservation evidence. Missing/skipped/failed stages and forced process cleanup fail acceptance. Same-version/repacked-same-source packages and mismatched MSIX families/signatures are rejected. `Test-UpgradeTestSupport.ps1` exercises these guards and append-only expectations without installation. This local entry does not dispatch CI, change release versions or upload Store packages. It does not establish WACK, cross-channel migration or project-file format upgrades.
+
 ## Adding coverage
 
 AI device-choice regression runs in the headless ML and UI logic projects: startup permission/defaults, per-task choice snapshots, forwarding to enhancement, same-device reuse, waiting/canceling before a backend switch, disposal and shared GPU failure memory. Depth generation retains its existing UI and policy. Real desktop checkbox layout and interaction remain part of separately authorized UI acceptance.

@@ -505,6 +505,35 @@ EXE/MSIX 启动探针从目标语种资源读取“通用”页签的预期文�
 
 安装冒烟先验证初次完整部署，再移动隔离内置库、修改已有条目标题、添加用户文件、删除已有说明文件，并移走另一整项。真实覆盖安装必须遵循保存的目录，完整保留已修改文件夹（包括用户删除的文件），并补入缺失条目；卸载必须保留该库。检查位于强制冒烟阶段，报告中的 `BuiltInWallpapers` 保存对应证据。`Test-BuiltInWallpaperTestSupport.ps1` 不安装程序，仅检查校验器的正反例，不模拟或替代真实 ISS 验收。
 
+## 区域格式与跨版本升级
+
+`Localization.RegionalFormats` 在中、英、德、法四种区域下驱动真实效果面板，切换界面语言时保留区域设置及自定义格式，验证小数步长、显示、JSON 保存和重新打开。UI 逻辑单测另验证更新检查日期使用自定义日期／时间格式。界面语言不应改变用户区域格式，JSON 数值独立于区域。用例只修改进程内文化，不修改 Windows 区域设置；组合执行时使用独立 WinUI 宿主，父报告严格核验其原始结果。
+
+`Localization.FontFallback` 使用正式文字／输入框样式，在亮暗主题呈现简繁中文、日文、韩文、西里尔文、带重音拉丁文及混合符号，检查文本保留和布局，并保留当前 Windows 环境的截图供人工检查缺字及字形。
+
+```powershell
+./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Module Localization
+```
+
+跨版本升级验收独立于同包覆盖安装冒烟。先为两个不同源码快照构建各自完整的 Release 解决方案和测试工具，候选版产品 FileVersion 必须更高。未发布候选版可在 MSBuild 调用中传入 `AssemblyVersion`／`FileVersion`，无需修改已跟踪版本字段。两个快照均需支持安装配置探针；尚无 Core-first MSIX 的历史快照不能冒称历史商店包升级。
+
+```powershell
+# 对已构建快照打包，整对 MSIX 共用本轮测试身份和证书。
+./.github/scripts/New-UpgradeTestPackages.ps1 -PreviousRoot <旧版目录> `
+  -PreviousSourceSha <旧版SHA> -SourceSha <候选版SHA> `
+  -OutputDirectory <新的双版本产物目录> -InnoSetupCompiler <ISCC.exe>
+foreach ($channel in @('EXE', 'MSIX')) {
+  ./test/Run-UpgradeTests.ps1 -Channel $channel `
+    -PreviousArtifact "<产物目录>/previous/$($channel.ToLowerInvariant())/package.json" `
+    -PackageArtifact "<产物目录>/next/$($channel.ToLowerInvariant())/package.json" `
+    -PreviousTestRoot <旧版目录> -ResultsRoot "TestResults/upgrade-$channel"
+}
+```
+
+需要管理员权限和可用桌面，保留 EXE 日常安装保护。流程为：安装旧版 → 使用旧版匹配的探针／宿主保存语言、配置及真实导入壁纸 → 不卸载直接升级 → 检查语言、配置、UID、素材字节及新增设置默认值 → 再次启动检查 → 卸载本轮安装。EXE 先选英文、升级选中文，原英文配置必须保留。MSIX 必须同测试包族、同证书、版本递增，使用正常 `Add-AppxPackage`，不允许降级覆盖。内置壁纸检查保留用户修改和删除的文件，遵循已保存目录，只补入整个缺失或新增文件夹。MSIX 验收临时信任公钥证书，结束后移除；打包工具负责删除本轮签名私钥。
+
+`upgrade-results.json` 记录两版源码 SHA、包版本／哈希、各阶段和内置库保留证据。阶段缺失、跳过、失败或强制清理进程均不通过；同版本、同源码重打包、MSIX 身份／签名不一致会被拒绝。`Test-UpgradeTestSupport.ps1` 无安装验证这些保护及只增不覆盖的预期。该入口不会触发 CI、同步发布版本或上传商店，也不代表已验证 WACK、跨渠道迁移或工程文件格式升级。
+
 在 `Cases` 下实现新用例，并在 `App.xaml.cs` 中注册；运行脚本和 CI 不维护硬编码用例名称或数量。
 
 - 共用测试基础设施与最小真实场景单独提交。

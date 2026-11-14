@@ -120,6 +120,8 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 ## 报告和本地验证
 
+跨版本升级使用独立本地入口 `test/Run-UpgradeTests.ps1`，输入两个源码／安装包快照及各自匹配的测试工具，不替代强制同包覆盖安装，也不触发工作流。区域格式／字体用例纳入原有真实 UI 清单；准备方式与截图检查见[测试指南](../../test/README.zh-CN.md)。
+
 原始报告使用 `test-results-*`，汇总使用 `test-summary-*`/`release-test-summary`。JSON/Markdown 记录渠道结果、源码 SHA，包清单记录版本和哈希。`store-draft.json` 记录提交 ID、上传包/安装包哈希与 `Committed=false`，不包含 token 或 SAS URL。包/草稿/汇总保留 30 天，构建/原始报告保留 7 天；上传支持覆盖重试，下载保留摘要校验。
 
 运行 `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` 验证 DAG（打包 → 全部共享项目测试 → 渠道子流程）、固定 hosted VM 隔离、冒烟/UI 顺序、严格报告失败/跳过/缺失、包载荷、版本同步、插件包，以及商店 HTTP 模拟和重试契约。它不安装应用，也不连接 Partner Center/GitHub。完整本地入口仍为 EXE 的 `test/Run-Tests.ps1` 和 MSIX 的 `test/Run-MsixTests.ps1`，详见[测试说明](../../test/README.zh-CN.md)。

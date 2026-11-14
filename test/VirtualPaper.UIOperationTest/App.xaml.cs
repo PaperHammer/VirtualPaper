@@ -29,6 +29,11 @@ public partial class App : Application {
         var cases = new[] {
             new UiTestCase("Localization.LiveText.RefreshAndPreserveState", LocalizationTests.RefreshAndPreserveStateAsync),
             new UiTestCase("Localization.LongText.IntelligentLayouts", LocalizationLayoutTests.RunAsync),
+            new UiTestCase("Localization.RegionalFormats.EffectsSaveAndReopen",
+                commandLine.Length == 5 && commandLine[3] == "--module" &&
+                    (commandLine[4] == "Localization.RegionalFormats" || commandLine[4] == RegionalFormatTests.CaseName)
+                    ? RegionalFormatTests.RunAsync : RegionalFormatTests.RunIsolatedAsync),
+            new UiTestCase("Localization.FontFallback.MixedScripts", FontFallbackTests.RunAsync),
             new UiTestCase("GeneralEffect.RImage.EditRestoreSaveAndReopen",
                 context => GeneralEffectTests.EditRestoreSaveAndReopenAsync(context, RuntimeType.RImage)),
             new UiTestCase("GeneralEffect.RImage3D.EditRestoreSaveAndReopen",

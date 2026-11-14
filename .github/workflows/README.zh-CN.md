@@ -101,12 +101,14 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 带 `channel:msstore` 运行 Pre-release 前补齐以下配置。缺失时准备阶段失败，不构建、不写版本、不创建草稿。Pre-merge 无需这些配置，使用每轮唯一的测试身份。
 
+四项公开标识填写到 [packaging/msix/StoreIdentity.json](../../packaging/msix/StoreIdentity.json)，本地商店打包、CI 打包和提交 API 共用该默认配置。原有 `MSSTORE_*` 环境变量仍可覆盖，身份验证凭据不放入 JSON。
+
 | 名称 | 类型 | 内容 |
 | --- | --- | --- |
-| `MSSTORE_APPLICATION_ID` | Repository variable | 产品 Store ID |
-| `MSSTORE_IDENTITY_NAME` | Repository variable | Package/Identity/Name |
-| `MSSTORE_PUBLISHER` | Repository variable | Package/Identity/Publisher |
-| `MSSTORE_PUBLISHER_DISPLAY_NAME` | Repository variable | PublisherDisplayName |
+| `StoreId` / `MSSTORE_APPLICATION_ID` | JSON／可选 Repository variable 覆盖 | 产品 Store ID |
+| `IdentityName` / `MSSTORE_IDENTITY_NAME` | JSON／可选 Repository variable 覆盖 | Package/Identity/Name |
+| `Publisher` / `MSSTORE_PUBLISHER` | JSON／可选 Repository variable 覆盖 | Package/Identity/Publisher |
+| `PublisherDisplayName` / `MSSTORE_PUBLISHER_DISPLAY_NAME` | JSON／可选 Repository variable 覆盖 | PublisherDisplayName |
 | `MSSTORE_TENANT_ID` | Repository variable | Entra 租户 GUID |
 | `MSSTORE_CLIENT_ID` | Repository variable | 关联应用 GUID |
 | `MSSTORE_CLIENT_SECRET` | Repository secret | 具有 Partner Center Manager 权限的应用密钥 |

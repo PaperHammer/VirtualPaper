@@ -20,15 +20,22 @@ pwsh -NoProfile -File .github/scripts/Build-Msix.ps1 -SkipSolutionBuild
 
 ## 正式商店包
 
-在 Partner Center 保留产品后，使用后台分配的准确身份：
+在 Partner Center 保留产品后，填写 [StoreIdentity.json](StoreIdentity.json)：
+
+| JSON 字段 | Partner Center 中的值 |
+| --- | --- |
+| `StoreId` | Store ID |
+| `IdentityName` | Package/Identity/Name |
+| `Publisher` | Package/Identity/Publisher，保留 `CN=` 前缀 |
+| `PublisherDisplayName` | Package/Properties/PublisherDisplayName |
+
+这些都是可提交的公开标识，密钥、令牌和证书不放入此文件。本地商店打包和 CI 默认读取该文件；优先级为显式参数 > `MSSTORE_*` 环境变量 > JSON。普通预览包和隔离验收仍使用各自的独立身份。必需字段为空时，在构建或创建证书前报错。
 
 ```powershell
-pwsh -NoProfile -File .github/scripts/Build-Msix.ps1 -Store `
-  -IdentityName '<Package/Identity/Name>' -Publisher '<Package/Identity/Publisher>' `
-  -PublisherDisplayName '<PublisherDisplayName>' -PackageVersion '1.0.1.0'
+pwsh -NoProfile -File .github/scripts/Build-Msix.ps1 -Store -PackageVersion '1.0.1.0'
 ```
 
-`-Store` 拒绝预览身份，要求显式提供发布者字段。包版本每段不超过 65535、首段非零、第四段为零，与现有 EXE 产品版本分别管理。身份参数只写入 `obj` 下的生成清单。商店会为通过审核的 MSIX 重新签名，提交无需购买签名证书。
+`-Store` 拒绝预览／测试身份，要求三项清单身份字段；提交 API 还要求 `StoreId`。包版本每段不超过 65535、首段非零、第四段为零，与现有 EXE 产品版本分别管理。身份参数只写入 `obj` 下的生成清单。商店会为通过审核的 MSIX 重新签名，提交无需购买签名证书。
 
 ## 运行边界和验收
 

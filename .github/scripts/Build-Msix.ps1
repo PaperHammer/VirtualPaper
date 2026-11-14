@@ -13,14 +13,21 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot 'MsixResources.ps1')
+. (Join-Path $PSScriptRoot 'StoreIdentity.ps1')
 if (-not $IsWindows) { throw 'MSIX packaging requires Windows and Visual Studio MSIX Packaging Tools.' }
 if ($PackageVersion -notmatch '^[1-9][0-9]*\.[0-9]+\.[0-9]+\.0$' -or
     @($PackageVersion.Split('.') | Where-Object { [long]$_ -gt 65535 }).Count) {
     throw 'PackageVersion must have four parts, a nonzero major, revision 0, and components <= 65535.'
 }
-if ($Store -and ($IdentityName -eq 'PaperHammer.VirtualPaper.Preview' -or
-    -not $PSBoundParameters.ContainsKey('Publisher') -or -not $PSBoundParameters.ContainsKey('PublisherDisplayName'))) {
-    throw 'Store builds require IdentityName, Publisher and PublisherDisplayName from Partner Center.'
+if ($Store) {
+    $overrides = @{}
+    foreach ($name in @('IdentityName', 'Publisher', 'PublisherDisplayName')) {
+        if ($PSBoundParameters.ContainsKey($name)) { $overrides[$name] = $PSBoundParameters[$name] }
+    }
+    $identity = Get-StoreIdentity @overrides
+    $IdentityName = $identity.IdentityName
+    $Publisher = $identity.Publisher
+    $PublisherDisplayName = $identity.PublisherDisplayName
 }
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $vswherePath = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'

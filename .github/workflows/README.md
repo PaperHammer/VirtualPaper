@@ -101,12 +101,14 @@ If version synchronization or one draft succeeds and a later draft fails, use **
 
 Configure these before dispatching Pre-release with `channel:msstore`. Missing values fail preparation before any package/version/draft writes; Pre-merge needs none of them and uses a unique test identity.
 
+Fill the four public identifiers in [packaging/msix/StoreIdentity.json](../../packaging/msix/StoreIdentity.json). The local Store packager, CI packager and submission API share this default. Existing `MSSTORE_*` environment variables remain optional overrides; keep authentication credentials outside the JSON.
+
 | Setting | Type | Value |
 | --- | --- | --- |
-| `MSSTORE_APPLICATION_ID` | Repository variable | Product Store ID |
-| `MSSTORE_IDENTITY_NAME` | Repository variable | Package/Identity/Name |
-| `MSSTORE_PUBLISHER` | Repository variable | Package/Identity/Publisher |
-| `MSSTORE_PUBLISHER_DISPLAY_NAME` | Repository variable | PublisherDisplayName |
+| `StoreId` / `MSSTORE_APPLICATION_ID` | JSON / optional repository variable override | Product Store ID |
+| `IdentityName` / `MSSTORE_IDENTITY_NAME` | JSON / optional repository variable override | Package/Identity/Name |
+| `Publisher` / `MSSTORE_PUBLISHER` | JSON / optional repository variable override | Package/Identity/Publisher |
+| `PublisherDisplayName` / `MSSTORE_PUBLISHER_DISPLAY_NAME` | JSON / optional repository variable override | PublisherDisplayName |
 | `MSSTORE_TENANT_ID` | Repository variable | Entra tenant GUID |
 | `MSSTORE_CLIENT_ID` | Repository variable | Associated application GUID |
 | `MSSTORE_CLIENT_SECRET` | Repository secret | Application key with Partner Center Manager permissions |

@@ -16,15 +16,22 @@ The script rebuilds the Release solution using its existing Any CPU mappings, pu
 
 The default `PaperHammer.VirtualPaper.Preview` / `CN=PaperHammer` / `1.0.0.0` identity is a local preview. The default package is unsigned. For side-loading, pass `-CertificateThumbprint '<40-digit thumbprint>'` and a `-Publisher` matching an existing trusted development certificate. The script does not create/trust certificates, install/register packages or launch the application. Side-loading also needs the declared `Microsoft.VCLibs.140.00.UWPDesktop` framework. Web playback requires the WebView2 Evergreen Runtime on the test machine.
 
-After reserving a product in Partner Center:
+After reserving a product in Partner Center, fill [StoreIdentity.json](StoreIdentity.json):
+
+| JSON field | Partner Center value |
+| --- | --- |
+| `StoreId` | Store ID |
+| `IdentityName` | Package/Identity/Name |
+| `Publisher` | Package/Identity/Publisher, including `CN=` |
+| `PublisherDisplayName` | Package/Properties/PublisherDisplayName |
+
+These are public identifiers and can be committed. Authentication keys, tokens and certificates do not belong in this file. Store packaging and CI use this file by default; explicit parameters override `MSSTORE_*` environment variables, which override JSON. Local preview and isolated acceptance keep their separate identities. Empty required fields fail before building or creating certificates.
 
 ```powershell
-pwsh -NoProfile -File .github/scripts/Build-Msix.ps1 -Store `
-  -IdentityName '<Package/Identity/Name>' -Publisher '<Package/Identity/Publisher>' `
-  -PublisherDisplayName '<PublisherDisplayName>' -PackageVersion '1.0.1.0'
+pwsh -NoProfile -File .github/scripts/Build-Msix.ps1 -Store -PackageVersion '1.0.1.0'
 ```
 
-`-Store` rejects the preview identity and requires publisher fields explicitly. Package version components are at most 65535, major is nonzero and revision is zero; package versions are separate from the product/EXE version. Identity overrides only affect the generated manifest under `obj`. Store re-signs accepted MSIX submissions; a purchased signing certificate is not required.
+`-Store` rejects preview/test identities and requires the three manifest identity fields; the submission API also requires `StoreId`. Package version components are at most 65535, major is nonzero and revision is zero; package versions are separate from the product/EXE version. Identity overrides only affect the generated manifest under `obj`. Store re-signs accepted MSIX submissions; a purchased signing certificate is not required.
 
 MSIX disables EXE/plugin patch execution, while releasing startup gates normally. It seeds missing built-in wallpaper folders into the configured writable library before UI startup; entire existing folders are preserved, matching Inno. No user data/settings migration is introduced. WinUI PRI indexes are relocated and merged at package root: embedded XBF, strings and URI names stay intact; file candidates point into `Plugins/UI`. See Microsoft's [PRIINFO indexer](https://learn.microsoft.com/en-us/windows/uwp/app-resources/makepri-exe-format-specific-indexers#priinfo).
 

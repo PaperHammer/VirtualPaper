@@ -1,15 +1,16 @@
 # Microsoft Store MSIX submission API. This module never commits a submission.
 # https://learn.microsoft.com/windows/uwp/monetize/manage-app-submissions
+. "$PSScriptRoot/StoreIdentity.ps1"
 function Get-StoreConfiguration {
-    $config = @{}
-    foreach ($name in @('APPLICATION_ID', 'IDENTITY_NAME', 'PUBLISHER', 'PUBLISHER_DISPLAY_NAME', 'TENANT_ID', 'CLIENT_ID', 'CLIENT_SECRET')) {
+    param([string] $IdentityPath = (Join-Path $PSScriptRoot '../../packaging/msix/StoreIdentity.json'))
+    $identity = Get-StoreIdentity -Path $IdentityPath -RequireStoreId
+    $config = @{ APPLICATION_ID = $identity.StoreId; IDENTITY_NAME = $identity.IdentityName
+        PUBLISHER = $identity.Publisher; PUBLISHER_DISPLAY_NAME = $identity.PublisherDisplayName }
+    foreach ($name in @('TENANT_ID', 'CLIENT_ID', 'CLIENT_SECRET')) {
         $value = [Environment]::GetEnvironmentVariable("MSSTORE_$name")
         if ([string]::IsNullOrWhiteSpace($value)) { throw "Missing MSSTORE_$name. Configure Partner Center before enabling channel:msstore." }
         $config[$name] = $value
     }
-    if ($config.APPLICATION_ID -notmatch '^[A-Z0-9]{12}$' -or
-        $config.IDENTITY_NAME -eq 'PaperHammer.VirtualPaper.Preview' -or
-        $config.IDENTITY_NAME -like 'PaperHammer.VirtualPaper.Test.*') { throw 'Use the formal Store product and package identity.' }
     foreach ($name in @('TENANT_ID', 'CLIENT_ID')) {
         $parsed = [guid]::Empty
         if (-not [guid]::TryParse($config[$name], [ref]$parsed)) { throw "Invalid MSSTORE_$name." }

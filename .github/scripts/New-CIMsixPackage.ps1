@@ -11,9 +11,13 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/../../test/PackageArtifactSupport.ps1"
+. "$PSScriptRoot/StoreIdentity.ps1"
 if (Test-Path -LiteralPath $OutputDirectory) { throw 'Use a fresh MSIX artifact directory.' }
-if ($Store -and (-not $IdentityName -or -not $Publisher -or -not $PublisherDisplayName)) {
-    throw 'Store packaging requires the formal Partner Center identity.'
+if ($Store) {
+    $identity = Get-StoreIdentity -IdentityName $IdentityName -Publisher $Publisher -PublisherDisplayName $PublisherDisplayName
+    $IdentityName = $identity.IdentityName
+    $Publisher = $identity.Publisher
+    $PublisherDisplayName = $identity.PublisherDisplayName
 }
 $run = [guid]::NewGuid().ToString('N')
 if (-not $Store) {

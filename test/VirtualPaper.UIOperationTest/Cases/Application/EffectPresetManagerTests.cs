@@ -83,7 +83,7 @@ internal static class EffectPresetManagerTests {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "EffectPresets.Delete.Cancel", visible: true));
             ApplicationUi.WaitUntilGone(root, "EffectPresets.Delete.Confirm");
         });
-        Check(beforeCancel.SequenceEqual(await File.ReadAllBytesAsync(path)), "Cancel delete changed the preset catalog");
+        Check(Enumerable.SequenceEqual(beforeCancel, await File.ReadAllBytesAsync(path)), "Cancel delete changed the preset catalog");
         await Task.Run(() => {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "EffectPresets.Delete"));
             ApplicationUi.Invoke(ApplicationUi.Find(root, "EffectPresets.Delete.Confirm", visible: true));

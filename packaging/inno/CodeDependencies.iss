@@ -1,6 +1,9 @@
 [Code]
 // https://github.com/DomGries/InnoDependencyInstaller
 
+#define Dependency_DotNet100Version "10.0.15"
+#define Dependency_DotNet100Revision 15
+
 // types and variables
 type
   TDependency_Entry = record
@@ -87,7 +90,7 @@ begin
               Result := Dependency_List[DependencyIndex].Title;
               DependencyIndex := DependencyCount;
             end else begin
-              case SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbError, MB_ABORTRETRYIGNORE, IDIGNORE) of
+              case SuppressibleMsgBox(AddPeriod(GetExceptionMessage), mbError, MB_ABORTRETRYIGNORE, IDABORT) of
                 IDABORT: begin
                   Result := Dependency_List[DependencyIndex].Title;
                   DependencyIndex := DependencyCount;
@@ -137,7 +140,7 @@ begin
             end;
           end;
 
-          case SuppressibleMsgBox(FmtMessage(SetupMessage(msgErrorFunctionFailed), [Dependency_List[DependencyIndex].Title, IntToStr(ResultCode)]), mbError, MB_ABORTRETRYIGNORE, IDIGNORE) of
+          case SuppressibleMsgBox(FmtMessage(SetupMessage(msgErrorFunctionFailed), [Dependency_List[DependencyIndex].Title, IntToStr(ResultCode)]), mbError, MB_ABORTRETRYIGNORE, IDABORT) of
             IDABORT: begin
               Result := Dependency_List[DependencyIndex].Title;
               break;
@@ -591,11 +594,11 @@ end;
 procedure Dependency_AddDotNet100Asp;
 begin
   // https://dotnet.microsoft.com/download/dotnet/10.0
-  if not Dependency_IsNetCoreInstalled('Microsoft.AspNetCore.App', 10, 0, 8) then begin
+  if not Dependency_IsNetCoreInstalled('Microsoft.AspNetCore.App', 10, 0, {#Dependency_DotNet100Revision}) then begin
     Dependency_Add('dotnet100asp' + Dependency_ArchSuffix + '.exe',
-      '/lcid ' + IntToStr(GetUILanguage) + ' /passive /norestart',
-      'ASP.NET Core Runtime 10.0.8' + Dependency_ArchTitle,
-      Dependency_String('https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.8/aspnetcore-runtime-10.0.8-win-x86.exe', 'https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.8/aspnetcore-runtime-10.0.8-win-x64.exe', 'https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/10.0.8/aspnetcore-runtime-10.0.8-win-arm64.exe'),
+      '/install /quiet /norestart',
+      'ASP.NET Core Runtime {#Dependency_DotNet100Version}' + Dependency_ArchTitle,
+      Dependency_String('https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/{#Dependency_DotNet100Version}/aspnetcore-runtime-{#Dependency_DotNet100Version}-win-x86.exe', 'https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/{#Dependency_DotNet100Version}/aspnetcore-runtime-{#Dependency_DotNet100Version}-win-x64.exe', 'https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/{#Dependency_DotNet100Version}/aspnetcore-runtime-{#Dependency_DotNet100Version}-win-arm64.exe'),
       '', False, False);
   end;
 end;
@@ -603,11 +606,11 @@ end;
 procedure Dependency_AddDotNet100Desktop;
 begin
   // https://dotnet.microsoft.com/download/dotnet/10.0
-  if not Dependency_IsNetCoreInstalled('Microsoft.WindowsDesktop.App', 10, 0, 8) then begin
+  if not Dependency_IsNetCoreInstalled('Microsoft.WindowsDesktop.App', 10, 0, {#Dependency_DotNet100Revision}) then begin
     Dependency_Add('dotnet100desktop' + Dependency_ArchSuffix + '.exe',
-      '/lcid ' + IntToStr(GetUILanguage) + ' /passive /norestart',
-      '.NET Desktop Runtime 10.0.8' + Dependency_ArchTitle,
-      Dependency_String('https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.8/windowsdesktop-runtime-10.0.8-win-x86.exe', 'https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.8/windowsdesktop-runtime-10.0.8-win-x64.exe', 'https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/10.0.8/windowsdesktop-runtime-10.0.8-win-arm64.exe'),
+      '/install /quiet /norestart',
+      '.NET Desktop Runtime {#Dependency_DotNet100Version}' + Dependency_ArchTitle,
+      Dependency_String('https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/{#Dependency_DotNet100Version}/windowsdesktop-runtime-{#Dependency_DotNet100Version}-win-x86.exe', 'https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/{#Dependency_DotNet100Version}/windowsdesktop-runtime-{#Dependency_DotNet100Version}-win-x64.exe', 'https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/{#Dependency_DotNet100Version}/windowsdesktop-runtime-{#Dependency_DotNet100Version}-win-arm64.exe'),
       '', False, False);
   end;
 end;

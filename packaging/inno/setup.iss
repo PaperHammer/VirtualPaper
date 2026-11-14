@@ -52,6 +52,7 @@ WizardImageFile=Themes\wizard_large.bmp
 LicenseFile=License\LICENSE.txt
 Uninstallable=true
 UninstallDisplayIcon={app}\{#MyAppExeName}
+ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UsePreviousAppDir=yes
 
@@ -62,7 +63,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 #include "BuiltInWallpapers.iss"
 
 [Files]
-Source: "..\..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.WebView2,*.WebView2\*,BuiltInWallpapers\*"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\src\VirtualPaper\bin\Release\net10.0-windows10.0.19041.0\*"; DestDir: "{app}"; Excludes: "*.pdb,*.xml,*.WebView2,*.WebView2\*,BuiltInWallpapers\*"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
@@ -115,32 +116,24 @@ begin
       RaiseException(ExpandConstant('{cm:InitialLanguageSaveFailed}'));
 end;
 
-// InnoDependencyInstaller 初始化向导 UI
+// Register once; CodeDependencies.iss owns its annotated wizard/install events.
 procedure InitializeWizard;
 begin
-  Dependency_InitializeWizard;
+  // Every shipped process is x64, including on ARM64 Windows via emulation.
+  Dependency_ForceX64 := True;
+  Dependency_AddDotNet100Desktop;
+  // The UI's local Web preview server requires ASP.NET Core as well.
+  Dependency_AddDotNet100Asp;
 end;
 
-// 在"准备安装"页面列出待安装的依赖项
-function UpdateReadyMemo(const Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo: String): String;
-begin
-  Result := Dependency_UpdateReadyMemo(Space, NewLine, MemoUserInfoInfo, MemoDirInfo, MemoTypeInfo, MemoComponentsInfo, MemoGroupInfo, MemoTasksInfo);
-end;
-
-// 声明 .NET 8.0 Desktop Runtime 为安装前置依赖
-// InnoDependencyInstaller 自动处理检测、下载、安装
-// 静默安装时跳过（CI 环境已由 setup-dotnet action 提供运行时）
+// The dependency handler runs first, for interactive and silent upgrades alike.
+// Never complete installation after an ignored/failed prerequisite installation.
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
-  if not WizardSilent() then
-    Dependency_AddDotNet80Desktop;
-  Result := Dependency_PrepareToInstall(NeedsRestart);
-end;
-
-// 安装完成后是否需要重启
-function NeedRestart: Boolean;
-begin
-  Result := Dependency_NeedRestart;
+  if not Dependency_IsNetCoreInstalled('Microsoft.WindowsDesktop.App', 10, 0, {#Dependency_DotNet100Revision}) then
+    Result := '.NET Desktop Runtime {#Dependency_DotNet100Version} (x64)'
+  else if not Dependency_IsNetCoreInstalled('Microsoft.AspNetCore.App', 10, 0, {#Dependency_DotNet100Revision}) then
+    Result := 'ASP.NET Core Runtime {#Dependency_DotNet100Version} (x64)';
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);

@@ -7,7 +7,7 @@ The probe runs real model graphs in isolated console processes. It is a manual m
 ## 前置条件
 
 - 先按[测试指南](../README.zh-CN.md)构建完整 Release 解决方案；本工具不构建应用依赖。需要 UI payload 中的托管 ORT，以及 UI、ML.Test 各自的原生 ORT/DirectML 文件。
-- 使用 .NET 8 SDK。机器同时装有更新 SDK 时，在结果目录的 `build/global.json` 中选定本机已安装的 8.x SDK，并从该目录执行构建；不要修改产品 SDK 配置。`OrtManagedPath` 可指定托管 DLL 的其他位置。
+- 使用仓库 `global.json` 选定的 .NET 10 SDK。`OrtManagedPath` 可指定托管 DLL 的其他位置。
 - Python 3.11；本轮转换使用 `numpy==1.26.4`、`onnx==1.17.0`、`onnxconverter-common==1.14.0`，已有环境还提供 `protobuf==5.29.1`、`Pillow==11.0.0`、`psutil==6.0.0`。转换器 1.14 不兼容 NumPy 2.4 的二进制 `fromstring` 接口。可以安装到隔离目录，并通过 `prepare.py --packages <目录>` 加载转换依赖；`measure.py`、`summarize.py` 仍使用所选 Python 环境中的 psutil/NumPy。
 - 模型源文件位于 `src/VirtualPaper.ML/*/ai_models`；AdaIN 的 `.onnx.data` 也必须存在。这里只转换超分模型，另外两类仅登记元数据，不代表已验证它们的半精度兼容性。
 - DirectML 可用的 GPU。测量会占用计算资源和显存；避免同时进行其他 GPU/推理任务。进程专用/共享显存通过 Windows `GPU Process Memory` 性能计数器采样，权限或计数器不可用时不能声称完成显存比较。
@@ -21,7 +21,7 @@ $probeRoot = Join-Path $PWD "TestResults/model-precision-$([guid]::NewGuid().ToS
 $probeProject = Join-Path $PWD 'test/InferencePrecision/InferencePrecision.csproj'
 New-Item -ItemType Directory -Path $probeRoot | Out-Null
 
-# 使用 .NET 8 SDK；此构建命令可从固定该 SDK 的 build 目录执行，之后回到仓库根目录。
+# 从仓库根目录构建，使用 global.json 选定的 .NET 10 SDK。
 dotnet build $probeProject -c Release
 
 # 在已有所需 Python 基础依赖的环境中，隔离转换器和 NumPy：

@@ -11,6 +11,10 @@ Both entry workflows are manual `workflow_dispatch` only; `package-acceptance.ym
 
 ## Build and acceptance
 
+The shared build and test jobs use .NET 10. EXE setup provisions the x64 Desktop and ASP.NET Core runtimes for both fresh installation and silent upgrades; MSIX publishes a serviced, self-contained .NET 10 runtime for each process. Existing installer names, update routing and package identities remain unchanged.
+
+The first release migrating from .NET 8 must be a full product release with a `version:*` label, without `update-plugins` or `update-plugin-*` labels. A plugin patch does not install the new system runtime or replace Core.
+
 Workflow contracts validate project-file activation declarations and icon frames. MSIX packaging also checks the actual association parameters and icons; installed Explorer activation remains a desktop acceptance item.
 
 The shared UI suite requires `ProjectActivation`, which exercises the real Core/UI project-opening path without changing daily file associations.

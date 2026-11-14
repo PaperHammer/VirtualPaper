@@ -12,13 +12,14 @@ param(
     [string] $MsixVersion = '1.0.1.0'
 )
 $ErrorActionPreference = 'Stop'
+. "$PSScriptRoot/../../test/UpgradeTestSupport.ps1"
 if ($PreviousSourceSha -ceq $SourceSha -or [version]$MsixVersion -le [version]$PreviousMsixVersion) { throw 'Use two source snapshots and increasing package versions.' }
 $PreviousRoot = (Resolve-Path -LiteralPath $PreviousRoot).Path
 $RepositoryRoot = (Resolve-Path -LiteralPath $RepositoryRoot).Path
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 if (Test-Path -LiteralPath $OutputDirectory) { throw 'Paired packages require a fresh output directory.' }
-$oldVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $PreviousRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/VirtualPaper.exe')).FileVersion
-$newVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $RepositoryRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/VirtualPaper.exe')).FileVersion
+$oldVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path (Get-UpgradeBuildDirectory $PreviousRoot) 'VirtualPaper.exe')).FileVersion
+$newVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path (Get-UpgradeBuildDirectory $RepositoryRoot) 'VirtualPaper.exe')).FileVersion
 if ([version]$newVersion -le [version]$oldVersion) { throw 'Build the candidate with a higher product FileVersion first; do not modify a released installer.' }
 [void](New-Item -ItemType Directory -Path $OutputDirectory)
 $runId = [guid]::NewGuid().ToString('N')

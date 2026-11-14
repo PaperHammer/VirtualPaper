@@ -21,7 +21,7 @@ Read the [testing guide](../../../test/README.md) ([中文](../../../test/README
 
 ## Complete local acceptance
 
-Requires Windows, elevated PowerShell, Visual Studio with the solution's Windows/WinUI tools, .NET 8 SDK, Node.js, Inno Setup 6.7.1 and the application runtime prerequisites. Real extended UI cases also require the bundled Real-ESRGAN and Depth Anything models; consult the testing guide for paths. A usable desktop is needed for real UI acceptance.
+Requires Windows, elevated PowerShell, Visual Studio with the solution's Windows/WinUI tools, .NET 10 SDK, Node.js, Inno Setup 6.7.1 and the application runtime prerequisites. Real extended UI cases also require the bundled Real-ESRGAN and Depth Anything models; consult the testing guide for paths. A usable desktop is needed for real UI acceptance.
 
 ```powershell
 pwsh -NoProfile -File test/Run-Tests.ps1

@@ -99,7 +99,7 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v6.1.0
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
 
     - name: Set up MSBuild
       uses: microsoft/setup-msbuild@v2
@@ -120,11 +120,11 @@ jobs:
 
     - name: Check test hosts
       run: |
-        $hostRoot = 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0'
+        $hostRoot = 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net10.0-windows10.0.19041.0'
         foreach ($file in @('VirtualPaper.UIOperationTest.exe', 'VirtualPaper.Common.dll')) {
           if (-not (Test-Path -LiteralPath (Join-Path $hostRoot $file))) { throw "WinUI host output missing: $file" }
         }
-        if (-not (Test-Path -LiteralPath 'test/VirtualPaper.InstallerTest/bin/Release/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll')) {
+        if (-not (Test-Path -LiteralPath 'test/VirtualPaper.InstallerTest/bin/Release/net10.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll')) {
           throw 'Installer test host output missing.'
         }
 
@@ -193,7 +193,7 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v6.1.0
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Package signed MSIX
       env:
         SOURCE_SHA: ${{ needs.validate-pr.outputs.test_sha }}

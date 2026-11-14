@@ -46,7 +46,7 @@ internal static class WallpaperLibraryTests {
             catch (JsonException) { return false; }
         }, "UI import metadata and thumbnail");
         var data = imported!;
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Imported image differs from the source");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Imported image differs from the source");
 
         // Exercise a real pre-existing format-18 folder, not just a format-19 import.
         await session.CloseUiAsync();
@@ -68,7 +68,7 @@ internal static class WallpaperLibraryTests {
             Check(!Path.IsPathRooted(upgradedJson[field]!.GetValue<string>()), "Upgrade kept an absolute " + field);
         Check(upgradedJson["WallpaperUid"]!.GetValue<string>() == data.WallpaperUid, "Upgrade changed the wallpaper UID");
         data = WpBasicData.Load(metadataPath);
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Upgrade changed source pixels");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Upgrade changed source pixels");
         context.Evidence["Format18AbsoluteLoadedAndUpgradedThroughContextMenu"] = true;
 
         await Task.Run(() => {
@@ -135,7 +135,7 @@ internal static class WallpaperLibraryTests {
         await Task.Run(() => ApplicationUi.Select(ApplicationUi.Find(AutomationElement.FromHandle(ui.MainWindowHandle), "App.Navigation.Library")));
         var reopenedRoot = await Task.Run(() => AutomationElement.FromHandle(ui.MainWindowHandle));
         await WaitForItemsAsync(reopenedRoot, 0);
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Library deletion modified the input file");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Library deletion modified the input file");
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["PlayerProcessId"] = playerId;

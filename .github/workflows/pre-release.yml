@@ -23,7 +23,7 @@ permissions:
   pull-requests: read
 
 env:
-  RELEASE_BIN_DIR: ${{ github.workspace }}/src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0
+  RELEASE_BIN_DIR: ${{ github.workspace }}/src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0
 
 jobs:
   prepare-metadata:
@@ -195,7 +195,7 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v6.1.0
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '10.0.x'
 
     - name: Cache NuGet packages
       uses: actions/cache@v6.1.0
@@ -305,7 +305,7 @@ jobs:
     - name: Set up .NET
       uses: actions/setup-dotnet@v6.1.0
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: 10.0.x
     - name: Package signed MSIX
       env:
         SOURCE_SHA: ${{ needs.prepare-metadata.outputs.main_sha }}

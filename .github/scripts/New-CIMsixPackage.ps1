@@ -38,7 +38,7 @@ try {
         Where-Object FullName -NotMatch '[\\/]Dependencies[\\/]')
     if ($packages.Count -ne 1) { throw 'Expected one signed x64 MSIX.' }
     $package = Copy-Item -LiteralPath $packages[0].FullName -Destination $OutputDirectory -PassThru
-    $productExe = Join-Path $PSScriptRoot '../../src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/VirtualPaper.exe'
+    $productExe = Join-Path $PSScriptRoot '../../src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0/VirtualPaper.exe'
     $manifest = [ordered]@{ FormatVersion = 1; Channel = 'MSIX'; SourceSha = $SourceSha; Store = $Store.IsPresent
         ProductVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($productExe).FileVersion
         IdentityName = $IdentityName; Publisher = $Publisher; PackageVersion = $PackageVersion

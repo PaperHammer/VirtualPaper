@@ -154,7 +154,7 @@ internal static class WebEditorTests {
             NativeFileDialog.Cancel(ui, owner);
         });
         await WaitForEditorStatusAsync(root, "Unsaved");
-        Check(sourceEntry.SequenceEqual(await File.ReadAllBytesAsync(originalEntry)), "Cancelling Save As changed the original entry");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "Cancelling Save As changed the original entry");
         Check(!File.Exists(copyManifest), "Cancelling Save As created a project");
 
         await Task.Run(() => {
@@ -165,8 +165,8 @@ internal static class WebEditorTests {
         await AppProcessSession.WaitForJsonAsync(copyManifest, json => json["name"]?.GetValue<string>() == "ui-web-copy");
         await WaitForEditorStatusAsync(root, "Saved");
         Check((await File.ReadAllTextAsync(copyEntry)).Contains(unsaved), "Save As lost the unsaved editor content");
-        Check(sourceEntry.SequenceEqual(await File.ReadAllBytesAsync(originalEntry)), "Save As saved edits into the original entry");
-        Check(sourceManifest.SequenceEqual(await File.ReadAllBytesAsync(originalManifest)), "Save As changed the original manifest");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "Save As saved edits into the original entry");
+        Check(Enumerable.SequenceEqual(sourceManifest, await File.ReadAllBytesAsync(originalManifest)), "Save As changed the original manifest");
         Check(Directory.Exists(Path.Combine(destination, "assets")), "Save As omitted an empty asset directory");
         Check(!File.Exists(Path.Combine(destination, ProjectName + ".vpw")), "Save As retained the old project manifest name");
         await Task.Run(() => {
@@ -180,7 +180,7 @@ internal static class WebEditorTests {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "Project.File.Save", visible: true));
         });
         await AppProcessSession.WaitAsync(async () => (await File.ReadAllTextAsync(copyEntry)).Contains("UI_OPERATION_COPY_ONLY"), "Save uses the copied project");
-        Check(sourceEntry.SequenceEqual(await File.ReadAllBytesAsync(originalEntry)), "Saving the copy changed the original project");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "Saving the copy changed the original project");
         await WaitForEditorStatusAsync(root, "Saved");
 
         string archivePath = Path.Combine(context.Root, "web-copy-full.zip");
@@ -218,7 +218,7 @@ internal static class WebEditorTests {
             ApplicationUi.ClickPointerElement(owner, FindItem(root, "index.html"));
         });
         await WaitForEditorStatusAsync(root, "Saved");
-        Check(sourceEntry.SequenceEqual(await File.ReadAllBytesAsync(originalEntry)), "The original project changed after reopen");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "The original project changed after reopen");
         context.Evidence["SaveAsCancelledWithoutSavingSource"] = true;
         context.Evidence["SaveAsIncludesUnsavedContent"] = true;
         context.Evidence["SaveAsSwitchesSessionAndPreservesSource"] = true;

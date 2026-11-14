@@ -1,11 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <OrtManagedPath Condition="'$(OrtManagedPath)' == ''">$(MSBuildThisFileDirectory)../../src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/Plugins/UI/Microsoft.ML.OnnxRuntime.dll</OrtManagedPath>
+    <OrtManagedPath Condition="'$(OrtManagedPath)' == ''">$(MSBuildThisFileDirectory)../../src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0/Plugins/UI/Microsoft.ML.OnnxRuntime.dll</OrtManagedPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.ML.OnnxRuntime">

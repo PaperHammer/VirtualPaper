@@ -111,8 +111,18 @@ public class DownloadTransferTests {
         try {
             await started.Task.WaitAsync(TimeSpan.FromSeconds(5));
             service.Pause();
-            await Task.Delay(150); // Drain progress notifications that preceded Pause.
+            // Pause is cooperative: an in-flight read and its queued notification
+            // may finish later under parallel load. Observe quiescence first.
             long pausedAt = received.Last();
+            int quietSamples = 0;
+            using var settling = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            while (quietSamples < 2) {
+                await Task.Delay(200, settling.Token);
+                long current = received.Last();
+                quietSamples = current == pausedAt ? quietSamples + 1 : 0;
+                pausedAt = current;
+                Assert.IsFalse(download.IsCompleted, "The transfer completed instead of staying paused.");
+            }
             await Task.Delay(200);
             Assert.AreEqual(pausedAt, received.Last());
             Assert.IsFalse(download.IsCompleted);

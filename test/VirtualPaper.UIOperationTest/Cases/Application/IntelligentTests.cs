@@ -80,8 +80,8 @@ internal static class IntelligentTests {
             CheckConfirm(root, false);
             CancelTask(root);
         });
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Task configuration modified the source image");
-        Check(styleHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(style))), "Task configuration modified the style image");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Task configuration modified the source image");
+        Check(Enumerable.SequenceEqual(styleHash, SHA256.HashData(await File.ReadAllBytesAsync(style))), "Task configuration modified the style image");
         await session.StopAsync();
         session.RecordEvidence(context);
         Check(((string[])context.Evidence["RuntimeErrors"]!).Length == 0, "Intelligent configuration logged a runtime error; inspect report evidence");

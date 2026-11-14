@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
+& (Join-Path $repositoryRoot 'test/Test-RuntimeDeployment.ps1')
 & (Join-Path $repositoryRoot 'test/Test-LocalizationResources.ps1')
 & (Join-Path $repositoryRoot 'test/Test-LocalizationResourceSupport.ps1')
 . (Join-Path $repositoryRoot 'test/TestReportSupport.ps1')

@@ -4,6 +4,8 @@
 
 The local test chain combines MSTest project tests, real installer acceptance and WinUI interaction tests. Start with `Run-Tests.ps1` for the complete flow; the focused runners below reuse its individual stages.
 
+Builds use the .NET 10 SDK selected by the root `global.json`. EXE installation and upgrades, including silent updates, require and provision the x64 .NET 10 Desktop Runtime and ASP.NET Core 10 Runtime used by Web previews. MSIX includes a serviced .NET 10 runtime for each process. Artifact tests check all four EXE runtime configurations; package validation rejects MSIX payloads without the matching self-contained runtime. Cross-version acceptance resolves each snapshot's target framework separately, allowing .NET 8 → .NET 10 upgrades. Missing-runtime provisioning must additionally be exercised on a clean Windows VM; a machine with .NET already installed only covers runtime reuse.
+
 For manual FP32/FP16 model measurements without application/UI startup, see [InferencePrecision](InferencePrecision/README.md). This separate headless probe uses actual Release native runtimes and does not replace project tests or installed acceptance.
 
 `VirtualPaper.UIOperationTest` is a standalone, unpackaged WinUI executable that also serves as the test host. Component cases load production pages through project references. Application cases start an isolated, real Core process, which launches the real UI. Neither uses Sandbox or connects to a user's running VirtualPaper instance.
@@ -63,7 +65,7 @@ For the complete Inno local acceptance used before merging, start PowerShell 7.2
 ./test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-This entry point rebuilds the full solution in **Release**, runs eight project jobs in parallel, compiles ISS, then runs mandatory installer smoke: English install/first launch → Chinese same-package reinstall → preserved/fresh-profile startup checks → uninstall. After smoke completes, an independent **Extended** UI suite runs against the Release output with its own Core/UI sessions. A failed local phase blocks subsequent phases; smoke always attempts uninstall after installation. Reports use a fresh `TestResults/local-acceptance-*` directory. Visual Studio MSBuild, .NET 8, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
+This entry point rebuilds the full solution in **Release**, runs eight project jobs in parallel, compiles ISS, then runs mandatory installer smoke: English install/first launch → Chinese same-package reinstall → preserved/fresh-profile startup checks → uninstall. After smoke completes, an independent **Extended** UI suite runs against the Release output with its own Core/UI sessions. A failed local phase blocks subsequent phases; smoke always attempts uninstall after installation. Reports use a fresh `TestResults/local-acceptance-*` directory. Visual Studio MSBuild, .NET 10, Node.js and Inno Setup 6.7.1 are required; use `-InnoSetupCompiler <ISCC.exe>` for a nonstandard compiler location.
 
 It refuses an existing Virtual Paper installation or Start menu shortcut. Remove a daily installation explicitly while preserving its data, or use a clean Windows test machine. Installation and uninstallation change the OS uninstall registration and shortcuts; UI cases still exclude startup registration, session locking and other persistent system-setting writes. Without a desktop, independent UI is explicitly skipped, but smoke cannot pass because its required startup/profile checks did not run.
 
@@ -139,7 +141,7 @@ Use PowerShell 7.2 or later on a Windows desktop with a graphical session:
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```
 
-The runner builds the full solution with Visual Studio MSBuild before starting the tests. Use `-NoBuild` when the binaries are ready. Core is loaded from `src/VirtualPaper/bin/<Configuration>/net8.0-windows10.0.19041.0` by default. Use `-CoreExe` to select another complete build, including its production UI plugin.
+The runner builds the full solution with Visual Studio MSBuild before starting the tests. Use `-NoBuild` when the binaries are ready. Core is loaded from `src/VirtualPaper/bin/<Configuration>/net10.0-windows10.0.19041.0` by default. Use `-CoreExe` to select another complete build, including its production UI plugin.
 
 Use `-ReportPath` to specify a new JSON report path; the default is in the system temporary directory. Existing report or artifact paths are rejected to prevent stale results from being reused. The runner checks the exit code, expected case count, and report completeness. Failures throw an error; a timeout terminates the host and child processes started by this run. **Do not run this WinUI executable with `dotnet test`.**
 

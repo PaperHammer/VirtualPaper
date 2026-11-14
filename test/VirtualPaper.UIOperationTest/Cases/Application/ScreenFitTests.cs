@@ -68,7 +68,7 @@ internal static class ScreenFitTests {
         var data = JsonSerializer.Deserialize(await File.ReadAllTextAsync(Path.Combine(folder, Constants.Field.WpBasicDataFileName)),
             WpBasicDataContext.Default.WpBasicData)!;
         data.ResolvePaths(Path.Combine(folder, Constants.Field.WpBasicDataFileName));
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))),
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))),
             "Screen fit changed the source pixels despite enhancement being disabled");
         var runtimePath = Directory.GetFiles(library, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories)
             .Single(path => Path.GetDirectoryName(path)!.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
@@ -119,7 +119,7 @@ internal static class ScreenFitTests {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "PrimaryButton", visible: true));
         });
         await AppProcessSession.WaitAsync(() => Task.FromResult(!Directory.Exists(folder)), "Screen fit fixture deleted");
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Screen fit modified the input file");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Screen fit modified the input file");
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["SelectedMonitor"] = selectedMonitor;

@@ -60,7 +60,7 @@ function Invoke-Stage([string] $Name, [scriptblock] $Action) {
 function Invoke-PackageUI([string] $Name, [string] $Module, [string] $Profile, [switch] $Extended) {
     $path = Join-Path $ResultsRoot "$Name/ui-operation-results.json"
     $arguments = @{ Configuration = 'Release'; NoBuild = $true; PackageFullName = $installed.PackageFullName
-        ReportPath = $path; HostExe = Join-Path $repositoryRoot 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe' }
+        ReportPath = $path; HostExe = Join-Path $repositoryRoot 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net10.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe' }
     if ($artifact -and $identity -notmatch '^PaperHammer\.VirtualPaper\.Test\.[0-9a-f]{16}$') {
         $arguments.CIOwnershipPath = $ownershipPath
     }

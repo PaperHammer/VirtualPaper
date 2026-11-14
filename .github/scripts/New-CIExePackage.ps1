@@ -10,7 +10,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$payload = Join-Path $repositoryRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0'
+$payload = Join-Path $repositoryRoot 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0'
 $actualVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $payload 'VirtualPaper.exe')).FileVersion
 if ($Version -and [version]$actualVersion -ne [version]$Version) { throw 'Build and requested installer version differ.' }
 $Version = $actualVersion

@@ -2,6 +2,8 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
+构建使用根目录 `global.json` 选定的 .NET 10 SDK。EXE 首次安装及升级（含静默更新）均检测并补装 x64 .NET 10 Desktop Runtime 及 Web 预览使用的 ASP.NET Core 10 Runtime；MSIX 为每个进程自带已修补的 .NET 10。产物测试检查四个 EXE 的运行时配置，MSIX 包校验拒绝缺失或错误版本的自包含运行时。跨版本验收分别读取两份源码的目标框架，支持 .NET 8 → .NET 10 升级。缺少运行时的补装链路仍需在干净 Windows VM 上执行；已安装 .NET 的本机只能覆盖复用已有运行时。
+
 本地测试链路由 MSTest 项目测试、真实安装包验收和 WinUI 交互测试组成。完整运行使用 `Run-Tests.ps1`，下面的单项入口复用其中各阶段。
 
 不启动应用或 UI 的 FP32/FP16 模型手动评测见 [InferencePrecision](InferencePrecision/README.md)。该独立无界面探针加载实际 Release 原生运行库，不替代项目回归或安装验收。
@@ -63,7 +65,7 @@ Inno 本地完整验收使用与 CI 一致的阶段。请以**管理员身份**�
 ./test/Run-Tests.ps1 -IncludeMLIntegration
 ```
 
-此入口完整重建 **Release**，并行运行八个项目测试，编译 ISS，再执行必需安装冒烟：英文安装与首启 → 中文同包覆盖安装 → 原配置/新配置启动验证 → 卸载。冒烟完成后，再对 Release 输出运行独立的 **Extended** 真实 UI，自行拉起 Core/UI 和隔离配置。本地任一阶段失败均阻止后续执行；尝试安装后仍执行卸载清理。每次写入新的 `TestResults/local-acceptance-*`。需要 Visual Studio MSBuild、.NET 8、Node.js、Inno Setup 6.7.1；可通过 `-InnoSetupCompiler <ISCC.exe>` 指定编译器。
+此入口完整重建 **Release**，并行运行八个项目测试，编译 ISS，再执行必需安装冒烟：英文安装与首启 → 中文同包覆盖安装 → 原配置/新配置启动验证 → 卸载。冒烟完成后，再对 Release 输出运行独立的 **Extended** 真实 UI，自行拉起 Core/UI 和隔离配置。本地任一阶段失败均阻止后续执行；尝试安装后仍执行卸载清理。每次写入新的 `TestResults/local-acceptance-*`。需要 Visual Studio MSBuild、.NET 10、Node.js、Inno Setup 6.7.1；可通过 `-InnoSetupCompiler <ISCC.exe>` 指定编译器。
 
 检测到已有 Virtual Paper 安装或开始菜单快捷方式时会拒绝运行。应先明确卸载日常版本并保留用户数据，或使用干净测试机。安装和卸载会修改系统安装注册信息与快捷方式；UI 用例仍不执行启动项注册、锁屏等持久系统设置操作。无桌面时独立 UI 明确跳过，但冒烟因必需启动/配置检查未执行而失败。
 
@@ -139,7 +141,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 ./test/Run-UIOperationTests.ps1 -Configuration Release -Module ModelInference -TimeoutSeconds 900
 ```
 
-运行脚本会先通过 Visual Studio MSBuild 构建完整解决方案，再启动测试。二进制文件已准备好时可使用 `-NoBuild`。默认从 `src/VirtualPaper/bin/<Configuration>/net8.0-windows10.0.19041.0` 加载 Core，也可通过 `-CoreExe` 指定另一份完整构建，其中必须包含正式 UI 插件。
+运行脚本会先通过 Visual Studio MSBuild 构建完整解决方案，再启动测试。二进制文件已准备好时可使用 `-NoBuild`。默认从 `src/VirtualPaper/bin/<Configuration>/net10.0-windows10.0.19041.0` 加载 Core，也可通过 `-CoreExe` 指定另一份完整构建，其中必须包含正式 UI 插件。
 
 通过 `-ReportPath` 指定新的 JSON 报告路径，默认位于系统临时目录。已有报告或产物路径会被拒绝，防止复用旧结果。脚本检查退出码、预期用例数和报告完整性；失败会抛出错误，超时则终止本次启动的宿主及子进程。**不要使用 `dotnet test` 运行此 WinUI 可执行程序。**
 

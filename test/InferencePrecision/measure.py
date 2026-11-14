@@ -22,9 +22,9 @@ args = parser.parse_args()
 repo = Path(__file__).resolve().parents[2]
 root = args.output.resolve()
 manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
-worker = repo / "test/InferencePrecision/bin/Release/net8.0/InferencePrecision.dll"
-ui = repo / "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/Plugins/UI"
-test = repo / "src/VirtualPaper.ML.Test/bin/Release/net8.0-windows10.0.19041.0"
+worker = repo / "test/InferencePrecision/bin/Release/net10.0/InferencePrecision.dll"
+ui = repo / "src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0/Plugins/UI"
+test = repo / "src/VirtualPaper.ML.Test/bin/Release/net10.0-windows10.0.19041.0"
 runtimes = {"ui": (ui / "onnxruntime.dll", ui / "DirectML.dll"),
             "ml-test": (test / "runtimes/win-x64/native/onnxruntime.dll", test / "DirectML.dll")}
 

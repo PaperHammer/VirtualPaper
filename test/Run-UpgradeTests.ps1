@@ -64,7 +64,7 @@ function Invoke-UpgradeProcess([string] $Executable, [string[]] $Arguments) {
     } finally { $process.Dispose() }
 }
 function Get-UpgradeProbe([string] $Root) {
-    $path = Join-Path $Root 'test/VirtualPaper.InstallerTest/bin/Release/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll'
+    $path = Join-Path (Get-UpgradeBuildDirectory $Root 'VirtualPaper.InstallerTest') 'VirtualPaper.InstallerTest.dll'
     if (-not (Test-Path -LiteralPath $path)) { throw "Build the complete matching Release solution first: $path" }
     return $path
 }
@@ -76,7 +76,7 @@ function Invoke-UpgradeWizard([string] $Executable, [string] $Language, [string]
 }
 function Assert-UpgradeInstalledFiles([string] $Root, $Artifact) {
     foreach ($file in @('VirtualPaper.exe', 'VirtualPaper.dll', 'VirtualPaper.Common.dll', 'Plugins/UI/VirtualPaper.UI.dll')) {
-        $expected = Join-Path $Root "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/$file"
+        $expected = Join-Path (Get-UpgradeBuildDirectory $Root) $file
         if ((Get-FileHash -LiteralPath (Join-Path $installDir $file)).Hash -cne (Get-FileHash -LiteralPath $expected).Hash) {
             throw "Installed payload differs from its phase's Release build: $file"
         }
@@ -108,7 +108,7 @@ function Invoke-UpgradeProfile([string] $Name, [string] $Root, [switch] $Prepare
         $module = if ($Prepare) { 'MsixProfile.Prepare' } else { 'MsixProfile.Verify' }
         $path = Join-Path $ResultsRoot "$Name/ui-operation-results.json"
         & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration Release -NoBuild -PackageFullName $installed.PackageFullName `
-            -HostExe (Join-Path $Root 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe') `
+            -HostExe (Join-Path (Get-UpgradeBuildDirectory $Root 'VirtualPaper.UIOperationTest') 'VirtualPaper.UIOperationTest.exe') `
             -DataRoot $profile -Module $module -ReportPath $path *> (Join-Path $ResultsRoot "$Name.log")
         $null = Assert-MsixUIReport $path $installed.PackageFullName
     }
@@ -145,7 +145,7 @@ try {
             Assert-UpgradeMsixVersion $previous
         }
         $source = if ($Channel -eq 'MSIX') { Join-Path $installDir 'BuiltInWallpapers' } else {
-            Join-Path $PreviousTestRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/BuiltInWallpapers'
+            Join-Path (Get-UpgradeBuildDirectory $PreviousTestRoot) 'BuiltInWallpapers'
         }
         $script:builtIns = New-BuiltInWallpaperAcceptance $source $profile
     }
@@ -153,7 +153,7 @@ try {
         Invoke-UpgradeProfile 'previous-profile' $PreviousTestRoot -Prepare
         Assert-InitialBuiltInWallpapers $builtIns
         Initialize-BuiltInWallpaperReinstallFixture $builtIns
-        $newPayload = Join-Path $TestRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/BuiltInWallpapers'
+        $newPayload = Join-Path (Get-UpgradeBuildDirectory $TestRoot) 'BuiltInWallpapers'
         Update-BuiltInWallpaperUpgradeExpectation $builtIns $newPayload
         $report.PreviousSettings = Get-Content -LiteralPath (Join-Path $profile 'user_settings.json') -Raw | ConvertFrom-Json
     }

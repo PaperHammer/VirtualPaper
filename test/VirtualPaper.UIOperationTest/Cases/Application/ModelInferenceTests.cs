@@ -144,7 +144,7 @@ internal static class ModelInferenceTests {
             catch (IOException) { return false; }
             catch (JsonException) { return false; }
         }, "Real result imported into library");
-        Check(SHA256.HashData(await File.ReadAllBytesAsync(output)).SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(imported!.FilePath))), "Imported image differs from the actual exported result");
+        Check(Enumerable.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(output)), SHA256.HashData(await File.ReadAllBytesAsync(imported!.FilePath))), "Imported image differs from the actual exported result");
         await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_ExportedAndImported);
         await Task.Run(() => ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[0]), "Intelligent.Task.Remove")));
         // A second real result exercises confirmed suppression and persisted settings.
@@ -188,7 +188,7 @@ internal static class ModelInferenceTests {
             "Reminder re-enabled from settings");
         context.Evidence["ActiveTaskTrayExitCancellationVerified"] = true;
         context.Evidence["PreservationBadgesAndReminderPersistenceVerified"] = true;
-        Check(originalHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(inputs[0]))), "Inference modified the source file");
+        Check(Enumerable.SequenceEqual(originalHash, SHA256.HashData(await File.ReadAllBytesAsync(inputs[0]))), "Inference modified the source file");
         await session.StopAsync();
         session.RecordEvidence(context);
         Check(((string[])context.Evidence["RuntimeErrors"]!).Length == 0, "Model integration logged a runtime error");

@@ -65,7 +65,7 @@ try {
         Invoke-MsBuild @('src/VirtualPaper.sln', '/restore', '/t:Rebuild', '/p:Configuration=Release', '/p:Platform=Any CPU', '/m')
     }
     $exeOutputRoots = @('src/VirtualPaper/Plugins/UI', 'src/VirtualPaper/Plugins/PlayerWeb',
-        'src/VirtualPaper/Plugins/ScrSaver', 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0') |
+        'src/VirtualPaper/Plugins/ScrSaver', 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0') |
         ForEach-Object { Join-Path $repositoryRoot $_ }
     $exeOutputBefore = Get-ExeOutputState $exeOutputRoots
     $productVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $exeOutputRoots[-1] 'VirtualPaper.exe')).FileVersion
@@ -85,7 +85,7 @@ try {
             '/p:Configuration=Release', "/p:Platform=$($process.Platform)", '/p:RuntimeIdentifier=win-x64',
             '/p:PlatformTarget=x64', '/p:AppendRuntimeIdentifierToOutputPath=false',
             "/p:AssemblyVersion=$productVersion", "/p:FileVersion=$productVersion",
-            '/p:SelfContained=true', '/p:WindowsAppSDKSelfContained=true', '/p:WindowsPackageType=None',
+            '/p:SelfContained=true', '/p:MsixRuntimeVersion=10.0.15', '/p:WindowsAppSDKSelfContained=true', '/p:WindowsPackageType=None',
             '/p:GenerateAppxPackageOnBuild=false', '/p:IsMsixRelease=false', '/p:BuildProjectReferences=false',
             "/p:CustomAfterMicrosoftCommonTargets=$repositoryRoot\packaging\msix\Publish.props",
             "/p:MsixPublishProject=$($process.Project)", "/p:MsixPublishOutputRoot=$workDirectory\ProcessBuild",
@@ -110,7 +110,7 @@ try {
     if ($changed.Count) { throw "MSIX publishing changed normal EXE output: $($changed -join ', ')" }
     Write-Output 'Normal EXE output fingerprints are unchanged after MSIX publishing.'
 
-    $releaseDirectory = Join-Path $repositoryRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0'
+    $releaseDirectory = Join-Path $repositoryRoot 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0'
     $componentManifest = Join-Path $releaseDirectory 'app_comp_manifest.json'
     if (Test-Path -LiteralPath $componentManifest) { Copy-Item -LiteralPath $componentManifest -Destination $payload }
     foreach ($folder in @('ML', 'Shaders')) {

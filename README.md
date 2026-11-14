@@ -164,7 +164,7 @@ The detail crops show the same region at the same display size, without addition
 
 See the [user guide](https://github.com/PaperHammer/VirtualPaper/wiki) for more help getting started.
 
-The installer checks for the **.NET 8 Desktop Runtime** and can download it when needed. The **Microsoft Edge WebView2 Runtime** is also required.
+The installer checks for the **.NET 10 Desktop Runtime** and **ASP.NET Core 10 Runtime** (used by Web previews), and downloads them when needed. The **Microsoft Edge WebView2 Runtime** is also required. The Microsoft Store package includes its .NET dependencies.
 
 > [!NOTE]
 > See the [release notes](https://github.com/PaperHammer/VirtualPaper/releases) for the features available in each version.

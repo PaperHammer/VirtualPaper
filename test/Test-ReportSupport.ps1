@@ -184,7 +184,7 @@ if ($global:ReportLocalizationMode -eq 'fail') { throw 'Expected localization fa
     Assert-ReportThrows { & $runner -JobId test-artifacts -ResultsDirectory 'TestResults/BadLocalization' } 'Incomplete localization must block artifact tests.'
     Assert-ReviewCondition ($global:ReportDotnetCalls -eq $dotnetCalls -and -not (Test-Path (Join-Path $runnerRoot 'TestResults/BadLocalization/release-build-tests.trx'))) 'Invalid package localization must fail before producing a passing TRX.'
     $global:ReportLocalizationMode = 'pass'
-    Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--settings' -and $global:ReportTestBin -eq (Join-Path $runnerRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0')) 'Artifact checks need the build directory and no coverage collector.'
+    Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--settings' -and $global:ReportTestBin -eq (Join-Path $runnerRoot 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0')) 'Artifact checks need the build directory and no coverage collector.'
     foreach ($case in @(@('exit-failure', 'test-shader'), @('missing-report', 'test-images'), @('failed-report', 'test-web-backdrop'))) {
         $global:ReportTestMode = $case[0]
         Assert-ReportThrows { & $runner -JobId $case[1] } $case[0]

@@ -70,7 +70,7 @@ if ($PackageFullName) {
         $installed[0].Version.ToString() -cne $ciArtifact.PackageVersion)) { throw 'Installed CI package differs from its artifact.' }
     $CoreExe = Join-Path $installed[0].InstallLocation 'VirtualPaper.exe'
 }
-if (-not $CoreExe) { $CoreExe = Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.exe" }
+if (-not $CoreExe) { $CoreExe = Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net10.0-windows10.0.19041.0/VirtualPaper.exe" }
 $CoreExe = [IO.Path]::GetFullPath($CoreExe)
 if (-not (Test-Path -LiteralPath $CoreExe)) { throw "Core executable not found: $CoreExe" }
 if (-not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $CoreExe) 'Plugins/UI/VirtualPaper.UI.exe'))) {
@@ -124,7 +124,7 @@ if ($BuiltInPayload) {
 if ($PackageFullName) {
     $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_FULL_NAME'] = $PackageFullName
     $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_AUMID'] = "$($installed[0].PackageFamilyName)!App"
-    $startInfo.Environment['VIRTUALPAPER_TEST_ACTIVATION_RESUMER'] = Join-Path $PSScriptRoot "VirtualPaper.InstallerTest/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.exe"
+    $startInfo.Environment['VIRTUALPAPER_TEST_ACTIVATION_RESUMER'] = Join-Path $PSScriptRoot "VirtualPaper.InstallerTest/bin/$Configuration/net10.0-windows10.0.19041.0/VirtualPaper.InstallerTest.exe"
 } else {
     [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_PACKAGE_FULL_NAME')
     [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_PACKAGE_AUMID')

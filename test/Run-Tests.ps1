@@ -74,7 +74,7 @@ try {
         -ReportPath "$ResultsRoot/test-results-installer/installer-results.json" *> "$ResultsRoot/installer-smoke.log"
     Write-Host 'Running independent extended UI acceptance against the Release build...'
     & ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
-        -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
+        -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net10.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
         -ReportPath "$ResultsRoot/test-results-ui-operation/ui-operation-results.json" *> "$ResultsRoot/ui-acceptance.log"
     & ./test/Summarize-TestResults.ps1 -Root $ResultsRoot
 } finally {

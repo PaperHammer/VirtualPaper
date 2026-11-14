@@ -128,7 +128,7 @@ internal static class WallpaperEffectsTests {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "PrimaryButton", visible: true));
         });
         await AppProcessSession.WaitAsync(() => Task.FromResult(!Directory.Exists(data.FolderPath)), "Effects fixture deleted");
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Effects editing modified the source image");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Effects editing modified the source image");
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["PlayerProcessId"] = ownedPlayer.Id;

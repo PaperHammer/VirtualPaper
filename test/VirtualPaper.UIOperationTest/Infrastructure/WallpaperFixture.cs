@@ -29,7 +29,7 @@ internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBa
                 data = JsonSerializer.Deserialize(await AppProcessSession.ReadTextSharedAsync(files[0]), WpBasicDataContext.Default.WpBasicData);
                 data?.ResolvePaths(files[0]);
                 return data != null && File.Exists(data.ThumbnailPath) && File.Exists(data.FilePath)
-                    && sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath)));
+                    && Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath)));
             }
             catch (IOException) { return false; }
             catch (JsonException) { return false; }

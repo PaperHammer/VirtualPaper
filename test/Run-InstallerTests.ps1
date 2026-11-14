@@ -27,7 +27,7 @@ New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
 # Spaces exercise installer/application path handling; never reuse a daily install.
 $installDir = Join-Path ([IO.Path]::GetTempPath()) "Virtual Paper install-acceptance-$([guid]::NewGuid().ToString('N'))"
 $project = Join-Path $repositoryRoot 'test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj'
-$probe = Join-Path $repositoryRoot "test/VirtualPaper.InstallerTest/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
+$probe = Join-Path $repositoryRoot "test/VirtualPaper.InstallerTest/bin/$Configuration/net10.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
 if (-not $NoBuild) {
     dotnet build $project -c $Configuration
     if ($LASTEXITCODE -ne 0) { throw 'Installer lifecycle probe build failed; installation was not attempted.' }
@@ -48,7 +48,7 @@ $profilesRoot = Join-Path ([IO.Path]::GetTempPath()) ('VPInstaller-' + [guid]::N
 $preservedRoot = Join-Path $profilesRoot 'p'
 $freshRoot = Join-Path $profilesRoot 'f'
 $payloadRoot = if ($env:RELEASE_BIN_DIR) { $env:RELEASE_BIN_DIR } else {
-    Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net8.0-windows10.0.19041.0"
+    Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net10.0-windows10.0.19041.0"
 }
 $builtIns = New-BuiltInWallpaperAcceptance (Join-Path $payloadRoot 'BuiltInWallpapers') $preservedRoot
 $installedVersion = $null
@@ -180,7 +180,7 @@ try {
             # This job owns its installation; the ordinary smoke job runs independently.
             & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
                 -CoreExe (Join-Path $installDir 'VirtualPaper.exe') -InstalledExe `
-                -HostExe (Join-Path $repositoryRoot 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe') `
+                -HostExe (Join-Path $repositoryRoot 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net10.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe') `
                 -BuiltInPayload $builtIns.Destination `
                 -ReportPath $ExtendedUIReportPath
             $ui = Get-Content -LiteralPath $ExtendedUIReportPath -Raw | ConvertFrom-Json

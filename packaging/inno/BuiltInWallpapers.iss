@@ -1,6 +1,6 @@
 ; Prepared wallpaper folders are installed as writable user data, not program files.
 #ifndef BuiltInWallpapersSource
-  #define BuiltInWallpapersSource "..\..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\BuiltInWallpapers"
+  #define BuiltInWallpapersSource "..\..\src\VirtualPaper\bin\Release\net10.0-windows10.0.19041.0\BuiltInWallpapers"
 #endif
 
 [Files]

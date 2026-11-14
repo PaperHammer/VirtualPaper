@@ -11,6 +11,10 @@
 
 ## 构建和验收
 
+共享构建和测试使用 .NET 10。EXE 首次安装及静默升级均检测并补装 x64 Desktop Runtime 和 Web 预览所需的 ASP.NET Core Runtime；MSIX 为每个进程发布已修补的自包含 .NET 10。安装包命名、更新路由和应用标识保持不变。
+
+首次从 .NET 8 迁移的发布必须是完整产品发布：使用 `version:*` 标签，不添加 `update-plugins` 或 `update-plugin-*` 标签。插件补丁不会安装新的系统运行时，也不会替换 Core。
+
 工作流契约检查项目文件激活声明和图标帧。MSIX 打包还检查实际包内的关联参数与图标，安装后的资源管理器激活仍属于桌面验收项。
 
 共用 UI 测试要求包含 `ProjectActivation` 模块，验证真实 Core/UI 的项目打开链路，不修改日常文件关联。

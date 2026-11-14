@@ -4,7 +4,7 @@ VirtualPaper 是面向 Windows 10 及以上系统的开源动态壁纸管理软�
 
 ## 技术栈
 
-- .NET 8，主要目标框架为 `net8.0-windows10.0.19041.0`。
+- .NET 10，主要目标框架为 `net10.0-windows10.0.19041.0`。
 - 主后台程序使用 WPF；管理与创作界面主要使用 WinUI 3 / Windows App SDK。
 - Web 壁纸播放和编辑基于 WebView2，代码编辑器内置 Monaco Editor 0.55.1。
 - 进程通信使用 gRPC、命名管道及 `GrpcDotNetNamedPipes`。

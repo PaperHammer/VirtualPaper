@@ -223,7 +223,7 @@ internal static class HardwareAccelerationTests {
                     task.Style ? "Intelligent.StyleTransfer.Task" : "Intelligent.SuperResolution.Task"))
                 .Cast<AutomationElement>().Any(item => item.Current.Name == task.Input)), "Exported device-choice task removed");
         }
-        foreach (var input in hashes) Check(input.Value.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(input.Key))),
+        foreach (var input in hashes) Check(Enumerable.SequenceEqual(input.Value, SHA256.HashData(await File.ReadAllBytesAsync(input.Key))),
             "Real inference modified a source image");
         await session.StopAsync();
         session.RecordEvidence(context);

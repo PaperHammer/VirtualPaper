@@ -1,6 +1,22 @@
 # Cross-version acceptance stays separate from same-package smoke.
 . "$PSScriptRoot/PackageArtifactSupport.ps1"
 
+function Get-UpgradeBuildDirectory {
+    param([string] $Root,
+        [ValidateSet('VirtualPaper', 'VirtualPaper.InstallerTest', 'VirtualPaper.UIOperationTest')]
+        [string] $Project = 'VirtualPaper')
+    $parent = if ($Project -eq 'VirtualPaper') { 'src' } else { 'test' }
+    $projectDirectory = Join-Path $Root "$parent/$Project"
+    [xml]$definition = Get-Content -LiteralPath (Join-Path $projectDirectory "$Project.csproj") -Raw
+    $frameworks = @($definition.SelectNodes('/Project/PropertyGroup/TargetFramework') | ForEach-Object InnerText)
+    if ($frameworks.Count -ne 1 -or $frameworks[0] -notmatch '^net\d+\.0-windows\d+\.\d+\.\d+\.\d+$') {
+        throw "Expected one Windows target framework in $Project.csproj."
+    }
+    $platform = if ($Project -eq 'VirtualPaper.UIOperationTest') { 'x64/' } else { '' }
+    # Each snapshot owns its framework: an upgrade can cross .NET major versions.
+    return Join-Path $projectDirectory "bin/${platform}Release/$($frameworks[0])"
+}
+
 function Get-UpgradePackagePair([string] $PreviousArtifact, [string] $PackageArtifact, [string] $Channel) {
     $previous = Get-PackageArtifact $PreviousArtifact $Channel
     $next = Get-PackageArtifact $PackageArtifact $Channel

@@ -78,7 +78,7 @@ internal static class StaticEditorTests {
             catch (IOException) { return false; }
             catch (FileFormatException) { return false; }
         }), "Reopened design exported a complete PNG");
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Editor modified the source image");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Editor modified the source image");
         await session.StopAsync();
         session.RecordEvidence(context);
         Check(((string[])context.Evidence["RuntimeErrors"]!).Length == 0, "Static editor logged a runtime error; inspect report evidence");

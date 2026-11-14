@@ -38,6 +38,25 @@ function New-Artifact([string] $Name, [string] $Channel, [string] $Version, [str
     return $manifest
 }
 try {
+    # A framework upgrade must use the matching tools/payload from each snapshot,
+    # even when stale output from the other framework is also present.
+    foreach ($major in @(8, 10)) {
+        $snapshot = Join-Path $root "net$major"
+        foreach ($project in @('VirtualPaper', 'VirtualPaper.InstallerTest', 'VirtualPaper.UIOperationTest')) {
+            $parent = if ($project -eq 'VirtualPaper') { 'src' } else { 'test' }
+            $directory = Join-Path $snapshot "$parent/$project"
+            [void](New-Item -ItemType Directory -Path $directory -Force)
+            $framework = "net$major.0-windows10.0.19041.0"
+            Set-Content -LiteralPath (Join-Path $directory "$project.csproj") "<Project><PropertyGroup><TargetFramework>$framework</TargetFramework></PropertyGroup></Project>"
+            $platform = if ($project -eq 'VirtualPaper.UIOperationTest') { 'x64/' } else { '' }
+            $expected = Join-Path $directory "bin/${platform}Release/$framework"
+            [void](New-Item -ItemType Directory -Path $expected -Force)
+            [void](New-Item -ItemType Directory -Path (Join-Path $directory "bin/${platform}Release/net99.0-windows10.0.19041.0") -Force)
+            Require ((Get-UpgradeBuildDirectory $snapshot $project) -ceq $expected) 'Upgrade selected another snapshot/framework output.'
+        }
+    }
+    Set-Content -LiteralPath (Join-Path $directory "$project.csproj") '<Project><PropertyGroup><TargetFramework>../other</TargetFramework></PropertyGroup></Project>'
+    Reject { Get-UpgradeBuildDirectory $snapshot $project }
     foreach ($channel in @('EXE', 'MSIX')) {
         $oldVersion = if ($channel -eq 'EXE') { '0.6.0.0' } else { '1.0.0.0' }
         $newVersion = if ($channel -eq 'EXE') { '0.6.1.0' } else { '1.0.1.0' }
@@ -112,12 +131,12 @@ try {
     # Exercise the actual packaging script with a compiler double: stale shared outputs
     # must not be read or removed, and a compiler failure must restore setup.iss.
     $repository = Join-Path $root 'packaging-repository'
-    foreach ($folder in @('.github/scripts', 'packaging/inno/Output', 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0')) {
+    foreach ($folder in @('.github/scripts', 'packaging/inno/Output', 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0')) {
         [void](New-Item -ItemType Directory -Path (Join-Path $repository $folder) -Force)
     }
     $packager = Join-Path $repository '.github/scripts/New-CIExePackage.ps1'
     Copy-Item -LiteralPath "$PSScriptRoot/../.github/scripts/New-CIExePackage.ps1" -Destination $packager
-    Copy-Item -LiteralPath (Get-Process -Id $PID).Path -Destination (Join-Path $repository 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/VirtualPaper.exe')
+    Copy-Item -LiteralPath (Get-Process -Id $PID).Path -Destination (Join-Path $repository 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0/VirtualPaper.exe')
     $setup = Join-Path $repository 'packaging/inno/setup.iss'
     $original = '#define MyAppVersion "0.6.0.0"' + "`n" + '#define MyAppVersionText "0_6_0_0"'
     [IO.File]::WriteAllText($setup, $original)

@@ -67,7 +67,7 @@ internal static class LibraryOrganizationTests {
             && json["Authors"]?.GetValue<string>()?.Contains("Organization author", StringComparison.Ordinal) == true);
         await AppProcessSession.WaitForJsonAsync(organization, json => json["Items"]?[uid]?["Tags"] is { } tags
             && tags.AsArray().Select(tag => tag!.GetValue<string>()).Order().SequenceEqual(new[] { "organization-tag", "pending-tag" }));
-        Check(beforeOrder.SequenceEqual(await Task.Run(() => Order(root, ids))), "Editing information changed the card's default position");
+        Check(Enumerable.SequenceEqual(beforeOrder, await Task.Run(() => Order(root, ids))), "Editing information changed the card's default position");
 
         await Task.Run(() => {
             ApplicationUi.Expand(ApplicationUi.Find(root, "Library.Filters"));
@@ -98,7 +98,7 @@ internal static class LibraryOrganizationTests {
         });
         await WallpaperLibraryTests.WaitForItemsAsync(root, 2);
         await WaitFavoriteAsync(ui.MainWindowHandle, root, uid, true);
-        Check(beforeOrder.SequenceEqual(await Task.Run(() => Order(root, ids))), "Reopening lost the library order");
+        Check(Enumerable.SequenceEqual(beforeOrder, await Task.Run(() => Order(root, ids))), "Reopening lost the library order");
         await FilterTagAsync(root, "organization-ta", 1);
         await Task.Run(() => WallpaperLibraryTests.FindItem(root, uid));
         await FilterTagAsync(root, "", 2);
@@ -112,8 +112,8 @@ internal static class LibraryOrganizationTests {
         });
         await AppProcessSession.WaitForJsonAsync(organization, json => json["Items"]?[uid]?["Favorite"]?.GetValue<bool>() == false);
         await WaitFavoriteAsync(ui.MainWindowHandle, root, uid, false);
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Organization modified the input image");
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(WpBasicData.Load(metadata).FilePath))), "Organization modified imported media");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Organization modified the input image");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(WpBasicData.Load(metadata).FilePath))), "Organization modified imported media");
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["FavoritesTagsInformationFiltersAndReopenVerified"] = true;

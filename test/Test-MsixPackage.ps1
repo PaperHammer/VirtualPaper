@@ -64,6 +64,11 @@ try {
         }
         $runtime = Read-PackageText "$directory$name.runtimeconfig.json" | ConvertFrom-Json
         if (-not $runtime.runtimeOptions.PSObject.Properties['includedFrameworks']) { throw "$name is not self-contained." }
+        $frameworks = @($runtime.runtimeOptions.includedFrameworks)
+        if (-not @($frameworks | Where-Object name -CEQ 'Microsoft.NETCore.App').Count -or
+            @($frameworks | Where-Object { [version]$_.version -lt [version]'10.0.15' -or ([version]$_.version).Major -ne 10 }).Count) {
+            throw "$name must include the serviced .NET 10 runtime."
+        }
     }
     $declaredLanguages = @($manifest.Package.Resources.Resource | ForEach-Object Language)
     Assert-PackageLanguageDeclarations $declaredLanguages $languageCatalog

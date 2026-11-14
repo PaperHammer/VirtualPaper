@@ -2,7 +2,7 @@
 
 ## Project map
 
-VirtualPaper is a Windows wallpaper application built with .NET 8, WPF, WinUI 3 and WebView2. It is a multi-process application: the WPF Core owns services and the tray; the WinUI process provides the library, settings and editors; wallpaper players and the screen saver run separately. Processes communicate through gRPC over named pipes.
+VirtualPaper is a Windows wallpaper application built with .NET 10, WPF, WinUI 3 and WebView2. It is a multi-process application: the WPF Core owns services and the tray; the WinUI process provides the library, settings and editors; wallpaper players and the screen saver run separately. Processes communicate through gRPC over named pipes.
 
 | Area | Source entry points |
 | --- | --- |

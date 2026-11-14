@@ -2153,4 +2153,16 @@ Se não funcionar, reinicie o Windows. Algumas versões de prévia do Windows 10
   <data name="Inference_EnhancementGpuHint" xml:space="preserve">
     <value>Recomendado. Aplica-se apenas à melhoria da imagem; a transferência de estilo usa a CPU. Se a GPU estiver indisponível, a CPU será usada.</value>
   </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>Abrir com VirtualPaper</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>Projeto de imagem do VirtualPaper</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>Projeto Web do VirtualPaper</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>Não foi possível abrir o projeto. Verifique se o arquivo está disponível e tente novamente.</value>
+  </data>
 </root>

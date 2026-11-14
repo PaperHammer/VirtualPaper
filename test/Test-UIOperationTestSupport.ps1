@@ -76,7 +76,7 @@ $report = New-PassReport
 $report.Results[0].Evidence.ProcessesExitedNormally = $false
 Assert-Rejected $report 'Abnormal process exit must fail'
 Assert-Rejected $null 'Missing report must fail'
-$extendedModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering')
+$extendedModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering','ProjectActivation')
 $hardwareCases = @('StartupPolicyAndOptions','SoftwareDrawingSaveReopenAndExport','SoftwareWebEditSaveReopenAndExport','DeviceChoiceAndEnhancement')
 $extendedCases = @($extendedModules | ForEach-Object { "Application.$_.Fixture" }) +
     @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" })

@@ -156,7 +156,7 @@ try {
     $installer | Add-Member NoteProperty PackageVersion '0.6.0.0'
     Save-Json $installer "$raw/test-results-installer/installer-results.json"
     Save-Json $installer "$raw/test-results-ui-operation/installed-acceptance.json"
-    $uiModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering')
+    $uiModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering','ProjectActivation')
     $hardwareCases = @('StartupPolicyAndOptions','SoftwareDrawingSaveReopenAndExport','SoftwareWebEditSaveReopenAndExport','DeviceChoiceAndEnhancement')
     $uiCases = @($uiModules | ForEach-Object { "Application.$_.Fixture" }) +
         @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" })
@@ -236,7 +236,7 @@ try {
     # Counts alone cannot distinguish a reduced UI suite from full installed acceptance.
     foreach ($path in @('test-results-ui-operation/ui-operation-results.json', 'test-results-msix-ui/extended-ui/ui-operation-results.json')) {
         $check = if ($path.StartsWith('test-results-msix-')) { $msixCheck } else { 'EXE artifact identity' }
-        foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor', 'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration')) {
+        foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor', 'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration', 'ProjectActivation')) {
             Reject-ChangedReport "$raw/$path" $check {
                 param($report)
                 $report.Results = @($report.Results | Where-Object Name -NotLike "Application.$module.*")

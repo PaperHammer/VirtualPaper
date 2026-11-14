@@ -26,6 +26,7 @@ internal static class LocalizationTests {
 
     public static async Task RefreshAndPreserveStateAsync(UiTestContext context) {
         var regionalCulture = System.Globalization.CultureInfo.CurrentCulture;
+        var previousServices = AppServiceLocator.Services;
         using var services = new ServiceCollection()
             .AddSingleton<StyleTransferAddTaskViewModel>()
             .AddSingleton<StyleTranferViewModel>()
@@ -143,8 +144,8 @@ internal static class LocalizationTests {
         }
         finally {
             page.TestSurface.Child = null;
-            await LanguageUtil.SetLanguageAsync("en-US");
-            AppServiceLocator.Services = null!;
+            try { await LanguageUtil.SetLanguageAsync("en-US"); }
+            finally { AppServiceLocator.Services = previousServices; }
         }
     }
 

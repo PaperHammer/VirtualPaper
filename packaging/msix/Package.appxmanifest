@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2"
+         xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
          xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-         IgnorableNamespaces="uap desktop rescap">
+         IgnorableNamespaces="uap uap2 uap3 desktop rescap">
   <!-- Local preview identity. Build-Msix.ps1 supplies the Partner Center identity for Store builds. -->
   <Identity Name="PaperHammer.VirtualPaper.Preview" Publisher="CN=PaperHammer" Version="1.0.0.0" ProcessorArchitecture="x64" />
   <Properties>
@@ -23,6 +25,22 @@
                           BackgroundColor="transparent" Square150x150Logo="MsixAssets\Square150x150Logo.png"
                           Square44x44Logo="MsixAssets\Square44x44Logo.png" />
       <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation Name="virtualpaper-design" Parameters="--open-project &quot;%1&quot;">
+            <uap:DisplayName>ms-resource:Shell_DesignFileType</uap:DisplayName>
+            <uap:Logo>FileIcons\vpd.png</uap:Logo>
+            <uap:SupportedFileTypes><uap:FileType>.vpd</uap:FileType></uap:SupportedFileTypes>
+            <uap2:SupportedVerbs><uap3:Verb Id="virtualpaperopen" Parameters="--open-project &quot;%1&quot;">ms-resource:Shell_OpenWithVirtualPaper</uap3:Verb></uap2:SupportedVerbs>
+          </uap3:FileTypeAssociation>
+        </uap:Extension>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap3:FileTypeAssociation Name="virtualpaper-web" Parameters="--open-project &quot;%1&quot;">
+            <uap:DisplayName>ms-resource:Shell_WebFileType</uap:DisplayName>
+            <uap:Logo>FileIcons\vpw.png</uap:Logo>
+            <uap:SupportedFileTypes><uap:FileType>.vpw</uap:FileType></uap:SupportedFileTypes>
+            <uap2:SupportedVerbs><uap3:Verb Id="virtualpaperopen" Parameters="--open-project &quot;%1&quot;">ms-resource:Shell_OpenWithVirtualPaper</uap3:Verb></uap2:SupportedVerbs>
+          </uap3:FileTypeAssociation>
+        </uap:Extension>
         <desktop:Extension Category="windows.startupTask" Executable="VirtualPaper.exe" EntryPoint="Windows.FullTrustApplication">
           <desktop:StartupTask TaskId="AppStartup" Enabled="false" DisplayName="Virtual Paper" />
         </desktop:Extension>

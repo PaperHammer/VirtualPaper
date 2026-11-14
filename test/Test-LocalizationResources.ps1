@@ -31,7 +31,7 @@ try {
     Write-Text $arguments.CatalogPath ($catalog | ConvertTo-Json -Depth 6)
     $texts = '<root><data name="Greeting"><value>Ready {0}</value></data><data name="CodeOnly"><value>Code-only message</value></data><data name="Installer"><value>Continue?</value></data></root>'
     foreach ($code in @('en-US', 'zh-CN')) { Write-Text "$source/$code/Resources.resw" $texts }
-    Write-Text $arguments.ResourceMappingFile '<Resources><Resource Target="Core" Name="Title" Source="Greeting"/><Resource Target="Common" Name="Message" Source="Greeting"/><Resource Target="Installer" Name="Continue" Source="Installer"/></Resources>'
+    Write-Text $arguments.ResourceMappingFile '<Resources><Resource Target="Core" Name="Title" Source="Greeting"/><Resource Target="Common" Name="Message" Source="Greeting"/><Resource Target="Installer" Name="Continue" Source="Installer"/><Resource Target="Manifest" Name="ShellMenu" Source="Installer"/></Resources>'
     Write-Text $arguments.MappingFile '<Resources><Resource Name="Ui_Greeting.Text" Source="Greeting"/></Resources>'
     Write-Text "$fixture/xaml/Page.xaml" '<Page xmlns="urn:test" xmlns:l="using:WinUI3Localizer"><TextBlock l:Uids.Uid="Ui_Greeting"/></Page>'
     Write-Text $arguments.ManifestTemplate '<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"><Resources/></Package>'
@@ -52,6 +52,10 @@ try {
     Require ($installer.Contains('english.InitialApplicationLanguage=en-US') -and $installer.Contains('chinese.InitialApplicationLanguage=zh-CN')) 'Installer names must map to canonical language markers.'
     Require ($installer.Contains('Name: "english"; MessagesFile: "compiler:Default.isl"; LicenseFile: "License\LICENSE.txt";')) 'The existing English license page must be preserved.'
     [xml]$manifest = Get-Content "$output/Manifest/Package.appxmanifest" -Raw
+    foreach ($code in @('en-US', 'zh-CN')) {
+        [xml]$shell = Get-Content "$output/Manifest/Strings/$code/Resources.resw" -Raw
+        Require ($shell.root.data.name -ceq 'ShellMenu' -and $shell.root.data.value -ceq 'Continue?') 'Manifest shell resources must use the shared source translations.'
+    }
     Require (($manifest.Package.Resources.Resource.Language -join ',') -ceq 'en-US,zh-CN') 'The manifest must declare the supported languages, default first.'
 
     $chinese = "$source/zh-CN/Resources.resw"

@@ -2160,4 +2160,16 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Inference_EnhancementGpuHint" xml:space="preserve">
     <value>Recommended. Applies only to enhancement; style transfer uses the CPU. If GPU processing is unavailable, enhancement falls back to the CPU.</value>
   </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>Open with VirtualPaper</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>VirtualPaper Image Project</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>VirtualPaper Web Project</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>The project could not be opened. Check that the file is available and try again.</value>
+  </data>
 </root>

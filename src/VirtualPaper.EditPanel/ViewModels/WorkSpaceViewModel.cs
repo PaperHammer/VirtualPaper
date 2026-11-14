@@ -229,7 +229,12 @@ namespace VirtualPaper.EditPanel.ViewModels {
 
         internal async Task<bool> AddNewItemsAsync(PreProjectData[]? predatas) {
             if (predatas == null || predatas.Length == 0) return false;
+            await _projectOpenGate.WaitAsync();
+            try { return await AddProjectItemsAsync(predatas); }
+            finally { _projectOpenGate.Release(); }
+        }
 
+        private async Task<bool> AddProjectItemsAsync(PreProjectData[] predatas) {
             var hasAddedItem = false;
             foreach (var data in predatas) {
                 try {
@@ -257,17 +262,18 @@ namespace VirtualPaper.EditPanel.ViewModels {
         }
 
         private async Task<bool> InitRuntimeWithFileAsync(string filePath) {
+            // An open editor owns its current state, even if its source was moved.
+            if (TryActivateOpenProject(filePath)) {
+                AddRecentUsed(filePath);
+                return true;
+            }
+
             if (!FileUtil.IsValidFilePath(filePath)) {
                 GlobalMessageUtil.ShowError(
                     message: Constants.I18n.Project_FileLoad_Failed,
                     isNeedLocalizer: true,
                     extraMsg: filePath);
                 return false;
-            }
-
-            if (TryActivateOpenProject(filePath)) {
-                AddRecentUsed(filePath);
-                return true;
             }
 
             var result = await _fileLoaderRegistry.LoadAsync(filePath);
@@ -468,5 +474,6 @@ namespace VirtualPaper.EditPanel.ViewModels {
         private readonly ConcurrentBag<string> _tempRecentUsed = [];
         private readonly Dictionary<IRuntime, (IArcTabViewItemHeader Header, IArcTabViewItem Item)> _runtimeToArcTab = [];
         private readonly Dictionary<IRuntime, string> _runtimeProjectPaths = [];
+        private readonly SemaphoreSlim _projectOpenGate = new(1, 1);
     }
 }

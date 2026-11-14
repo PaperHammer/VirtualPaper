@@ -23,6 +23,11 @@ internal sealed class UiTestContext : IDisposable {
         Application.Current.UnhandledException += OnUnhandled;
     }
 
+    public Task ActivateHostAsync() {
+        _window.Activate();
+        return ApplicationUi.ActivateOwnedWindowAsync(WinRT.Interop.WindowNative.GetWindowHandle(_window));
+    }
+
     private void OnUnhandled(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs args) {
         _unhandled ??= args.Exception;
         args.Handled = true;

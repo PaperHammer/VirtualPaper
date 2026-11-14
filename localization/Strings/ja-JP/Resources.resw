@@ -2153,4 +2153,16 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Inference_EnhancementGpuHint" xml:space="preserve">
     <value>有効にすることを推奨します。高画質化にのみ適用され、スタイル変換は CPU を使用します。GPU を利用できない場合は CPU に切り替えます。</value>
   </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>VirtualPaper で開く</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>VirtualPaper 画像プロジェクト</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>VirtualPaper Web プロジェクト</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>プロジェクトを開けませんでした。ファイルが利用可能か確認して、もう一度お試しください。</value>
+  </data>
 </root>

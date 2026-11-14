@@ -5,6 +5,10 @@ import "Protos/common_models.proto";
 
 service Grpc_CommandsService {
 	rpc ShowUI (google.protobuf.Empty) returns (google.protobuf.Empty);
+	rpc OpenProjects (Grpc_ProjectPaths) returns (google.protobuf.Empty);
+	rpc GetActivationHost (google.protobuf.Empty) returns (Grpc_ActivationHost);
+	rpc GetPendingProjectOpen (google.protobuf.Empty) returns (Grpc_ProjectOpenRequest);
+	rpc CompleteProjectOpen (Grpc_ProjectOpenId) returns (google.protobuf.Empty);
 	rpc CloseUI (google.protobuf.Empty) returns (google.protobuf.Empty);
 	rpc NotifyUIClosing (Grpc_UIClosing) returns (google.protobuf.Empty);
 	rpc RequestInstall (google.protobuf.Empty) returns (google.protobuf.Empty);
@@ -16,4 +20,21 @@ service Grpc_CommandsService {
 
 message Grpc_UIClosing {
 	int32 process_id = 1;
+}
+
+message Grpc_ProjectPaths {
+	repeated string paths = 1;
+}
+
+message Grpc_ActivationHost {
+	int32 process_id = 1;
+}
+
+message Grpc_ProjectOpenRequest {
+	string id = 1;
+	repeated string paths = 2;
+}
+
+message Grpc_ProjectOpenId {
+	string id = 1;
 }

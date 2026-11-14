@@ -102,6 +102,8 @@ internal static class GeneralSettingsTests {
                 "Language selector lost its selected value"));
             string expectedTooltip = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "SidebarIntelligentFullName");
             await Task.Run(() => ApplicationUi.VerifyToolTipAsync(ui.MainWindowHandle,
+                ApplicationUi.Find(root, "App.Navigation.Library"), LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "SidebarRepository")));
+            await Task.Run(() => ApplicationUi.VerifyToolTipAsync(ui.MainWindowHandle,
                 ApplicationUi.Find(root, "App.Navigation.Intelligent"), expectedTooltip));
         }
         string finalLanguage = SupportedLanguages.Languages[^1].Codes[0];

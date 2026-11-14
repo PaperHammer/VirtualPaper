@@ -68,7 +68,8 @@ internal static class InterfaceAnimationTests {
                 "Expanded arrow points in the wrong direction");
 
             page.TestSurface.Child = null;
-            await context.WaitAsync(() => !expander.IsLoaded);
+            await context.WaitAsync(() => !expander.IsLoaded && VisualStateManager.GetCustomVisualStateManager(root) == null,
+                "Unload completes animation cleanup");
             Check(VisualStateManager.GetCustomVisualStateManager(root) == null, "Unloading retained the animation registration");
             Check(icon.Source == null, "Unloading unnecessarily restarted the animated chevron");
             page.TestSurface.Child = expander;

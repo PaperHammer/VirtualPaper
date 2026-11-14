@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
+using Microsoft.Extensions.DependencyInjection;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Utils;
@@ -51,6 +53,7 @@ public partial class App : Application {
             new UiTestCase("Application.SystemSettings.ExportLogsAndCancel", SystemSettingsTests.ExportLogsAndCancelAsync),
             new UiTestCase("Application.StaticEditor.RotateCancelSaveReopenAndExport", context => StaticEditorTests.RotateCancelSaveReopenAndExportAsync(context)),
             new UiTestCase("Application.WebEditor.CreateFilesSaveReopenAndExport", context => WebEditorTests.CreateFilesSaveReopenAndExportAsync(context)),
+            new UiTestCase("Application.ProjectActivation.StartForwardReuseAndReopen", ProjectActivationTests.RunAsync),
             new UiTestCase("Application.EditorExit.ImageCancelSaveAndExit", EditorExitTests.ImageAsync),
             new UiTestCase("Application.EditorExit.WebCancelSaveAndDiscard", EditorExitTests.WebAsync),
             new UiTestCase("Application.Intelligent.ConfigureCancelAndReopen", IntelligentTests.ConfigureCancelAndReopenAsync),
@@ -75,6 +78,8 @@ public partial class App : Application {
         else
             cases = cases.Where(test => !test.RequiresIntegrationEnvironment).ToArray();
         var results = new List<UiTestResult>();
+        using var hostServices = new ServiceCollection().BuildServiceProvider();
+        AppServiceLocator.Services = hostServices;
         try {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());
             UiAnimation.Initialize(true);

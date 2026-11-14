@@ -217,9 +217,18 @@ public sealed partial class EffectPresetManagerDialog : ArcContentDialog {
         ToolTipService.SetToolTip(DeleteTargetName, DeleteTargetName.Text);
     }
 
-    private void DeleteFlyout_Closed(object? sender, object args) => _deleteTargetId = null;
+    private void DeletePreset_Click(object sender, RoutedEventArgs args) {
+        // Capture on the click, before the opening animation exposes the confirmation.
+        // A previous flyout's delayed Closed event must not clear a newer confirmation.
+        _deleteTargetId = !_busy && !_closed && _savedSelection?.Preset.IsBuiltIn == false
+            ? _savedSelection.Preset.Id : null;
+        if (_deleteTargetId != null) DeleteTargetName.Text = _savedSelection!.Label;
+    }
 
-    private void CancelDelete_Click(object sender, RoutedEventArgs args) => DeleteFlyout.Hide();
+    private void CancelDelete_Click(object sender, RoutedEventArgs args) {
+        _deleteTargetId = null;
+        DeleteFlyout.Hide();
+    }
 
     private async void ConfirmDelete_Click(object sender, RoutedEventArgs args) {
         string? id = _deleteTargetId;

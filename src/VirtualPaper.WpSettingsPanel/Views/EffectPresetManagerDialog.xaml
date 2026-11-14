@@ -75,9 +75,9 @@
                     </ListView.ItemTemplate>
                 </ListView>
                 <Button x:Name="DeletePreset" Grid.Row="2" MinWidth="96" l:Uids.Uid="Ui_EffectPreset_Delete"
-                    AutomationProperties.AutomationId="EffectPresets.Delete">
+                    AutomationProperties.AutomationId="EffectPresets.Delete" Click="DeletePreset_Click">
                     <Button.Flyout>
-                        <Flyout x:Name="DeleteFlyout" Placement="TopEdgeAlignedLeft" Opened="DeleteFlyout_Opened" Closed="DeleteFlyout_Closed">
+                        <Flyout x:Name="DeleteFlyout" Placement="TopEdgeAlignedLeft" Opened="DeleteFlyout_Opened">
                             <StackPanel Width="300" Spacing="12">
                                 <TextBlock TextWrapping="Wrap" l:Uids.Uid="Ui_EffectPreset_DeleteConfirm"/>
                                 <TextBlock x:Name="DeleteTargetName" FontWeight="SemiBold" TextWrapping="Wrap"

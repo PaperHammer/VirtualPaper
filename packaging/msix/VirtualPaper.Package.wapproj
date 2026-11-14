@@ -41,6 +41,9 @@
     <Content Update="$(MsixPayloadDirectory)\MsixAssets\*.png">
       <ExcludeFromResourceIndex>false</ExcludeFromResourceIndex>
     </Content>
+    <Content Update="$(MsixPayloadDirectory)\FileIcons\*.png">
+      <ExcludeFromResourceIndex>false</ExcludeFromResourceIndex>
+    </Content>
     <!-- Storage Pickers opens this PRI beside Microsoft.WindowsAppRuntime.dll
          by filename. Keep the physical files as well as the merged resource maps;
          normal Content PRI inputs are consumed by the AppX resource merge. -->
@@ -60,6 +63,14 @@
       <Output TaskParameter="Result" PropertyName="DefaultLanguage" />
     </XmlPeek>
     <Copy SourceFiles="$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization\Package.appxmanifest" DestinationFiles="$(MsixGeneratedManifest)" />
+    <ItemGroup>
+      <_ShellResource Include="$(MSBuildProjectDirectory)\obj\$(Platform)\$(Configuration)\Localization\Strings\**\Resources.resw" />
+      <PRIResource Include="@(_ShellResource)">
+        <Link>Strings\%(_ShellResource.RecursiveDir)Resources.resw</Link>
+        <TargetPath>Strings\%(_ShellResource.RecursiveDir)Resources.resw</TargetPath>
+        <ExcludeFromResourceIndex>false</ExcludeFromResourceIndex>
+      </PRIResource>
+    </ItemGroup>
     <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Name" Value="$(MsixIdentityName)" />
     <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Publisher" Value="$(MsixPublisher)" />
     <XmlPoke XmlInputPath="$(MsixGeneratedManifest)" Query="/*[local-name()='Package']/*[local-name()='Identity']/@Version" Value="$(MsixPackageVersion)" />

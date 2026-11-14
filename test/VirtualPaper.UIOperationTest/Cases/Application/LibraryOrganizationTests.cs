@@ -46,7 +46,7 @@ internal static class LibraryOrganizationTests {
         Check(beforeOrder.Length == 2 && beforeOrder[0] == "Library.Item." + uid, "Expected both fixtures with the newest card first");
         await Task.Run(() => WallpaperLibraryTests.OpenItemMenu(ui.MainWindowHandle, root, uid, "Library.Item.AddFavorite"));
         await AppProcessSession.WaitForJsonAsync(organization, json => json["Items"]?[uid]?["Favorite"]?.GetValue<bool>() == true);
-        await WaitFavoriteAsync(root, uid, true);
+        await WaitFavoriteAsync(ui.MainWindowHandle, root, uid, true);
 
         await Task.Run(() => {
             WallpaperLibraryTests.OpenItemMenu(ui.MainWindowHandle, root, uid, "Library.Item.EditInfo");
@@ -97,7 +97,7 @@ internal static class LibraryOrganizationTests {
             return window;
         });
         await WallpaperLibraryTests.WaitForItemsAsync(root, 2);
-        await WaitFavoriteAsync(root, uid, true);
+        await WaitFavoriteAsync(ui.MainWindowHandle, root, uid, true);
         Check(beforeOrder.SequenceEqual(await Task.Run(() => Order(root, ids))), "Reopening lost the library order");
         await FilterTagAsync(root, "organization-ta", 1);
         await Task.Run(() => WallpaperLibraryTests.FindItem(root, uid));
@@ -111,7 +111,7 @@ internal static class LibraryOrganizationTests {
             WallpaperLibraryTests.OpenItemMenu(ui.MainWindowHandle, root, uid, "Library.Item.RemoveFavorite");
         });
         await AppProcessSession.WaitForJsonAsync(organization, json => json["Items"]?[uid]?["Favorite"]?.GetValue<bool>() == false);
-        await WaitFavoriteAsync(root, uid, false);
+        await WaitFavoriteAsync(ui.MainWindowHandle, root, uid, false);
         Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Organization modified the input image");
         Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(WpBasicData.Load(metadata).FilePath))), "Organization modified imported media");
         await session.StopAsync();
@@ -121,11 +121,14 @@ internal static class LibraryOrganizationTests {
 
     private static string Text(AutomationElement input) => ((ValuePattern)input.GetCurrentPattern(ValuePattern.Pattern)).Current.Value;
     private static Task WaitEmptyInputAsync(AutomationElement root, string id) => AppProcessSession.WaitAsync(() => Task.Run(() => Text(ApplicationUi.Find(root, id)) == ""), "Enter commits " + id);
-    private static Task WaitFavoriteAsync(AutomationElement root, string uid, bool favorite) => AppProcessSession.WaitAsync(() => Task.Run(() => {
+    private static Task WaitFavoriteAsync(nint window, AutomationElement root, string uid, bool favorite) => Task.Run(async () => {
         var card = WallpaperLibraryTests.FindItem(root, uid);
-        var button = ApplicationUi.Find(card, "Library.Card.Favorite", enabled: false);
-        return ((TogglePattern)button.GetCurrentPattern(TogglePattern.Pattern)).Current.ToggleState == (favorite ? ToggleState.On : ToggleState.Off);
-    }), "Card favorite state " + favorite);
+        await ApplicationUi.WithHoveredElementAsync(window, card, () => AppProcessSession.WaitAsync(() => {
+            var button = ApplicationUi.Find(card, "Library.Favorite." + uid);
+            return Task.FromResult(((TogglePattern)button.GetCurrentPattern(TogglePattern.Pattern)).Current.ToggleState
+                == (favorite ? ToggleState.On : ToggleState.Off));
+        }, "Hovered card favorite state " + favorite));
+    });
     private static string[] Order(AutomationElement root, string[] ids) => ApplicationUi.Find(root, "Library.Items")
         .FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem))
         .Cast<AutomationElement>().Select(item => item.Current.AutomationId).Where(id => ids.Any(uid => id == "Library.Item." + uid)).ToArray();

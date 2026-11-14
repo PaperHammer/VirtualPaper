@@ -1,12 +1,13 @@
 #Requires -Version 7.2
 [CmdletBinding()]
-param([Parameter(Mandatory)][string] $PackagePath)
+param([Parameter(Mandatory)][string] $PackagePath, [string] $MakePri)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 . (Join-Path $PSScriptRoot '../.github/scripts/MsixResources.ps1')
 . (Join-Path $PSScriptRoot '../localization/LanguageCatalog.ps1')
 . (Join-Path $PSScriptRoot 'LocalizationResourceSupport.ps1')
-$languageCatalog = Get-LanguageCatalog
+$expected = Get-ExpectedLocalization
+$languageCatalog = $expected.Catalog
 $package = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $PackagePath).Path)
 try {
     $files = @{}
@@ -22,6 +23,7 @@ try {
     [xml]$manifest = Read-PackageText 'AppxManifest.xml'
     $namespaces = [Xml.XmlNamespaceManager]::new($manifest.NameTable)
     $namespaces.AddNamespace('m', 'http://schemas.microsoft.com/appx/manifest/foundation/windows10')
+    $namespaces.AddNamespace('uap', 'http://schemas.microsoft.com/appx/manifest/uap/windows10')
     $namespaces.AddNamespace('desktop', 'http://schemas.microsoft.com/appx/manifest/desktop/windows10')
     $app = $manifest.SelectSingleNode('/m:Package/m:Applications/m:Application', $namespaces)
     if ($app.Executable -cne 'VirtualPaper.exe' -or $app.EntryPoint -cne 'Windows.FullTrustApplication') {
@@ -38,6 +40,19 @@ try {
     Assert-PackageFile 'MsixAssets/StoreLogo.scale-200.png'
     Assert-PackageFile 'MsixAssets/Square150x150Logo.scale-200.png'
     Assert-PackageFile 'MsixAssets/Square44x44Logo.scale-200.png'
+    $associations = @($app.SelectNodes("m:Extensions/uap:Extension[@Category='windows.fileTypeAssociation']/*[local-name()='FileTypeAssociation']", $namespaces))
+    if ($associations.Count -ne 2) { throw 'Both project file associations must be packaged.' }
+    $extensions = @()
+    foreach ($association in $associations) {
+        $extensions += $association.SupportedFileTypes.FileType
+        if ($association.Parameters -cne '--open-project "%1"' -or
+            $association.SupportedVerbs.Verb.Parameters -cne '--open-project "%1"' -or
+            $association.SupportedVerbs.Verb.InnerText -cne 'ms-resource:Shell_OpenWithVirtualPaper') {
+            throw 'Project files and their context menu must launch Core through the same quoted argument contract.'
+        }
+        Assert-PackageFile ($association.Logo.Replace('\', '/'))
+    }
+    if (@(Compare-Object @('.vpd', '.vpw') ($extensions | Sort-Object)).Count) { throw 'Project file extensions differ from the supported formats.' }
     foreach ($process in @(
         @('', 'VirtualPaper'), @('Plugins/UI/', 'VirtualPaper.UI'),
         @('Plugins/PlayerWeb/', 'VirtualPaper.PlayerWeb'), @('Plugins/ScrSaver/', 'VirtualPaper.ScreenSaver')
@@ -56,7 +71,7 @@ try {
         param($path)
         Assert-PackageFile $path
         $files[$path].Open()
-    }
+    } $expected
     Assert-PackageFile 'Plugins/UI/PLAYER_Web/default.html'
     Assert-PackageFile 'Plugins/ScrSaver/Players/Web/default.html'
     foreach ($model in @('DepthEstimate/ai_models/depth_anything_v2_vits_dynamic.onnx',
@@ -68,17 +83,20 @@ try {
         throw 'MSIX includes debug/installer files or a WebView2 user profile.'
     }
     # Inspect the actual merged index, not just the presence of a .pri file.
-    $sdkRoot = (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Microsoft SDKs\Windows\v10.0').InstallationFolder
-    $makePri = Join-Path $sdkRoot 'bin/10.0.26100.0/x64/makepri.exe'
+    if (-not $MakePri) {
+        $sdkRoot = (Get-ItemProperty 'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Microsoft SDKs\Windows\v10.0').InstallationFolder
+        $MakePri = Join-Path $sdkRoot 'bin/10.0.26100.0/x64/makepri.exe'
+    }
     $temporaryDirectory = Join-Path ([IO.Path]::GetTempPath()) "VirtualPaper.MsixCheck.$([guid]::NewGuid().ToString('N'))"
     [void](New-Item -ItemType Directory -Path $temporaryDirectory)
     $priPath = Join-Path $temporaryDirectory 'resources.pri'
     $dumpPath = Join-Path $temporaryDirectory 'resources.xml'
     try {
         [IO.Compression.ZipFileExtensions]::ExtractToFile($files['resources.pri'], $priPath)
-        & $makePri dump /if $priPath /of $dumpPath /dt detailed | Out-Null
+        & $MakePri dump /if $priPath /of $dumpPath /dt detailed | Out-Null
         if ($LASTEXITCODE -ne 0) { throw 'Cannot read the packaged WinUI resource index.' }
         [xml]$index = Get-Content -LiteralPath $dumpPath -Raw
+        Assert-PackageShellResources $index $manifest.Package.Identity.Name $expected
         foreach ($name in @('App.xbf', 'MainWindow.xbf', 'LibraryContents.xbf')) {
             if (-not $index.SelectSingleNode("//NamedResource[@name='$name']/Candidate[@type='EmbeddedData']/Base64Value")) {
                 throw "The package lost compiled WinUI XAML: $name"

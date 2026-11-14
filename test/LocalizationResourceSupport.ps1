@@ -35,6 +35,25 @@ function Assert-LocalizedStrings($Actual, $Expected, [string]$Description) {
     }
 }
 
+function Assert-PackageShellResources([xml]$Index, [string]$Identity, $Expected = (Get-ExpectedLocalization)) {
+    foreach ($key in @('Shell_OpenWithVirtualPaper', 'Shell_DesignFileType', 'Shell_WebFileType')) {
+        $node = $Index.SelectSingleNode("//NamedResource[@uri='ms-resource://$Identity/Resources/$key']")
+        if (-not $node) { throw "Missing shell string in the primary package resource map: $key" }
+        $candidates = @($node.SelectNodes('Candidate'))
+        if ($candidates.Count -ne $Expected.Catalog.Languages.Count) { throw "Incomplete packaged shell translations: $key" }
+        foreach ($language in $Expected.Catalog.Languages) {
+            $localized = @($candidates | Where-Object {
+                $qualifier = $_.SelectSingleNode('QualifierSet/Qualifier[@name="Language"]')
+                $qualifier -and $qualifier.GetAttribute('value') -ieq $language.Code
+            })
+            if ($localized.Count -ne 1 -or $localized[0].GetAttribute('type') -cne 'String' -or
+                $localized[0].SelectSingleNode('Value').InnerText -cne $Expected.Locales[$language.Code].UI[$key]) {
+                throw "Missing or stale packaged shell translation: $($language.Code)/$key"
+            }
+        }
+    }
+}
+
 function Read-LocalizedUiStrings([IO.Stream]$Stream) {
     $xml = [Xml.Linq.XDocument]::Load($Stream)
     $values = [Collections.Generic.Dictionary[string,string]]::new([StringComparer]::Ordinal)

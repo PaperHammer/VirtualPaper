@@ -148,7 +148,7 @@ try {
     $packages = @(Get-ChildItem -LiteralPath $OutputDirectory -Recurse -File |
         Where-Object { $_.Extension -in @('.msix', '.appx') -and $_.FullName -notmatch '[\\/]Dependencies[\\/]' })
     if ($packages.Count -ne 1) { throw "Expected one x64 application package, found $($packages.Count)." }
-    & (Join-Path $repositoryRoot 'test/Test-MsixPackage.ps1') -PackagePath $packages[0].FullName
+    & (Join-Path $repositoryRoot 'test/Test-MsixPackage.ps1') -PackagePath $packages[0].FullName -MakePri $makePri
     Write-Output "Package: $($packages[0].FullName)"
     if (-not $CertificateThumbprint) {
         Write-Output 'Unsigned: Store re-signs submissions; side-loading requires a trusted test certificate matching Publisher.'

@@ -8,6 +8,7 @@ Run these tools manually from the repository root. Application startup and norma
 | --- | --- | --- |
 | Bundled wallpapers | [BuiltInWallpapers](BuiltInWallpapers/README.md) | Prepare source media and generate or verify wallpaper metadata and previews. |
 | Application icon | [gen_appicon_ico.ps1](Icons/gen_appicon_ico.ps1) | Convert a source PNG into a multi-size ICO. Requires Windows and System.Drawing. |
+| Project file icons | [Generate-ProjectFileIcons.ps1](Icons/Generate-ProjectFileIcons.ps1) | Render self-contained `.vpd`/`.vpw` SVG sources to PNG and seven-size ICO. Lettering is outlined and requires no fonts at render time. Run `pwsh -NoProfile -STA -File resources/tools/Icons/Generate-ProjectFileIcons.ps1` on Windows. |
 
 ```powershell
 pwsh -NoProfile -File resources/tools/Icons/gen_appicon_ico.ps1

@@ -112,7 +112,8 @@ internal static class NativeFileDialog {
             }
             catch (ElementNotAvailableException) { return; }
             catch (COMException ex) when (pickerWindow != 0 &&
-                (ex.HResult == unchecked((int)0x80010012) || ex.HResult == unchecked((int)0x80010108))) {
+                (ex.HResult == unchecked((int)0x80010012) || ex.HResult == unchecked((int)0x80010108)
+                    || ex.HResult == unchecked((int)0x8000FFFF))) {
                 // The picker broker can exit while UIA traverses its retiring provider.
             }
             Thread.Sleep(100);

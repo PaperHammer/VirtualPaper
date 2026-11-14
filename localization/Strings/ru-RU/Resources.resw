@@ -2153,4 +2153,16 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Inference_EnhancementGpuHint" xml:space="preserve">
     <value>Рекомендуется. Применяется только к улучшению изображения; перенос стиля выполняется на CPU. Если GPU недоступен, используется CPU.</value>
   </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>Открыть с помощью VirtualPaper</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>Проект изображения VirtualPaper</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>Веб-проект VirtualPaper</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>Не удалось открыть проект. Убедитесь, что файл доступен, и повторите попытку.</value>
+  </data>
 </root>

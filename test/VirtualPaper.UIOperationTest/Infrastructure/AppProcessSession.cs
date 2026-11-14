@@ -38,7 +38,8 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         _commands = new(channel);
     }
 
-    public async Task StartAsync(Action<Settings>? configure = null, bool preserveProfile = false, bool freshProfile = false) {
+    public async Task StartAsync(Action<Settings>? configure = null, bool preserveProfile = false, bool freshProfile = false,
+        string[]? projectPaths = null) {
         string coreExe = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE")
             ?? throw new InvalidOperationException("Core executable path is missing.");
         Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
@@ -60,10 +61,16 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             File.WriteAllText(Constants.CommonPaths.WallpaperLayoutPath, "[]");
             File.WriteAllText(Constants.CommonPaths.RecentUsedPath, "[]");
         }
-        _core = PackageActivation.ExpectedFullName != null ? PackageActivation.Start() : Process.Start(new ProcessStartInfo(coreExe) {
+        var startInfo = new ProcessStartInfo(coreExe) {
             WorkingDirectory = Path.GetDirectoryName(coreExe)!, UseShellExecute = false,
             WindowStyle = ProcessWindowStyle.Hidden
-        }) ?? throw new InvalidOperationException("Core process could not start.");
+        };
+        if (projectPaths is { Length: > 0 }) {
+            startInfo.ArgumentList.Add("--open-project");
+            foreach (string path in projectPaths) startInfo.ArgumentList.Add(path);
+        }
+        _core = PackageActivation.ExpectedFullName != null ? PackageActivation.Start() : Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Core process could not start.");
 
         await WaitAsync(async () => {
             if (_core.HasExited) throw new InvalidOperationException($"Core exited during startup: {_core.ExitCode}");
@@ -73,6 +80,25 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             }
             catch (global::Grpc.Core.RpcException) { return false; }
         }, "Core settings RPC readiness");
+        if (PackageActivation.ExpectedFullName != null && projectPaths is { Length: > 0 }) {
+            var request = new Grpc_ProjectPaths();
+            request.Paths.AddRange(projectPaths);
+            await _commands.OpenProjectsAsync(request, deadline: DateTime.UtcNow.AddSeconds(15));
+        }
+    }
+
+    public async Task ForwardProjectFilesAsync(params string[] paths) {
+        string coreExe = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE")!;
+        var start = new ProcessStartInfo(coreExe) { UseShellExecute = false,
+            WorkingDirectory = Path.GetDirectoryName(coreExe)!, WindowStyle = ProcessWindowStyle.Hidden };
+        start.ArgumentList.Add("--open-project");
+        foreach (string path in paths) start.ArgumentList.Add(path);
+        using var forwarder = Process.Start(start) ?? throw new InvalidOperationException("Project forwarding process did not start.");
+        try {
+            await forwarder.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+            UiTestContext.Check(forwarder.ExitCode == 0, "Project forwarding process exited abnormally.");
+        }
+        finally { if (!forwarder.HasExited) { forwarder.Kill(entireProcessTree: true); await forwarder.WaitForExitAsync(); } }
     }
 
     public async Task<Process> OpenUiAsync() {
@@ -81,7 +107,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         return await WaitForUiAsync();
     }
 
-    public async Task<Process> WaitForUiAsync(bool firstRun = false) {
+    public async Task<Process> WaitForUiAsync(bool firstRun = false, bool activateWindow = true) {
         var lastRequest = Stopwatch.StartNew();
         await WaitAsync(async () => {
             if (_core!.HasExited) throw new InvalidOperationException("Core exited before UI became ready.");
@@ -106,7 +132,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         PackageActivation.AssertIdentity(_ui);
         // Module-only runs do not execute the component cases that activate the
         // host first. Acquire real focus before operating this process's pickers.
-        await Task.Run(() => ApplicationUi.ActivateOwnedWindowAsync(_ui.MainWindowHandle));
+        if (activateWindow) await Task.Run(() => ApplicationUi.ActivateOwnedWindowAsync(_ui.MainWindowHandle));
         return _ui;
     }
 

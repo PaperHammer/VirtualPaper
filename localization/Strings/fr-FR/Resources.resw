@@ -2153,4 +2153,16 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   <data name="Inference_EnhancementGpuHint" xml:space="preserve">
     <value>Recommandé. S’applique uniquement à l’amélioration d’image ; le transfert de style utilise le CPU. Si le GPU est indisponible, le CPU prend le relais.</value>
   </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>Ouvrir avec VirtualPaper</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>Projet image VirtualPaper</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>Projet Web VirtualPaper</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>Impossible d’ouvrir le projet. Vérifiez que le fichier est disponible et réessayez.</value>
+  </data>
 </root>

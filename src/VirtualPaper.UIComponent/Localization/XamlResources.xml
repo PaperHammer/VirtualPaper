@@ -199,7 +199,6 @@
   <Resource Name="Ui_Settings_System_Developer_Log_Text.Text" Source="Settings_System_Developer_Log" />
   <Resource Name="Ui_Settings_System_Text_Debug_Content.Content" Source="Settings_System_Text_Debug" />
   <Resource Name="Ui_Settings_System_Text_Developer_Text.Text" Source="Settings_System_Text_Developer" />
-  <Resource Name="Ui_SidebarIntelligent_FullName.ToolTipService.ToolTip" Source="SidebarIntelligentFullName" />
   <Resource Name="Ui_SidebarIntelligent_Text.Text" Source="SidebarIntelligent" />
   <Resource Name="Ui_SidebarProject_Text.Text" Source="SidebarProject" />
   <Resource Name="Ui_SidebarRepository_Text.Text" Source="SidebarRepository" />

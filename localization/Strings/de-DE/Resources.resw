@@ -2153,4 +2153,16 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   <data name="Inference_EnhancementGpuHint" xml:space="preserve">
     <value>Empfohlen. Gilt nur für die Bildverbesserung; die Stilübertragung nutzt die CPU. Ist die GPU nicht verfügbar, wird die CPU verwendet.</value>
   </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>Mit VirtualPaper öffnen</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>VirtualPaper-Bildprojekt</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>VirtualPaper-Webprojekt</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>Das Projekt konnte nicht geöffnet werden. Prüfen Sie, ob die Datei verfügbar ist, und versuchen Sie es erneut.</value>
+  </data>
 </root>

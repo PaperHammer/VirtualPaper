@@ -8,6 +8,7 @@
 | --- | --- | --- |
 | 内置壁纸 | [BuiltInWallpapers](BuiltInWallpapers/README.zh-CN.md) | 准备源素材，生成或校验壁纸元数据及预览。 |
 | 应用图标 | [gen_appicon_ico.ps1](Icons/gen_appicon_ico.ps1) | 将源 PNG 转为多尺寸 ICO，需要 Windows 和 System.Drawing。 |
+| 项目文件图标 | [Generate-ProjectFileIcons.ps1](Icons/Generate-ProjectFileIcons.ps1) | 将自包含的 `.vpd`／`.vpw` SVG 源图渲染为 PNG 和七种尺寸的 ICO。字标已转为轮廓，渲染时无需字体。在 Windows 上执行 `pwsh -NoProfile -STA -File resources/tools/Icons/Generate-ProjectFileIcons.ps1`。 |
 
 ```powershell
 pwsh -NoProfile -File resources/tools/Icons/gen_appicon_ico.ps1

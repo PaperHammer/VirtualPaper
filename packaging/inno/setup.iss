@@ -38,7 +38,7 @@ VersionInfoProductName={#MyAppName}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppName} Installer
 DefaultDirName={autopf}\{#MyAppName}
-ChangesAssociations=no
+ChangesAssociations=yes
 DisableProgramGroupPage=yes
 OutputBaseFilename=virtualpaper_setup_x64_full_v{#MyAppVersionText}
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
@@ -66,6 +66,18 @@ Source: "..\..\src\VirtualPaper\bin\Release\net8.0-windows10.0.19041.0\*"; DestD
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
+Root: HKA; Subkey: "Software\Classes\.vpd\OpenWithProgids"; ValueType: string; ValueName: "VirtualPaper.Design"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.vpw\OpenWithProgids"; ValueType: string; ValueName: "VirtualPaper.Web"; ValueData: ""; Flags: uninsdeletevalue
+Root: HKA; Subkey: "Software\Classes\.vpd"; ValueType: string; ValueData: "VirtualPaper.Design"; Check: CanAssociateProject('.vpd')
+Root: HKA; Subkey: "Software\Classes\.vpw"; ValueType: string; ValueData: "VirtualPaper.Web"; Check: CanAssociateProject('.vpw')
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Design"; ValueType: string; ValueData: "{cm:DesignFileType}"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Design\DefaultIcon"; ValueType: string; ValueData: """{app}\FileIcons\vpd.ico"""
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Design\shell\open"; ValueType: string; ValueData: "{cm:OpenWithVirtualPaper}"
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Design\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" --open-project ""%1"""
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Web"; ValueType: string; ValueData: "{cm:WebFileType}"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Web\DefaultIcon"; ValueType: string; ValueData: """{app}\FileIcons\vpw.ico"""
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Web\shell\open"; ValueType: string; ValueData: "{cm:OpenWithVirtualPaper}"
+Root: HKA; Subkey: "Software\Classes\VirtualPaper.Web\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" --open-project ""%1"""
 ; Root: HKA; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "VirtualPaper"; ValueData: """{app}\VirtualPaper.exe"""; Flags: uninsdeletevalue; Tasks:windowsstartup
 
 [Icons]
@@ -79,6 +91,21 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 Type: files; Name: "{app}\installer-language.txt"
 
 [Code]
+function CanAssociateProject(Extension: String): Boolean;
+var
+  Current: String;
+begin
+  Result := not RegQueryStringValue(HKA, 'Software\Classes\' + Extension, '', Current) or (Current = '');
+end;
+
+procedure RemoveProjectAssociation(Extension, ProgId: String);
+var
+  Current: String;
+begin
+  // Remove only our fallback association; leave any newer choice and other type metadata intact.
+  if RegQueryStringValue(HKA, 'Software\Classes\' + Extension, '', Current) and (Current = ProgId) then
+    RegDeleteValue(HKA, 'Software\Classes\' + Extension, '');
+end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
@@ -120,6 +147,8 @@ procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then
   begin
+    RemoveProjectAssociation('.vpd', 'VirtualPaper.Design');
+    RemoveProjectAssociation('.vpw', 'VirtualPaper.Web');
     if SuppressibleMsgBox(
          ExpandConstant('{cm:DeleteEverythigMsgBox}') + ' ' +
          ExpandConstant('{localappdata}\{#MyAppDataFolderName}'),

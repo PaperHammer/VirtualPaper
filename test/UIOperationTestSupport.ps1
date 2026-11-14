@@ -128,7 +128,7 @@ function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
 # acceptance additionally requires every application module, regardless of counts.
 function Assert-ExtendedUIModules($Report) {
     foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor',
-        'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration')) {
+        'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration', 'ProjectActivation')) {
         if (@($Report.Results | Where-Object Name -Like "Application.$module.*").Count -lt 1) {
             throw "Missing required installed UI module: $module"
         }

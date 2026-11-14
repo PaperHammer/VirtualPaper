@@ -4,9 +4,12 @@ $ErrorActionPreference = 'Stop'
 function Assert-Equal($Actual, $Expected, [string]$Message) {
     if ($Actual -cne $Expected) { throw "$Message`: expected [$Expected], got [$Actual]." }
 }
-function Assert-Throws([scriptblock]$Action, [string]$Pattern) {
+function Assert-Throws([scriptblock]$Action, [string]$Pattern, [string]$ErrorIdPattern) {
     try { & $Action | Out-Null } catch {
-        if ($_.Exception.Message -notmatch $Pattern) { throw "Unexpected error: $($_.Exception.Message); expected $Pattern" }
+        if ($ErrorIdPattern) {
+            if ($_.FullyQualifiedErrorId -notlike $ErrorIdPattern) { throw "Unexpected error ID: $($_.FullyQualifiedErrorId); expected $ErrorIdPattern" }
+        }
+        elseif ($_.Exception.Message -notmatch $Pattern) { throw "Unexpected error: $($_.Exception.Message); expected $Pattern" }
         return
     }
     throw "Expected failure matching: $Pattern"
@@ -85,7 +88,7 @@ try {
     Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } 'failed \(4\)'
     Assert-Equal $LASTEXITCODE 4 'Download failure not reset to success'
     $script:downloadMode = 'invalid'
-    Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } 'Conversion from JSON failed'
+    Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } -ErrorIdPattern '*,Microsoft.PowerShell.Commands.ConvertFromJsonCommand'
     $history.Previous.assets = @()
     Assert-Equal (Get-ReleaseBaseline fixture/repo $history $script:downloadPath -WarningAction SilentlyContinue) $null 'Legacy manifest absence is explicit'
     $history.Previous.name = 'Legacy release with unknown build'

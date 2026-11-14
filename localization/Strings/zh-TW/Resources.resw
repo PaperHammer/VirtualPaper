@@ -2172,4 +2172,16 @@ Windows 資源管理器在過去 30 秒內重新啟動兩次！這可能是 Virt
   <data name="Inference_EnhancementGpuHint" xml:space="preserve">
     <value>建議開啟。僅用於後續高畫質處理，風格轉換仍使用 CPU。GPU 無法使用時會自動改用 CPU。</value>
   </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>使用 VirtualPaper 開啟</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>VirtualPaper 影像專案</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>VirtualPaper Web 專案</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>無法開啟專案。請確認檔案可用後再試。</value>
+  </data>
 </root>

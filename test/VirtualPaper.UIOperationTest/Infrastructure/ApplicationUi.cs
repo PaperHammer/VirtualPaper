@@ -70,14 +70,50 @@ internal static class ApplicationUi {
         ((ExpandCollapsePattern)element.GetCurrentPattern(ExpandCollapsePattern.Pattern)).Expand();
     }
 
-    public static async Task VerifyToolTipAsync(nint ownerWindow, AutomationElement element, string expected) {
+    public static async Task WithHoveredElementAsync(nint ownerWindow, AutomationElement element, Func<Task> action) {
         using var foreground = Foreground(ownerWindow);
-        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate tooltip owner");
+        ClickPointer(ownerWindow, AutomationElement.FromHandle(ownerWindow), 0x0002, 0x0004);
+        BringIntoView(element);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate hover owner");
         var bounds = element.Current.BoundingRectangle;
         var point = new NativePoint { X = (int)(bounds.Left + bounds.Width / 2), Y = (int)(bounds.Top + bounds.Height / 2) };
-        Check(GetAncestor(WindowFromPoint(point), 2) == ownerWindow, "The tooltip target is covered by another window");
-        Check(GetCursorPos(out var previous) && SetCursorPos(point.X, point.Y), "Could not hover the owned tooltip target");
+        Check(GetAncestor(WindowFromPoint(point), 2) == ownerWindow, "Hover target is covered by another window");
+        Check(GetCursorPos(out var previous), "Could not read the pointer position");
         try {
+            var windowBounds = AutomationElement.FromHandle(ownerWindow).Current.BoundingRectangle;
+            var outside = new NativePoint { X = (int)(windowBounds.Left + 80), Y = (int)(windowBounds.Top + 12) };
+            Check(GetAncestor(WindowFromPoint(outside), 2) == ownerWindow, "The hover reset point is covered by another window");
+            HoverAt(outside);
+            await Task.Delay(150);
+            HoverAt(point);
+            await action();
+        }
+        catch {
+            WindowSnapshot.Save(ownerWindow, Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "hover-target.png"));
+            throw;
+        }
+        finally { SetCursorPos(previous.X, previous.Y); }
+    }
+
+    public static async Task VerifyToolTipAsync(nint ownerWindow, AutomationElement element, string expected) {
+        using var foreground = Foreground(ownerWindow);
+        ClickPointer(ownerWindow, AutomationElement.FromHandle(ownerWindow), 0x0002, 0x0004);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate tooltip owner");
+        // A navigation item's center can fall in the gap between its icon and label.
+        var label = element.FindFirst(TreeScope.Descendants, new AndCondition(
+            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text),
+            new PropertyCondition(AutomationElement.IsOffscreenProperty, false)));
+        var bounds = (label ?? element).Current.BoundingRectangle;
+        var point = new NativePoint { X = (int)(bounds.Left + bounds.Width / 2), Y = (int)(bounds.Top + bounds.Height / 2) };
+        Check(GetAncestor(WindowFromPoint(point), 2) == ownerWindow, "The tooltip target is covered by another window");
+        Check(GetCursorPos(out var previous), "Could not read the pointer position");
+        var windowBounds = AutomationElement.FromHandle(ownerWindow).Current.BoundingRectangle;
+        var outside = new NativePoint { X = (int)(windowBounds.Left + 80), Y = (int)(windowBounds.Top + 12) };
+        Check(GetAncestor(WindowFromPoint(outside), 2) == ownerWindow, "The tooltip reset point is covered by another window");
+        try {
+            HoverAt(outside);
+            await Task.Delay(150);
+            HoverAt(point);
             int processId = element.Current.ProcessId;
             await AppProcessSession.WaitAsync(() => Task.Run(() => {
                 try {
@@ -97,7 +133,29 @@ internal static class ApplicationUi {
                 return false;
             }), "Localized navigation tooltip: " + expected);
         }
+        catch (TimeoutException) {
+            string snapshot = Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "navigation-tooltip.png");
+            Directory.CreateDirectory(Path.GetDirectoryName(snapshot)!);
+            WindowSnapshot.Save(ownerWindow, snapshot);
+            var nodes = AutomationElement.RootElement.FindAll(TreeScope.Children,
+                new PropertyCondition(AutomationElement.ProcessIdProperty, element.Current.ProcessId))
+                .Cast<AutomationElement>().SelectMany(window => new[] { window }.Concat(window.FindAll(TreeScope.Descendants,
+                    Condition.TrueCondition).Cast<AutomationElement>()))
+                .Where(node => !node.Current.IsOffscreen).Select(node => new {
+                    node.Current.AutomationId, node.Current.Name,
+                    Type = node.Current.ControlType.ProgrammaticName, Bounds = node.Current.BoundingRectangle.ToString()
+                }).ToArray();
+            File.WriteAllText(Path.ChangeExtension(snapshot, ".json"), System.Text.Json.JsonSerializer.Serialize(nodes));
+            throw;
+        }
         finally { SetCursorPos(previous.X, previous.Y); }
+    }
+
+    private static void HoverAt(NativePoint point) {
+        Check(SetCursorPos(point.X - 1, point.Y), "Could not position the hover pointer");
+        // XAML needs an input event as well as a changed cursor position.
+        var move = new NativeInput { Type = 0, Data = new() { Mouse = new() { X = 1, Flags = 0x0001 } } };
+        Check(SendInput(1, [move], Marshal.SizeOf<NativeInput>()) == 1, "Could not send the hover movement");
     }
 
     public static void SetText(AutomationElement element, string value) {

@@ -4,6 +4,7 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.IPC;
 using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Cores.AppUpdate;
@@ -34,6 +35,15 @@ namespace VirtualPaper.Services {
             _fileName = Path.Combine(_workingDir, Constants.ModuleName.UI);
         }
 
+        public async Task OpenProjectsAsync(IEnumerable<string> paths) {
+            _projectOpens.Enqueue(paths);
+            await ShowUIAsync();
+            UISendCmd?.Invoke(this, MessageType.cmd_open_projects);
+        }
+
+        public ProjectOpenRequest? GetPendingProjectOpen() => _projectOpens.Peek();
+        public void CompleteProjectOpen(string requestId) => _projectOpens.Complete(requestId);
+
         public async Task ShowUIAsync() {
             while (true) {
                 await UpdateLock.WaitAllAsync();
@@ -48,6 +58,7 @@ namespace VirtualPaper.Services {
                     exitTask = _uiExitTask;
                     if (updateTask == null && exitTask == null && _processUI != null) {
                         try {
+                            _ = Native.AllowSetForegroundWindow((uint)_processUI.Id);
                             ArcLog.GetLogger<UIRunnerService>().Warn("UI is already running");
                             UISendCmd?.Invoke(this, MessageType.cmd_active);
                             //_processUI.StandardInput.WriteLine(JsonSerializer.Serialize(new VirtualPaperActiveCmd(), IpcMessageContext.Default.IpcMessage));
@@ -72,6 +83,7 @@ namespace VirtualPaper.Services {
                             _processUI.Exited += Proc_UI_Exited;
                             _processUI.OutputDataReceived += Proc_OutputDataReceived;
                             _processUI.Start();
+                            _ = Native.AllowSetForegroundWindow((uint)_processUI.Id);
                             _jobService.AddProcess(_processUI.Id, PluginName.UI);
 
                             //winui writing debug information into output stream :/
@@ -251,6 +263,7 @@ namespace VirtualPaper.Services {
                 if (!ReferenceEquals(process, _processUI)) return false;
 
                 var pid = process.Id;
+                bool expectedExit = _uiExitTask != null;
                 ReleaseProcess();
 
                 if (_isDisposed || App.IsShuttingDown) return false;
@@ -271,8 +284,14 @@ namespace VirtualPaper.Services {
                         return true;
                     }
                 }
+                if (_projectOpens.TryReopenUi(expectedExit)) _ = ReopenPendingProjectUIAsync();
                 return false;
             }
+        }
+
+        private async Task ReopenPendingProjectUIAsync() {
+            try { await Task.Run(ShowUIAsync).ConfigureAwait(false); }
+            catch (Exception ex) { ArcLog.GetLogger<UIRunnerService>().Error(ex); }
         }
 
         #region dispose
@@ -322,6 +341,7 @@ namespace VirtualPaper.Services {
         }
 
         private readonly object _processLock = new();
+        private readonly ProjectOpenQueue _projectOpens = new();
         private readonly SemaphoreSlim _restartGate = new(1, 1);
         private readonly Func<Task<bool>> _requestUiClose;
         private Process? _processUI;

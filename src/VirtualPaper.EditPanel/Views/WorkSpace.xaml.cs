@@ -55,6 +55,7 @@ namespace VirtualPaper.EditPanel.Views {
             _preProjectDatas = null;
             _tabToHost.Clear();
             _viewModel.Dispose();
+            _ready.TrySetResult(); // Let the caller recheck the current page after navigation.
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
@@ -74,7 +75,26 @@ namespace VirtualPaper.EditPanel.Views {
 
         #region add and selection
         private async void TabViewControl_Loaded(object sender, RoutedEventArgs e) {
-            if (_preProjectDatas == null) return;
+            if (_preProjectDatas == null) {
+                _ready.TrySetResult();
+                return;
+            }
+
+            try { await LoadInitialProjectsAsync(); }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WorkSpace>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
+            }
+            finally { _preProjectDatas = null; _ready.TrySetResult(); }
+        }
+
+        internal Task Ready => _ready.Task;
+
+        internal Task OpenProjectsAsync(IReadOnlyList<string> paths) =>
+            _viewModel.AddNewItemsAsync(paths.Select(path =>
+                new PreProjectData(path, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting)).ToArray());
+
+        private async Task LoadInitialProjectsAsync() {
 
             var ctx = ArcPageContextManager.GetContext<Edit>();
             var loadingCtx = ctx?.LoadingContext;
@@ -439,6 +459,7 @@ namespace VirtualPaper.EditPanel.Views {
 
         private Edit? _editPage;
         private readonly WorkSpaceViewModel _viewModel;
+        private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private PreProjectData[]? _preProjectDatas;
         private TaskCompletionSource<PreProjectData[]?>? _addProjectTcs;
         private readonly Dictionary<IArcTabViewItem, ContentControl> _tabToHost = [];

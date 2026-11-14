@@ -15,4 +15,6 @@ EXE 编译需要 Inno Setup 6.7.1，示例假定 `ISCC.exe` 已加入 `PATH`。M
 
 生成的 `Output/`、`AppPackages/`、`bin/`、`obj/` 内容不提交。CI 入口 `.github/scripts/New-CIExePackage.ps1`、`.github/scripts/New-CIMsixPackage.ps1` 保持不变，默认将渠道产物写入 `dist/`。
 
+两个安装包均注册 `.vpd`、`.vpw` 项目类型，显示可区分类型的项目图标，并提供“使用 VirtualPaper 打开”操作。`VirtualPaper.exe --open-project "<项目绝对路径>"` 启动 Core 或向已有实例转交请求，编辑区对已打开的项目激活原标签页，保留未保存修改。Inno 保留已有默认关联，卸载时仅清除自己的默认值；MSIX 关联遵循 Windows 应用选择。Inno 菜单文案使用安装语言，MSIX 文案遵循 Windows 的资源语言选择。
+
 打包验证与安装后验收分别执行。`test/Run-Tests.ps1`、`test/Run-MsixTests.ps1` 的用法见[测试指南](../test/README.zh-CN.md)，CI 必需门禁见[工作流指南](../.github/workflows/README.zh-CN.md)。安装和真实 UI 执行需满足文档中的干净安装环境及桌面条件。

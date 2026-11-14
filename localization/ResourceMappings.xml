@@ -88,4 +88,11 @@
   <Resource Target="Installer" Name="ClosingMsgBox" Source="Installer_ClosingMsgBox" />
   <Resource Target="Installer" Name="InitialLanguageSaveFailed" Source="Installer_InitialLanguageSaveFailed" />
   <Resource Target="Core" Name="AppUpdater_WindowTitle" Source="Core_AppUpdater_WindowTitle" />
+  <Resource Target="Core" Name="Shell_ProjectOpenFailed" Source="Shell_ProjectOpenFailed" />
+  <Resource Target="Installer" Name="OpenWithVirtualPaper" Source="Shell_OpenWithVirtualPaper" />
+  <Resource Target="Installer" Name="DesignFileType" Source="Shell_DesignFileType" />
+  <Resource Target="Installer" Name="WebFileType" Source="Shell_WebFileType" />
+  <Resource Target="Manifest" Name="Shell_OpenWithVirtualPaper" Source="Shell_OpenWithVirtualPaper" />
+  <Resource Target="Manifest" Name="Shell_DesignFileType" Source="Shell_DesignFileType" />
+  <Resource Target="Manifest" Name="Shell_WebFileType" Source="Shell_WebFileType" />
 </Resources>

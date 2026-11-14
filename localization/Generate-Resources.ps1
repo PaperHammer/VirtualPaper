@@ -105,7 +105,7 @@ $resourceMappings = @((Read-Xml $ResourceMappingFile).Root.Elements('Resource'))
 $mappingKeys = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 foreach ($mapping in $resourceMappings) {
     $kind = Attribute $mapping 'Target'; $name = Attribute $mapping 'Name'; $key = Attribute $mapping 'Source'
-    if ($kind -cnotin @('Core', 'Common', 'Installer') -or $name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$' -or
+    if ($kind -cnotin @('Core', 'Common', 'Installer', 'Manifest') -or $name -notmatch '^[A-Za-z_][A-Za-z0-9_]*$' -or
         -not $baseline.ContainsKey($key) -or -not $mappingKeys.Add("${kind}:$name")) { throw 'Invalid or duplicate runtime resource mapping.' }
 }
 foreach ($kind in @('Core', 'Common', 'Installer')) {
@@ -177,6 +177,13 @@ foreach ($kind in $targets) {
         Save-Generated (Join-Path $root 'Localization.iss') (($lines -join "`r`n") + "`r`n")
     }
     elseif ($kind -eq 'Manifest') {
+        foreach ($language in $orderedLanguages) {
+            $resource = [Xml.Linq.XDocument]::Parse('<root/>')
+            foreach ($entry in $resourceMappings | Where-Object { (Attribute $_ 'Target') -ceq 'Manifest' }) {
+                Add-String $resource.Root (Attribute $entry 'Name') $strings[$language.Code][(Attribute $entry 'Source')]
+            }
+            Save-Xml (Join-Path $root "Strings/$($language.Code)/Resources.resw") $resource
+        }
         [xml]$document = Get-Content -LiteralPath $ManifestTemplate -Raw -Encoding UTF8
         $resources = $document.DocumentElement.SelectSingleNode("*[local-name()='Resources']")
         $resources.RemoveAll()

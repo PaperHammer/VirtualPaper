@@ -12,7 +12,7 @@ Reject { Assert-LocalizedStrings $copy $sample 'missing source' }
 $copy['SidebarIntelligentFullName'] = 'old'
 Reject { Assert-LocalizedStrings $copy $sample 'stale source' }
 $copy['SidebarIntelligentFullName'] = $sample['SidebarIntelligentFullName']
-$alias = 'Ui_SidebarIntelligent_FullName.ToolTipService.ToolTip'
+$alias = 'Ui_SidebarRepository_Text.Text'
 $copy[$alias] = 'old tooltip'
 Reject { Assert-LocalizedStrings $copy $sample 'stale mapped property' }
 $copy[$alias] = $sample[$alias]
@@ -23,6 +23,50 @@ foreach ($text in @('<root><data name="Duplicate"><value>A</value></data><data n
     $bytes = [Text.Encoding]::UTF8.GetBytes($text)
     $stream = [IO.MemoryStream]::new($bytes)
     try { Reject { Read-LocalizedUiStrings $stream } } finally { $stream.Dispose() }
+}
+
+# Match MakePri's detailed dump, including uppercase language qualifiers.
+[xml]$shell = '<PriInfo><ResourceMap><ResourceMapSubtree name="Resources"/></ResourceMap></PriInfo>'
+$resources = $shell.SelectSingleNode('//ResourceMapSubtree')
+foreach ($key in @('Shell_OpenWithVirtualPaper', 'Shell_DesignFileType', 'Shell_WebFileType')) {
+    $resource = $shell.CreateElement('NamedResource')
+    $resource.SetAttribute('uri', "ms-resource://VirtualPaper.Test/Resources/$key")
+    foreach ($language in $expected.Catalog.Languages) {
+        $candidate = $shell.CreateElement('Candidate'); $candidate.SetAttribute('type', 'String')
+        $set = $shell.CreateElement('QualifierSet')
+        $qualifier = $shell.CreateElement('Qualifier'); $qualifier.SetAttribute('name', 'Language')
+        $qualifier.SetAttribute('value', $language.Code.ToUpperInvariant())
+        [void]$set.AppendChild($qualifier); [void]$candidate.AppendChild($set)
+        $value = $shell.CreateElement('Value'); $value.InnerText = $expected.Locales[$language.Code].UI[$key]
+        [void]$candidate.AppendChild($value); [void]$resource.AppendChild($candidate)
+    }
+    [void]$resources.AppendChild($resource)
+}
+Assert-PackageShellResources $shell 'VirtualPaper.Test' $expected
+foreach ($mutate in @(
+    { param($xml) $node = $xml.SelectSingleNode('//NamedResource'); [void]$node.ParentNode.RemoveChild($node) },
+    { param($xml) $node = $xml.SelectSingleNode('//Candidate'); [void]$node.ParentNode.RemoveChild($node) },
+    { param($xml) $xml.SelectSingleNode('//NamedResource').SetAttribute('uri', 'ms-resource://Wrong.Package/Resources/Shell_OpenWithVirtualPaper') },
+    { param($xml) $xml.SelectSingleNode('//Candidate').SetAttribute('type', 'Path') },
+    { param($xml) $xml.SelectSingleNode('//Candidate/Value').InnerText = 'stale shell label' },
+    { param($xml) $xml.SelectSingleNode('//Candidate/QualifierSet/Qualifier').SetAttribute('value', 'missing') },
+    {
+        param($xml)
+        # Every expected text still exists, but English and Chinese resolve incorrectly.
+        $resource = $xml.SelectSingleNode('//NamedResource')
+        $english = $resource.SelectSingleNode("Candidate[QualifierSet/Qualifier[@value='EN-US']]/Value")
+        $chinese = $resource.SelectSingleNode("Candidate[QualifierSet/Qualifier[@value='ZH-CN']]/Value")
+        $english.InnerText, $chinese.InnerText = $chinese.InnerText, $english.InnerText
+    },
+    {
+        param($xml)
+        $resource = $xml.SelectSingleNode('//NamedResource')
+        $resource.SelectSingleNode("Candidate/QualifierSet/Qualifier[@value='ZH-CN']").SetAttribute('value', 'EN-US')
+    }
+)) {
+    [xml]$changed = $shell.OuterXml
+    & $mutate $changed
+    Reject { Assert-PackageShellResources $changed 'VirtualPaper.Test' $expected }
 }
 # Exercise the complete archive/directory path traversal without a build dependency.
 # This scoped mock supplies assembly contents only; real payload runs below read actual DLL resources.

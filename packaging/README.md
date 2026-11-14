@@ -15,4 +15,6 @@ Both channels use the shared sources under [`localization`](../localization/READ
 
 Generated `Output/`, `AppPackages/`, `bin/` and `obj/` contents are not committed. The CI wrappers `.github/scripts/New-CIExePackage.ps1` and `.github/scripts/New-CIMsixPackage.ps1` keep their existing entry points and produce channel artifacts under `dist/` by default.
 
+Both packages register `.vpd` and `.vpw` project types with distinct project icons and an **Open with VirtualPaper** action. `VirtualPaper.exe --open-project "<absolute project path>"` starts Core or forwards to the running instance; the editor activates an already-open project and preserves unsaved work. Inno preserves existing default associations and removes only its own fallback values on uninstall. MSIX registration follows Windows app selection. Inno shell labels use the installer language; MSIX labels follow Windows resource language selection.
+
 Build verification is separate from installed acceptance. See the [testing guide](../test/README.md) for `test/Run-Tests.ps1` and `test/Run-MsixTests.ps1`, and the [workflow guide](../.github/workflows/README.md) for required CI gates. Installer and real UI runs require their documented clean-install and desktop prerequisites.

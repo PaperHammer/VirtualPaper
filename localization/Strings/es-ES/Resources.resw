@@ -2172,4 +2172,20 @@ Si no funciona, reinicia Windows. Algunas versiones preliminares de Windows 10 n
   <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
     <value>Derechos de autor y licencias</value>
   </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>Antes de usar las funciones de IA</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>Las funciones de IA procesan sus materiales en este equipo, sin subirlos a un servicio de IA en la nube. Los resultados pueden contener errores.</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>El procesamiento con IA no le otorga automáticamente derechos de autor sobre el material original o el resultado. Antes de publicar, redistribuir o usar los resultados con fines comerciales, compruebe que dispone de los derechos o permisos necesarios.</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>Leer sobre el procesamiento con IA y los derechos</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>Entendido, continuar</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Explorar archivos…</value></data>
 </root>

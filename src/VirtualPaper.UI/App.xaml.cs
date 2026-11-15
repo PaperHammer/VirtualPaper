@@ -120,6 +120,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
                 .AddSingleton<IIntelligentTaskDialogs, IntelligentTaskDialogs>()
+                .AddSingleton<IAiUseNoticeService, AppSettingsPanel.Utils.AiUseNoticeService>()
                 .AddSingleton<IntelligentTaskCloseCoordinator>()
                 .AddTransient<EditPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()

@@ -90,6 +90,14 @@ namespace VirtualPaper.IntelligentPanel {
                         HideOverlayPage();
                         break;
                     }
+
+                    bool acknowledged = false;
+                    try { acknowledged = await AppServiceLocator.Services.GetRequiredService<IAiUseNoticeService>().EnsureAcknowledgedAsync(); }
+                    catch (Exception ex) { ArcLog.GetLogger<Intelligent>().Error(ex); GlobalMessageUtil.ShowException(ex); }
+                    if (!acknowledged) {
+                        intelligentTCS.Reset();
+                        continue;
+                    }
                     
                     var res = _viewModel.AddTask(result);
                     if (res) {

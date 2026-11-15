@@ -563,11 +563,15 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     var dialogRes = await dialog.ShowAsync();
                     if (dialogRes != ContentDialogResult.Primary) return RuntimeType.RUnknown;
 
-                    return wpCreateDialogViewModel.SelectedItem.CreateType switch {
+                    var runtimeType = wpCreateDialogViewModel.SelectedItem.CreateType switch {
                         WallpaperCreateType.Img => RuntimeType.RImage,
                         WallpaperCreateType.DepthImg => RuntimeType.RImage3D,
                         _ => RuntimeType.RUnknown,
                     };
+                    if (runtimeType == RuntimeType.RImage3D
+                        && !await AppServiceLocator.Services.GetRequiredService<IAiUseNoticeService>().EnsureAcknowledgedAsync())
+                        return RuntimeType.RUnknown;
+                    return runtimeType;
                 case FileType.FVideo:
                     return RuntimeType.RVideo;
                 case FileType.FWebZip:

@@ -1903,7 +1903,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="ParallaxMode_Mouse" xml:space="preserve"><value>鼠标跟随</value></data>
   <data name="ParallaxMode_Auto" xml:space="preserve"><value>自动漂移</value></data>
   <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D 视差</value></data>
-  <data name="ScreenFit_Title" xml:space="preserve"><value>高清适屏</value></data>
+  <data name="ScreenFit_Title" xml:space="preserve"><value>高清适配</value></data>
   <data name="ScreenFit_SelectImage" xml:space="preserve"><value>选择图片</value></data>
   <data name="ScreenFit_Monitor" xml:space="preserve"><value>目标显示器</value></data>
   <data name="ScreenFit_Mode" xml:space="preserve"><value>适配方式</value></data>
@@ -2179,4 +2179,20 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
     <value>版权与许可证</value>
   </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>使用 AI 功能前</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>AI 功能在本机处理素材，不会将您的素材上传至云端 AI 服务。处理结果可能存在误差。</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>AI 处理不会自动赋予您原始素材或处理结果的著作权。公开发布、再分发或商业使用前，请确认您拥有所需的权利或授权。</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>查看《AI 处理与权利说明》</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>了解并继续</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>浏览文件…</value></data>
 </root>

@@ -21,6 +21,7 @@ namespace VirtualPaper.Models.Cores.Interfaces {
         bool NavigationAnimationsEnabled { get; set; }
         bool UiHardwareAccelerationEnabled { get; set; }
         bool RemindUnpreservedIntelligentResults { get; set; }
+        int AiUseNoticeVersion { get; set; }
         #endregion
 
         #region dirs

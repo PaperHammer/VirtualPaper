@@ -119,6 +119,8 @@
   <Resource Name="Ui_ScreenFit_Preview_AutomationProperties_Name.AutomationProperties.Name" Source="ScreenFit_Preview" />
   <Resource Name="Ui_ScreenFit_Preview_Text.Text" Source="ScreenFit_Preview" />
   <Resource Name="Ui_ScreenFit_SelectImage_Content.Content" Source="ScreenFit_SelectImage" />
+  <Resource Name="Ui_ScreenFit_BrowseFile.Content" Source="ScreenFit_BrowseFile" />
+  <Resource Name="Ui_ScreenFit_Loading.AutomationProperties.Name" Source="Text_Loading" />
   <Resource Name="Ui_ScreenFit_Title_Title__Text_Apply_PrimaryButtonText__Text_Cancel_CloseButtonText.CloseButtonText" Source="Text_Cancel" />
   <Resource Name="Ui_ScreenFit_Title_Title__Text_Apply_PrimaryButtonText__Text_Cancel_CloseButtonText.PrimaryButtonText" Source="Text_Apply" />
   <Resource Name="Ui_ScreenFit_Title_Title__Text_Apply_PrimaryButtonText__Text_Cancel_CloseButtonText.Title" Source="ScreenFit_Title" />

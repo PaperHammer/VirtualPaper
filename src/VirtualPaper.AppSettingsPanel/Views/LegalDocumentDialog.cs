@@ -20,6 +20,18 @@ internal static class LegalDocumentDialog {
     private static readonly Regex Links = new(@"\[([^\]]+)\]\(([^)\s]+)\)", RegexOptions.Compiled);
 
     internal static async Task ShowAsync(FrameworkElement owner, string title, string section) {
+        var body = await CreateContentAsync(section);
+        var dialog = new ArcContentDialog {
+            Title = new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap },
+            Content = body, CloseButtonText = LanguageUtil.GetI18n("Text_Close"),
+            DialogWidth = 800, DialogHeight = 680,
+            XamlRoot = owner.XamlRoot, RequestedTheme = owner.ActualTheme
+        };
+        AutomationProperties.SetAutomationId(dialog, "Settings.Legal.Dialog");
+        await dialog.ShowAsync();
+    }
+
+    internal static async Task<StackPanel> CreateContentAsync(string section) {
         string root = Path.Combine(AppContext.BaseDirectory, "Legal");
         string document = LegalDocuments.GetPath(root, LanguageUtil.CurrentLanguage);
         string text = await LegalDocuments.ReadSectionAsync(root, LanguageUtil.CurrentLanguage, section);
@@ -64,14 +76,7 @@ internal static class LegalDocumentDialog {
             block.Blocks.Add(paragraph);
             body.Children.Add(block);
         }
-        var dialog = new ArcContentDialog {
-            Title = new TextBlock { Text = title, TextWrapping = TextWrapping.Wrap },
-            Content = body, CloseButtonText = LanguageUtil.GetI18n("Text_Close"),
-            DialogWidth = 800, DialogHeight = 680,
-            XamlRoot = owner.XamlRoot, RequestedTheme = owner.ActualTheme
-        };
-        AutomationProperties.SetAutomationId(dialog, "Settings.Legal.Dialog");
-        await dialog.ShowAsync();
+        return body;
     }
 
     private static string Plain(string text) => text.Replace("`", string.Empty);

@@ -67,6 +67,7 @@
 
                 <Button x:Name="sourceImageBorder" Padding="0" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                     AutomationProperties.AutomationId="Intelligent.SuperResolution.Source"
+                    AutomationProperties.HelpText="{x:Bind _viewModel.SourceFilePath, Mode=OneWay}"
                     l:Uids.Uid="Ui_Intelligent_Task_Scr_Img_Import_AutomationProperties_Name"
                     MaxWidth="400"
                     HorizontalAlignment="Stretch"

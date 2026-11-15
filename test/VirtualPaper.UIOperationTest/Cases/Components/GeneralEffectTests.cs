@@ -98,7 +98,9 @@ internal static class GeneralEffectTests {
         await context.WaitAsync(() => selector.Items.OfType<ComboBoxItem>().Any(item => Equals(item.Tag, "builtin:Snow")),
             "Load effect preset choices");
         string before = page.GetPresetParameters().ToJsonString();
-        string saved = await File.ReadAllTextAsync(args.WpEffectFilePathUsing);
+        string effectPath = args.WpEffectFilePathUsing
+            ?? throw new InvalidOperationException("The preset trial is missing its effect configuration path.");
+        string saved = await File.ReadAllTextAsync(effectPath);
         int edits = 0;
         EventHandler onEdited = (_, _) => edits++;
         page.ParametersChanged += onEdited;
@@ -133,7 +135,7 @@ internal static class GeneralEffectTests {
             Invoke((Button)page.FindName("CancelPreset"));
             await context.WaitForLayoutAsync();
             Check(page.GetPresetParameters().ToJsonString() == before, "Cancel did not restore the parameters from before the first trial");
-            Check(saved == await File.ReadAllTextAsync(args.WpEffectFilePathUsing), "Trying or cancelling presets changed the saved wallpaper config");
+            Check(saved == await File.ReadAllTextAsync(effectPath), "Trying or cancelling presets changed the saved wallpaper config");
             Check(edits == 1, "Programmatic restoration emitted a manual parameter edit");
             context.Evidence["PresetSelectionTrialCancelVerified"] = true;
         }

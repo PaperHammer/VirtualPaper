@@ -2172,4 +2172,20 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
     <value>저작권 및 라이선스</value>
   </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>AI 기능을 사용하기 전에</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>AI 기능은 이 컴퓨터에서 자료를 처리하며 클라우드 AI 서비스에 업로드하지 않습니다. 처리 결과에는 오류가 있을 수 있습니다.</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>AI 처리만으로 원본 자료나 처리 결과의 저작권을 얻는 것은 아닙니다. 공개, 재배포 또는 상업적 이용 전에 필요한 권리나 허가가 있는지 확인하세요.</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>AI 처리 및 권리 안내 읽기</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>확인하고 계속</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>파일 찾아보기…</value></data>
 </root>

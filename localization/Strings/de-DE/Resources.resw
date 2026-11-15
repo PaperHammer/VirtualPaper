@@ -2172,4 +2172,20 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
     <value>Urheberrecht und Lizenzen</value>
   </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>Vor der Nutzung von KI-Funktionen</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>KI-Funktionen verarbeiten Ihre Inhalte auf diesem Computer, ohne sie an einen Cloud-KI-Dienst hochzuladen. Ergebnisse können Fehler enthalten.</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>Die KI-Verarbeitung verleiht Ihnen nicht automatisch Urheberrechte am Ausgangsmaterial oder Ergebnis. Stellen Sie vor einer Veröffentlichung, Weitergabe oder kommerziellen Nutzung sicher, dass Sie die erforderlichen Rechte oder Erlaubnisse besitzen.</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>KI-Verarbeitung und Rechte lesen</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>Verstanden und fortfahren</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Dateien durchsuchen…</value></data>
 </root>

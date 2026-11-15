@@ -170,6 +170,31 @@ public class SettingsWorkflowTests {
         Assert.AreEqual(12, restarted.Settings.WaitingTime);
     }
 
+    [TestMethod]
+    public async Task AiUseNotice_LegacyProfileStartsUnacknowledged_AndClientPersistsAcrossRestart() {
+        using var environment = new WorkflowEnvironment();
+        var token = TestContext.CancellationTokenSource.Token;
+        File.WriteAllText(Constants.CommonPaths.UserSettingsPath, "{\"WallpaperWaitTime\":73}");
+        environment.StartSettingsServer();
+        using (var client = new UserSettingsClient(environment.CreateChannel())) {
+            Assert.AreEqual(0, client.Settings.AiUseNoticeVersion);
+            client.Settings.AiUseNoticeVersion = 1;
+            await client.SaveAsync<ISettings>().WaitAsync(token);
+            Assert.AreEqual(1, JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!["AiUseNoticeVersion"]!.GetValue<int>());
+        }
+        environment.StartSettingsServer();
+        using var restarted = new UserSettingsClient(environment.CreateChannel());
+        Assert.AreEqual(1, restarted.Settings.AiUseNoticeVersion);
+        var legacy = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
+        var request = await legacy.GetSettingsAsync(new Empty(), cancellationToken: token);
+        request.ClearAiUseNoticeVersion();
+        request.WallpaperWaitTime = 74;
+        await legacy.SetSettingsAsync(request, cancellationToken: token);
+        await restarted.LoadAsync<ISettings>().WaitAsync(token);
+        Assert.AreEqual(1, restarted.Settings.AiUseNoticeVersion);
+        Assert.AreEqual(74, restarted.Settings.WallpaperWaitTime);
+    }
+
     private static void AssertPreferences(ISettings settings, bool animations) {
         Assert.AreEqual(animations, settings.NavigationAnimationsEnabled);
         Assert.AreEqual(animations, settings.RemindUnpreservedIntelligentResults);

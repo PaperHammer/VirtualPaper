@@ -6,6 +6,8 @@ The local test chain combines MSTest project tests, real installer acceptance an
 
 Offline legal notices are checked by `Test-LegalDocuments.ps1` (all catalog languages, section links, UI labels and original license/media notices), included in workflow contracts. UI logic tests cover section selection, repeated language changes and aliases, locale fallback and local-link containment; artifact tests compare every shipped document to its authored bytes. MSIX archive validation requires the same `Plugins/UI/Legal` payload. The General Settings real-UI case opens all three notices after switching to each catalog language and checks their localized titles and body text.
 
+The first-use AI notice is shared by intelligent tasks, 3D depth selection and screen-fit enhancement. Only an explicit acknowledgement followed by a successful settings save permits the operation; cancellation preserves the form. `AiUseNoticeVersion` survives UI restarts, language changes and ordinary updates. Core/logic tests cover old profiles and RPC clients, stale writes, shared pending confirmation, cancellation and save failures. Ordinary application fixtures start with an acknowledged profile; Intelligent and ScreenFit explicitly use version zero to verify cancellation and retained inputs, while the extended inference/rendering cases acknowledge before actual processing. ScreenFit closes its current modal before the notice and reopens the same form afterwards, avoiding nested dialogs. The full legal text expands inside the notice.
+
 Builds use the .NET 10 SDK selected by the root `global.json`. EXE installation and upgrades, including silent updates, require and provision the x64 .NET 10 Desktop Runtime and ASP.NET Core 10 Runtime used by Web previews. MSIX includes a serviced .NET 10 runtime for each process. Artifact tests check all four EXE runtime configurations; package validation rejects MSIX payloads without the matching self-contained runtime. Cross-version acceptance resolves each snapshot's target framework separately, allowing .NET 8 → .NET 10 upgrades.
 
 For manual FP32/FP16 model measurements without application/UI startup, see [InferencePrecision](InferencePrecision/README.md). This separate headless probe uses actual Release native runtimes and does not replace project tests or installed acceptance.
@@ -305,12 +307,14 @@ Picker submission uses an asynchronous click on a verified native Button within 
 
 ### Fit to screen
 
+The image picker reuses the preset picker's thumbnail/name rows, name/author search and favorites filter, restricted to static images. The list is virtualized, thumbnails decode on demand, and closing releases the snapshot. Loading appears beside the source button without increasing dialog height. Logic tests cover type filtering, existing-library reuse, enhanced copies and retaining the previous selection on read failure.
+
 `Application.ScreenFit.PreviewCancelApplyAndReopen`:
 
-1. Open More → Fit image to screen, pick a portrait image through the system picker, wait for the sample preview to disappear, switch contain/cover, and check the visible-area description.
+1. Open More → Fit image to screen, choose Select image → Browse files to pick a portrait image through the system picker, wait for the sample preview to disappear, switch contain/cover, and check the visible-area description.
 2. Cancel and check that no wallpaper, layout, or player was created. Reopening must require a new source selection.
 3. Apply with enhancement off and contain selected. Check the source hash, target monitor, and Scaling in three effect JSON files.
-4. Check PlayerWeb mounting under WorkerW, then reopen UI and verify the library entry, current preview, and persisted settings.
+4. Check PlayerWeb mounting under WorkerW, then reopen UI and verify the library entry, current preview, and persisted settings. Search for and select the imported image in the source list, apply again, and verify the identity is unchanged with no duplicate library entry.
 5. Close the player and delete the fixture through production UI. Check the unchanged source and normal Core/UI shutdown.
 
 This case does not run super-resolution or validate inference, preview pixel quality, monitor switching, or actual cover-mode rendering.

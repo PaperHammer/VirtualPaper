@@ -17,6 +17,7 @@ using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.ML.SuperResolution;
 using VirtualPaper.ML.SuperResolution.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
@@ -33,6 +34,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private readonly IUserSettingsClient _settings;
         private readonly IStoragePicker _picker;
         private readonly Func<ISuperResolution> _createModel;
+        private IWpBasicData? _librarySource;
+        internal string? LibrarySourceUid => _librarySource?.WallpaperUid;
         public event Action<IWpBasicData>? Imported;
         public IReadOnlyList<ScreenFitMonitor> Monitors { get; }
         public ScreenFitViewModel(IMonitorManagerClient monitors, IWallpaperControlClient wallpapers,
@@ -94,6 +97,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         public string ProgressText { get => _progressText; private set { _progressText = value; OnPropertyChanged(); } }
 
         internal void SetSource(string path, int width, int height) {
+            _librarySource = null;
             SourcePath = path; _sourceWidth = width; _sourceHeight = height;
             OnPropertyChanged(nameof(SourcePath)); UseEnhancement = false; ErrorMessage = string.Empty; UpdatePlan();
         }
@@ -110,13 +114,31 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             try {
                 var files = await _picker.PickFilesAsync(WindowConsts.WindowHandle, [.. FileFilter.FileTypeToExtension[FileType.FImage]], false);
                 if (files == null || files.Length == 0) return;
-                var file = await StorageFile.GetFileFromPathAsync(files[0].Path);
-                using var stream = await file.OpenReadAsync();
-                var decoder = await BitmapDecoder.CreateAsync(stream);
-                SetSource(file.Path, checked((int)decoder.OrientedPixelWidth), checked((int)decoder.OrientedPixelHeight));
+                await ReadImageAsync(files[0].Path);
             }
             catch (Exception ex) { ArcLog.GetLogger<ScreenFitViewModel>().Error(ex); ErrorMessage = Text("ScreenFit_ReadFailed"); }
             finally { IsBusy = false; }
+        }
+
+        public async Task SelectLibraryImageAsync(WallpaperIndexEntry entry) {
+            if (IsBusy || entry.FType != FileType.FImage) return;
+            IsBusy = true;
+            try {
+                var data = await WpBasicData.LoadAsync(entry.JsonPath)
+                    ?? throw new InvalidDataException("Wallpaper metadata is empty.");
+                if (data.FType != FileType.FImage) throw new InvalidDataException("The wallpaper is not a static image.");
+                await ReadImageAsync(data.FilePath);
+                _librarySource = data;
+            }
+            catch (Exception ex) { ArcLog.GetLogger<ScreenFitViewModel>().Error(ex); ErrorMessage = Text("ScreenFit_ReadFailed"); }
+            finally { IsBusy = false; }
+        }
+
+        private async Task ReadImageAsync(string path) {
+            var file = await StorageFile.GetFileFromPathAsync(path);
+            using var stream = await file.OpenReadAsync();
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            SetSource(file.Path, checked((int)decoder.OrientedPixelWidth), checked((int)decoder.OrientedPixelHeight));
         }
 
         public async Task<bool> ApplyAsync(CancellationToken ct) {
@@ -127,6 +149,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             int scaling = (int)(FitIndex == 0 ? ObjectFit.Contain : ObjectFit.Cover);
             string source = SourcePath;
             bool enhance = UseEnhancement && plan.NeedsEnhancement;
+            var sourceData = enhance ? null : _librarySource;
             string? tempDir = null;
             IsBusy = true; ErrorMessage = string.Empty;
             try {
@@ -151,9 +174,12 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                     ErrorMessage = Text("ScreenFit_DisplayChanged"); return false;
                 }
                 ProgressText = Text("ScreenFit_Applying");
-                var imported = await _wallpapers.CreateBasicDataAsync(source, FileType.FImage, ct);
-                if (imported == null) throw new InvalidOperationException("Wallpaper import failed.");
-                var data = DataAssist.GrpcToBasicData(imported);
+                var data = sourceData;
+                if (data == null) {
+                    var imported = await _wallpapers.CreateBasicDataAsync(source, FileType.FImage, ct);
+                    if (imported == null) throw new InvalidOperationException("Wallpaper import failed.");
+                    data = DataAssist.GrpcToBasicData(imported);
+                }
                 if (!data.IsAvailable()) throw new InvalidOperationException("Wallpaper metadata is invalid.");
                 Imported?.Invoke(data);
                 ct.ThrowIfCancellationRequested();

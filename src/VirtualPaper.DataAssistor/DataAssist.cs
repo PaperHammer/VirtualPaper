@@ -214,6 +214,7 @@ namespace VirtualPaper.DataAssistor {
                 NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
                 UiHardwareAccelerationEnabled = settings.UiHardwareAccelerationEnabled,
                 RemindUnpreservedIntelligentResults = settings.RemindUnpreservedIntelligentResults,
+                AiUseNoticeVersion = settings.AiUseNoticeVersion,
 
                 WallpaperDir = settings.WallpaperDir,
                 BuiltInWallpapersDir = settings.BuiltInWallpapersDir,
@@ -285,6 +286,7 @@ namespace VirtualPaper.DataAssistor {
                 NavigationAnimationsEnabled = !settings.HasNavigationAnimationsEnabled || settings.NavigationAnimationsEnabled,
                 UiHardwareAccelerationEnabled = !settings.HasUiHardwareAccelerationEnabled || settings.UiHardwareAccelerationEnabled,
                 RemindUnpreservedIntelligentResults = !settings.HasRemindUnpreservedIntelligentResults || settings.RemindUnpreservedIntelligentResults,
+                AiUseNoticeVersion = settings.HasAiUseNoticeVersion ? Math.Max(0, settings.AiUseNoticeVersion) : 0,
 
                 WallpaperDir = settings.WallpaperDir,
                 BuiltInWallpapersDir = settings.HasBuiltInWallpapersDir && !string.IsNullOrWhiteSpace(settings.BuiltInWallpapersDir)

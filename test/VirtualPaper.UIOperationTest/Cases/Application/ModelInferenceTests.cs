@@ -26,7 +26,10 @@ internal static class ModelInferenceTests {
         await using var session = new AppProcessSession();
         // Keep queue/cancellation acceptance on CPU; GPU choice has an independent
         // case and must not make the three-task queue depend on a fast GPU's timing.
-        await session.StartAsync(settings => settings.UiHardwareAccelerationEnabled = false);
+        await session.StartAsync(settings => {
+            settings.UiHardwareAccelerationEnabled = false;
+            settings.AiUseNoticeVersion = 0;
+        });
         context.Evidence["HardwareAccelerationStartupPreference"] = false;
         context.Evidence["CoreProcessId"] = session.CoreId;
         var ui = await session.OpenUiAsync();
@@ -45,6 +48,15 @@ internal static class ModelInferenceTests {
                 NativeFileDialog.OpenFile(ui, owner, input);
                 ApplicationUi.Invoke(ApplicationUi.Find(root, "Intelligent.Task.Confirm", visible: true));
             });
+            if (input == inputs[0]) {
+                await Task.Run(() => {
+                    var dialog = ApplicationUi.Find(root, "AiUseNotice.Dialog", visible: true);
+                    ApplicationUi.Invoke(ApplicationUi.Find(dialog, "PrimaryButton", visible: true));
+                    ApplicationUi.WaitUntilGone(root, "AiUseNotice.Dialog");
+                });
+                await AppProcessSession.WaitForJsonAsync(session.SettingsPath,
+                    json => json["AiUseNoticeVersion"]?.GetValue<int>() == 1);
+            }
             // A successful submission clears the form; wait before selecting the next input.
             await AppProcessSession.WaitAsync(() => Task.Run(() => !ApplicationUi.Find(root,
                 "Intelligent.Task.Confirm", visible: true, enabled: false).Current.IsEnabled), "Task accepted and input reset");
@@ -81,6 +93,7 @@ internal static class ModelInferenceTests {
             return state == LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed);
         }), "Real model result completed", TimeSpan.FromMinutes(6));
         context.Evidence["InferenceMilliseconds"] = timer.ElapsedMilliseconds;
+        context.Evidence["AiNoticeAcknowledgedOnceBeforeRealInference"] = true;
         await Task.Run(() => Check(!Row(root, inputs[0]).FindAll(TreeScope.Descendants,
             new PropertyCondition(AutomationElement.AutomationIdProperty, "Intelligent.Task.Backend"))
             .Cast<AutomationElement>().Any(element => element.Current.BoundingRectangle is { Width: > 0, Height: > 0 }),

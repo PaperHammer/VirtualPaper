@@ -11,6 +11,7 @@ using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using VirtualPaper.WpSettingsPanel.Views;
 
@@ -87,8 +88,14 @@ namespace VirtualPaper.WpSettingsPanel {
                     viewModel.SelectedMonitor = viewModel.Monitors.FirstOrDefault(m => m.DeviceId == deviceId) ?? viewModel.SelectedMonitor;
                 }
                 viewModel.Imported += data => AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>().UpdateLib(data);
-                var dialog = new ScreenFitDialog(viewModel) { XamlRoot = XamlRoot, RequestedTheme = ActualTheme };
-                await dialog.ShowAsync();
+                var aiNotice = AppServiceLocator.Services.GetRequiredService<IAiUseNoticeService>();
+                var dialog = new ScreenFitDialog(viewModel, aiNotice,
+                    AppServiceLocator.Services.GetRequiredService<IWallpaperIndexService>()) { XamlRoot = XamlRoot, RequestedTheme = ActualTheme };
+                do {
+                    await dialog.ShowAsync();
+                    if (!dialog.AiNoticeRequested) break;
+                    dialog.ResumeAfterNotice = await aiNotice.EnsureAcknowledgedAsync();
+                } while (true);
                 if (dialog.Applied) {
                     int index = _viewModel.Monitors.ToList().FindIndex(m => m.DeviceId == viewModel.SelectedMonitor?.DeviceId);
                     if (index >= 0) _viewModel.SelectedMonitorIndex = index;

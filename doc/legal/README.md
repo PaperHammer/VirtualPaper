@@ -26,6 +26,7 @@ The application notices are maintained here as UTF-8 Markdown, one README per su
 - The publisher and project maintainer is PaperHammer; GitHub Issues is the current public contact. Keep these details current and direct users to ask for an appropriate channel before providing sensitive information.
 - The project maintainer has manually confirmed the third-party sources and redistribution permissions for the current release; this confirmation was recorded on 2026-11-15. Preserve the required notices. When replacing dependencies, model weights or media, check the new items' terms and update the accompanying records.
 - The repository's `LICENSE` is the source of truth for the application's GPLv3 text. Keep the installer text and bundled copy identical. Do not silently relicense the application or replace third-party terms with its GPL.
+- The UI's first-use AI notice records `AiUseNoticeVersion` separately from the application and document versions. Increase its version only for substantive changes to AI processing or rights. Copy edits and translations do not require renewed acknowledgement. This acknowledgement does not grant a content license or permission for future uploads.
 
 中文：语种跟随统一语言目录；正文与日期同步更新。三个章节锚点用于本地阅读入口。打包仅带用户文档、第三方说明与许可证原文。商店仍需可公开访问的隐私政策 URL，文档合入公开发布分支后再配置。项目现有公开联系方式为 GitHub Issues，敏感信息应先询问合适的提供方式。当前发布内容的第三方来源及再分发授权已由项目维护者人工确认，确认记录日期为 2026-11-15；后续更换依赖、模型权重或素材时，同步核对新条目并更新声明。
 

@@ -46,6 +46,8 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         var settings = new Settings {
             IsFirstRun = false, IsUpdated = false, IsAutoStart = false, IsScreenSaverOn = false,
             NavigationAnimationsEnabled = true, Language = "en-US",
+            // Unrelated cases use an acknowledged profile; first-use cases explicitly reset this to zero.
+            AiUseNoticeVersion = 1,
             // A host runs several application cases; each Core must get an empty library.
             WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Guid.NewGuid().ToString("N"),
                 Constants.FolderName.WpStoreFolderName)

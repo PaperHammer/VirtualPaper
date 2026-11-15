@@ -2172,4 +2172,20 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
     <value>Droits d’auteur et licences</value>
   </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>Avant d’utiliser les fonctions d’IA</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>Les fonctions d’IA traitent vos contenus sur cet ordinateur, sans les envoyer à un service d’IA dans le cloud. Les résultats peuvent contenir des erreurs.</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>Le traitement par IA ne vous confère pas automatiquement de droits d’auteur sur le contenu source ou le résultat. Avant toute publication, redistribution ou utilisation commerciale, assurez-vous de disposer des droits ou autorisations nécessaires.</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>Lire les informations sur l’IA et les droits</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>J’ai compris, continuer</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Parcourir les fichiers…</value></data>
 </root>

@@ -21,10 +21,18 @@ internal static class RenderingTests {
         string source = Path.Combine(context.Root, "render-fixture.png");
         WriteScene(source);
         await using var session = new AppProcessSession();
-        await session.StartAsync();
+        await session.StartAsync(settings => settings.AiUseNoticeVersion = 0);
         context.Evidence["CoreProcessId"] = session.CoreId;
         var fixture = await WallpaperFixture.ImportAsync(session, source);
-        await fixture.ApplyAsync(depth: true);
+        await fixture.ApplyAsync(depth: true, beforeWait: () => {
+            var notice = ApplicationUi.Find(fixture.Root, "AiUseNotice.Dialog", visible: true);
+            Check(Directory.GetFiles(fixture.Data.FolderPath, "depth-*.png", SearchOption.AllDirectories).Length == 0,
+                "Depth inference ran before the AI notice was acknowledged");
+            ApplicationUi.Invoke(ApplicationUi.Find(notice, "PrimaryButton", visible: true));
+            ApplicationUi.WaitUntilGone(fixture.Root, "AiUseNotice.Dialog");
+        });
+        await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json => json["AiUseNoticeVersion"]?.GetValue<int>() == 1);
+        context.Evidence["AiNoticeAcceptedBeforeDepthGeneration"] = true;
         await AppProcessSession.WaitForJsonAsync(Constants.CommonPaths.WallpaperLayoutPath,
             json => json.AsArray().Count == 1 && json[0]?["RType"]?.GetValue<string>() == "RImage3D");
         string runtimePath = Directory.GetFiles(fixture.Data.FolderPath, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories).Single();

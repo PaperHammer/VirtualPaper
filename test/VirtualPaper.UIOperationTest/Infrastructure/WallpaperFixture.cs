@@ -37,7 +37,7 @@ internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBa
         return new(ui, root, data!);
     }
 
-    public async Task ApplyAsync(bool depth = false, bool usePointer = false) {
+    public async Task ApplyAsync(bool depth = false, bool usePointer = false, Action? beforeWait = null) {
         await Task.Run(() => {
             Cases.WallpaperLibraryTests.OpenItemMenu(Ui.MainWindowHandle, Root, Data.WallpaperUid, "Library.Item.Apply", usePointer);
             if (depth) {
@@ -48,6 +48,7 @@ internal sealed record WallpaperFixture(Process Ui, AutomationElement Root, WpBa
             }
             if (Data.FType is FileType.FImage or FileType.FGif)
                 ApplicationUi.Invoke(ApplicationUi.Find(Root, "PrimaryButton", visible: true));
+            beforeWait?.Invoke();
         });
         await AppProcessSession.WaitForJsonAsync(Constants.CommonPaths.WallpaperLayoutPath,
             json => json.AsArray().Count == 1 && json[0]?["FolderPath"]?.GetValue<string>() == Data.FolderPath,

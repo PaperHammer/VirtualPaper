@@ -28,6 +28,7 @@ namespace VirtualPaper.Models.Cores {
         public bool NavigationAnimationsEnabled { get; set; } = true;
         public bool UiHardwareAccelerationEnabled { get; set; } = true;
         public bool RemindUnpreservedIntelligentResults { get; set; } = true;
+        public int AiUseNoticeVersion { get; set; }
         #endregion
 
         #region dirs

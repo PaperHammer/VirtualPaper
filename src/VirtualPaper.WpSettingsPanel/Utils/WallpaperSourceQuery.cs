@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using VirtualPaper.Common;
 
 namespace VirtualPaper.WpSettingsPanel.Utils;
 
@@ -9,7 +10,8 @@ internal sealed class WallpaperSourceQuery {
     private readonly WallpaperIndexEntry[] _ordered;
     private readonly HashSet<string> _favorites;
 
-    internal WallpaperSourceQuery(IEnumerable<WallpaperIndexEntry> entries, Func<string, bool> isFavorite) {
+    internal WallpaperSourceQuery(IEnumerable<WallpaperIndexEntry> entries, Func<string, bool> isFavorite, FileType? fileType = null) {
+        if (fileType is { } type) entries = entries.Where(entry => entry.FType == type);
         _ordered = entries.OrderBy(entry => entry.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ThenBy(entry => entry.Uid, StringComparer.OrdinalIgnoreCase).ToArray();
         _favorites = _ordered.Where(entry => isFavorite(entry.Uid)).Select(entry => entry.Uid)

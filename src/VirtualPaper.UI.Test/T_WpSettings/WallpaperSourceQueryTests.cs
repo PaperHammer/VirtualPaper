@@ -7,6 +7,25 @@ namespace VirtualPaper.UI.Test.T_WpSettings;
 [TestClass]
 public class WallpaperSourceQueryTests {
     [TestMethod]
+    public void ImagePicker_FiltersTypesBeforeReadingFavorites_AndKeepsNameAndAuthorSearch() {
+        WallpaperIndexEntry[] entries = [
+            new() { Uid = "image", Title = "Lake", Author = "Artist", FType = FileType.FImage },
+            new() { Uid = "other-image", Title = "Mountain", Author = "Artist", FType = FileType.FImage },
+            new() { Uid = "video", Title = "Lake", Author = "Artist", FType = FileType.FVideo },
+            new() { Uid = "gif", Title = "Lake", FType = FileType.FGif },
+            new() { Uid = "web", Title = "Lake", FType = FileType.FWebZip }
+        ];
+        var reads = new List<string>();
+        var query = new WallpaperSourceQuery(entries, uid => { reads.Add(uid); return uid == "image"; }, FileType.FImage);
+
+        CollectionAssert.AreEquivalent(new[] { "image", "other-image" }, reads);
+        CollectionAssert.AreEqual(new[] { "image", "other-image" }, query.Search("artist", false).Select(item => item.Uid).ToArray());
+        Assert.AreSame(entries[0], query.Search("lake", true).Single());
+        Assert.IsEmpty(query.Search("mountain", true));
+        Assert.HasCount(entries.Length, new WallpaperSourceQuery(entries, _ => false).Search("", false));
+    }
+
+    [TestMethod]
     [DataRow(" CALM ", "named")]
     [DataRow(" PHOTO.PNG ", "file")]
     [DataRow(" UID-ONLY ", "uid-only")]

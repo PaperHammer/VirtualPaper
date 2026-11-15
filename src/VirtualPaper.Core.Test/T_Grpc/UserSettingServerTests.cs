@@ -224,6 +224,26 @@ public class UserSettingServerTests {
         fixture.UiRunner.Verify(service => service.RestartUIAsync(), Times.Never);
     }
 
+    [TestMethod]
+    public async Task AiUseNotice_OldAndStaleClientsCannotDiscardAcknowledgement() {
+        var fixture = new ServerFixture();
+        var request = await fixture.Server.GetSettings(new Empty(), null!);
+        Assert.IsTrue(request.HasAiUseNoticeVersion);
+        Assert.AreEqual(0, request.AiUseNoticeVersion);
+        request.AiUseNoticeVersion = 1;
+        await fixture.Server.SetSettings(request, null!);
+        request.ClearAiUseNoticeVersion();
+        await fixture.Server.SetSettings(request, null!);
+        Assert.AreEqual(1, fixture.Settings.AiUseNoticeVersion);
+        request.AiUseNoticeVersion = 0;
+        await fixture.Server.SetSettings(request, null!);
+        Assert.AreEqual(1, fixture.Settings.AiUseNoticeVersion);
+        request.AiUseNoticeVersion = 2;
+        await fixture.Server.SetSettings(request, null!);
+        Assert.AreEqual(2, (await fixture.Server.GetSettings(new Empty(), null!)).AiUseNoticeVersion);
+        fixture.UiRunner.Verify(service => service.RestartUIAsync(), Times.Never);
+    }
+
     private sealed class ServerFixture {
         public Settings Settings { get; } = new();
         public List<IRecentUsed> RecentUseds { get; } = [];

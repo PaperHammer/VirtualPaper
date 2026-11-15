@@ -145,6 +145,7 @@ message Grpc_SettingsData {
     optional bool remind_unpreserved_intelligent_results = 32;
     optional string built_in_wallpapers_dir = 33;
     optional bool ui_hardware_acceleration_enabled = 34;
+    optional int32 ai_use_notice_version = 35;
 }
 
 message Grpc_AppRulesSettings {

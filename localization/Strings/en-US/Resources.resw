@@ -2179,4 +2179,20 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
     <value>Copyright and licenses</value>
   </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>Before using AI features</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>AI features process your materials on this computer without uploading them to a cloud AI service. Results may contain errors.</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>AI processing does not automatically give you copyright in the source material or result. Before publishing, redistributing or using results commercially, make sure you have the necessary rights or permissions.</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>Read AI processing and rights</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>Acknowledge and continue</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Browse files…</value></data>
 </root>

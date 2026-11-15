@@ -2172,4 +2172,20 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
     <value>Авторские права и лицензии</value>
   </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>Перед использованием функций ИИ</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>Функции ИИ обрабатывают ваши материалы на этом компьютере, не отправляя их в облачные сервисы ИИ. Результаты могут содержать ошибки.</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>Обработка с помощью ИИ не даёт вам автоматически авторских прав на исходный материал или результат. Перед публикацией, распространением или коммерческим использованием убедитесь, что у вас есть необходимые права или разрешения.</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>Прочитать об обработке ИИ и правах</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>Понятно, продолжить</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Обзор файлов…</value></data>
 </root>

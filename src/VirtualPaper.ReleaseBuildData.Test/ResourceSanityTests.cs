@@ -47,7 +47,7 @@ namespace VirtualPaper.ReleaseBuildData.Test {
 
         [TestMethod]
         [TestCategory("ReleaseBuild")]
-        [DynamicData(nameof(SupportedLocales), DynamicDataSourceType.Method)]
+        [DynamicData(nameof(SupportedLocales))]
         public void Plugin_UI_LiveTranslations_MatchTheirSourceStrings(string locale) {
             string path = Path.Combine(PluginsDir, "UI", "VirtualPaper.UIComponent", "Strings", locale, "Resources.resw");
             var entries = System.Xml.Linq.XDocument.Load(path).Root!.Elements("data")

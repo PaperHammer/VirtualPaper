@@ -75,8 +75,8 @@ public class EffectPresetStoreTests {
         Assert.AreEqual(copy.Id, loaded.Single(item => !item.IsBuiltIn).Id);
         Assert.HasCount(EffectPresets.BuiltIns().Count, loaded.Where(item => item.IsBuiltIn).ToArray());
         string saved = await File.ReadAllTextAsync(_path);
-        Assert.IsFalse(saved.Contains("FolderPath"));
-        Assert.IsFalse(saved.Contains("\"Type\""));
+        Assert.DoesNotContain("FolderPath", saved);
+        Assert.DoesNotContain("\"Type\"", saved);
         Assert.IsFalse(saved.Contains("\"Max\"", StringComparison.Ordinal)); // No control definitions inside Values.
     }
 

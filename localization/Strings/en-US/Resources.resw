@@ -439,9 +439,7 @@ The file cannot be imported: </value>
     <value>It's the latest version!</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>Thank you for downloading this program!
-Virtual Paper is a free, lightweight wallpaper software that runs on Windows, for all Windows 10 and above systems to provide wallpaper management and other personalized features, if you find a problem, please contact us!
-Author: PaperHammer</value>
+    <value>VirtualPaper is a free, open-source wallpaper app for Windows 10 and later. It supports images, videos, GIFs and interactive Web wallpapers, with built-in image editing, local AI processing, 3D parallax and atmosphere effects.</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>Document</value>
@@ -2171,5 +2169,14 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>The project could not be opened. Check that the file is available and try again.</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>Privacy policy</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>AI processing and rights</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>Copyright and licenses</value>
   </data>
 </root>

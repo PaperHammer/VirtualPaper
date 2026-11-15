@@ -78,6 +78,12 @@ try {
         $files[$path].Open()
     } $expected
     Assert-PackageFile 'Plugins/UI/PLAYER_Web/default.html'
+    $legalRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../doc/legal'))
+    foreach ($document in Get-ChildItem -LiteralPath $legalRoot -Recurse -File) {
+        $relative = [IO.Path]::GetRelativePath($legalRoot, $document.FullName).Replace('\', '/')
+        if ($relative -eq 'README.md') { continue }
+        Assert-PackageFile "Plugins/UI/Legal/$relative"
+    }
     Assert-PackageFile 'Plugins/ScrSaver/Players/Web/default.html'
     foreach ($model in @('DepthEstimate/ai_models/depth_anything_v2_vits_dynamic.onnx',
         'StyleTransfer/ai_models/adain_style_transfer.onnx', 'SuperResolution/ai_models/realesrgan_x4plus_dynamic.onnx')) {

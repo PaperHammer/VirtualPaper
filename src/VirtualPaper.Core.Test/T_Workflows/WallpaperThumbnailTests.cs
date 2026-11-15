@@ -100,7 +100,7 @@ public class WallpaperThumbnailTests {
             byte[] first = new byte[32 * 24 * 4], last = new byte[first.Length];
             new FormatConvertedBitmap(decoder.Frames[0], PixelFormats.Bgra32, null, 0).CopyPixels(first, 32 * 4, 0);
             new FormatConvertedBitmap(decoder.Frames[3], PixelFormats.Bgra32, null, 0).CopyPixels(last, 32 * 4, 0);
-            Assert.IsTrue(last[0] - first[0] > 100, "Earlier frames must retain their own pixels after each source Mat is disposed.");
+            Assert.IsGreaterThan(100, last[0] - first[0], "Earlier frames must retain their own pixels after each source Mat is disposed.");
         }
         finally { Directory.Delete(folder, recursive: true); }
     }

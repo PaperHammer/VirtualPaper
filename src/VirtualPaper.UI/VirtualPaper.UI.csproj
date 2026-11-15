@@ -62,6 +62,14 @@
 		</Content>
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="..\..\doc\legal\**\*" Exclude="..\..\doc\legal\README.md">
+			<Link>Legal\%(RecursiveDir)%(Filename)%(Extension)</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
+
 	<PropertyGroup>
 		<OutputPath>..\VirtualPaper\Plugins\UI\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>

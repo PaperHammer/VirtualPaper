@@ -220,8 +220,8 @@ public class WebProjectCopyTests {
         string path = WebProjectCopy.Copy(_project, Path.Combine(_root, "Copy"), [new(source, "copy edit", "UTF-8")]);
         string copy = Path.Combine(Path.GetDirectoryName(path)!, "index.html");
         Assert.AreEqual("copy edit", File.ReadAllText(copy));
-        Assert.IsFalse((File.GetAttributes(copy) & FileAttributes.ReadOnly) != 0);
-        Assert.IsTrue((File.GetAttributes(source) & FileAttributes.ReadOnly) != 0);
+        Assert.AreEqual(default(FileAttributes), File.GetAttributes(copy) & FileAttributes.ReadOnly);
+        Assert.AreNotEqual(default(FileAttributes), File.GetAttributes(source) & FileAttributes.ReadOnly);
         Assert.AreEqual("<html>original</html>", File.ReadAllText(source));
     }
 

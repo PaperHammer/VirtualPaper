@@ -439,9 +439,7 @@ Não é possível importar o arquivo: </value>
     <value>Você está usando a versão mais recente!</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>Obrigado por baixar o aplicativo!
-O Virtual Paper é um aplicativo gratuito e leve para Windows 10 ou superior, com gerenciamento de papéis de parede e personalização da área de trabalho. Entre em contato se encontrar um problema.
-Autor: PaperHammer</value>
+    <value>O VirtualPaper é um aplicativo de papéis de parede gratuito e de código aberto para Windows 10 ou superior. Ele oferece suporte a imagens, vídeos, GIFs e papéis de parede Web interativos, com edição de imagens, processamento local por IA, paralaxe 3D e efeitos de ambiente.</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>Documentação</value>
@@ -2164,5 +2162,14 @@ Se não funcionar, reinicie o Windows. Algumas versões de prévia do Windows 10
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>Não foi possível abrir o projeto. Verifique se o arquivo está disponível e tente novamente.</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>Política de privacidade</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>Processamento por IA e direitos</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>Direitos autorais e licenças</value>
   </data>
 </root>

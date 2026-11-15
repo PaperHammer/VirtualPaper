@@ -29,7 +29,7 @@ public class DownloadTransferTests {
             CollectionAssert.AreEqual(Payload, File.ReadAllBytes(path));
             Assert.IsTrue(progress.Any(p => p.Percent >= 100 && p.ReceivedBytes == Payload.Length));
         }
-        Assert.IsTrue(server.Requests.Count >= 2);
+        Assert.IsGreaterThanOrEqualTo(2, server.Requests.Count);
     }
 
     [TestMethod]

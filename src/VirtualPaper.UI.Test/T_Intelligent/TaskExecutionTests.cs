@@ -70,7 +70,7 @@ public class TaskExecutionTests {
         await Task.WhenAll(items.Append(next).Select(item => item.Execution)).WaitAsync(TimeSpan.FromSeconds(8));
         Assert.AreEqual(limit + 1, fixture.Engine.Runs);
         Assert.IsTrue(next.IsCompleted);
-        Assert.IsTrue(fixture.Engine.MaximumActive <= limit);
+        Assert.IsLessThanOrEqualTo(limit, fixture.Engine.MaximumActive);
     }
 
     [TestMethod]
@@ -89,7 +89,7 @@ public class TaskExecutionTests {
         fixture.Engine.Release();
         await Task.WhenAll(items.Select(item => item.Execution)).WaitAsync(TimeSpan.FromSeconds(8));
         Assert.IsTrue(items[^1].IsCompleted);
-        Assert.IsTrue(fixture.Engine.MaximumActive <= limit);
+        Assert.IsLessThanOrEqualTo(limit, fixture.Engine.MaximumActive);
     }
 
     [TestMethod]

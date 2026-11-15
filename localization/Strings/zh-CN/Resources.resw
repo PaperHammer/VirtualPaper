@@ -439,9 +439,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
     <value>已是最新版本！</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>感谢您下载本程序！
-Virtual Paper 是一款免费、运行在 Windows 上的轻量级壁纸软件，供所有 Windows 10 及以上的系统提供壁纸管理及其他个性化功能，如发现问题，欢迎联系！
-作者：PaperHammer</value>
+    <value>VirtualPaper 是一款免费开源的 Windows 壁纸应用，支持图片、视频、GIF 和交互式 Web 壁纸，集成图像编辑、本地 AI 处理、3D 视差与氛围特效。适用于 Windows 10 及以上系统。</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>文档</value>
@@ -2171,5 +2169,14 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>无法打开项目。请确认文件可用后重试。</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>隐私政策</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>AI 处理与权利说明</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>版权与许可证</value>
   </data>
 </root>

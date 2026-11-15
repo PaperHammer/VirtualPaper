@@ -15,6 +15,8 @@
                       LogicalName="VirtualPaper.Localization.Source.%(RecursiveDir)Resources.resw" />
     <EmbeddedResource Include="..\..\resources\BuiltInWallpapers\**\wp_metadata_basic.json"
                       LogicalName="VirtualPaper.BuiltIn.%(RecursiveDir)wp_metadata_basic.json" />
+    <EmbeddedResource Include="..\..\doc\legal\**\*" Exclude="..\..\doc\legal\README.md"
+                      LogicalName="VirtualPaper.Legal.%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\VirtualPaper.UIComponent\Localization\XamlResources.xml"
                       LogicalName="VirtualPaper.XamlResources.xml" />
   </ItemGroup>

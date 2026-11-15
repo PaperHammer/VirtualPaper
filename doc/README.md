@@ -15,6 +15,7 @@ The detailed guides linked below are currently in Chinese.
 - [Microsoft Store MSIX](../packaging/msix/README.md): Core-first packaging, local preview and Store identity parameters.
 - [WebBackdrop](webbackdrop.md): Web wallpaper project formats, the editor, file tree, preview, and saving.
 - [Asset tools](../resources/tools/README.md): bundled wallpaper and application icon generation.
+- [Privacy, AI processing and copyright](legal/README.md): offline notices in every supported language and original license texts.
 
 ## Source entry points
 

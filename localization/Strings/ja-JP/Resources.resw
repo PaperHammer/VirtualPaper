@@ -439,9 +439,7 @@
     <value>最新バージョンです！</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>ダウンロードいただきありがとうございます！
-Virtual Paper は、Windows 10 以降で壁紙の管理やデスクトップのカスタマイズができる、無料で軽量なアプリです。問題がありましたら、お知らせください。
-作者：PaperHammer</value>
+    <value>VirtualPaper は、Windows 10 以降に対応した無料のオープンソース壁紙アプリです。画像、動画、GIF、インタラクティブな Web 壁紙に対応し、画像編集、ローカル AI 処理、3D 視差効果、雰囲気を演出するエフェクトを備えています。</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>ドキュメント</value>
@@ -2164,5 +2162,14 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>プロジェクトを開けませんでした。ファイルが利用可能か確認して、もう一度お試しください。</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>プライバシーポリシー</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>AI 処理と権利について</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>著作権とライセンス</value>
   </data>
 </root>

@@ -92,6 +92,8 @@ internal static class GeneralSettingsTests {
         Check(!ui.HasExited && ui.Id == languageUiId, "Changing back to English restarted the UI process");
         // Traverse the complete advertised catalog in one real application session.
         // Read expected strings independently of the host's current localizer.
+        var legalSamples = new List<string>();
+        context.Evidence["LegalDocumentSamples"] = legalSamples;
         foreach (var language in SupportedLanguages.Languages) {
             string locale = language.Codes[0];
             await ApplicationUi.SelectLanguageAsync(root, locale);
@@ -110,6 +112,7 @@ internal static class GeneralSettingsTests {
                     await ApplicationUi.VerifyToolTipAsync(ui.MainWindowHandle, navigation, expected);
                 });
             }
+            await VerifyLegalDocumentsAsync(context, root, locale, legalSamples);
         }
         string finalLanguage = SupportedLanguages.Languages[^1].Codes[0];
         await session.CloseUiAsync();
@@ -126,10 +129,48 @@ internal static class GeneralSettingsTests {
         context.Evidence["LanguageUpdatedWithoutUiRestart"] = true;
         context.Evidence["CatalogLanguagesVerified"] = SupportedLanguages.Languages.Select(language => language.Codes[0]).ToArray();
         context.Evidence["FullNavigationTooltipsVerified"] = true;
+        context.Evidence["LegalDocumentsAfterEveryLanguageSwitchVerified"] = true;
         context.Evidence["AdditionalLanguageReopened"] = finalLanguage;
         context.Evidence["AutoStartOsRegistrationTested"] = false;
         context.Evidence["BackdropPixelsAndAboutImageDecodeVerified"] = false;
     }
+
+    private static async Task VerifyLegalDocumentsAsync(UiTestContext context, AutomationElement root, string locale, List<string> samples) {
+        await Task.Run(() => ApplicationUi.Select(ApplicationUi.Find(root, "Settings.Tab.Others")));
+        string core = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE")!;
+        string source = await File.ReadAllTextAsync(Path.Combine(Path.GetDirectoryName(core)!, "Plugins", "UI", "Legal", locale, "README.md"));
+        foreach (var (id, section, key) in new[] {
+            ("PrivacyPolicy", "privacy-policy", "Settings_Others_Legal_Privacy"),
+            ("AiRights", "ai-processing-and-rights", "Settings_Others_Legal_Ai"),
+            ("Copyright", "copyright-and-licenses", "Settings_Others_Legal_Copyright")
+        }) {
+            context.Evidence["LegalDocumentCurrentSample"] = locale + "/" + section;
+            string marker = "<a id=\"" + section + "\"></a>";
+            string expectedParagraph = source[(source.IndexOf(marker, StringComparison.Ordinal) + marker.Length)..]
+                .Split('\n').Select(line => line.Trim()).First(line => line.Length > 0 && !line.StartsWith('#'));
+            await Task.Run(() => {
+                ApplicationUi.Invoke(ApplicationUi.Find(root, "Settings.Others." + id));
+                var dialog = ApplicationUi.Find(root, "Settings.Legal.Dialog", visible: true);
+                string title = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, key);
+                var elements = dialog.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>().ToArray();
+                Check(elements.Any(element => element.Current.Name == title), "Legal document title did not follow " + locale);
+                string[] paragraphs = elements.Where(element => element.Current.AutomationId.StartsWith("Settings.Legal.Paragraph.", StringComparison.Ordinal))
+                    .Select(element => element.TryGetCurrentPattern(TextPattern.Pattern, out var pattern)
+                        ? ((TextPattern)pattern).DocumentRange.GetText(-1) : element.Current.Name).ToArray();
+                context.Evidence["LegalDocumentBodySample"] = paragraphs.ElementAtOrDefault(2);
+                Check(paragraphs.Any(text => NormalizeWhitespace(text).Contains(NormalizeWhitespace(expectedParagraph), StringComparison.Ordinal)),
+                    "Legal document body did not follow " + locale + "/" + section);
+                ApplicationUi.Invoke(ApplicationUi.Find(dialog, "CloseButton", visible: true));
+                ApplicationUi.WaitUntilGone(root, "Settings.Legal.Dialog");
+            });
+            samples.Add(locale + "/" + section);
+        }
+        await Task.Run(() => ApplicationUi.Select(ApplicationUi.Find(root, "Settings.Tab.General")));
+    }
+
+    private static string NormalizeWhitespace(string value) =>
+        System.Text.RegularExpressions.Regex.Replace(
+            System.Text.RegularExpressions.Regex.Replace(value.Replace("`", string.Empty), @"\[([^\]]+)\]\([^)]+\)", "$1"), @"\s+", " ").Trim();
 
     private static TogglePattern Toggle(AutomationElement root) {
         var control = ApplicationUi.Find(root, "Settings.General.AutoStart");

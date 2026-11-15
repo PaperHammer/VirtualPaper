@@ -439,9 +439,7 @@
     <value>Установлена последняя версия!</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>Спасибо за загрузку приложения!
-Virtual Paper — бесплатное и лёгкое приложение для Windows 10 и новее, предназначенное для управления обоями и настройки рабочего стола. Сообщите нам, если обнаружите проблему.
-Автор: PaperHammer</value>
+    <value>VirtualPaper — бесплатное приложение для обоев с открытым исходным кодом для Windows 10 и новее. Поддерживает изображения, видео, GIF и интерактивные веб-обои, а также предлагает встроенный редактор изображений, локальную обработку ИИ, 3D-параллакс и атмосферные эффекты.</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>Документация</value>
@@ -2164,5 +2162,14 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>Не удалось открыть проект. Убедитесь, что файл доступен, и повторите попытку.</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>Политика конфиденциальности</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>Обработка ИИ и права</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>Авторские права и лицензии</value>
   </data>
 </root>

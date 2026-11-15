@@ -1,5 +1,7 @@
 # Core 入口 MSIX 打包
 
+UI 构建／发布包含 `Plugins/UI/Legal`：各语种离线隐私、AI 与版权说明及许可原文，EXE 输出也使用同一份内容。`Test-MsixPackage.ps1` 拒绝缺少任一源法律文档的包。Partner Center 仍需配置公开的隐私政策 URL，见[文档维护说明](../../doc/legal/README.md)。
+
 [English](README.md)
 
 独立的 `VirtualPaper.Package.wapproj` 收集 Core 及现有 `Plugins/UI`、`Plugins/PlayerWeb`、`Plugins/ScrSaver`、`Plugins/ML`、`Plugins/Shaders`、`BuiltInWallpapers` 布局。开始菜单和开机启动入口都是 Core，再沿原生产路径启动子进程。WAP 工程不加入普通解决方案默认构建，现有 Inno 工作流继续服务 EXE 通道。
@@ -41,9 +43,9 @@ pwsh -NoProfile -File .github/scripts/Build-Msix.ps1 -Store -PackageVersion '1.0
 
 - MSIX 停用 EXE／插件补丁执行，并正常释放插件启动锁。
 - MSIX 在库启动前复制缺失的内置壁纸文件夹，已有文件夹整目录保留，与 Inno 一致；不引入用户数据／配置迁移。
-- WinUI PRI 在包根目录合并，保留嵌入 XBF、字符串和 URI 名称，只把文件候选路径指向 `Plugins/UI`。使用微软的 [PRIINFO 索引器](https://learn.microsoft.com/en-us/windows/uwp/app-resources/makepri-exe-format-specific-indexers#priinfo)，安装后仍需验证 PRI 和 XAML。
+- WinUI PRI 在包根目录合并，保留嵌入 XBF、字符串和 URI 名称，只把文件候选路径指向 `Plugins/UI`。使用微软的 [PRIINFO 索引器](https://learn.microsoft.com/en-us/windows/uwp/app-resources/makepri-exe-format-specific-indexers#priinfo)。
 - `test/Test-MsixPackage.ps1 -PackagePath '<application.msix>'` 检查实际包入口／启动任务、自包含运行文件、翻译、模型、Shader 和资源索引，不代表安装及 UI 验收通过。
-- 提交前运行 WACK，并在干净机器验证普通用户开始菜单启动、Core/UI 通信、中英文、壁纸／编辑／AI／屏保、开机启动、升级后配置保留、正常退出、卸载。系统设置场景单独安排，不混入普通 UI 套件；不连接日常运行实例。Inno 冒烟和非打包 UI 测试不能替代 MSIX 验收。
+- `test/Run-MsixTests.ps1` 覆盖安装后的启动、Core/UI 通信、语言、应用功能、同包重装／配置保留、正常退出和卸载。不连接日常运行实例。Inno 冒烟和非打包 UI 测试不能替代 MSIX 验收。
 
 Pre-merge 现已并行生成 EXE 和 MSIX，并分别进行安装冒烟和扩展 UI 验收。Pre-release 通过已合并 PR 的 `channel:msstore` 标签增加正式商店通道：GitHub 只创建 EXE/插件草稿，Partner Center 创建已上传但未提交的 MSIX 草稿。运行前补齐正式身份和 API 配置，详见[工作流说明](../../.github/workflows/README.zh-CN.md)。CI 使用 `Run-MsixTests.ps1 -PackageArtifact <package.json> -Mode Smoke|UI` 消费已有包，不重新打包；选中的验收均为必需门禁。
 

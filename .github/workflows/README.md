@@ -120,11 +120,13 @@ Fill the four public identifiers in [packaging/msix/StoreIdentity.json](../../pa
 - Create the four fixed `version:*` labels once.
 - Local workflow changes do not delete old remote branches such as `release` or `bugfix`. Clean them up separately after checking for unmerged work.
 
-Reserve the product and complete the initial Partner Center submission setup, including age ratings, before using the submission API. Product creation itself is manual. Complete WACK, clean-machine ordinary-user prerequisites, cross-version upgrades and other Store requirements before actual submission; automated draft creation does not establish those checks.
+Reserve the product and complete the initial Partner Center submission setup, including age ratings, before using the submission API. Product creation itself is manual.
 
 Keep the four `version:*` labels and add `channel:msstore`. Branch protection must require `pre-merge-check` (remove obsolete status names separately). Workflows do not change repository labels/rules remotely. Do not modify/release matching tags while a workflow is running.
 
 ## Reports and local checks
+
+Workflow contracts also run `test/Test-LegalDocuments.ps1` for all supported offline legal translations, section IDs, links, UI labels and original notices. Artifact tests verify the shipped document bytes; MSIX validation requires the complete legal payload. Configure the public privacy-policy URL separately in Partner Center after publishing the documents.
 
 Cross-version upgrades use the independent local `test/Run-UpgradeTests.ps1` entry with two source/package snapshots and phase-matched test tools. They do not replace mandatory same-package smoke or dispatch either workflow. Regional-format/font cases join the existing real UI inventory; see the [testing guide](../../test/README.md) for preparation and screenshot review.
 

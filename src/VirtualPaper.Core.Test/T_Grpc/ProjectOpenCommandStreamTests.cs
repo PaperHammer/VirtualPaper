@@ -61,7 +61,7 @@ public class ProjectOpenCommandStreamTests {
         }
         int count = writer.Messages.Count;
         runner.Raise(x => x.UISendCmd += null, runner.Object, MessageType.cmd_open_projects);
-        Assert.AreEqual(count, writer.Messages.Count);
+        Assert.HasCount(count, writer.Messages);
         runner.VerifyRemove(x => x.UISendCmd -= It.IsAny<EventHandler<MessageType>>(), Times.Once);
     }
 

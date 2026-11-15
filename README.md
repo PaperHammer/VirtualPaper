@@ -194,3 +194,5 @@ Open pull requests against `dev`. Please discuss larger changes in an issue firs
 With thanks to [Lively Wallpaper](https://github.com/lively-community/lively), [XamlNexus](https://github.com/PaperHammer/XamlNexus), [WinUI 3](https://github.com/microsoft/microsoft-ui-xaml), and [Monaco Editor](https://github.com/microsoft/monaco-editor).
 
 VirtualPaper is free and open source under the [GNU General Public License v3.0](LICENSE). Third-party components and models retain their respective licenses.
+
+[Privacy policy](doc/legal/en-US/README.md#privacy-policy) · [AI processing and rights](doc/legal/en-US/README.md#ai-processing-and-rights) · [Copyright and licenses](doc/legal/en-US/README.md#copyright-and-licenses) · [Other languages](doc/legal/README.md)

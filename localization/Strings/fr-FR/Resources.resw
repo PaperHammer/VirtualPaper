@@ -439,9 +439,7 @@ Fichier impossible à importer : </value>
     <value>Vous utilisez la dernière version !</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>Merci d'avoir téléchargé cette application !
-Virtual Paper est une application gratuite et légère pour Windows 10 et versions ultérieures, permettant de gérer les fonds d'écran et de personnaliser le bureau. Contactez-nous si vous rencontrez un problème.
-Auteur : PaperHammer</value>
+    <value>VirtualPaper est une application de fonds d’écran gratuite et open source pour Windows 10 et versions ultérieures. Elle prend en charge les images, les vidéos, les GIF et les fonds d’écran Web interactifs, avec un éditeur d’images intégré, un traitement local par IA, une parallaxe 3D et des effets d’ambiance.</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>Documentation</value>
@@ -2164,5 +2162,14 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>Impossible d’ouvrir le projet. Vérifiez que le fichier est disponible et réessayez.</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>Politique de confidentialité</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>Traitement par IA et droits</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>Droits d’auteur et licences</value>
   </data>
 </root>

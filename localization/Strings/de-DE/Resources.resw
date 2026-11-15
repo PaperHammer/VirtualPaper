@@ -439,9 +439,7 @@ Datei kann nicht importiert werden: </value>
     <value>Sie verwenden die neueste Version!</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>Vielen Dank für den Download!
-Virtual Paper ist eine kostenlose, schlanke Anwendung für Windows 10 und höher zur Verwaltung von Hintergrundbildern und zur Personalisierung des Desktops. Bitte melden Sie uns Probleme.
-Autor: PaperHammer</value>
+    <value>VirtualPaper ist eine kostenlose Open-Source-App für Hintergrundbilder unter Windows 10 und neuer. Sie unterstützt Bilder, Videos, GIFs und interaktive Webhintergründe und bietet integrierte Bildbearbeitung, lokale KI-Verarbeitung, 3D-Parallaxe und atmosphärische Effekte.</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>Dokumentation</value>
@@ -2164,5 +2162,14 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>Das Projekt konnte nicht geöffnet werden. Prüfen Sie, ob die Datei verfügbar ist, und versuchen Sie es erneut.</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>Datenschutzerklärung</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>KI-Verarbeitung und Rechte</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>Urheberrecht und Lizenzen</value>
   </data>
 </root>

@@ -1,5 +1,7 @@
 # Core-first MSIX packaging
 
+The UI build/publish includes `Plugins/UI/Legal`: localized offline privacy/AI/copyright documents and original license notices. The same content is included in EXE output. `Test-MsixPackage.ps1` rejects a package missing any authored legal file. A public privacy-policy URL must still be configured in Partner Center; see the [legal document guide](../../doc/legal/README.md).
+
 [简体中文](README.zh-CN.md)
 
 The separate `VirtualPaper.Package.wapproj` packages Core plus the existing `Plugins/UI`, `Plugins/PlayerWeb`, `Plugins/ScrSaver`, `Plugins/ML`, `Plugins/Shaders` and `BuiltInWallpapers` layout. Core is the Start-menu/startup entry point and launches the other processes normally. The WAP project is not part of the normal solution build; the existing Inno workflow remains the EXE release channel.
@@ -35,7 +37,7 @@ pwsh -NoProfile -File .github/scripts/Build-Msix.ps1 -Store -PackageVersion '1.0
 
 MSIX disables EXE/plugin patch execution, while releasing startup gates normally. It seeds missing built-in wallpaper folders into the configured writable library before UI startup; entire existing folders are preserved, matching Inno. No user data/settings migration is introduced. WinUI PRI indexes are relocated and merged at package root: embedded XBF, strings and URI names stay intact; file candidates point into `Plugins/UI`. See Microsoft's [PRIINFO indexer](https://learn.microsoft.com/en-us/windows/uwp/app-resources/makepri-exe-format-specific-indexers#priinfo).
 
-`test/Test-MsixPackage.ps1 -PackagePath '<application.msix>'` checks actual package entry/startup, runtime files, translations, models, shaders and resource indexes. It does not prove installation/UI operation. Before Store submission, run WACK and clean-machine installed acceptance: standard-user Start-menu startup, Core/UI IPC, both languages, wallpaper/editing/AI/screen-saver features, startup settings, upgrade/profile retention, normal exit and uninstall. Arrange persistent system-setting cases separately from the regular UI suite. Do not connect acceptance to a running daily instance. Inno smoke/unpackaged UI tests do not replace MSIX acceptance.
+`test/Test-MsixPackage.ps1 -PackagePath '<application.msix>'` checks actual package entry/startup, runtime files, translations, models, shaders and resource indexes. `test/Run-MsixTests.ps1` covers installed startup, Core/UI IPC, languages, application features, same-package reinstall/profile retention, normal exit and uninstall. Do not connect acceptance to a running daily instance. Inno smoke/unpackaged UI tests do not replace MSIX acceptance.
 
 Pre-merge now packages EXE and MSIX in parallel and independently verifies both installed formats. Pre-release adds the formal Store channel for a merged PR labeled `channel:msstore`; GitHub receives only the EXE/plugin draft, while Partner Center receives an uploaded, uncommitted MSIX draft. Complete the Store identity/API configuration before dispatching that release. See the [workflow guide](../../.github/workflows/README.md). CI consumes an existing package with `Run-MsixTests.ps1 -PackageArtifact <package.json> -Mode Smoke|UI`; all selected checks are strict.
 

@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- XAML property key -> source string key. Translations live in localization/Strings/<locale>/Resources.resw. -->
 <Resources>
+  <Resource Name="Ui_Settings_Others_Legal_Privacy.Text" Source="Settings_Others_Legal_Privacy" />
+  <Resource Name="Ui_Settings_Others_Legal_Ai.Text" Source="Settings_Others_Legal_Ai" />
+  <Resource Name="Ui_Settings_Others_Legal_Copyright.Text" Source="Settings_Others_Legal_Copyright" />
   <Resource Name="Ui_Inference_UseGpu.Text" Source="Inference_UseGpu" />
   <Resource Name="Ui_Inference_SuperResolutionGpuHint.Text" Source="Inference_SuperResolutionGpuHint" />
   <Resource Name="Ui_Inference_StyleGpuUnavailable.Text" Source="Inference_StyleGpuUnavailable" />

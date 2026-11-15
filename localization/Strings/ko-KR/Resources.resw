@@ -439,9 +439,7 @@
     <value>최신 버전입니다!</value>
   </data>
   <data name="Settings_Others_About_Basic" xml:space="preserve">
-    <value>다운로드해 주셔서 감사합니다!
-Virtual Paper는 Windows 10 이상에서 배경 화면 관리와 바탕 화면 꾸미기 기능을 제공하는 무료 경량 앱입니다. 문제가 발생하면 알려 주세요.
-제작자: PaperHammer</value>
+    <value>VirtualPaper는 Windows 10 이상을 지원하는 무료 오픈 소스 배경화면 앱입니다. 이미지, 동영상, GIF 및 대화형 Web 배경화면을 지원하며, 이미지 편집, 로컬 AI 처리, 3D 시차 효과와 분위기 효과를 제공합니다.</value>
   </data>
   <data name="Settings_Others_More_Document" xml:space="preserve">
     <value>문서</value>
@@ -2164,5 +2162,14 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   </data>
   <data name="Shell_ProjectOpenFailed" xml:space="preserve">
     <value>프로젝트를 열 수 없습니다. 파일을 사용할 수 있는지 확인한 후 다시 시도하세요.</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>개인정보 처리방침</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>AI 처리 및 권리 안내</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>저작권 및 라이선스</value>
   </data>
 </root>

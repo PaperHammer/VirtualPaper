@@ -181,18 +181,18 @@ public class ProjectPersistenceTests {
         session.IsSavedChanged += (_, e) => isSaved = e.IsSaved;
         Assert.IsTrue((await session.DesignFileUtil.SaveAsync(Size, Business(), Layers(session))).Success);
         Assert.IsTrue((await canvas.SaveAsync(session)).Success);
-        Assert.AreEqual(true, isSaved);
+        Assert.IsTrue(isSaved);
         Track(canvas.AddLayer("Unsaved addition"));
-        Assert.AreEqual(false, isSaved);
+        Assert.IsFalse(isSaved);
         byte[] original = File.ReadAllBytes(_path);
         using (var locked = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
             Assert.IsFalse((await canvas.SaveAsync(session)).Success);
         }
-        Assert.AreEqual(false, isSaved, "A failed write must keep the close/save warning active.");
+        Assert.IsFalse(isSaved, "A failed write must keep the close/save warning active.");
         CollectionAssert.AreEqual(original, File.ReadAllBytes(_path));
         Assert.IsTrue((await canvas.SaveAsync(session)).Success);
-        Assert.AreEqual(true, isSaved);
-        Assert.AreEqual(3, (await LoadAsync()).Layers!.Count);
+        Assert.IsTrue(isSaved);
+        Assert.HasCount(3, (await LoadAsync()).Layers!);
     }
 
     [TestMethod]
@@ -202,17 +202,17 @@ public class ProjectPersistenceTests {
         var selected = canvas.Layers[1];
         byte[] pixels = selected.RenderData.RenderTarget.GetPixelBytes();
         canvas.DeleteLayer(selected.Tag);
-        Assert.AreEqual(1, canvas.Layers.Count);
+        Assert.HasCount(1, canvas.Layers);
         await session.UnReUtil.UndoAsync();
         Assert.AreSame(selected, canvas.Layers[1]);
         CollectionAssert.AreEqual(pixels, selected.RenderData.RenderTarget.GetPixelBytes());
         Assert.IsTrue((await session.DesignFileUtil.SaveAsync(Size, Business(), layers: canvas.Layers.Select(ToLayer).ToList())).Success);
-        Assert.AreEqual(2, (await LoadAsync()).Layers!.Count);
+        Assert.HasCount(2, (await LoadAsync()).Layers!);
         await session.UnReUtil.RedoAsync();
-        Assert.AreEqual(1, canvas.Layers.Count);
+        Assert.HasCount(1, canvas.Layers);
         Assert.IsTrue((await canvas.SaveAsync(session)).Success);
         var loaded = await LoadAsync();
-        Assert.AreEqual(1, loaded.Layers!.Count);
+        Assert.HasCount(1, loaded.Layers!);
         CollectionAssert.AreEqual(canvas.Layers[0].RenderData.RenderTarget.GetPixelBytes(), loaded.Layers[0].RenderData.RenderTarget.GetPixelBytes());
     }
 
@@ -268,7 +268,7 @@ public class ProjectPersistenceTests {
         Assert.AreEqual(expected.SelectedLayerIndex, actual.SelectedLayerIndex); CollectionAssert.AreEqual(expected.Colors.ToArray(), actual.Colors.ToArray());
     }
     private static void AssertLayers(List<Layer> expected, List<Layer> actual) {
-        Assert.AreEqual(expected.Count, actual.Count);
+        Assert.HasCount(expected.Count, actual);
         for (int i = 0; i < expected.Count; i++) {
             Assert.AreEqual(expected[i].Name, actual[i].Name); Assert.AreEqual(expected[i].State, actual[i].State);
             CollectionAssert.AreEqual(expected[i].RenderData.RenderTarget.GetPixelBytes(), actual[i].RenderData.RenderTarget.GetPixelBytes());

@@ -1,0 +1,14 @@
+Bigora Cascade
+Original footage: Bigora waterfall.webm
+Original creator: Termininja
+Source: https://commons.wikimedia.org/wiki/File:Bigora_waterfall.webm
+License evidence: https://commons.wikimedia.org/w/index.php?title=File:Bigora_waterfall.webm&oldid=1026030884
+Original download: https://upload.wikimedia.org/wikipedia/commons/c/c1/Bigora_waterfall.webm
+Original SHA-256: 032d3f186ed758c09a62998cff39fd875bdcc98f594f25cb67156f20e86fee83
+The creator identifies this as their own work and dedicates it under CC0 1.0 Universal. Verified 2026-11-06.
+License: https://creativecommons.org/publicdomain/zero/1.0/ (full text in CC0-1.0.txt).
+You may use, copy, modify and redistribute this footage, including as standalone media and for commercial purposes, without attribution or share-alike requirements.
+Adaptation by VirtualPaper: Real-time excerpt; fixed crop to the waterfall below the flag; downscale to 768x432; short loop crossfade; 20 fps shared-palette GIF with identical endpoint frames. No generated motion, optical-flow interpolation, reversal, audio or upscaling.
+VirtualPaper also dedicates any copyright it holds in these media adaptations and thumbnails under CC0 1.0. No additional media-use restrictions are imposed by this application or its code license.
+Creator and source are recorded for provenance, not as an attribution condition. No endorsement by the creator is implied.
+CC0 waives copyright and related rights to the extent legally possible; it does not clear third-party trademark, privacy or other rights, and provides no warranties.

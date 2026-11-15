@@ -43,8 +43,9 @@ public class ModelContentHashCacheTests {
         File.SetLastWriteTimeUtc(_model, sameLength ? timestamp.AddSeconds(2) : timestamp);
         using var updated = new CountingStream(_model);
         string expected = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(_model)));
-        Assert.AreEqual(expected, cache.GetHash(updated, default));
-        Assert.AreNotEqual(original, expected);
+        string actual = cache.GetHash(updated, default);
+        Assert.AreEqual(expected, actual);
+        Assert.AreNotEqual(original, actual);
         Assert.AreEqual(updated.Length, updated.BytesRead);
     }
 

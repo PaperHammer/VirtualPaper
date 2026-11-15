@@ -83,7 +83,7 @@ public class WallpaperSourceQueryTests {
 
         for (int i = 0; i < 20; i++) {
             var matches = query.Search("artist", true);
-            Assert.AreEqual(1, matches.Count);
+            Assert.HasCount(1, matches);
             Assert.AreSame(entries[9999], matches[0]);
         }
 
@@ -99,7 +99,7 @@ public class WallpaperSourceQueryTests {
         favorite = true;
         var reopened = new WallpaperSourceQuery(entries, _ => favorite);
 
-        Assert.AreEqual(0, opened.Search("", true).Count);
+        Assert.IsEmpty(opened.Search("", true));
         Assert.AreSame(entries[0], reopened.Search("", true).Single());
     }
 

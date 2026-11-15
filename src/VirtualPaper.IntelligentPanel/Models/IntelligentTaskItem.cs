@@ -26,6 +26,14 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public abstract bool IsCompleted { get; }
         protected abstract void NotifyCommandsCanExecuteChanged();
 
+        public string FailureReason => _failureReason;
+
+        internal void SetFailureReason(Exception error) {
+            // Keep the message with its task, without retaining the exception and its stack.
+            _failureReason = string.IsNullOrWhiteSpace(error.Message) ? error.GetType().Name : error.Message;
+            OnPropertyChanged(nameof(FailureReason));
+        }
+
         // 关闭硬件加速时隐藏设备状态；多阶段任务累计设备，并保留故障回退记录。
         public bool HasBackendInfo => _hasBackendInfo;
         public string BackendText => !_hasBackendInfo ? string.Empty : LanguageUtil.GetI18n(
@@ -101,6 +109,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
             OnPropertyChanged(nameof(PreservationText));
         }
 
+        private string _failureReason = string.Empty;
         private bool _hasBackendInfo;
         private bool _usedCpu;
         private bool _usedGpu;

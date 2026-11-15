@@ -2192,4 +2192,13 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>検索と絞り込みを解除</value></data>
   <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>非対応のファイル</value></data>
   <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>以下のファイルは形式が非対応のためスキップされ、ライブラリには追加されませんでした。</value></data>
+  <data name="Settings_General_Storage_MigrationScanning" xml:space="preserve"><value>壁紙フォルダーをスキャンしています…</value></data>
+  <data name="Settings_General_Storage_MigrationCopying" xml:space="preserve"><value>壁紙をコピーしています…</value></data>
+  <data name="Settings_General_Storage_MigrationUpdating" xml:space="preserve"><value>設定を更新しています…</value></data>
+  <data name="Settings_General_Storage_MigrationRestoring" xml:space="preserve"><value>壁紙の再生を再開しています…</value></data>
+  <data name="Settings_General_Storage_MigrationCleaning" xml:space="preserve"><value>元のフォルダーを削除しています…</value></data>
+  <data name="Settings_General_Storage_MigrationRollingBack" xml:space="preserve"><value>元の設定に戻しています…</value></data>
+  <data name="Messages_BatchSummary" xml:space="preserve"><value>この操作には {0} 件の通知があります。詳細をご確認ください。</value></data>
+  <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>壁紙を {0} 件インポートしました。</value></data>
+  <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>インポートをキャンセルしました。インポートした壁紙: {0} 件。</value></data>
 </root>

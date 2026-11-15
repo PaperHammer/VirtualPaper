@@ -869,6 +869,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         }
 
         public async Task<bool> SaveAllAsync() {
+            using var messages = GlobalMessageUtil.BeginBatch();
             await _saveLock.WaitAsync();
             try {
                 IsSaving = true;
@@ -1547,6 +1548,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         /// 由 EditPanel 的“文件 → 入库”菜单触发（与 StaticImg 交互一致）。
         /// </summary>
         public async Task<bool> AddToLibraryAsync() {
+            using var messages = GlobalMessageUtil.BeginBatch();
             if (_isAddingToLibrary) return false;
             if (ViewModel == null || _session == null) return false;
 

@@ -2199,4 +2199,13 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Clear search and filters</value></data>
   <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Unsupported files</value></data>
   <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>These files were skipped because their formats are not supported. They were not added to your library.</value></data>
+  <data name="Settings_General_Storage_MigrationScanning" xml:space="preserve"><value>Scanning wallpaper folders…</value></data>
+  <data name="Settings_General_Storage_MigrationCopying" xml:space="preserve"><value>Copying wallpapers…</value></data>
+  <data name="Settings_General_Storage_MigrationUpdating" xml:space="preserve"><value>Updating configuration…</value></data>
+  <data name="Settings_General_Storage_MigrationRestoring" xml:space="preserve"><value>Restoring wallpaper playback…</value></data>
+  <data name="Settings_General_Storage_MigrationCleaning" xml:space="preserve"><value>Cleaning up old folders…</value></data>
+  <data name="Settings_General_Storage_MigrationRollingBack" xml:space="preserve"><value>Restoring the original configuration…</value></data>
+  <data name="Messages_BatchSummary" xml:space="preserve"><value>{0} messages from this operation. View details for more information.</value></data>
+  <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Wallpapers imported: {0}.</value></data>
+  <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Import canceled. Wallpapers imported: {0}.</value></data>
 </root>

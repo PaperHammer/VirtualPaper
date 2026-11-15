@@ -360,6 +360,8 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         // ── GetWpBasicDataByInstallFoldersAsync ───────────────────────
 
         [TestMethod]
+        // Other settings tests publish the process-wide language event, which also refreshes the stage text.
+        [DoNotParallelize]
         [DataRow(false)]
         [DataRow(true)]
         public async Task WallpaperDirectoryChange_MovesBothLibraries_AndKeepsSourcesOnFailure(bool failRestart) {
@@ -369,6 +371,11 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             string destination = Path.Combine(root, "destination");
             string targetUser = Path.Combine(destination, "wallpapers");
             string targetBuiltIn = Constants.CommonPaths.GetBuiltInWallpapersDir(targetUser);
+            var stages = new List<string>();
+            var restartStages = new List<string>();
+            _vm.PropertyChanged += (_, args) => {
+                if (args.PropertyName == nameof(_vm.WallpaperDirectoryChangeStatus)) stages.Add(_vm.WallpaperDirectoryChangeStatus);
+            };
             try {
                 CreateMovableWallpaper(sourceUser, "user");
                 CreateMovableWallpaper(sourceBuiltIn, "built-in");
@@ -377,10 +384,18 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 _wpControlClient.Setup(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()))
                     .Returns(Task.CompletedTask);
                 _wpControlClient.Setup(w => w.RestartAllWallpapersAsync())
+                    .Callback(() => restartStages.Add(_vm.WallpaperDirectoryChangeStatus))
                     .ReturnsAsync(new Grpc_RestartWallpaperResponse { IsFinished = !failRestart });
 
                 await _vm.WallpaperDirectoryChangeAsync(destination);
 
+                string[] expectedStages = ["Scanning", "Copying", "Updating", "Restoring", failRestart ? "RollingBack" : "Cleaning"];
+                CollectionAssert.AreEqual(expectedStages.Select(stage => LanguageUtil.GetI18n("Settings_General_Storage_Migration" + stage))
+                    .Append(string.Empty).ToArray(), stages);
+                CollectionAssert.AreEqual((failRestart ? new[] { "Restoring", "RollingBack" } : new[] { "Restoring" })
+                    .Select(stage => LanguageUtil.GetI18n("Settings_General_Storage_Migration" + stage)).ToArray(), restartStages);
+                Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
+                Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
                 Assert.AreEqual(failRestart ? sourceUser : targetUser, _settings.Object.WallpaperDir);
                 Assert.AreEqual(failRestart ? sourceBuiltIn : targetBuiltIn, _settings.Object.BuiltInWallpapersDir);
                 Assert.AreEqual(failRestart, Directory.Exists(sourceUser));
@@ -634,6 +649,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             await _vm.WallpaperDirectoryChangeAsync("invalid\0path");
             Assert.AreEqual(previous, _settings.Object.WallpaperDir);
             Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
+            Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
             _userSettingsClient.Verify(s => s.SaveAsync<ISettings>(), Times.Never);
             _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
@@ -686,6 +702,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 Assert.IsTrue(File.Exists(Path.Combine(user, "user", "media.png")));
                 Assert.IsTrue(File.Exists(Path.Combine(builtIn, "built-in", "media.png")));
                 Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
+                Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
                 _userSettingsClient.Verify(s => s.SaveAsync<ISettings>(), Times.Never);
                 _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             }

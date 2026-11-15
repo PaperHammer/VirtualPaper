@@ -103,6 +103,12 @@
                                                     FontSize="14"
                                                     FontWeight="SemiBold"
                                                     Foreground="{x:Bind StatusColor, Mode=OneWay, Converter={StaticResource ByteArrayToBrushConverter}}"/>
+                                                <TextBlock AutomationProperties.AutomationId="Intelligent.Task.FailureReason"
+                                                    Text="{x:Bind FailureReason, Mode=OneWay}" FontSize="12"
+                                                    TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2" MaxWidth="240"
+                                                    ToolTipService.ToolTip="{x:Bind FailureReason, Mode=OneWay}"
+                                                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                                    Visibility="{x:Bind IsFailed, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
                                                 <TextBlock AutomationProperties.AutomationId="Intelligent.Task.Backend"
                                                     Text="{x:Bind BackendText, Mode=OneWay}" FontSize="12"
                                                     TextWrapping="Wrap" MaxWidth="240"
@@ -173,6 +179,9 @@
                                     Padding="16,12"
                                     MinHeight="120"
                                     Spacing="10">
+                                    <TextBlock Text="{x:Bind FailureReason, Mode=OneWay}" TextWrapping="Wrap"
+                                        IsTextSelectionEnabled="True" Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                        Visibility="{x:Bind IsFailed, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
                                     <Grid VerticalAlignment="Center" HorizontalAlignment="Center">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto"/>

@@ -150,6 +150,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
             catch (Exception ex) {
                 CleanupTaskFiles(taskItem, tempDir);
+                taskItem.SetFailureReason(ex);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
                 taskItem.Status = TaskStatus.Faulted;

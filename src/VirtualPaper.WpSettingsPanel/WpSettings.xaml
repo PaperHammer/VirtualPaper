@@ -60,12 +60,12 @@
                                     <VisualState x:Name="Normal"/>
                                     <VisualState x:Name="PointerOver">
                                         <VisualState.Setters>
-                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ListViewItemBackgroundPointerOver}"/>
                                         </VisualState.Setters>
                                     </VisualState>
                                     <VisualState x:Name="Pressed">
                                         <VisualState.Setters>
-                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorTertiaryBrush}"/>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ListViewItemBackgroundPressed}"/>
                                         </VisualState.Setters>
                                     </VisualState>
                                     <VisualState x:Name="Disabled">
@@ -105,12 +105,12 @@
                                     <VisualState x:Name="Indeterminate"/>
                                     <VisualState x:Name="IndeterminatePointerOver">
                                         <VisualState.Setters>
-                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorSecondaryBrush}"/>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ListViewItemBackgroundPointerOver}"/>
                                         </VisualState.Setters>
                                     </VisualState>
                                     <VisualState x:Name="IndeterminatePressed">
                                         <VisualState.Setters>
-                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ControlFillColorTertiaryBrush}"/>
+                                            <Setter Target="ItemBackground.Background" Value="{ThemeResource ListViewItemBackgroundPressed}"/>
                                         </VisualState.Setters>
                                     </VisualState>
                                     <VisualState x:Name="IndeterminateDisabled">

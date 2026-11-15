@@ -116,6 +116,7 @@ namespace Workloads.Creation.WebBackdrop {
 
         #region IRuntime
         public async Task<bool> SaveAsync() {
+            using var messages = GlobalMessageUtil.BeginBatch();
             try {
                 var result = await webEditor.SaveAllAsync();
                 if (result) {
@@ -187,6 +188,7 @@ namespace Workloads.Creation.WebBackdrop {
         }
 
         public async Task<string?> ExportAsync(ExportImageFormat format) {
+            using var messages = GlobalMessageUtil.BeginBatch();
             // Web 项目导出两种 zip（选择保存位置 → 打包 → 写入，与 StaticImg 导出流程一致）：
             //  - Zip    ：库可导入的 FWebZip 标准 Web 壁纸包（剔除 .vpw，包内含 project.json）
             //  - FullZip：全量项目归档（含 .vpw 工程文件，用于备份/迁移）

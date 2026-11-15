@@ -279,6 +279,15 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
+        public string WallpaperDirectoryChangeStatus => string.IsNullOrEmpty(_wallpaperMigrationStatusKey)
+            ? string.Empty : LanguageUtil.GetI18n(_wallpaperMigrationStatusKey);
+
+        private void SetWallpaperMigrationStatus(string resourceKey) {
+            if (_wallpaperMigrationStatusKey == resourceKey) return;
+            _wallpaperMigrationStatusKey = resourceKey;
+            OnPropertyChanged(nameof(WallpaperDirectoryChangeStatus));
+        }
+
         private bool _isWallpaperDirectoryChangeEnable = true;
         public bool IsWallpaperDirectoryChangeEnable {
             get { return _isWallpaperDirectoryChangeEnable; }
@@ -328,6 +337,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 OnPropertyChanged(nameof(SeletedSystemBackdropIndx));
                 ChangeAutoShartStatu(_isAutoStart);
                 OnPropertyChanged(nameof(IntelligentResultReminderStatus));
+                OnPropertyChanged(nameof(WallpaperDirectoryChangeStatus));
                 OnPropertyChanged(nameof(AppVersionText));
                 MenuUpdate(_lastUpdateStatus, _lastUpdateRelease);
             }
@@ -481,6 +491,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             WallpaperDirectoryChangeOngoing = true;
 
             try {
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationScanning");
                 string destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(destRootFolderPath));
                 moves = WallpaperLibraryDirectories.All
                     .Select(directory => (Directory: directory, Source: directory.GetPath(settings),
@@ -501,10 +512,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
                 // Copy and verify every library before switching paths. Source data
                 // is removed only after settings are saved and playback is restored.
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationCopying");
                 foreach (var move in moves) {
                     if (sourceSnapshots.TryGetValue(move.Source, out var snapshot))
                         await WallpaperDirectoryUpdateAsync(move.Source, move.Target, snapshot);
                 }
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationUpdating");
                 foreach (var move in moves) {
                     await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Source, move.Target);
                     changedLayouts.Add((move.Source, move.Target));
@@ -512,11 +525,13 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                     move.Directory.SetPath(settings, move.Target);
                 }
                 await _userSettingsClient.SaveAsync<ISettings>();
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationRestoring");
                 var response = await _wpControlClient.RestartAllWallpapersAsync();
                 if (!response.IsFinished) throw new IOException("Restart all wallpapers failed.");
 
                 // The new location is committed. Cleanup failures must not restore paths
                 // to source folders that may already have been removed.
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationCleaning");
                 try { WallpaperInstallDirChanged?.Invoke(this, EventArgs.Empty); }
                 catch (Exception notification) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(notification); }
                 foreach (var move in moves) {
@@ -531,6 +546,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             catch (Exception ex) {
                 // Keep both the originals and any copied files if migration fails.
                 try {
+                    if (settingsChanged || changedLayouts.Count > 0)
+                        SetWallpaperMigrationStatus("Settings_General_Storage_MigrationRollingBack");
                     if (settingsChanged) {
                         foreach (var move in moves) move.Directory.SetPath(settings, move.Source);
                         await _userSettingsClient.SaveAsync<ISettings>();
@@ -548,6 +565,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
             finally {
                 WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
+                SetWallpaperMigrationStatus(string.Empty);
                 WallpaperDirectoryChangeOngoing = false;
             }
         }
@@ -653,6 +671,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
         #endregion
 
+        private string _wallpaperMigrationStatusKey = string.Empty;
         private string _sysbdDefault = string.Empty;
         private string _sysbdMica = string.Empty;
         private string _sysbdAcrylic = string.Empty;

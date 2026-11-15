@@ -64,6 +64,7 @@ public class TaskExecutionTests {
         await queued.Execution.WaitAsync(TimeSpan.FromSeconds(5));
         await WaitAsync(() => !fixture.Contains(queued));
         Assert.AreEqual(TaskStatus.Canceled, Fixture.Status(queued));
+        Assert.AreEqual(string.Empty, queued.FailureReason);
         Assert.IsFalse(fixture.Engine.Directories.ContainsKey(Fixture.Source(queued)));
         var next = fixture.Add();
         fixture.Engine.Release();
@@ -85,6 +86,7 @@ public class TaskExecutionTests {
         await items[0].Execution.WaitAsync(TimeSpan.FromSeconds(5));
         await WaitAsync(() => !fixture.Contains(items[0]) && fixture.Engine.Runs == limit + 1);
         Assert.AreEqual(TaskStatus.Canceled, Fixture.Status(items[0]));
+        Assert.AreEqual(string.Empty, items[0].FailureReason);
         Assert.IsFalse(Directory.Exists(directory));
         fixture.Engine.Release();
         await Task.WhenAll(items.Select(item => item.Execution)).WaitAsync(TimeSpan.FromSeconds(8));
@@ -104,11 +106,14 @@ public class TaskExecutionTests {
         var failed = fixture.Add();
         await failed.Execution.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.AreEqual(TaskStatus.Faulted, Fixture.Status(failed));
+        Assert.AreEqual("Controlled model failure at " + stage, failed.FailureReason);
         Assert.IsFalse(failed.IsTemporaryResult);
         Assert.IsEmpty(Directory.GetDirectories(Constants.CommonPaths.TempDir), "Failed model work must not leave its partial outputs behind.");
         var next = fixture.Add();
         await next.Execution.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.IsTrue(next.IsCompleted, "A failed job must return its concurrency permit.");
+        Assert.AreEqual(string.Empty, next.FailureReason, "A later task must not inherit the previous task's failure.");
+        Assert.AreEqual("Controlled model failure at " + stage, failed.FailureReason);
         Assert.IsTrue(File.Exists(Fixture.Result(next)));
         CollectionAssert.AreEqual(fixture.InputBytes, File.ReadAllBytes(Fixture.Source(failed)));
     }

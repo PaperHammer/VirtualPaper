@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -461,6 +460,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
+            using var messages = GlobalMessageUtil.BeginBatch();
             var loading = ArcPageContextManager.GetContext<WpSettings>()?.LoadingContext;
             if (loading == null) return;
 
@@ -469,12 +469,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             var result = new ImportResult();
             try {
                 await loading.RunAsync(async token => {
-                    values = await GetImportValueFromLocalAsync(items);
+                    values = await ScanImportFilesAsync(items.Select(item => item.Path).ToArray(), result, token);
                     token.ThrowIfCancellationRequested();
                 }, cancellation);
-                await loading.RunWithProgressAsync(async (token, progress) => {
-                    await ImportFilesAsync(values, result, progress, token);
-                }, values.Count, cancellation);
+                if (values.Count > 0) {
+                    await loading.RunWithProgressAsync(async (token, progress) => {
+                        await ImportFilesAsync(values, result, progress, token);
+                    }, values.Count, cancellation);
+                }
             }
             catch (Exception ex) when (ex is OperationCanceledException || ex is RpcException { StatusCode: StatusCode.Cancelled }) {
                 result.Canceled = true;
@@ -488,7 +490,10 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 await UpdateLibAsync(result.Imported);
             }
 
-            if (result.Canceled) GlobalMessageUtil.ShowCanceled();
+            string importSummary = string.Format(LanguageUtil.GetI18n(result.Canceled
+                ? "WpLib_ImportCanceledSummary" : "WpLib_ImportCompletedSummary"), result.Imported.Count);
+            if (result.Canceled || result.Imported.Count == 0) GlobalMessageUtil.ShowInfo(importSummary);
+            else GlobalMessageUtil.ShowSuccess(importSummary);
             foreach (var failure in result.Failed) {
                 if (failure.Error != null) ArcLog.GetLogger<LibraryContentsViewModel>().Error(failure.Error);
                 GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true, extraMsg: failure.FilePath);
@@ -579,33 +584,57 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             return _previews.Keys.Any(k => k.uid == data.WallpaperUid);
         }
 
-        private static async Task<List<ImportValue>> GetImportValueFromLocalAsync(IReadOnlyList<IStorageItem> items) {
-            ConcurrentBag<ImportValue> importRes = [];
-            SemaphoreSlim semaphore = new(20); // 并发度控制
-
-            var tasks = items.Select(async item => {
-                await semaphore.WaitAsync();
-
-                try {
-                    if (item is StorageFile file) {
-                        importRes.Add(new(file.Path, FileFilter.GetFileType(file.Path)));
-                    }
-                    else if (item is StorageFolder folder) {
-                        var subItems = await folder.GetItemsAsync();
-                        var subResults = await GetImportValueFromLocalAsync(subItems);
-                        foreach (var res in subResults) {
-                            importRes.Add(res);
+        internal static Task<List<ImportValue>> ScanImportFilesAsync(IEnumerable<string> paths,
+            ImportResult result, CancellationToken token) => Task.Run(() => {
+                List<ImportValue> values = [];
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var folders = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var pending = new Stack<string>();
+                // One background traversal keeps file-header reads off the UI thread,
+                // without multiplying tasks or concurrency limits for nested folders.
+                foreach (string root in paths) {
+                    pending.Push(root);
+                    while (pending.TryPop(out string? path)) {
+                        token.ThrowIfCancellationRequested();
+                        try {
+                            path = Path.GetFullPath(path);
+                            if (!seen.Add(path)) continue;
+                            var attributes = File.GetAttributes(path);
+                            if ((attributes & System.IO.FileAttributes.Directory) == 0) {
+                                values.Add(new(path, FileFilter.GetFileType(path)));
+                                continue;
+                            }
+                            // Resolve linked folders before enumerating, so overlapping
+                            // selections and directory links cannot create traversal loops.
+                            if ((attributes & System.IO.FileAttributes.ReparsePoint) != 0)
+                                path = Directory.ResolveLinkTarget(path, returnFinalTarget: true)?.FullName ?? path;
+                            if (!folders.Add(path)) continue;
+                            var entries = CollectImportEntries(Directory.EnumerateFileSystemEntries(path), token);
+                            for (int i = entries.Count - 1; i >= 0; i--) {
+                                token.ThrowIfCancellationRequested();
+                                pending.Push(entries[i]);
+                            }
+                        }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+                            or ArgumentException or NotSupportedException or System.Security.SecurityException) {
+                            result.Failed.Add(new(path, ex));
                         }
                     }
                 }
-                finally {
-                    semaphore.Release();
-                }
-            });
+                return values;
+            }, token);
 
-            await Task.WhenAll(tasks);
-
-            return [.. importRes];
+        internal static List<string> CollectImportEntries(IEnumerable<string> entries, CancellationToken token) {
+            token.ThrowIfCancellationRequested();
+            var collected = new List<string>();
+            foreach (string entry in entries) {
+                token.ThrowIfCancellationRequested();
+                collected.Add(entry);
+            }
+            token.ThrowIfCancellationRequested();
+            collected.Sort(StringComparer.OrdinalIgnoreCase);
+            token.ThrowIfCancellationRequested();
+            return collected;
         }
 
         public void RegisterPanelActions() {

@@ -2192,4 +2192,13 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Effacer la recherche et les filtres</value></data>
   <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Fichiers non pris en charge</value></data>
   <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>Ces fichiers ont été ignorés car leurs formats ne sont pas pris en charge. Ils n’ont pas été ajoutés à la bibliothèque.</value></data>
+  <data name="Settings_General_Storage_MigrationScanning" xml:space="preserve"><value>Analyse des dossiers de fonds d’écran…</value></data>
+  <data name="Settings_General_Storage_MigrationCopying" xml:space="preserve"><value>Copie des fonds d’écran…</value></data>
+  <data name="Settings_General_Storage_MigrationUpdating" xml:space="preserve"><value>Mise à jour de la configuration…</value></data>
+  <data name="Settings_General_Storage_MigrationRestoring" xml:space="preserve"><value>Rétablissement de la lecture des fonds d’écran…</value></data>
+  <data name="Settings_General_Storage_MigrationCleaning" xml:space="preserve"><value>Nettoyage des anciens dossiers…</value></data>
+  <data name="Settings_General_Storage_MigrationRollingBack" xml:space="preserve"><value>Restauration de la configuration initiale…</value></data>
+  <data name="Messages_BatchSummary" xml:space="preserve"><value>{0} messages pour cette opération. Consultez les détails pour en savoir plus.</value></data>
+  <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Fonds d’écran importés : {0}.</value></data>
+  <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Importation annulée. Fonds d’écran importés : {0}.</value></data>
 </root>

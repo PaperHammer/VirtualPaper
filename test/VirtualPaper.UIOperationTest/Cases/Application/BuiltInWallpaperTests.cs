@@ -102,9 +102,10 @@ internal static class BuiltInWallpaperTests {
     private static async Task VerifyMixedFolderImportAsync(UiTestContext context, AppProcessSession session,
         Process ui, AutomationElement root, string library, int existingCount) {
         string folder = Directory.CreateDirectory(Path.Combine(context.Root, "mixed import folder")).FullName;
-        string image = Path.Combine(folder, "supported image.png");
+        string nested = Directory.CreateDirectory(Path.Combine(folder, "nested images")).FullName;
+        string image = Path.Combine(nested, "supported image.png");
         WallpaperLibraryTests.WriteImage(image);
-        string[] unsupported = [Path.Combine(folder, "notes with spaces.txt"), Path.Combine(folder, "metadata.json")];
+        string[] unsupported = [Path.Combine(folder, "notes with spaces.txt"), Path.Combine(nested, "metadata.json")];
         foreach (string path in unsupported) await File.WriteAllTextAsync(path, "Not a wallpaper.");
         var hashes = unsupported.Append(image).ToDictionary(path => path, Hash);
         var previousExplorerWindows = await Task.Run(() => AutomationElement.RootElement.FindAll(TreeScope.Children,
@@ -156,6 +157,7 @@ internal static class BuiltInWallpaperTests {
         });
         await WallpaperLibraryTests.WaitForItemsAsync(root, existingCount + 1);
         context.Evidence["MixedFolderImportSkipsUnsupportedAndPreservesSources"] = true;
+        context.Evidence["NestedFolderImportPreservesSupportedAndUnsupportedPaths"] = true;
         context.Evidence["UnsupportedFilePathsAndRevealTargetsVerified"] = true;
         context.Evidence["ExplorerSelectedUnsupportedFile"] = true;
     }

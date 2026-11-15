@@ -91,6 +91,33 @@ public class WebEditorViewModelTests {
     }
 
     [TestMethod]
+    public async Task SaveAll_WhenSomeFilesFail_PreservesTheirOriginalsAndStillSavesOtherFiles() {
+        var files = new List<WebEditorFile>();
+        foreach (string name in new[] { "locked.txt", "load-failed.txt", "valid.txt" }) {
+            string path = Path.Combine(_testRoot, name);
+            File.WriteAllText(path, "original");
+            await _viewModel.OpenFileAsync(path);
+            var file = _viewModel.ActiveFile!;
+            file.Content = "edited " + name;
+            file.SetSavedState(false);
+            files.Add(file);
+        }
+        files[1].SetLoadFailed();
+        using var fileLock = new FileStream(files[0].FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        Assert.IsFalse(await _viewModel.SaveAllAsync());
+
+        Assert.AreEqual("original", File.ReadAllText(files[0].FilePath));
+        Assert.AreEqual("original", File.ReadAllText(files[1].FilePath));
+        Assert.IsFalse(files[0].IsSaved);
+        Assert.IsTrue(files[1].IsLoadFailed);
+        Assert.IsFalse(files[1].IsSaved);
+        Assert.AreEqual("edited valid.txt", File.ReadAllText(files[2].FilePath));
+        Assert.IsTrue(files[2].IsSaved);
+        Assert.IsFalse(_viewModel.IsAllSaved);
+    }
+
+    [TestMethod]
     public async Task BinaryFileCannotBeSavedAsText() {
         string path = Path.Combine(_testRoot, "image.png");
         File.WriteAllBytes(path, [1, 2, 3]);

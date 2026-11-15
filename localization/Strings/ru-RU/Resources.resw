@@ -2192,4 +2192,13 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Сбросить поиск и фильтры</value></data>
   <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Неподдерживаемые файлы</value></data>
   <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>Эти файлы пропущены, так как их форматы не поддерживаются. Они не добавлены в библиотеку.</value></data>
+  <data name="Settings_General_Storage_MigrationScanning" xml:space="preserve"><value>Сканирование папок с обоями…</value></data>
+  <data name="Settings_General_Storage_MigrationCopying" xml:space="preserve"><value>Копирование обоев…</value></data>
+  <data name="Settings_General_Storage_MigrationUpdating" xml:space="preserve"><value>Обновление настроек…</value></data>
+  <data name="Settings_General_Storage_MigrationRestoring" xml:space="preserve"><value>Восстановление воспроизведения обоев…</value></data>
+  <data name="Settings_General_Storage_MigrationCleaning" xml:space="preserve"><value>Очистка старых папок…</value></data>
+  <data name="Settings_General_Storage_MigrationRollingBack" xml:space="preserve"><value>Восстановление исходных настроек…</value></data>
+  <data name="Messages_BatchSummary" xml:space="preserve"><value>Сообщений об этой операции: {0}. Дополнительная информация доступна в подробностях.</value></data>
+  <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Импортировано обоев: {0}.</value></data>
+  <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Импорт отменён. Импортировано обоев: {0}.</value></data>
 </root>

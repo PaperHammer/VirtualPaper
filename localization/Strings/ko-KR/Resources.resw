@@ -2192,4 +2192,13 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>검색 및 필터 초기화</value></data>
   <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>지원하지 않는 파일</value></data>
   <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>다음 파일은 지원하지 않는 형식이므로 건너뛰었으며 라이브러리에 추가되지 않았습니다.</value></data>
+  <data name="Settings_General_Storage_MigrationScanning" xml:space="preserve"><value>배경 화면 폴더를 검색하는 중…</value></data>
+  <data name="Settings_General_Storage_MigrationCopying" xml:space="preserve"><value>배경 화면을 복사하는 중…</value></data>
+  <data name="Settings_General_Storage_MigrationUpdating" xml:space="preserve"><value>설정을 업데이트하는 중…</value></data>
+  <data name="Settings_General_Storage_MigrationRestoring" xml:space="preserve"><value>배경 화면 재생을 복원하는 중…</value></data>
+  <data name="Settings_General_Storage_MigrationCleaning" xml:space="preserve"><value>이전 폴더를 정리하는 중…</value></data>
+  <data name="Settings_General_Storage_MigrationRollingBack" xml:space="preserve"><value>원래 설정을 복원하는 중…</value></data>
+  <data name="Messages_BatchSummary" xml:space="preserve"><value>이 작업에 대한 알림이 {0}개 있습니다. 자세한 내용을 확인하세요.</value></data>
+  <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>가져온 배경 화면: {0}개.</value></data>
+  <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>가져오기가 취소되었습니다. 가져온 배경 화면: {0}개.</value></data>
 </root>

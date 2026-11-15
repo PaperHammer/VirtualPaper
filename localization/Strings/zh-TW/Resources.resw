@@ -2211,4 +2211,13 @@ Windows 資源管理器在過去 30 秒內重新啟動兩次！這可能是 Virt
   <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>清除搜尋與篩選</value></data>
   <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>不支援的檔案</value></data>
   <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>以下檔案的格式不受支援，已略過且未匯入桌布庫。</value></data>
+  <data name="Settings_General_Storage_MigrationScanning" xml:space="preserve"><value>正在掃描桌布目錄…</value></data>
+  <data name="Settings_General_Storage_MigrationCopying" xml:space="preserve"><value>正在複製桌布…</value></data>
+  <data name="Settings_General_Storage_MigrationUpdating" xml:space="preserve"><value>正在更新設定…</value></data>
+  <data name="Settings_General_Storage_MigrationRestoring" xml:space="preserve"><value>正在恢復桌布播放…</value></data>
+  <data name="Settings_General_Storage_MigrationCleaning" xml:space="preserve"><value>正在清理舊目錄…</value></data>
+  <data name="Settings_General_Storage_MigrationRollingBack" xml:space="preserve"><value>正在恢復原有設定…</value></data>
+  <data name="Messages_BatchSummary" xml:space="preserve"><value>本次操作有 {0} 則提示，請查看詳細資訊。</value></data>
+  <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>本次已匯入 {0} 項桌布。</value></data>
+  <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>匯入已取消，本次已匯入 {0} 項桌布。</value></data>
 </root>

@@ -410,7 +410,7 @@
                         </Grid>
                     </layout:ArcExpander.Header>
                     <layout:ArcExpander.Content>
-                        <StackPanel Orientation="Vertical" Margin="35 0">
+                        <StackPanel Orientation="Vertical" Margin="35 0" Spacing="8">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="auto"/>
@@ -442,6 +442,10 @@
                                     Grid.Column="2"
                                     IsActive="{x:Bind _viewModel.WallpaperDirectoryChangeOngoing, Mode=OneWay}"/>
                             </Grid>
+                            <TextBlock AutomationProperties.AutomationId="Settings.Storage.MigrationStatus"
+                                Text="{x:Bind _viewModel.WallpaperDirectoryChangeStatus, Mode=OneWay}"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"
+                                Visibility="{x:Bind _viewModel.WallpaperDirectoryChangeOngoing, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"/>
                         </StackPanel>
                     </layout:ArcExpander.Content>
                 </layout:ArcExpander>

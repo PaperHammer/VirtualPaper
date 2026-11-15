@@ -235,6 +235,7 @@ namespace VirtualPaper.EditPanel.ViewModels {
         }
 
         private async Task<bool> AddProjectItemsAsync(PreProjectData[] predatas) {
+            using var messages = GlobalMessageUtil.BeginBatch();
             var hasAddedItem = false;
             foreach (var data in predatas) {
                 try {

@@ -130,7 +130,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
             catch (Exception ex) {
                 CleanupTaskFiles(taskItem, tempDir);
-                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                taskItem.SetFailureReason(ex);
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
                 taskItem.Status = TaskStatus.Faulted;
             }
@@ -198,7 +199,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             if (!found) {
                 GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
-                ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error("WpSettings panel is not available for previewing file.");
             }
         }
 
@@ -234,7 +235,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 return true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
                 return false;
             }
@@ -261,7 +262,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             if (!found) {
                 GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
-                ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error("WpSettings panel is not available for previewing file.");
                 return false;
             }
 

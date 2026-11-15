@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Runtime.InteropServices;
 using System.Windows.Automation;
 using Google.Protobuf.WellKnownTypes;
 using GrpcDotNetNamedPipes;
@@ -93,9 +94,109 @@ internal static class BuiltInWallpaperTests {
         context.Evidence["ImportedTypes"] = imported.Select(item => item.FType.ToString()).ToArray();
         context.Evidence["OnePickerSubmissionImportedCount"] = imported.Length;
         context.Evidence["AllCardsAndOriginalInputsPreservedAfterReopen"] = true;
+        await VerifyMixedFolderImportAsync(context, session, ui, root, library, sources.Count);
         await session.StopAsync();
         session.RecordEvidence(context);
     }
+
+    private static async Task VerifyMixedFolderImportAsync(UiTestContext context, AppProcessSession session,
+        Process ui, AutomationElement root, string library, int existingCount) {
+        string folder = Directory.CreateDirectory(Path.Combine(context.Root, "mixed import folder")).FullName;
+        string image = Path.Combine(folder, "supported image.png");
+        WallpaperLibraryTests.WriteImage(image);
+        string[] unsupported = [Path.Combine(folder, "notes with spaces.txt"), Path.Combine(folder, "metadata.json")];
+        foreach (string path in unsupported) await File.WriteAllTextAsync(path, "Not a wallpaper.");
+        var hashes = unsupported.Append(image).ToDictionary(path => path, Hash);
+        var previousExplorerWindows = await Task.Run(() => AutomationElement.RootElement.FindAll(TreeScope.Children,
+            new PropertyCondition(AutomationElement.ClassNameProperty, "CabinetWClass")).Cast<AutomationElement>()
+            .Select(window => window.Current.NativeWindowHandle).ToHashSet());
+
+        await Task.Run(() => {
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.Import"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.Import.Folder", visible: true));
+            NativeFileDialog.ChooseFolder(ui, ui.MainWindowHandle, folder);
+            var list = ApplicationUi.Find(root, "Library.Import.UnsupportedFiles", visible: true);
+            var paths = list.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text))
+                .Cast<AutomationElement>().Select(item => item.Current.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Check(unsupported.All(paths.Contains), "The unsupported-file summary did not list every skipped path.");
+            var revealTargets = list.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "Library.Import.RevealFile"))
+                .Cast<AutomationElement>().Select(link => link.Current.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Check(revealTargets.SetEquals(unsupported), "Reveal actions are not bound to the skipped files.");
+            WindowSnapshot.Save(ui.MainWindowHandle, Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "unsupported-imports.png"));
+            var reveal = list.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.AutomationIdProperty, "Library.Import.RevealFile"))
+                .Cast<AutomationElement>().Single(link => link.Current.Name == unsupported[0]);
+            ApplicationUi.Invoke(reveal);
+        });
+        nint explorerWindow = 0;
+        try {
+            await AppProcessSession.WaitAsync(() => Task.Run(() => {
+                explorerWindow = FindExplorerSelection(unsupported[0]);
+                return explorerWindow != 0;
+            }), "Explorer selects the unsupported source file");
+        }
+        finally {
+            // Close only a window created for this test, never a pre-existing Explorer window.
+            if (explorerWindow != 0 && !previousExplorerWindows.Contains((int)explorerWindow))
+                PostMessage(explorerWindow, 0x0010, 0, 0);
+        }
+        await Task.Run(() => {
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "PrimaryButton", visible: true));
+            ApplicationUi.WaitUntilGone(root, "Library.Import.UnsupportedFiles");
+        });
+        await WallpaperLibraryTests.WaitForItemsAsync(root, existingCount + 1);
+        var imported = Directory.GetFiles(library, Constants.Field.WpBasicDataFileName, SearchOption.AllDirectories).Select(WpBasicData.Load).ToArray();
+        Check(imported.Length == existingCount + 1 && imported.Count(item => Hash(item.FilePath) == hashes[image]) == 1,
+            "Mixed-folder import lost the supported image or imported an unsupported file.");
+        foreach (var (path, hash) in hashes) Check(Hash(path) == hash, "Mixed import modified a source file.");
+        await session.CloseUiAsync();
+        ui = await session.OpenUiAsync();
+        await Task.Run(() => {
+            root = AutomationElement.FromHandle(ui.MainWindowHandle);
+            ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Library"));
+        });
+        await WallpaperLibraryTests.WaitForItemsAsync(root, existingCount + 1);
+        context.Evidence["MixedFolderImportSkipsUnsupportedAndPreservesSources"] = true;
+        context.Evidence["UnsupportedFilePathsAndRevealTargetsVerified"] = true;
+        context.Evidence["ExplorerSelectedUnsupportedFile"] = true;
+    }
+
+    private static nint FindExplorerSelection(string target) {
+        object? shell = null, windows = null;
+        try {
+            shell = Activator.CreateInstance(System.Type.GetTypeFromProgID("Shell.Application")!);
+            windows = ((dynamic)shell!).Windows();
+            for (int i = 0; i < (int)((dynamic)windows).Count; i++) {
+                object? window = null, document = null, selection = null;
+                try {
+                    window = ((dynamic)windows).Item(i);
+                    document = ((dynamic)window!).Document;
+                    selection = ((dynamic)document!).SelectedItems();
+                    for (int j = 0; j < (int)((dynamic)selection!).Count; j++) {
+                        object item = ((dynamic)selection).Item(j);
+                        try {
+                            if (string.Equals((string)((dynamic)item).Path, target, StringComparison.OrdinalIgnoreCase))
+                                return (nint)(long)((dynamic)window).HWND;
+                        }
+                        finally { Marshal.FinalReleaseComObject(item); }
+                    }
+                }
+                catch (COMException) { } // A different Explorer window can close during enumeration.
+                finally {
+                    if (selection != null) Marshal.FinalReleaseComObject(selection);
+                    if (document != null) Marshal.FinalReleaseComObject(document);
+                    if (window != null) Marshal.FinalReleaseComObject(window);
+                }
+            }
+            return 0;
+        }
+        finally {
+            if (windows != null) Marshal.FinalReleaseComObject(windows);
+            if (shell != null) Marshal.FinalReleaseComObject(shell);
+        }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern bool PostMessage(nint window, uint message, nint wParam, nint lParam);
 
     public static async Task ApplyBuiltInsAsync(UiTestContext context) {
         await using var session = new AppProcessSession();

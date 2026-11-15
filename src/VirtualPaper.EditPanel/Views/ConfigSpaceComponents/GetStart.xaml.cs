@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -42,6 +43,10 @@ namespace VirtualPaper.EditPanel.Views.ConfigSpaceComponents {
             this.InitializeComponent();
             _viewModel = AppServiceLocator.Services.GetRequiredService<GetStartViewModel>();
             this.DataContext = _viewModel;
+            _filterTimer = DispatcherQueue.CreateTimer();
+            _filterTimer.Interval = TimeSpan.FromMilliseconds(180);
+            _filterTimer.IsRepeating = false;
+            Unloaded += Page_Unloaded;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e) {
@@ -55,11 +60,24 @@ namespace VirtualPaper.EditPanel.Views.ConfigSpaceComponents {
         }
 
         private void Page_Loaded(object sender, RoutedEventArgs e) {
+            _filterTimer.Tick += FilterTimer_Tick;
             _viewModel.InitCollection();
+            _viewModel.ApplyFilter(tbSearchName.Text);
+        }
+
+        private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _filterTimer.Stop();
+            _filterTimer.Tick -= FilterTimer_Tick;
         }
 
         private void OnFilterChanged(object sender, TextChangedEventArgs e) {
-            _viewModel.ApplyFilter(tbSearchName.Text);
+            if (!IsLoaded) return;
+            _filterTimer.Stop();
+            _filterTimer.Start();
+        }
+
+        private void FilterTimer_Tick(DispatcherQueueTimer sender, object args) {
+            if (IsLoaded) _viewModel.ApplyFilter(tbSearchName.Text);
         }
 
         private async void RecentUsedsListView_ItemClick(object sender, ItemClickEventArgs e) {
@@ -148,6 +166,7 @@ namespace VirtualPaper.EditPanel.Views.ConfigSpaceComponents {
         }
 
         private readonly GetStartViewModel _viewModel;
+        private readonly DispatcherQueueTimer _filterTimer;
         private INavigateComponent _navigateComponent = null!;
     }
 }

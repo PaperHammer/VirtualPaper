@@ -1976,7 +1976,7 @@
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>태그 추가</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>태그 제거</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>내 태그 바꾸기</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>배경 화면이 없습니다. 배경 화면을 추가하거나 필터를 변경하세요.</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>라이브러리가 비어 있습니다. 배경화면을 추가해 보세요.</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>효과 프리셋</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>라이브러리 추가 작업</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>효과 프리셋…</value></data>
@@ -2188,4 +2188,8 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
     <value>확인하고 계속</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>파일 찾아보기…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>일치하는 배경화면이 없습니다. 검색어를 바꾸거나 필터를 초기화하세요.</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>검색 및 필터 초기화</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>지원하지 않는 파일</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>다음 파일은 지원하지 않는 형식이므로 건너뛰었으며 라이브러리에 추가되지 않았습니다.</value></data>
 </root>

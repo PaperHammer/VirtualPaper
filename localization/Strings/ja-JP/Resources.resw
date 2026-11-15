@@ -1976,7 +1976,7 @@
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>タグを追加</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>タグを削除</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>自分のタグを置き換え</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>壁紙が見つかりません。壁紙を追加するか、フィルターを変更してください。</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>ライブラリは空です。壁紙を追加して始めましょう。</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>効果プリセット</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>ライブラリのその他の操作</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>効果プリセット…</value></data>
@@ -2188,4 +2188,8 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
     <value>内容を確認して続行</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>ファイルを参照…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>一致する壁紙がありません。検索語を変えるか、絞り込みを解除してください。</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>検索と絞り込みを解除</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>非対応のファイル</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>以下のファイルは形式が非対応のためスキップされ、ライブラリには追加されませんでした。</value></data>
 </root>

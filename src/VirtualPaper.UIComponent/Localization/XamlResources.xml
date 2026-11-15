@@ -451,4 +451,8 @@
   <Resource Name="Ui_Settings_General_HardwareAccelerationExplain.Text" Source="Settings_Performance_HardwareAccelerationExplain" />
   <Resource Name="Ui_Settings_General_HardwareAccelerationToggle.AutomationProperties.Name" Source="Settings_Performance_HardwareAcceleration" />
   <Resource Name="Ui_Settings_General_HardwareAccelerationRestart.Message" Source="Settings_Performance_HardwareAccelerationRestart" />
+  <Resource Name="Ui_WpLib_NoResults.Text" Source="WpLib_NoResults" />
+  <Resource Name="Ui_WpLib_ClearSearchAndFilters.Content" Source="WpLib_ClearSearchAndFilters" />
+  <Resource Name="Ui_WpLib_UnsupportedFilesDescription.Text" Source="WpLib_UnsupportedFilesDescription" />
+  <Resource Name="Ui_WpLib_RevealUnsupportedFile.AutomationProperties.HelpText" Source="Text_ShowOnDisk" />
 </Resources>

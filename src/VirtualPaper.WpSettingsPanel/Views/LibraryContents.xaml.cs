@@ -80,6 +80,9 @@ namespace VirtualPaper.WpSettingsPanel.Views {
             this.DataContext = null;           
         }
 
+        private void EmptyAddWallpaper_Click(object sender, RoutedEventArgs e) => _viewModel.AddWallpaper();
+        private void EmptyClearFilters_Click(object sender, RoutedEventArgs e) => _viewModel.ClearLibraryFilters();
+
         private void ViewModel_ItemDeleted(object? sender, EventArgs e) => QueueLoadMoreIfNeeded();
 
         private void ViewModel_QueryReset(object? sender, EventArgs e) {

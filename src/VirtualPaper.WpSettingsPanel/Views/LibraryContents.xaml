@@ -356,7 +356,18 @@
                     Visibility="{x:Bind _viewModel.IsEmpty, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=True}">
                     <FontIcon Glyph="&#xE8B9;" FontSize="32" Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
                     <TextBlock TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind _viewModel.IsLibraryEmpty, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
                         l:Uids.Uid="Ui_WpLib_Empty"/>
+                    <TextBlock TextAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Visibility="{x:Bind _viewModel.HasNoMatches, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                        l:Uids.Uid="Ui_WpLib_NoResults"/>
+                    <Button Click="EmptyAddWallpaper_Click" HorizontalAlignment="Center" AutomationProperties.AutomationId="Library.Empty.Add"
+                        Visibility="{x:Bind _viewModel.IsLibraryEmpty, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
+                        <TextBlock l:Uids.Uid="Ui_WpLib_AddWallpaperLabel"/>
+                    </Button>
+                    <Button Click="EmptyClearFilters_Click" HorizontalAlignment="Center" AutomationProperties.AutomationId="Library.Empty.ClearFilters"
+                        Visibility="{x:Bind _viewModel.HasNoMatches, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                        l:Uids.Uid="Ui_WpLib_ClearSearchAndFilters"/>
                 </StackPanel>
             </GridView.Header>
             <GridView.Footer>

@@ -524,6 +524,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _vm.TypeFilters[0].IsSelected = true;
             _vm.OnFilterChanged(FilterKey.LibraryTitle, "forest");
 
+            Assert.AreEqual("forest", _vm.SearchKeyword);
+
             Assert.Contains("(3)", _vm.TypeFilterLabel);
 
             filterable.Verify(item => item.ApplyFilter(It.Is<FilterContext>(filter => filter.FavoritesOnly
@@ -531,6 +533,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
                 && filter.TitleKeyword == "forest" && filter.ActiveTypes!.Contains(FileType.FImage))), Times.Once);
 
             _vm.ClearLibraryFilters();
+
+            Assert.AreEqual("", _vm.SearchKeyword);
 
             Assert.DoesNotContain("(", _vm.TypeFilterLabel);
 

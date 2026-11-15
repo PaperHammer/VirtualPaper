@@ -1976,7 +1976,7 @@ Wiederherstellen?</value></data>
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>Tags hinzufügen</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>Tags entfernen</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>Eigene Tags ersetzen</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>Keine Hintergrundbilder gefunden. Bilder hinzufügen oder Filter ändern.</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>Ihre Sammlung ist leer. Fügen Sie zunächst Hintergrundbilder hinzu.</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>Effektvoreinstellungen</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>Weitere Bibliotheksaktionen</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>Effektvoreinstellungen…</value></data>
@@ -2188,4 +2188,8 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
     <value>Verstanden und fortfahren</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Dateien durchsuchen…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>Keine passenden Hintergrundbilder. Ändern Sie die Suche oder setzen Sie die Filter zurück.</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Suche und Filter zurücksetzen</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Nicht unterstützte Dateien</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>Diese Dateien wurden wegen ihres nicht unterstützten Formats übersprungen und nicht zur Sammlung hinzugefügt.</value></data>
 </root>

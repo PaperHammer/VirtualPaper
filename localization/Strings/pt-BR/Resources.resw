@@ -1976,7 +1976,7 @@ Deseja recuperar?</value></data>
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>Adicionar tags</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>Remover tags</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>Substituir suas tags</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>Nenhum papel de parede encontrado. Adicione papéis de parede ou altere os filtros.</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>Sua biblioteca está vazia. Adicione papéis de parede para começar.</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>Predefinições de efeitos</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>Mais ações da biblioteca</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>Predefinições de efeitos…</value></data>
@@ -2188,4 +2188,8 @@ Se não funcionar, reinicie o Windows. Algumas versões de prévia do Windows 10
     <value>Entendi, continuar</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Procurar arquivos…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>Nenhum papel de parede correspondente. Tente outra busca ou limpe os filtros.</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Limpar busca e filtros</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Arquivos não compatíveis</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>Estes arquivos foram ignorados porque seus formatos não são compatíveis. Eles não foram adicionados à biblioteca.</value></data>
 </root>

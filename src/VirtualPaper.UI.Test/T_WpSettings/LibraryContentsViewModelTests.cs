@@ -60,6 +60,115 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _monitorManagerClient.Setup(m => m.PrimaryMonitor).Returns(_primaryMonitor.Object);
         }
 
+        [TestMethod]
+        public async Task BatchImport_SkipsUnsupportedFiles_AndContinuesAfterAllKindsOfItemFailure() {
+            LibraryContentsViewModel.ImportValue[] inputs = [
+                new("unsupported.txt", FileType.FUnknown), new("first.png", FileType.FImage),
+                new("empty.png", FileType.FImage), new("broken.png", FileType.FImage),
+                new("metadata.json", FileType.FUnknown), new("invalid.png", FileType.FImage), new("last.png", FileType.FImage)
+            ];
+            _wpControlClient.SetupSequence(client => client.CreateBasicDataAsync(It.IsAny<string>(), FileType.FImage, It.IsAny<CancellationToken>(), false))
+                .ReturnsAsync(DataAssist.BasicDataToGrpcData(MakeWpData("first", "First")))
+                .ReturnsAsync((Grpc_WpBasicData)null!)
+                .ThrowsAsync(new IOException("Cannot read source"))
+                .ReturnsAsync(new Grpc_WpBasicData { FType = (Grpc_FileType)FileType.FImage, AppInfo = new() })
+                .ReturnsAsync(DataAssist.BasicDataToGrpcData(MakeWpData("last", "Last")));
+            var result = new LibraryContentsViewModel.ImportResult();
+            var progress = new List<(int Current, int Total)>();
+
+            await _vm.ImportFilesAsync(inputs, result, (current, total) => progress.Add((current, total)), CancellationToken.None);
+
+            CollectionAssert.AreEqual(new[] { "first", "last" }, result.Imported.Select(item => item.WallpaperUid).ToArray());
+            CollectionAssert.AreEqual(new[] { "unsupported.txt", "metadata.json" }, result.Unsupported);
+            CollectionAssert.AreEqual(new[] { "empty.png", "broken.png", "invalid.png" }, result.Failed.Select(item => item.FilePath).ToArray());
+            Assert.IsInstanceOfType<IOException>(result.Failed[1].Error);
+            Assert.IsFalse(result.Canceled);
+            CollectionAssert.AreEqual(Enumerable.Range(1, inputs.Length).Select(current => (current, inputs.Length)).ToArray(), progress.ToArray());
+            _wpControlClient.Verify(client => client.CreateBasicDataAsync(It.IsAny<string>(), FileType.FUnknown, It.IsAny<CancellationToken>(), false), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task BatchImport_AllUnsupported_RecordsEveryPathWithoutCallingCore() {
+            LibraryContentsViewModel.ImportValue[] inputs = [new("a.txt", FileType.FUnknown), new("b.json", FileType.FUnknown)];
+            var result = new LibraryContentsViewModel.ImportResult();
+            int processed = 0;
+            await _vm.ImportFilesAsync(inputs, result, (current, _) => processed = current, CancellationToken.None);
+            CollectionAssert.AreEqual(new[] { "a.txt", "b.json" }, result.Unsupported);
+            Assert.IsEmpty(result.Imported);
+            Assert.IsEmpty(result.Failed);
+            Assert.AreEqual(2, processed);
+            _wpControlClient.Verify(client => client.CreateBasicDataAsync(It.IsAny<string>(), It.IsAny<FileType>(), It.IsAny<CancellationToken>(), false), Times.Never);
+        }
+
+        [TestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public async Task BatchImport_CancellationKeepsCompletedItems_AndDoesNotAttemptTheRemainingFiles(bool rpcCancellation) {
+            LibraryContentsViewModel.ImportValue[] inputs = [new("first.png", FileType.FImage), new("cancel.png", FileType.FImage), new("last.png", FileType.FImage)];
+            Exception cancellation = rpcCancellation
+                ? new global::Grpc.Core.RpcException(new global::Grpc.Core.Status(global::Grpc.Core.StatusCode.Cancelled, "Cancelled"))
+                : new OperationCanceledException();
+            _wpControlClient.SetupSequence(client => client.CreateBasicDataAsync(It.IsAny<string>(), FileType.FImage, It.IsAny<CancellationToken>(), false))
+                .ReturnsAsync(DataAssist.BasicDataToGrpcData(MakeWpData("first", "First")))
+                .ThrowsAsync(cancellation);
+            var result = new LibraryContentsViewModel.ImportResult();
+            var progress = new List<int>();
+            await _vm.ImportFilesAsync(inputs, result, (current, _) => progress.Add(current), CancellationToken.None);
+            Assert.IsTrue(result.Canceled);
+            Assert.AreEqual("first", result.Imported.Single().WallpaperUid);
+            Assert.IsEmpty(result.Failed);
+            CollectionAssert.AreEqual(new[] { 1, 2 }, progress);
+            _wpControlClient.Verify(client => client.CreateBasicDataAsync("last.png", FileType.FImage, It.IsAny<CancellationToken>(), false), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task BatchImport_AlreadyCancelled_DoesNotReadOrReportAnyItem() {
+            using var cancellation = new CancellationTokenSource();
+            cancellation.Cancel();
+            var result = new LibraryContentsViewModel.ImportResult();
+            await _vm.ImportFilesAsync([new("unread.png", FileType.FImage)], result,
+                (_, _) => Assert.Fail("No item should be processed."), cancellation.Token);
+            Assert.IsTrue(result.Canceled);
+            Assert.IsEmpty(result.Imported);
+            Assert.IsEmpty(result.Unsupported);
+            _wpControlClient.Verify(client => client.CreateBasicDataAsync(It.IsAny<string>(), It.IsAny<FileType>(), It.IsAny<CancellationToken>(), false), Times.Never);
+        }
+
+        [TestMethod]
+        [DataRow("title")]
+        [DataRow("tag")]
+        [DataRow("favorite")]
+        [DataRow("type")]
+        public void EmptyState_ChangesFromNoMatchesToVisibleItemsAfterClearingFilters(string kind) {
+            PopulateLibrary(MakeWpData("image", "Forest"));
+            _wallpaperIndexService.Setup(index => index.GetOrganization(It.IsAny<string>())).Returns(new WallpaperOrganization());
+            _vm.ApplyFilter(kind switch {
+                "title" => new FilterContext { TitleKeyword = "missing" },
+                "tag" => new FilterContext { Tag = "missing" },
+                "favorite" => new FilterContext { FavoritesOnly = true },
+                _ => new FilterContext { ActiveTypes = new HashSet<FileType> { FileType.FVideo } }
+            });
+            Assert.IsTrue(_vm.HasNoMatches);
+            Assert.IsFalse(_vm.IsLibraryEmpty);
+            _vm.ClearLibraryFilters();
+            Assert.HasCount(1, _vm.LibraryWallpapers);
+            Assert.IsFalse(_vm.HasNoMatches);
+            Assert.IsFalse(_vm.IsLibraryEmpty);
+        }
+
+        [TestMethod]
+        public void EmptyState_EmptyLibraryAndSortingShowAddAction_AndLoadingHidesBothActions() {
+            Assert.IsTrue(_vm.IsLibraryEmpty);
+            _vm.ApplyFilter(new FilterContext { SortOrder = WallpaperSortOrder.Title });
+            Assert.IsTrue(_vm.IsLibraryEmpty);
+            Assert.IsFalse(_vm.HasNoMatches);
+            _vm.LibLoadingStatus = LoadingStatus.Changing;
+            Assert.IsFalse(_vm.IsLibraryEmpty);
+            Assert.IsFalse(_vm.HasNoMatches);
+            _vm.LibLoadingStatus = LoadingStatus.Ready;
+            Assert.IsTrue(_vm.IsLibraryEmpty);
+        }
+
         private WpSettingsViewModel CreateVm(IEnumerable<IMonitor>? monitors = null) {
             var list = monitors ?? new[] { _primaryMonitor.Object };
             _monitorManagerClient.Setup(m => m.Monitors).Returns(list.ToList().AsReadOnly());

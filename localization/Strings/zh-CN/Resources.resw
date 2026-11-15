@@ -1983,7 +1983,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>添加标签</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>移除标签</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>替换个人标签</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>没有找到壁纸，可以添加壁纸或调整筛选条件。</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>壁纸库还是空的，添加一些喜欢的壁纸吧。</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>效果预设</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>更多壁纸库操作</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>效果预设…</value></data>
@@ -2195,4 +2195,8 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
     <value>了解并继续</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>浏览文件…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>没有匹配的壁纸，请尝试其他关键字或清空筛选条件。</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>清空搜索与筛选</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>不支持的文件</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>以下文件的格式不受支持，已跳过且未导入壁纸库。</value></data>
 </root>

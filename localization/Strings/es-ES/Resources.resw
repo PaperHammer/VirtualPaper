@@ -1976,7 +1976,7 @@ El archivo está dañado. Repáralo o restáuralo antes de modificarlo.</value><
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>Añadir etiquetas</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>Quitar etiquetas</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>Reemplazar tus etiquetas</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>No se encontraron fondos. Añade fondos o cambia los filtros.</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>Su biblioteca está vacía. Añada fondos de pantalla para empezar.</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>Preajustes de efectos</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>Más acciones de biblioteca</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>Preajustes de efectos…</value></data>
@@ -2188,4 +2188,8 @@ Si no funciona, reinicia Windows. Algunas versiones preliminares de Windows 10 n
     <value>Entendido, continuar</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Explorar archivos…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>No hay fondos coincidentes. Pruebe otra búsqueda o borre los filtros.</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Borrar búsqueda y filtros</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Archivos no compatibles</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>Estos archivos se omitieron porque sus formatos no son compatibles. No se añadieron a la biblioteca.</value></data>
 </root>

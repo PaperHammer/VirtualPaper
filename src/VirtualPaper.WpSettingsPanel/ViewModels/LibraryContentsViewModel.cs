@@ -25,6 +25,7 @@ using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.PlayerWeb.Core.WebView.Windows;
 using VirtualPaper.UIComponent.Context;
+using VirtualPaper.UIComponent.Dialogs;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -34,6 +35,7 @@ using VirtualPaper.UIComponent.Utils.PanelBus.WpSettingsArgs;
 using VirtualPaper.UIComponent.ViewModels;
 using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
+using VirtualPaper.WpSettingsPanel.Views;
 using Windows.Storage;
 using Windows.System.UserProfile;
 using WinUIEx;
@@ -45,7 +47,7 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         private LoadingStatus _libLoadingStatus;
         public LoadingStatus LibLoadingStatus {
             get { return _libLoadingStatus; }
-            set { _libLoadingStatus = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsEmpty)); OnPropertyChanged(nameof(EndOfResults)); }
+            set { _libLoadingStatus = value; OnPropertyChanged(); NotifyEmptyState(); }
         }
 
         public LibraryContentsViewModel(
@@ -459,92 +461,68 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         internal async Task DropFilesAsync(IReadOnlyList<IStorageItem> items) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
-            var loadingCtx = ctx?.LoadingContext;
-            if (loadingCtx == null)
-                return;
+            var loading = ArcPageContextManager.GetContext<WpSettings>()?.LoadingContext;
+            if (loading == null) return;
 
-            var ctsImport = new CancellationTokenSource();
-            await loadingCtx.RunAsync(
-                operation: async token => {
-                    try {
-                        List<ImportValue> importValues = await GetImportValueFromLocalAsync(items);
-                        await ImportAsync(importValues);
-                    }
-                    catch (Exception ex) {
-                        ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                        GlobalMessageUtil.ShowException(ex);
-                    }
-                }, cts: ctsImport);
-        }
-
-        private async Task ImportAsync(List<ImportValue> importValues) {
-            var ctx = ArcPageContextManager.GetContext<WpSettings>();
-            var loadingCtx = ctx?.LoadingContext;
-            if (loadingCtx == null)
-                return;
-
-            var ctsImport = new CancellationTokenSource();
-            int finishedCnt = 0;
-            int total = importValues.Count;
-            var imported = new List<IWpBasicData>();
+            using var cancellation = new CancellationTokenSource();
+            List<ImportValue> values = [];
+            var result = new ImportResult();
             try {
-                await loadingCtx.RunWithProgressAsync(
-                    operation: async (token, reportProgress) => {
-                        foreach (var importValue in importValues) {
-                            try {
-                                token.ThrowIfCancellationRequested();
-
-                                if (importValue.FType != FileType.FUnknown) {
-                                    var grpcData = await _wpControlClient.CreateBasicDataAsync(
-                                        importValue.FilePath,
-                                        importValue.FType,
-                                        token);
-
-                                    if (grpcData == null) {
-                                        GlobalMessageUtil.ShowError(
-                                            Constants.I18n.InfobarMsg_ImportErr,
-                                            isNeedLocalizer: true,
-                                            extraMsg: importValue.FilePath);
-                                        return;
-                                    }
-
-                                    var data = DataAssist.GrpcToBasicData(grpcData);
-                                    if (data.IsAvailable()) {
-                                        imported.Add(data);
-                                    }
-                                    else {
-                                        GlobalMessageUtil.ShowError(
-                                            Constants.I18n.InfobarMsg_ImportErr,
-                                            isNeedLocalizer: true,
-                                            extraMsg: importValue.FilePath);
-                                    }
-                                }
-                                else {
-                                    GlobalMessageUtil.ShowError(
-                                        Constants.I18n.Dialog_Content_Import_Failed_Lib,
-                                        isNeedLocalizer: true,
-                                        extraMsg: importValue.FilePath);
-                                }
-
-                                reportProgress(++finishedCnt, total);
-                            }
-                            catch (Exception ex) when (
-                                ex is OperationCanceledException ||
-                                (ex is RpcException rpc && rpc.StatusCode == StatusCode.Cancelled)) {
-                                GlobalMessageUtil.ShowCanceled();
-                                return;
-                            }
-                            catch (Exception ex) {
-                                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
-                                GlobalMessageUtil.ShowException(ex);
-                            }
-                        }
-                    }, total: importValues.Count, cts: ctsImport);
+                await loading.RunAsync(async token => {
+                    values = await GetImportValueFromLocalAsync(items);
+                    token.ThrowIfCancellationRequested();
+                }, cancellation);
+                await loading.RunWithProgressAsync(async (token, progress) => {
+                    await ImportFilesAsync(values, result, progress, token);
+                }, values.Count, cancellation);
+            }
+            catch (Exception ex) when (ex is OperationCanceledException || ex is RpcException { StatusCode: StatusCode.Cancelled }) {
+                result.Canceled = true;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<LibraryContentsViewModel>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                // Publish successful imports even if a later item fails or is cancelled.
-                await UpdateLibAsync(imported);
+                // Keep completed imports visible even when a later item fails or cancellation is requested.
+                await UpdateLibAsync(result.Imported);
+            }
+
+            if (result.Canceled) GlobalMessageUtil.ShowCanceled();
+            foreach (var failure in result.Failed) {
+                if (failure.Error != null) ArcLog.GetLogger<LibraryContentsViewModel>().Error(failure.Error);
+                GlobalMessageUtil.ShowError(Constants.I18n.InfobarMsg_ImportErr, isNeedLocalizer: true, extraMsg: failure.FilePath);
+            }
+            if (result.Unsupported.Count > 0) {
+                // The progress overlay has closed before opening this summary.
+                var dialog = _dialogService.CreateDialog(new UnsupportedImportFilesView(result.Unsupported),
+                    LanguageUtil.GetI18n("WpLib_UnsupportedFilesTitle"), LanguageUtil.GetI18n("Text_Close"));
+                if (dialog is ArcContentDialog sizedDialog) sizedDialog.DialogWidth = 720;
+                if (dialog != null) await dialog.ShowAsync();
+            }
+        }
+
+        internal async Task ImportFilesAsync(IReadOnlyList<ImportValue> values, ImportResult result,
+            Action<int, int> progress, CancellationToken token) {
+            int processed = 0;
+            foreach (var value in values) {
+                if (token.IsCancellationRequested) { result.Canceled = true; break; }
+                try {
+                    if (value.FType == FileType.FUnknown) {
+                        result.Unsupported.Add(value.FilePath);
+                        continue;
+                    }
+                    var response = await _wpControlClient.CreateBasicDataAsync(value.FilePath, value.FType, token);
+                    var data = response == null ? null : DataAssist.GrpcToBasicData(response);
+                    if (data?.IsAvailable() == true) result.Imported.Add(data);
+                    else result.Failed.Add(new(value.FilePath, null));
+                }
+                catch (Exception ex) when (ex is OperationCanceledException || ex is RpcException { StatusCode: StatusCode.Cancelled }) {
+                    result.Canceled = true;
+                    break;
+                }
+                catch (Exception ex) { result.Failed.Add(new(value.FilePath, ex)); }
+                finally { progress(++processed, values.Count); }
             }
         }
 
@@ -722,11 +700,25 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
                 }
             }
             while (LibraryWallpapers.Count > items.Count) LibraryWallpapers.RemoveAt(LibraryWallpapers.Count - 1);
-            OnPropertyChanged(nameof(IsEmpty));
+            NotifyEmptyState();
         }
 
         public bool IsEmpty => LibraryWallpapers.Count == 0 && LibLoadingStatus != LoadingStatus.Changing;
         public bool EndOfResults => !_hasMore && !IsEmpty && LibLoadingStatus != LoadingStatus.Changing;
+        private bool HasActiveFilters => !string.IsNullOrWhiteSpace(_filter.TitleKeyword)
+            || !string.IsNullOrWhiteSpace(_filter.Tag) || _filter.FavoritesOnly || _filter.ActiveTypes?.Count > 0;
+        public bool IsLibraryEmpty => IsEmpty && !HasActiveFilters;
+        public bool HasNoMatches => IsEmpty && HasActiveFilters;
+        internal void AddWallpaper() => _wpSettingsViewModel.AddToLibCommand?.Execute(null);
+        internal void ClearLibraryFilters() => _wpSettingsViewModel.ClearLibraryFilters();
+
+        private void NotifyEmptyState() {
+            OnPropertyChanged(nameof(IsEmpty));
+            OnPropertyChanged(nameof(IsLibraryEmpty));
+            OnPropertyChanged(nameof(HasNoMatches));
+            OnPropertyChanged(nameof(EndOfResults));
+        }
+
         public WallpaperOrganization GetOrganization(string uid) => _wallpaperIndexService.GetOrganization(uid) ?? new();
         public bool IsFavorite(IWpBasicData data) => GetOrganization(data.WallpaperUid).Favorite;
         public event EventHandler? OrganizationChanged;
@@ -847,9 +839,13 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
         #endregion
 
-        private struct ImportValue(string filePath, FileType ftype) {
-            internal string FilePath { get; set; } = filePath;
-            internal FileType FType { get; set; } = ftype;
+        internal readonly record struct ImportValue(string FilePath, FileType FType);
+        internal sealed record ImportFailure(string FilePath, Exception? Error);
+        internal sealed class ImportResult {
+            internal List<IWpBasicData> Imported { get; } = [];
+            internal List<string> Unsupported { get; } = [];
+            internal List<ImportFailure> Failed { get; } = [];
+            internal bool Canceled { get; set; }
         }
 
         private int _offset = 0;

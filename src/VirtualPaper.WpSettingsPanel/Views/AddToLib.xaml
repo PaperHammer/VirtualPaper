@@ -62,6 +62,7 @@
                 </Grid>
             </Button>
             <Button x:Name="AddFolderButton" Style="{StaticResource ImportChoiceStyle}"
+                AutomationProperties.AutomationId="Library.Import.Folder"
                 Command="{x:Bind _viewModel.HandleAddFoldersCommand}"
                 l:Uids.Uid="Ui_Add_To_Lib_SelectFolderExplain_ToolTipService_ToolTip">
                 <Grid ColumnSpacing="10">

@@ -76,8 +76,15 @@ internal static class WallpaperLibraryTests {
             ApplicationUi.SetText(ApplicationUi.Find(root, "Library.Search"), "no-such-wallpaper");
         });
         await WaitForItemsAsync(root, 0);
-        await Task.Run(() => ApplicationUi.SetText(ApplicationUi.Find(root, "Library.Search"), data.Title));
+        await Task.Run(() => {
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.Empty.ClearFilters", visible: true));
+            var search = ApplicationUi.Find(root, "Library.Search");
+            var input = search.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit)) ?? search;
+            Check(((ValuePattern)input.GetCurrentPattern(ValuePattern.Pattern)).Current.Value == "",
+                "Clearing the empty-state filters did not clear the visible search box");
+        });
         await WaitForItemsAsync(root, 1);
+        context.Evidence["NoResultsActionClearsVisibleSearchAndRestoresWallpapers"] = true;
 
         // Cancellation must leave both the actual library item and files intact.
         await Task.Run(() => {

@@ -1983,7 +1983,7 @@ The following words cannot be used as usernames:
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>Add tags</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>Remove tags</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>Replace your tags</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>No wallpapers found. Add wallpapers or change your filters.</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>Your library is empty. Add some wallpapers to get started.</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>Effect presets</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>More library actions</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>Effect presets…</value></data>
@@ -2195,4 +2195,8 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
     <value>Acknowledge and continue</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Browse files…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>No matching wallpapers. Try another search or clear your filters.</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Clear search and filters</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Unsupported files</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>These files were skipped because their formats are not supported. They were not added to your library.</value></data>
 </root>

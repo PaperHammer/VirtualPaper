@@ -208,6 +208,7 @@
                             </Grid.ColumnDefinitions>
                             <AutoSuggestBox x:Name="tbSearchName"
                                 AutomationProperties.AutomationId="Library.Search"
+                                Text="{x:Bind _viewModel.SearchKeyword, Mode=OneWay}"
                                 Style="{StaticResource ArcSearchBoxStyle}"
                                 Tag="{x:Bind localUtils:FilterKey.LibraryTitle}"
                                 HorizontalAlignment="Stretch"

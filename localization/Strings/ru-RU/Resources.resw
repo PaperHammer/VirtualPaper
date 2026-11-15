@@ -1976,7 +1976,7 @@
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>Добавить теги</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>Удалить теги</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>Заменить свои теги</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>Обои не найдены. Добавьте обои или измените фильтры.</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>Библиотека пуста. Добавьте обои, чтобы начать.</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>Предустановки эффектов</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>Другие действия библиотеки</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>Предустановки эффектов…</value></data>
@@ -2188,4 +2188,8 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
     <value>Понятно, продолжить</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>Обзор файлов…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>Подходящих обоев нет. Измените запрос или сбросьте фильтры.</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>Сбросить поиск и фильтры</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>Неподдерживаемые файлы</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>Эти файлы пропущены, так как их форматы не поддерживаются. Они не добавлены в библиотеку.</value></data>
 </root>

@@ -1995,7 +1995,7 @@ Scale-down：尺寸與 None 或 Contain 中的一中方式相同，取決於哪�
   <data name="WpLib_TagsAdd" xml:space="preserve"><value>新增標籤</value></data>
   <data name="WpLib_TagsRemove" xml:space="preserve"><value>移除標籤</value></data>
   <data name="WpLib_TagsReplace" xml:space="preserve"><value>替換個人標籤</value></data>
-  <data name="WpLib_Empty" xml:space="preserve"><value>沒有找到桌布，可以新增桌布或調整篩選條件。</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>桌布庫還是空的，新增一些喜歡的桌布吧。</value></data>
   <data name="EffectPreset_Title" xml:space="preserve"><value>效果預設</value></data>
   <data name="EffectPreset_More" xml:space="preserve"><value>更多桌布庫操作</value></data>
   <data name="EffectPreset_Manage" xml:space="preserve"><value>效果預設…</value></data>
@@ -2207,4 +2207,8 @@ Windows 資源管理器在過去 30 秒內重新啟動兩次！這可能是 Virt
     <value>瞭解並繼續</value>
   </data>
   <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>瀏覽檔案…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>沒有符合條件的桌布，請嘗試其他關鍵字或清除篩選條件。</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>清除搜尋與篩選</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>不支援的檔案</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>以下檔案的格式不受支援，已略過且未匯入桌布庫。</value></data>
 </root>

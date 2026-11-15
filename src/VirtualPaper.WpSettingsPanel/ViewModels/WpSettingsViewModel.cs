@@ -77,8 +77,11 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             OnPropertyChanged(nameof(TagSuggestions));
         }
 
+        public string SearchKeyword => _currentTitleKeyword;
+
         public void ClearLibraryFilters() {
             _currentTitleKeyword = "";
+            OnPropertyChanged(nameof(SearchKeyword));
             _tagKeyword = "";
             _favoritesOnly = false;
             foreach (var item in TypeFilters) item.IsSelected = false;
@@ -257,7 +260,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         public void OnFilterChanged(FilterKey fk, string text) {
             if (fk == FilterKey.LibraryTitle) {
+                if (_currentTitleKeyword == text) return;
                 _currentTitleKeyword = text;
+                OnPropertyChanged(nameof(SearchKeyword));
             }
             BroadcastFilter();
         }

@@ -227,6 +227,8 @@ Each real control is changed, confirmed through Core RPC and persisted JSON, and
 
 ### Hardware acceleration
 
+Headless super-resolution regressions check that horizontal, vertical and two-dimensional tile regions cover every pixel exactly once, including short tails around the 480-pixel step. A self-authored Identity ONNX graph checks patterned output pixels, unchanged inputs and repeatability without loading the bundled large model.
+
 The standard suite includes three `Application.HardwareAcceleration` cases:
 
 - `StartupPolicyAndOptions`: use the real General-settings toggle and Core JSON/RPC to switch on → pending off → restarted off → pending on → restarted on. The current UI retains its startup policy until a normal restart. Reverting a pending preference must clear the restart notice. Both AI forms check GPU-option visibility, recommended defaults, explicit CPU selection and reset after cancel/reopen; style transfer itself remains CPU-only. The independent animation preference must survive hardware-mode changes and must not itself require a restart.

@@ -89,24 +89,8 @@ namespace VirtualPaper.ML.SuperResolution {
             int imgWidth = image.Width;
             int imgHeight = image.Height;
 
-            int step = TileSize - 2 * TileOverlap;
-            int numTilesX = (imgWidth + step - 1) / step;
-            int numTilesY = (imgHeight + step - 1) / step;
-
             // 预计算全部 Tile 坐标，避免在并行 lambda 中重复推导
-            var tileInfos = new TileInfo[numTilesX * numTilesY];
-            for (int ty = 0; ty < numTilesY; ty++) {
-                for (int tx = 0; tx < numTilesX; tx++) {
-                    int sx = tx * step - TileOverlap;
-                    int sy = ty * step - TileOverlap;
-                    tileInfos[ty * numTilesX + tx] = new TileInfo(
-                        sx, sy,
-                        Math.Max(0, sx),
-                        Math.Max(0, sy),
-                        Math.Min(imgWidth, sx + TileSize),
-                        Math.Min(imgHeight, sy + TileSize));
-                }
-            }
+            var tileInfos = BuildTiles(imgWidth, imgHeight);
 
             int fixedTilePixels = TileSize * TileSize * 3;
             int fixedChannelSize = TileSize * TileSize;
@@ -205,23 +189,17 @@ namespace VirtualPaper.ML.SuperResolution {
                                     candidate.Dispose(); // 其他线程已抢先分配，放弃本候选
                             }
 
-                            // 计算有效区域（剥离 overlap 边缘，以实际内容宽高为上界排除填充区）
-                            int contentW = tileW * scaleX;
-                            int contentH = tileH * scaleY;
-
                             int leftStrip = (tile.Sx < 0 ? 0 : TileOverlap) * scaleX;
                             int topStrip = (tile.Sy < 0 ? 0 : TileOverlap) * scaleY;
-                            int rightStrip = (tile.ExClamped == imgWidth ? 0 : TileOverlap) * scaleX;
-                            int bottomStrip = (tile.EyClamped == imgHeight ? 0 : TileOverlap) * scaleY;
 
                             int validX = leftStrip;
                             int validY = topStrip;
-                            int validW = contentW - leftStrip - rightStrip;
-                            int validH = contentH - topStrip - bottomStrip;
+                            int validW = tile.OutputWidth * scaleX;
+                            int validH = tile.OutputHeight * scaleY;
 
                             // 有效区域在完整输出图中的起始坐标
-                            int dstX = (tile.SxClamped + (tile.Sx < 0 ? 0 : TileOverlap)) * scaleX;
-                            int dstY = (tile.SyClamped + (tile.Sy < 0 ? 0 : TileOverlap)) * scaleY;
+                            int dstX = tile.OutputX * scaleX;
+                            int dstY = tile.OutputY * scaleY;
 
                             // 将有效区域写入 outputImage
                             // 各 Tile 的 [dstX, dstX+validW) * [dstY, dstY+validH) 互不重叠，无需加锁
@@ -331,17 +309,41 @@ namespace VirtualPaper.ML.SuperResolution {
         /// </summary>
         private const int MaxParallelTiles = 2;
 
+        internal static TileInfo[] BuildTiles(int width, int height) {
+            int step = TileSize - 2 * TileOverlap;
+            int columns = (width + step - 1) / step;
+            int rows = (height + step - 1) / step;
+            var tiles = new TileInfo[columns * rows];
+            for (int y = 0; y < rows; y++) {
+                for (int x = 0; x < columns; x++) {
+                    int sx = x * step - TileOverlap;
+                    int sy = y * step - TileOverlap;
+                    int left = Math.Max(0, sx), top = Math.Max(0, sy);
+                    int right = Math.Min(width, sx + TileSize), bottom = Math.Min(height, sy + TileSize);
+                    // Input context may reach the image edge before the last tile.
+                    // Output ownership always follows the fixed step, with only the last tile shortened.
+                    tiles[y * columns + x] = new(sx, sy, left, top, right, bottom,
+                        Math.Min(step, width - x * step), Math.Min(step, height - y * step));
+                }
+            }
+            return tiles;
+        }
+
         // ── 辅助结构（值类型，无状态）────────────────────────────────────────
-        private readonly struct TileInfo(
+        internal readonly struct TileInfo(
             int sx, int sy,
             int sxClamped, int syClamped,
-            int exClamped, int eyClamped) {
+            int exClamped, int eyClamped, int outputWidth, int outputHeight) {
             public readonly int Sx = sx;
             public readonly int Sy = sy;
             public readonly int SxClamped = sxClamped;
             public readonly int SyClamped = syClamped;
             public readonly int ExClamped = exClamped;
             public readonly int EyClamped = eyClamped;
+            public int OutputX => Sx + TileOverlap;
+            public int OutputY => Sy + TileOverlap;
+            public readonly int OutputWidth = outputWidth;
+            public readonly int OutputHeight = outputHeight;
         }
 
         // ── 单例实例字段（仅 LoadModel 写入，之后只读）──────────────────────

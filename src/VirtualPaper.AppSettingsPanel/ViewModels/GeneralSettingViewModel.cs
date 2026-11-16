@@ -485,7 +485,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             if (WallpaperDirectoryChangeOngoing) return;
             var settings = _userSettingsClient.Settings;
             (WallpaperDirectoryDefinition Directory, string Source, string Target)[] moves = [];
-            var changedLayouts = new List<(string Source, string Target)>();
+            var layoutMoves = new List<(string Source, string Target)>();
             var sourceSnapshots = new Dictionary<string, WallpaperDirectorySnapshot>(StringComparer.OrdinalIgnoreCase);
             bool settingsChanged = false;
             WallpaperDirectoryChangeOngoing = true;
@@ -519,8 +519,9 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 }
                 SetWallpaperMigrationStatus("Settings_General_Storage_MigrationUpdating");
                 foreach (var move in moves) {
+                    // A failed RPC may already have applied its paths before saving or replying.
+                    layoutMoves.Add((move.Source, move.Target));
                     await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Source, move.Target);
-                    changedLayouts.Add((move.Source, move.Target));
                     settingsChanged = true;
                     move.Directory.SetPath(settings, move.Target);
                 }
@@ -545,19 +546,22 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 // Keep both the originals and any copied files if migration fails.
-                try {
-                    if (settingsChanged || changedLayouts.Count > 0)
-                        SetWallpaperMigrationStatus("Settings_General_Storage_MigrationRollingBack");
-                    if (settingsChanged) {
-                        foreach (var move in moves) move.Directory.SetPath(settings, move.Source);
-                        await _userSettingsClient.SaveAsync<ISettings>();
-                    }
-                    foreach (var move in changedLayouts.AsEnumerable().Reverse()) {
-                        await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Target, move.Source);
-                    }
-                    if (changedLayouts.Count > 0) await _wpControlClient.RestartAllWallpapersAsync();
+                if (settingsChanged || layoutMoves.Count > 0)
+                    SetWallpaperMigrationStatus("Settings_General_Storage_MigrationRollingBack");
+                if (settingsChanged) {
+                    foreach (var move in moves) move.Directory.SetPath(settings, move.Source);
+                    try { await _userSettingsClient.SaveAsync<ISettings>(); }
+                    catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
                 }
-                catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
+                // Each recovery step is independent: one failure must not block the rest.
+                foreach (var move in layoutMoves.AsEnumerable().Reverse()) {
+                    try { await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Target, move.Source); }
+                    catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
+                }
+                if (layoutMoves.Count > 0) {
+                    try { await _wpControlClient.RestartAllWallpapersAsync(); }
+                    catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
+                }
                 if (ex is OperationCanceledException || ex is RpcException { StatusCode: StatusCode.Cancelled })
                     GlobalMessageUtil.ShowCanceled();
                 else GlobalMessageUtil.ShowException(ex);

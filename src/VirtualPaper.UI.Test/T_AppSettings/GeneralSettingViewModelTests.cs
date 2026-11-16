@@ -617,7 +617,104 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 Assert.IsTrue(File.Exists(Path.Combine(sourceBuiltIn, "built-in", "media.png")));
                 _userSettingsClient.Verify(s => s.SaveAsync<ISettings>(), Times.Once);
                 _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetUser, sourceUser), Times.Once);
-                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetBuiltIn, sourceBuiltIn), Times.Never);
+                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetBuiltIn, sourceBuiltIn), Times.Once);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+        }
+
+        [TestMethod]
+        [DataRow(false, false)]
+        [DataRow(true, false)]
+        [DataRow(false, true)]
+        [DataRow(true, true)]
+        public async Task WallpaperDirectoryChange_SaveFailure_DoesNotPreventIndependentRollback(bool rollbackSaveFails, bool rollbackLayoutFails) {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.LibraryMove", Guid.NewGuid().ToString("N"));
+            string sourceUser = Path.Combine(root, "source", "wallpapers");
+            string sourceBuiltIn = Path.Combine(root, "source", "BuiltInWallpapers");
+            string destination = Path.Combine(root, "destination");
+            string targetUser = Path.Combine(destination, "wallpapers");
+            string targetBuiltIn = Path.Combine(destination, "BuiltInWallpapers");
+            var layouts = new[] { Path.Combine(sourceUser, "user"), Path.Combine(sourceBuiltIn, "built-in") };
+            var rollbacks = new List<string>();
+            int saves = 0;
+            try {
+                CreateMovableWallpaper(sourceUser, "user");
+                CreateMovableWallpaper(sourceBuiltIn, "built-in");
+                _settings.Object.WallpaperDir = sourceUser;
+                _settings.Object.BuiltInWallpapersDir = sourceBuiltIn;
+                _wpControlClient.Setup(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()))
+                    .Returns((string source, string target) => {
+                        if (source == targetUser || source == targetBuiltIn) {
+                            rollbacks.Add(source);
+                            if (source == targetBuiltIn && rollbackLayoutFails)
+                                return Task.FromException(new IOException("One layout rollback failed."));
+                        }
+                        for (int i = 0; i < layouts.Length; i++)
+                            layouts[i] = VirtualPaper.Common.Utils.Files.FileUtil.RelocatePath(layouts[i], source, target);
+                        return Task.CompletedTask;
+                    });
+                _userSettingsClient.Setup(s => s.SaveAsync<ISettings>()).Returns(() =>
+                    ++saves == 1 || rollbackSaveFails ? Task.FromException(new IOException("Settings are locked.")) : Task.CompletedTask);
+                _wpControlClient.Setup(w => w.RestartAllWallpapersAsync())
+                    .ReturnsAsync(new Grpc_RestartWallpaperResponse { IsFinished = true });
+
+                await _vm.WallpaperDirectoryChangeAsync(destination);
+
+                CollectionAssert.AreEqual(new[] { targetBuiltIn, targetUser }, rollbacks);
+                Assert.AreEqual(Path.Combine(sourceUser, "user"), layouts[0]);
+                Assert.AreEqual(Path.Combine(rollbackLayoutFails ? targetBuiltIn : sourceBuiltIn, "built-in"), layouts[1]);
+                Assert.AreEqual(sourceUser, _settings.Object.WallpaperDir);
+                Assert.AreEqual(sourceBuiltIn, _settings.Object.BuiltInWallpapersDir);
+                Assert.AreEqual(2, saves);
+                _wpControlClient.Verify(w => w.RestartAllWallpapersAsync(), Times.Once);
+                foreach (string library in new[] { sourceUser, sourceBuiltIn, targetUser, targetBuiltIn })
+                    Assert.IsTrue(Directory.Exists(library), "Failed migration must retain originals and copies.");
+                Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
+                Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+        }
+
+        [TestMethod]
+        [DataRow(1)]
+        [DataRow(2)]
+        public async Task WallpaperDirectoryChange_RpcFailsAfterApplyingPaths_RollsBackTheAttemptedCall(int failedCall) {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.LibraryMove", Guid.NewGuid().ToString("N"));
+            string sourceUser = Path.Combine(root, "source", "wallpapers");
+            string sourceBuiltIn = Path.Combine(root, "source", "BuiltInWallpapers");
+            string destination = Path.Combine(root, "destination");
+            string targetUser = Path.Combine(destination, "wallpapers");
+            string targetBuiltIn = Path.Combine(destination, "BuiltInWallpapers");
+            var originals = new[] { Path.Combine(sourceUser, "user"), Path.Combine(sourceBuiltIn, "built-in") };
+            var layouts = originals.ToArray();
+            int forwardCalls = 0;
+            try {
+                CreateMovableWallpaper(sourceUser, "user");
+                CreateMovableWallpaper(sourceBuiltIn, "built-in");
+                _settings.Object.WallpaperDir = sourceUser;
+                _settings.Object.BuiltInWallpapersDir = sourceBuiltIn;
+                _wpControlClient.Setup(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()))
+                    .Returns((string source, string target) => {
+                        for (int i = 0; i < layouts.Length; i++)
+                            layouts[i] = VirtualPaper.Common.Utils.Files.FileUtil.RelocatePath(layouts[i], source, target);
+                        // The server may have changed its in-memory layouts before persistence or the reply fails.
+                        return (source == sourceUser || source == sourceBuiltIn) && ++forwardCalls == failedCall
+                            ? Task.FromException(new IOException("RPC failed after applying paths.")) : Task.CompletedTask;
+                    });
+                _wpControlClient.Setup(w => w.RestartAllWallpapersAsync())
+                    .ReturnsAsync(new Grpc_RestartWallpaperResponse { IsFinished = true });
+
+                await _vm.WallpaperDirectoryChangeAsync(destination);
+
+                CollectionAssert.AreEqual(originals, layouts);
+                Assert.AreEqual(sourceUser, _settings.Object.WallpaperDir);
+                Assert.AreEqual(sourceBuiltIn, _settings.Object.BuiltInWallpapersDir);
+                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetUser, sourceUser), Times.Once);
+                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetBuiltIn, sourceBuiltIn),
+                    failedCall == 2 ? Times.Once() : Times.Never());
+                _wpControlClient.Verify(w => w.RestartAllWallpapersAsync(), Times.Once);
+                Assert.IsTrue(File.Exists(Path.Combine(sourceUser, "user", "media.png")));
+                Assert.IsTrue(File.Exists(Path.Combine(sourceBuiltIn, "built-in", "media.png")));
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
         }

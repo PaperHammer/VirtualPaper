@@ -1,3 +1,8 @@
+using System.Resources;
+using System.Runtime.Loader;
+using System.Text.Json;
+using System.Xml.Linq;
+
 namespace VirtualPaper.ReleaseBuildData.Test {
 
     /// <summary>
@@ -50,38 +55,37 @@ namespace VirtualPaper.ReleaseBuildData.Test {
         [DynamicData(nameof(SupportedLocales))]
         public void Plugin_UI_LiveTranslations_MatchTheirSourceStrings(string locale) {
             string path = Path.Combine(PluginsDir, "UI", "VirtualPaper.UIComponent", "Strings", locale, "Resources.resw");
-            var entries = System.Xml.Linq.XDocument.Load(path).Root!.Elements("data")
-                .ToDictionary(element => (string)element.Attribute("name")!, element => element);
-            var assembly = typeof(ResourceSanityTests).Assembly;
-            string sourceName = assembly.GetManifestResourceNames().Single(name =>
-                name.StartsWith("VirtualPaper.Localization.Source.", StringComparison.Ordinal)
-                && name.Replace('\\', '/').EndsWith($"{locale}/Resources.resw", StringComparison.Ordinal));
-            using var sourceStream = assembly.GetManifestResourceStream(sourceName)!;
-            var sources = System.Xml.Linq.XDocument.Load(sourceStream).Root!.Elements("data");
+            using var stream = File.OpenRead(path);
+            var entries = ReadUiStrings(stream);
+            var expected = ReadSourceStrings(locale);
             const string generalTabKey = "AppSettings_SelBarItem1_General";
-            Assert.AreEqual((string?)sources.Single(source => (string?)source.Attribute("name") == generalTabKey).Element("value"),
+            Assert.AreEqual(expected[generalTabKey],
                 VirtualPaper.TestSupport.LocalizedTestStrings.Read(Path.Combine(PluginsDir, "UI"), locale, generalTabKey),
                 $"Installed acceptance must use the requested language: {locale}");
-            foreach (var source in sources) {
-                string key = (string)source.Attribute("name")!;
-                Assert.IsTrue(entries.TryGetValue(key, out var actual), $"Missing packaged source string: {locale}/{key}");
-                Assert.AreEqual((string?)source.Element("value"), (string?)actual!.Element("value"), $"Stale packaged translation: {locale}/{key}");
-            }
             // Embed the build's expected mappings in the test assembly; runtime
             // packages need only the generated resw files, not build metadata.
             using var mappingStream = typeof(ResourceSanityTests).Assembly.GetManifestResourceStream("VirtualPaper.XamlResources.xml");
             Assert.IsNotNull(mappingStream, "The test assembly is missing XAML resource mappings.");
-            var mappings = System.Xml.Linq.XDocument.Load(mappingStream).Root!.Elements("Resource")
-                .ToDictionary(element => (string)element.Attribute("Name")!, element => (string)element.Attribute("Source")!);
-            var translatedProperties = entries.Where(pair => pair.Key.StartsWith("Ui_", StringComparison.Ordinal)).ToArray();
-            Assert.IsGreaterThan(0, translatedProperties.Length, "Live XAML translations are missing from the package.");
-            Assert.HasCount(mappings.Count, translatedProperties, "Generated XAML translations do not match the mapping count.");
-            foreach (var (name, source) in mappings) {
-                Assert.IsTrue(entries.TryGetValue(name, out var entry), $"Generated XAML translation is missing: {name}");
-                Assert.IsTrue(entries.TryGetValue(source, out var original), $"Missing source string for {name}: {source}");
-                Assert.AreEqual((string?)original!.Element("value"), (string?)entry!.Element("value"),
-                    $"Live and programmatic translations differ: {name}");
+            foreach (var mapping in XDocument.Load(mappingStream).Root!.Elements("Resource")) {
+                expected.Add((string)mapping.Attribute("Name")!, expected[(string)mapping.Attribute("Source")!]);
             }
+            AssertLocalizedStrings(entries, expected, path);
+        }
+
+        [TestMethod]
+        [TestCategory("ReleaseBuild")]
+        [DynamicData(nameof(RuntimeResources))]
+        public void Runtime_Translations_MatchTheirSourceStrings(string locale, string target, string path, string resourceName) {
+            var source = ReadSourceStrings(locale);
+            using var mappingStream = typeof(ResourceSanityTests).Assembly.GetManifestResourceStream("VirtualPaper.ResourceMappings.xml");
+            Assert.IsNotNull(mappingStream, "The test assembly is missing Core/Common resource mappings.");
+            var expected = XDocument.Load(mappingStream).Root!.Elements("Resource")
+                .Where(mapping => (string?)mapping.Attribute("Target") == target)
+                .ToDictionary(mapping => (string)mapping.Attribute("Name")!,
+                    mapping => source[(string)mapping.Attribute("Source")!], StringComparer.Ordinal);
+            Assert.IsGreaterThan(0, expected.Count, $"No embedded mappings for {target}.");
+            string fullPath = Path.Combine(ReleaseBuildSanityTests.ReleaseDir, path);
+            AssertLocalizedStrings(ReadAssemblyStrings(fullPath, resourceName), expected, $"{locale}/{path}");
         }
 
         [TestMethod]
@@ -94,9 +98,73 @@ namespace VirtualPaper.ReleaseBuildData.Test {
 
         public static IEnumerable<object[]> SupportedLocales() {
             using var stream = typeof(ResourceSanityTests).Assembly.GetManifestResourceStream("VirtualPaper.LanguageCatalog.json")!;
-            using var catalog = System.Text.Json.JsonDocument.Parse(stream);
+            using var catalog = JsonDocument.Parse(stream);
             return catalog.RootElement.GetProperty("Languages").EnumerateArray()
                 .Select(language => new object[] { language.GetProperty("Code").GetString()! }).ToArray();
+        }
+
+        public static IEnumerable<object[]> RuntimeResources() {
+            using var stream = typeof(ResourceSanityTests).Assembly.GetManifestResourceStream("VirtualPaper.LanguageCatalog.json")!;
+            using var catalog = JsonDocument.Parse(stream);
+            string defaultLanguage = catalog.RootElement.GetProperty("DefaultLanguage").GetString()!;
+            var owners = new[] {
+                (Target: "Core", Directory: "", Assembly: "VirtualPaper", Resource: "VirtualPaper.Properties.lang"),
+                (Target: "Common", Directory: "", Assembly: "VirtualPaper.Common", Resource: "VirtualPaper.Common.Resources.FileAccess"),
+                (Target: "Common", Directory: "Plugins/UI", Assembly: "VirtualPaper.Common", Resource: "VirtualPaper.Common.Resources.FileAccess")
+            };
+            foreach (var language in catalog.RootElement.GetProperty("Languages").EnumerateArray()) {
+                string locale = language.GetProperty("Code").GetString()!;
+                bool isNeutral = locale == defaultLanguage;
+                foreach (var owner in owners) {
+                    string path = isNeutral ? Path.Combine(owner.Directory, owner.Assembly + ".dll")
+                        : Path.Combine(owner.Directory, locale, owner.Assembly + ".resources.dll");
+                    yield return [locale, owner.Target, path, owner.Resource + (isNeutral ? "" : "." + locale) + ".resources"];
+                }
+            }
+        }
+
+        private static Dictionary<string, string> ReadSourceStrings(string locale) {
+            var assembly = typeof(ResourceSanityTests).Assembly;
+            string name = assembly.GetManifestResourceNames().Single(name =>
+                name.StartsWith("VirtualPaper.Localization.Source.", StringComparison.Ordinal)
+                && name.Replace('\\', '/').EndsWith($"{locale}/Resources.resw", StringComparison.Ordinal));
+            using var stream = assembly.GetManifestResourceStream(name)!;
+            return ReadUiStrings(stream);
+        }
+
+        private static Dictionary<string, string> ReadUiStrings(Stream stream) {
+            var values = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var entry in XDocument.Load(stream).Root!.Elements("data")) {
+                string? key = (string?)entry.Attribute("name"), value = (string?)entry.Element("value");
+                if (string.IsNullOrEmpty(key) || value == null) throw new InvalidDataException("Malformed UI translation.");
+                values.Add(key, value);
+            }
+            return values;
+        }
+
+        private static Dictionary<string, string> ReadAssemblyStrings(string path, string resourceName) {
+            // Inspect each physical copy independently, without assembly-name reuse or file locks.
+            var context = new AssemblyLoadContext($"Localization-{Guid.NewGuid():N}", isCollectible: true);
+            try {
+                using var image = File.OpenRead(path);
+                var assembly = context.LoadFromStream(image);
+                using var stream = assembly.GetManifestResourceStream(resourceName);
+                Assert.IsNotNull(stream, $"Missing packaged resource: {path}/{resourceName}");
+                using var reader = new ResourceReader(stream);
+                var values = new Dictionary<string, string>(StringComparer.Ordinal);
+                var entries = reader.GetEnumerator();
+                while (entries.MoveNext()) values.Add((string)entries.Key, (string)entries.Value!);
+                return values;
+            }
+            finally { context.Unload(); }
+        }
+
+        private static void AssertLocalizedStrings(Dictionary<string, string> actual, Dictionary<string, string> expected, string description) {
+            Assert.HasCount(expected.Count, actual, $"Localization key count differs: {description}");
+            foreach (var (key, value) in expected) {
+                Assert.IsTrue(actual.TryGetValue(key, out var text), $"Missing packaged translation: {description}/{key}");
+                Assert.AreEqual(value.Replace("\r\n", "\n"), text!.Replace("\r\n", "\n"), $"Stale packaged translation: {description}/{key}");
+            }
         }
 
         // ── PlayerWeb 内嵌 Web 资源 ───────────────────────────────────────────

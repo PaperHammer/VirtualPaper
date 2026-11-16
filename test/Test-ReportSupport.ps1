@@ -144,14 +144,6 @@ try {
     $runnerDirectory = Join-Path $runnerRoot 'test'
     New-Item -ItemType Directory -Path $runnerDirectory -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Run-ProjectTests.ps1'), (Join-Path $PSScriptRoot 'TestReportSupport.ps1') -Destination $runnerDirectory
-    [IO.File]::WriteAllText((Join-Path $runnerDirectory 'Test-LocalizationResourceSupport.ps1'), @'
-param([string]$PayloadDirectory)
-$global:ReportLocalizationCalls++
-if ($PayloadDirectory -ne $env:RELEASE_BIN_DIR) { throw 'Artifact localization used a different payload.' }
-if ($global:ReportLocalizationMode -eq 'fail') { throw 'Expected localization failure.' }
-'@)
-    $global:ReportLocalizationCalls = 0
-    $global:ReportLocalizationMode = 'pass'
     $global:ReportDotnetCalls = 0
     $global:ReportTestMode = 'pass'
     function dotnet {
@@ -177,14 +169,16 @@ if ($global:ReportLocalizationMode -eq 'fail') { throw 'Expected localization fa
     Remove-Item -LiteralPath (Join-Path $runnerRoot 'TestResults/ML/ml-tests.trx')
     & $runner -JobId test-ml -IncludeMLIntegration
     Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--filter') 'Explicit ML integration must not be filtered out.'
+    # Match the downloaded artifact: no localization sources or source-only helpers.
+    $releaseBinBeforeArtifacts = $env:RELEASE_BIN_DIR
     & $runner -JobId test-artifacts
-    Assert-ReviewCondition ($global:ReportLocalizationCalls -eq 1) 'Artifacts must validate actual localization before running tests.'
-    $dotnetCalls = $global:ReportDotnetCalls
-    $global:ReportLocalizationMode = 'fail'
-    Assert-ReportThrows { & $runner -JobId test-artifacts -ResultsDirectory 'TestResults/BadLocalization' } 'Incomplete localization must block artifact tests.'
-    Assert-ReviewCondition ($global:ReportDotnetCalls -eq $dotnetCalls -and -not (Test-Path (Join-Path $runnerRoot 'TestResults/BadLocalization/release-build-tests.trx'))) 'Invalid package localization must fail before producing a passing TRX.'
-    $global:ReportLocalizationMode = 'pass'
+    Assert-ReviewCondition ($env:RELEASE_BIN_DIR -eq $releaseBinBeforeArtifacts) 'Artifact tests must restore the caller environment.'
     Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--settings' -and $global:ReportTestBin -eq (Join-Path $runnerRoot 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0')) 'Artifact checks need the build directory and no coverage collector.'
+    $dotnetCalls = $global:ReportDotnetCalls
+    $global:ReportTestMode = 'failed-report'
+    Assert-ReportThrows { & $runner -JobId test-artifacts -ResultsDirectory 'TestResults/BadLocalization' } 'Incomplete localization must block artifact tests.'
+    Assert-ReviewCondition ($global:ReportDotnetCalls -eq $dotnetCalls + 1 -and (Test-Path (Join-Path $runnerRoot 'TestResults/BadLocalization/release-build-tests.trx'))) 'Failed artifact assertions must be retained in the TRX and block success.'
+    Assert-ReviewCondition ($env:RELEASE_BIN_DIR -eq $releaseBinBeforeArtifacts) 'Failed artifact tests must also restore the caller environment.'
     foreach ($case in @(@('exit-failure', 'test-shader'), @('missing-report', 'test-images'), @('failed-report', 'test-web-backdrop'))) {
         $global:ReportTestMode = $case[0]
         Assert-ReportThrows { & $runner -JobId $case[1] } $case[0]
@@ -193,7 +187,7 @@ if ($global:ReportLocalizationMode -eq 'fail') { throw 'Expected localization fa
     Write-Host '[OK] TRX validity, report isolation on retry, per-project coverage, explicit UI skips and shared runner failure propagation.'
 } finally {
     Remove-Item Function:\dotnet -ErrorAction SilentlyContinue
-    Remove-Variable ReportTestArguments, ReportTestMode, ReportTestBin, ReportLocalizationCalls, ReportLocalizationMode, ReportDotnetCalls -Scope Global -ErrorAction SilentlyContinue
+    Remove-Variable ReportTestArguments, ReportTestMode, ReportTestBin, ReportDotnetCalls -Scope Global -ErrorAction SilentlyContinue
     $env:GITHUB_OUTPUT = $oldOutput; $env:GITHUB_STEP_SUMMARY = $oldSummary
     $resolved = [IO.Path]::GetFullPath($fixture)
     if ([IO.Path]::GetDirectoryName($resolved) -ne $resultsRoot) { throw 'Unsafe report test cleanup path.' }

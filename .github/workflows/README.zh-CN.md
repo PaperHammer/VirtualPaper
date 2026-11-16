@@ -27,7 +27,7 @@ EXE／MSIX 安装版扩展 UI 报告要求每个已选宿主用例恰好出现�
 
 1. 校验 PR，固定源码 SHA、版本和渠道选择；使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。
 2. `package-exe`、`package-msix` 并行消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 要求选中的包全部生成成功。
-3. 所选包全部成功后，八组共享项目测试只运行一轮，内部并行。两路渠道验收均等待全部八组成功；失败或跳过时不开始安装。
+3. 所选包全部成功后，八组共享项目测试只运行一轮，内部并行。Artifact Tests 仅消费构建产物，不检出源码；预期文案和映射已嵌入测试程序集。两路渠道验收均等待全部八组成功；失败或跳过时不开始安装。
 4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，分别使用全新的 GitHub-hosted Windows VM。每路内部顺序执行：冒烟并卸载清理 → 独立重装同一产物 → 扩展 UI 并卸载清理。两渠道可并行，同一渠道内冒烟和 UI 串行。
 5. `Summarize-PipelineTests.ps1` 校验选中渠道的子流程结果及原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。必需阶段失败、跳过或证据缺失均阻塞；两个工作流的 UI 也必须通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
 6. Pre-merge 在 PR head 回写 `pre-merge-check`。Pre-release 验收通过后仅在 main 提交一次产品版本，再将该 main 合回 dev，原子推送两分支。随后 `Draft Release (GitHub)` 和选中的 `Draft Release (Microsoft Store)` 并行执行，互不依赖；一路草稿失败不会阻止另一路执行。最后汇总两者结果。

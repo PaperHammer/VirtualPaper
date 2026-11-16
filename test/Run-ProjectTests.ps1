@@ -25,7 +25,6 @@ $previousReleaseBin = $env:RELEASE_BIN_DIR
 try {
     if ($JobId -eq 'test-artifacts') {
         $env:RELEASE_BIN_DIR = Join-Path $repositoryRoot 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0'
-        & "$PSScriptRoot/Test-LocalizationResourceSupport.ps1" -PayloadDirectory $env:RELEASE_BIN_DIR
     }
     & dotnet @arguments
     if ($LASTEXITCODE -ne 0) { throw "$JobId failed (exit $LASTEXITCODE)." }

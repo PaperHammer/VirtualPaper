@@ -14,6 +14,8 @@
 
 Windows 项目的目标与最低支持版本统一为 Windows 10 Build 19041（`10.0.19041.0`）。`Test-RuntimeDeployment.ps1` 检查目标框架及显式最低版本、两份包清单、MSIX 打包最低版本和 EXE 安装器的系统限制；没有显式最低版本的测试项目按目标框架默认值处理。MSIX 打包 SDK 独立保持为 26100。
 
+CI 的 Artifact Tests 仅下载固定构建产物，不检出源码。测试程序集嵌入语言清单、源文案及 UI/Core/Common 映射，与实际 Release 资源逐项比对，包括 UI 内的 Common 副本。脚本夹具单独随工作流契约运行，项目测试入口无需源码目录中的本地化脚本或文件。
+
 不启动应用或 UI 的 FP32/FP16 模型手动评测见 [InferencePrecision](InferencePrecision/README.md)。该独立无界面探针加载实际 Release 原生运行库，不替代项目回归或安装验收。
 
 `VirtualPaper.UIOperationTest` 是独立、非打包的 WinUI 可执行程序，同时充当测试宿主。组件用例通过项目引用加载正式页面；应用用例启动隔离的真实 Core 进程，再由 Core 拉起真实 UI。两者都不使用 Sandbox，也不会连接用户正在运行的 VirtualPaper 实例。
@@ -520,7 +522,7 @@ AI 设备选择由无界面的 ML 和 UI 逻辑项目回归覆盖：启动许可
 
 EXE/MSIX 启动探针从目标语种资源读取“通用”页签的预期文字，不依赖测试宿主的界面语言；产物测试将共用读取逻辑与各语种内嵌源文案比对。法语作为可选代表验收入口，不代表全部语种的安装向导已经验收。
 
-`LocalizationResourceSupport.ps1` 逐项校验源文案／XAML 属性及 Core、Common 的中性和卫星资源，包括 UI 内 Common 副本；它在产物测试前、EXE 安装／覆盖安装后及最终 MSIX ZIP 条目上运行。`Test-LocalizationResourceSupport.ps1` 覆盖缺文件、缺失／过期文案、重复 XML key 和退役属性；`-PayloadDirectory <Release-bin>` 还读取实际构建 DLL，并检查正常／损坏的归档夹具，全程不安装、不操作 UI。Core 单测另覆盖安装语言标记被独占锁定后，按系统首选语言回退并持久化的行为。
+`VirtualPaper.ReleaseBuildData.Test` 以程序集内嵌的预期数据，逐项校验 UI 源文案／XAML 属性及 Core、Common 的中性和卫星资源，包括 UI 内 Common 副本。缺失、多余、过期、重复或损坏的资源会使产物测试失败，并记录在 TRX 中。`LocalizationResourceSupport.ps1` 保留对已安装 EXE（安装／覆盖安装后）及最终 MSIX ZIP 条目的同等校验。其 `Test-LocalizationResourceSupport.ps1` 夹具随工作流契约运行；可选参数 `-PayloadDirectory <Release-bin>` 还读取实际构建 DLL，并检查正常／损坏的归档夹具。这些资源检查不安装、不操作 UI。Core 单测另覆盖安装语言标记被独占锁定后，按系统首选语言回退并持久化的行为。
 
 内置壁纸文件夹维护在 [`resources/BuiltInWallpapers`](../resources/BuiltInWallpapers/README.zh-CN.md)。构建时带入 Core 输出，安装器读取 `BuiltInWallpapersDir`；旧配置缺少该字段时回退到 `WallpaperDir` 的同级目录，添加缺失文件夹并保留已有目录及用户修改。安装验收向安装程序传递隔离数据目录，不写入日常壁纸库。Core 和 UI 逻辑测试覆盖旧配置默认值、独立路径经 RPC 保存及重启恢复、双目录扫描/删除、预览配置落盘、单一入口下的双目录迁移、索引刷新及失败时保留原数据。
 

@@ -39,16 +39,27 @@ function Read-InstalledUIReport([string] $Path, [string] $JobId, [bool] $Lifecyc
     if ($AllowUIFailure -and $runResult -cnotin @('success', 'failure', 'skipped')) {
         throw "Missing installed UI step outcome: $JobId"
     }
+    if ($AllowUIFailure -and $jobs[$JobId].outputs.ui_upload_result -cne 'success') {
+        throw "Required installed UI report upload did not pass: $JobId"
+    }
     if (-not $AllowUIFailure -and $runResult -and $runResult -cne 'success') { throw "Installed UI step did not pass: $JobId" }
     if ($outcome -eq 'Passed' -and (-not $LifecyclePassed -or ($runResult -and $runResult -cne 'success'))) { $outcome = 'Failed' }
-    return @{ Report = $ui; Outcome = $outcome; RunResult = $runResult }
+    return @{ Report = $ui; Outcome = $outcome; RunResult = $runResult; Error = $ui.Error }
 }
 $jobs = $JobResultsJson | ConvertFrom-Json -AsHashtable
+function Test-ToleratedUIJob([string] $Name, $Job) {
+    return $AllowUIFailure -and $Name -in @('test-exe-acceptance', 'test-msix-acceptance') -and
+        $Job.result -ceq 'failure' -and $Job.outputs.ui_run_result -ceq 'failure' -and
+        $Job.outputs.ui_upload_result -ceq 'success'
+}
 Check 'Job results' {
-    $required = @('packages-ready', 'package-exe', 'test-exe-acceptance') + @(Get-ProjectTestSpecs | ForEach-Object Id)
+    $required = @('packages-ready', 'tests-passed', 'package-exe', 'test-exe-acceptance') + @(Get-ProjectTestSpecs | ForEach-Object Id)
     if ($MsixEnabled) { $required += 'package-msix', 'test-msix-acceptance' }
     foreach ($name in $required) {
-        if (-not $jobs.ContainsKey($name) -or $jobs[$name].result -cne 'success') { throw "Required job $name did not pass." }
+        if (-not $jobs.ContainsKey($name) -or
+            ($jobs[$name].result -cne 'success' -and -not (Test-ToleratedUIJob $name $jobs[$name]))) {
+            throw "Required job $name did not pass."
+        }
     }
     if (-not $MsixEnabled) {
         foreach ($name in @('package-msix', 'test-msix-acceptance')) {
@@ -57,7 +68,9 @@ Check 'Job results' {
     }
     foreach ($entry in $jobs.GetEnumerator()) {
         if (-not $MsixEnabled -and $entry.Key -in @('package-msix','test-msix-acceptance')) { continue }
-        if ($entry.Value.result -cne 'success') { throw "Required prerequisite $($entry.Key) did not pass." }
+        if ($entry.Value.result -cne 'success' -and -not (Test-ToleratedUIJob $entry.Key $entry.Value)) {
+            throw "Required prerequisite $($entry.Key) did not pass."
+        }
     }
 }
 Check 'Shared project tests / EXE smoke / installed UI' {
@@ -92,6 +105,7 @@ Check 'EXE artifact identity' {
     $details.EXE.UICases = @($ui.Report.Results).Count
     $details.EXE.UIOutcome = $ui.Outcome
     $details.EXE.UIRunResult = $ui.RunResult
+    $details.EXE.UIError = $ui.Error
 }
 if ($MsixEnabled) {
     Check 'MSIX smoke / installed UI / artifact identity' {
@@ -101,7 +115,7 @@ if ($MsixEnabled) {
         }
         $packageNames = @()
         $caseCount = 0
-        $uiOutcome = $null; $uiRunResult = $null
+        $uiOutcome = $null; $uiRunResult = $null; $uiError = $null
         foreach ($mode in @('Smoke', 'UI')) {
             $directory = Join-Path $Root "test-results-msix-$($mode.ToLowerInvariant())"
             $report = Get-Content -LiteralPath (Join-Path $directory 'msix-acceptance.json') -Raw | ConvertFrom-Json
@@ -120,7 +134,7 @@ if ($MsixEnabled) {
                 $ui = Read-InstalledUIReport $path 'test-msix-acceptance' $lifecyclePassed
                 $null = Assert-MsixUIReport $path $report.PackageFullName -Extended -AllowFailure:$AllowUIFailure
                 $caseCount += @($ui.Report.Results).Count
-                $uiOutcome = $ui.Outcome; $uiRunResult = $ui.RunResult
+                $uiOutcome = $ui.Outcome; $uiRunResult = $ui.RunResult; $uiError = $ui.Error
             } else {
                 foreach ($stage in @('first-run', 'retained-profile', 'fresh-profile')) {
                     $ui = Assert-MsixUIReport "$directory/$stage/ui-operation-results.json" $report.PackageFullName
@@ -134,7 +148,7 @@ if ($MsixEnabled) {
         if (@($packageNames | Select-Object -Unique).Count -ne 1) { throw 'MSIX smoke and UI installed different package identities.' }
         $details.MSIX = @{ ProductVersion = $artifact.ProductVersion; PackageVersion = $artifact.PackageVersion
             PackageSha256 = $artifact.PackageSha256; UploadSha256 = $(if ($artifact.Store) { $artifact.UploadSha256 } else { $null })
-            UICases = $caseCount; UIOutcome = $uiOutcome; UIRunResult = $uiRunResult }
+            UICases = $caseCount; UIOutcome = $uiOutcome; UIRunResult = $uiRunResult; UIError = $uiError }
     }
 } else { $rows.Add(@{ Name = 'MSIX'; Status = 'NotSelected'; Error = $null }) }
 $execution = if ($env:GITHUB_ACTIONS -eq 'true') { 'GitHubActions' } else { 'Local' }
@@ -144,21 +158,27 @@ foreach ($channel in @('EXE', 'MSIX')) {
     if (-not $data -or -not $data.UIOutcome) { continue }
     if ($data.UIOutcome -eq 'Failed' -or ($data.UIOutcome -eq 'Skipped' -and $uiOutcome -eq 'Passed')) { $uiOutcome = $data.UIOutcome }
     $name = "$channel extended UI" + $(if ($AllowUIFailure) { ' (non-blocking)' } else { '' })
-    $rows.Add(@{ Name = $name; Status = $data.UIOutcome; Error = $null })
+    $rows.Add(@{ Name = $name; Status = $data.UIOutcome; Error = $data.UIError })
 }
 $report = @{ Passed = $errors.Count -eq 0; SourceSha = $SourceSha; Execution = $execution; MsixEnabled = $MsixEnabled
     UIOutcome = $uiOutcome; AllowUIFailure = $AllowUIFailure.IsPresent; Checks = $rows.ToArray(); Details = $details }
 $report | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $Root 'pipeline-summary.json') -Encoding utf8NoBOM
-$lines = @('# Package acceptance', '', "Execution: $execution; source baseline: $SourceSha", '', '| Check | Result |', '| --- | --- |')
-$lines += @($rows | ForEach-Object { "| $($_.Name) | $($_.Status) |" })
+$lines = @('# Package acceptance', '', "Execution: $execution; source baseline: $SourceSha", '', '| Check | Result | Details |', '| --- | --- | --- |')
+$lines += @($rows | ForEach-Object {
+    $errorLine = ([string]$_.Error -split '\r?\n')[0].Replace('|', '\|')
+    "| $($_.Name) | $($_.Status) | $errorLine |"
+})
 $lines += @('', "Shared project tests passed: $($details.ProjectTestsPassed)", '', '| Channel | Product / package version | UI cases | Package SHA256 |', '| --- | --- | ---: | --- |')
 foreach ($channel in @('EXE', 'MSIX')) {
     $data = $details[$channel]
     if ($data) { $lines += "| $channel | $($data.ProductVersion) / $($data.PackageVersion) | $($data.UICases) | $($data.PackageSha256) |" }
 }
 if ($details.MSIX -and $details.MSIX.UploadSha256) { $lines += @('', "Store upload SHA256: $($details.MSIX.UploadSha256)") }
-$lines += @('', '| Project | Covered lines | Valid lines |', '| --- | ---: | ---: |')
-$lines += @($details.Coverage | ForEach-Object { "| $($_.Project) | $($_.Covered) | $($_.Valid) |" })
+$lines += @('', 'Product module coverage, merged by source path and line across all project reports.', '', '| Product module | Covered lines | Valid lines | Coverage |', '| --- | ---: | ---: | ---: |')
+$lines += @($details.Coverage | ForEach-Object {
+    $rate = if ($_.Valid -eq 0) { 'N/A' } else { "$([math]::Round(100 * $_.Covered / $_.Valid, 2))%" }
+    "| $($_.Module) | $($_.Covered) | $($_.Valid) | $rate |"
+})
 $lines += @('', $errors.ToArray())
 $lines | Set-Content (Join-Path $Root 'pipeline-summary.md') -Encoding utf8NoBOM
 if ($env:GITHUB_STEP_SUMMARY) { $lines -join "`n" >> $env:GITHUB_STEP_SUMMARY }

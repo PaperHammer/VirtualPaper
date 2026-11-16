@@ -298,6 +298,15 @@ jobs:
       with:
         ref: ${{ needs.prepare-metadata.outputs.main_sha }}
         persist-credentials: false
+    # Compute the key from authored files, before generated bin/obj are downloaded.
+    - name: Cache NuGet packages
+      uses: actions/cache@v6.1.0
+      with:
+        path: ~/.nuget/packages
+        key: nuget-msix-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props', 'global.json', 'packaging/msix/*.props', 'packaging/msix/*.wapproj', '.github/scripts/Build-Msix.ps1') }}
+        restore-keys: |
+          nuget-msix-${{ runner.os }}-
+          nuget-${{ runner.os }}-
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
       with:
@@ -351,7 +360,7 @@ jobs:
   test-artifacts:
     name: Artifact Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -366,7 +375,7 @@ jobs:
   test-core:
     name: Core Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -381,7 +390,7 @@ jobs:
   test-ui-logic:
     name: UI Logic Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Check out source
       uses: actions/checkout@v4
@@ -411,7 +420,7 @@ jobs:
   test-images:
     name: Static Image Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -426,7 +435,7 @@ jobs:
   test-web-backdrop:
     name: Web Backdrop Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -441,7 +450,7 @@ jobs:
   test-ui-components:
     name: UI Component Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -456,7 +465,7 @@ jobs:
   test-ml:
     name: ML Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -472,7 +481,7 @@ jobs:
   test-shader:
     name: Shader Tests
     runs-on: windows-latest
-    needs: [prepare-metadata, build-release, packages-ready]
+    needs: [prepare-metadata, build-release]
     steps:
     - name: Download build output
       uses: actions/download-artifact@v8.0.2
@@ -484,9 +493,24 @@ jobs:
       with:
         job-id: test-shader
         require-complete-execution: 'true'
+  tests-passed:
+    name: Tests Passed
+    runs-on: ubuntu-latest
+    needs: [test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    if: always() && !cancelled()
+    steps:
+    - name: Require all project tests
+      env:
+        JOB_RESULTS: ${{ toJSON(needs) }}
+      run: |
+        $jobs = $env:JOB_RESULTS | ConvertFrom-Json -AsHashtable
+        if ($jobs.Count -ne 8) { throw 'Missing project test job results.' }
+        foreach ($entry in $jobs.GetEnumerator()) {
+          if ($entry.Value.result -cne 'success') { throw "Required project test did not pass: $($entry.Key) ($($entry.Value.result))" }
+        }
   test-exe-acceptance:
     name: EXE Installed Acceptance
-    needs: [prepare-metadata, build-release, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    needs: [prepare-metadata, build-release, packages-ready, tests-passed]
     uses: ./.github/workflows/package-acceptance.yml
     with:
       channel: exe
@@ -494,7 +518,7 @@ jobs:
       build-artifact: build-release-output
   test-msix-acceptance:
     name: MSIX Installed Acceptance
-    needs: [prepare-metadata, build-release, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
+    needs: [prepare-metadata, build-release, packages-ready, tests-passed]
     if: needs.prepare-metadata.outputs.msstore_enabled == 'true'
     uses: ./.github/workflows/package-acceptance.yml
     with:
@@ -504,7 +528,7 @@ jobs:
   summarize-tests:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [prepare-metadata, build-release, package-exe, package-msix, packages-ready, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-exe-acceptance, test-msix-acceptance]
+    needs: [prepare-metadata, build-release, package-exe, package-msix, packages-ready, tests-passed, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-exe-acceptance, test-msix-acceptance]
     if: always() && needs.prepare-metadata.result == 'success'
     outputs:
       ui_outcome: ${{ steps.reports.outputs.ui_outcome }}
@@ -555,7 +579,12 @@ jobs:
     name: Sync Versions
     runs-on: windows-latest
     needs: [prepare-metadata, package-exe, summarize-tests]
-    if: needs.prepare-metadata.outputs.has_plugin_update != 'true'
+    if: |
+      !cancelled() &&
+      needs.prepare-metadata.result == 'success' &&
+      needs.package-exe.result == 'success' &&
+      needs.summarize-tests.result == 'success' &&
+      needs.prepare-metadata.outputs.has_plugin_update != 'true'
     outputs:
       main_sha: ${{ steps.sync-versions.outputs.main_sha }}
     steps:

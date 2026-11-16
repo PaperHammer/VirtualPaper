@@ -9,7 +9,7 @@ using Workloads.Creation.WebBackdrop.ViewModels;
 namespace WebBackdrop.Test.T_WebBackdrop;
 
 [TestClass]
-public class WebEditorViewModelTests {
+public partial class WebEditorViewModelTests {
     [TestInitialize]
     public void Initialize() {
         _testRoot = Path.Combine(

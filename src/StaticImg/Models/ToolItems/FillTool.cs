@@ -281,7 +281,12 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         private static uint ColorToBgra32(Color color) {
-            return (uint)(color.B | (color.G << 8) | (color.R << 16) | (color.A << 24));
+            // 图层使用预乘 Alpha；与 Win2D 绘制写入的像素格式保持一致。
+            uint alpha = color.A;
+            uint blue = (color.B * alpha + 127) / 255;
+            uint green = (color.G * alpha + 127) / 255;
+            uint red = (color.R * alpha + 127) / 255;
+            return blue | (green << 8) | (red << 16) | (alpha << 24);
         }
 
         private (long Version, CancellationTokenSource Cts) BeginFillRequest() {

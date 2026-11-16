@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Microsoft.Graphics.Canvas;
-using Microsoft.UI;
+using Windows.UI;
 using Microsoft.UI.Input;
 using VirtualPaper.Common.Extensions;
 using Windows.Foundation;
@@ -83,10 +83,10 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
             // 每条新笔画只在落笔时清空一次，避免上一条笔画的遮罩残留。
             using (var tempDs = TempRenderTarget.CreateDrawingSession())
-                tempDs.Clear(Colors.Transparent);
+                tempDs.Clear(Color.FromArgb(0, 0, 0, 0));
 
             using var ds = SnapshotRenderTarget.CreateDrawingSession();
-            ds.Clear(Colors.Transparent);
+            ds.Clear(Color.FromArgb(0, 0, 0, 0));
             ds.DrawImage(RenderTarget);
         }
 
@@ -152,9 +152,10 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
                 // *** TempRenderTarget 重用与增量绘制 ***
                 using (var dsTemp = TempRenderTarget.CreateDrawingSession()) {
+                    dsTemp.Units = CanvasUnits.Pixels;
                     // 同时清理上一帧范围，覆盖采样器替换末端点后边界轻微收缩的情况。
                     dsTemp.Blend = CanvasBlend.Copy;
-                    dsTemp.FillRectangle(dirtyBounds, Colors.Transparent);
+                    dsTemp.FillRectangle(dirtyBounds, Color.FromArgb(0, 0, 0, 0));
                     CurrentStroke.RenderIncrement(dsTemp, geometry);
                 }
 
@@ -170,6 +171,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
                 )) {
                     // 将合成结果写入 RenderTarget
                     using (var dsTarget = RenderTarget.CreateDrawingSession()) {
+                        dsTarget.Units = CanvasUnits.Pixels;
                         // 因为 MergeImages 返回的 Effect 已经包含了 SnapshotRT 的内容，
                         // 所以用 Copy 模式替换 RenderTarget 的内容。
                         dsTarget.Blend = CanvasBlend.Copy;
@@ -255,7 +257,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             try {
                 using (var ds = expandedCache.CreateDrawingSession()) {
                     ds.Units = CanvasUnits.Pixels;
-                    ds.Clear(Colors.Transparent);
+                    ds.Clear(Color.FromArgb(0, 0, 0, 0));
                     if (_committedStrokeCache != null) {
                         ds.DrawImage(
                             _committedStrokeCache,

@@ -13,7 +13,8 @@ function Assert-MsixAcceptanceReport($Report, [ValidateSet('Full', 'Smoke', 'UI'
     if ($Report.Passed -ne $true -or $Report.PackageSha256 -notmatch '^[0-9a-fA-F]{64}$' -or
         -not $Report.PackageFullName -or $Report.Error -or $actualMode -cne $Mode -or ($Mode -eq 'Focused' -and -not $Report.Module) -or
         @($Report.Stages).Count -ne @(Get-MsixAcceptanceStages $Mode).Count) {
-        throw 'MSIX acceptance is incomplete or failed.'
+        $reason = if ($Report.Error) { $Report.Error } else { 'Required stages or package identity are missing.' }
+        throw "MSIX acceptance is incomplete or failed. $reason"
     }
     foreach ($name in Get-MsixAcceptanceStages $Mode) {
         $stages = @($Report.Stages | Where-Object Name -CEQ $name)

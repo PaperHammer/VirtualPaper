@@ -75,6 +75,7 @@ if ($localRunner -match 'RunUIOperationTests|AllowUIFailure' -or
 & (Join-Path $repositoryRoot 'test/Test-BuiltInWallpaperTestSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-InstallerProcessSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReportSupport.ps1')
+& (Join-Path $repositoryRoot 'test/Test-CoverageReportSupport.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseVersion.ps1')
 & (Join-Path $repositoryRoot 'test/Test-ReleaseMetadata.ps1')
 Write-Host '[OK] Both workflows run independent smoke/UI jobs per channel; packages, project tests, smoke and uploads remain required.'

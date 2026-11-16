@@ -89,6 +89,37 @@ $report = New-PassReport
 $report.Results[0].Evidence.ProcessesExitedNormally = $false
 Assert-Rejected $report 'Abnormal process exit must fail'
 Assert-Rejected $null 'Missing report must fail'
+# Exercise the runner's actual error handler without launching any UI/process.
+$runnerAst = [System.Management.Automation.Language.Parser]::ParseFile("$PSScriptRoot/Run-UIOperationTests.ps1", [ref]$null, [ref]$null)
+$handler = $runnerAst.Find({ param($node)
+    $node -is [System.Management.Automation.Language.CatchClauseAst] -and
+        $node.Body.Extent.Text.Contains('New-UIOperationFailureReport')
+}, $true).Body.Extent.Text
+$failureHandler = [scriptblock]::Create($handler.Substring(1, $handler.Length - 2))
+$reportFullPath = Join-Path ([IO.Path]::GetTempPath()) "VirtualPaper.UIHostFailure-$([guid]::NewGuid().ToString('N')).json"
+$environment = Resolve-UIOperationEnvironment ([pscustomobject](New-DesktopState))
+try {
+    foreach ($process in @($null, [pscustomobject]@{ HasExited = $false }, [pscustomobject]@{ HasExited = $true; ExitCode = -1073741189 })) {
+        $rejected = $false
+        try { try { throw 'Fixture host failure or timeout' } catch { & $failureHandler } } catch { $rejected = $true }
+        Assert-Equal $rejected $true 'The runner must still fail after writing the diagnostic report'
+        $failure = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
+        Assert-Equal $failure.Status 'Failed' 'Host errors must not be reported as passed or skipped'
+        Assert-Equal $failure.Error 'Fixture host failure or timeout' 'Preserve the actual host failure'
+        Assert-Equal $failure.HostExitCode $(if ($process.HasExited) { $process.ExitCode } else { $null }) 'Capture only an exited host code'
+        Assert-Equal @($failure.Results).Count 0 'Do not invent completed case results'
+        Assert-Equal (Get-UIOperationReportOutcome $failure -AllowFailure) 'Failed' 'CI may record a host failure'
+        Assert-Rejected $failure 'Host failures must still block strict local acceptance'
+        Remove-Item -LiteralPath $reportFullPath
+    }
+    foreach ($original in @((New-PassReport | ConvertTo-Json -Depth 8), '{invalid report')) {
+        [IO.File]::WriteAllText($reportFullPath, $original)
+        try { try { throw 'Failure after an existing report' } catch { & $failureHandler } } catch { }
+        Assert-Equal ([IO.File]::ReadAllText($reportFullPath)) $original 'Never replace an existing complete, partial or malformed host report'
+    }
+} finally {
+    if (Test-Path -LiteralPath $reportFullPath) { Remove-Item -LiteralPath $reportFullPath }
+}
 # Read the registered cases independently of the report-gate policy.
 $source = Get-Content -LiteralPath "$PSScriptRoot/VirtualPaper.UIOperationTest/App.xaml.cs" -Raw
 $extendedCases = @([regex]::Matches($source, 'new UiTestCase\("([^"]+)"') | ForEach-Object { $_.Groups[1].Value } |

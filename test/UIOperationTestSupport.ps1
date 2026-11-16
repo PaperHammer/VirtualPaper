@@ -96,6 +96,15 @@ function New-UIOperationSkipReport($Environment) {
     }
 }
 
+function New-UIOperationFailureReport([string] $Message, $Environment, [Nullable[int]] $HostExitCode) {
+    if ([string]::IsNullOrWhiteSpace($Message)) { throw 'A UI host failure requires an error message.' }
+    [pscustomobject]@{
+        Status = 'Failed'; Passed = $false; Skipped = $false
+        ExpectedCount = 0; Results = @(); Error = $Message
+        HostExitCode = $HostExitCode; Environment = $Environment
+    }
+}
+
 function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure, [string]$FocusedModule) {
     if ($Report.Skipped -eq $true -or $Report.Status -eq 'Skipped') {
         $environment = $Report.Environment

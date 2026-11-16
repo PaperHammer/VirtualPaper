@@ -11,6 +11,8 @@
 
 ## 构建和验收
 
+覆盖率按产品源码所属模块展示。七组常规项目的正式报告按规范化源码路径和行号合并，命中取并集，每行只计一次；报告缺失或损坏仍阻塞。该指标仅代表已采集的产品源码，安装版 UI、脚本契约及未采集进程仍单独验收。
+
 共享构建和测试使用 .NET 10。EXE 首次安装及静默升级均检测并补装 x64 Desktop Runtime 和 Web 预览所需的 ASP.NET Core Runtime；MSIX 为每个进程发布已修补的自包含 .NET 10。安装包命名、更新路由和应用标识保持不变。
 
 首次从 .NET 8 迁移的发布必须是完整产品发布：使用 `version:*` 标签，不添加 `update-plugins` 或 `update-plugin-*` 标签。插件补丁不会安装新的系统运行时，也不会替换 Core。
@@ -26,11 +28,15 @@ EXE／MSIX 安装版扩展 UI 报告声称通过时，要求每个已选宿主�
 两个主入口中相同阶段使用一致的显示名称，包括 `Build Release` 和 `Test Summary`。 Windows 和 Ubuntu 的 run 块均默认使用 PowerShell（`pwsh`），包括打包门禁和汇总。
 
 1. 校验 PR，固定源码 SHA、版本和渠道选择；使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。
-2. `package-exe`、`package-msix` 并行消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 要求选中的包全部生成成功。
-3. 所选包全部成功后，八组共享项目测试只运行一轮，内部并行。Artifact Tests 仅消费构建产物，不检出源码；预期文案和映射已嵌入测试程序集。两路渠道验收均等待全部八组成功；失败或跳过时不开始安装。
+2. `package-exe`、`package-msix` 与项目测试并行，消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 要求选中的包全部生成成功。
+3. Release 构建完成后，八组共享项目测试各运行一次，与打包并行，不等待 `packages-ready`。Artifact Tests 仅消费构建产物，不检出源码；预期文案和映射已嵌入测试程序集。`tests-passed`（Tests Passed）只汇总八组任务结果，不检出源码、下载产物或重复测试。两路渠道验收同时等待 `packages-ready` 和 `tests-passed`；项目测试失败、取消、跳过或结果缺失时不开始安装。
 4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，每路启动互无依赖的 Smoke、UI Acceptance 两个 job，共四个 job 并行使用独立的全新 GitHub-hosted Windows VM。每个 job 自行检出同一固定源码、下载并核验对应构建与安装包、安装及卸载，分别保留报告。
-5. `Summarize-PipelineTests.ps1` 校验选中渠道的子流程结果及原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。包校验、项目测试和冒烟失败／跳过，身份不符或上传／报告缺失仍阻塞。两个工作流仅允许扩展 UI 运行失败及合法的环境跳过；记录真实步骤结果，继续显示 Failed／Skipped，不伪装为通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
+5. `Summarize-PipelineTests.ps1` 校验两个汇总关卡、各项目及选中渠道的任务结果和原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。包校验、项目测试和冒烟失败／跳过，身份不符或上传／报告缺失仍阻塞。两个工作流仅允许扩展 UI 运行失败及合法的环境跳过；记录真实步骤结果，继续显示 Failed／Skipped，不伪装为通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
 6. Pre-merge 在 PR head 回写 `pre-merge-check`。Pre-release 验收通过后仅在 main 提交一次产品版本，再将该 main 合回 dev，原子推送两分支。随后 `Draft Release (GitHub)` 和选中的 `Draft Release (Microsoft Store)` 并行执行，互不依赖；一路草稿失败不会阻止另一路执行。最后汇总两者结果。
+
+MSIX 打包在检出源码后、下载构建产物前恢复 `~/.nuget/packages`，避免生成的 `bin/obj` 影响 key。独立的 `nuget-msix` 缓存 key 包含依赖文件、SDK 选择及 MSIX 发布配置，依次回退到旧 MSIX 缓存和共享构建缓存；未命中时仍正常执行 restore。
+
+仅 UI job 使用任务级 `continue-on-error`，运行步骤及检查保留失败标记。父流程汇总要求 `ui_upload_result=success`，验证上传报告并保留真实 `ui_run_result`；上传失败或缺失仍阻塞。宿主崩溃／超时且尚未写出报告时，运行脚本生成 Failed 诊断报告，记录错误及可用的退出码，不补造用例结果。已有报告不会被替换，本地严格验收仍失败。
 
 子流程的两个独立 job 均固定使用 `windows-latest`，各自拒绝非 GitHub-hosted runner，因此每个 Smoke／UI job 使用独立 Windows VM 和桌面；不要求或承诺云端物理宿主不同。同一台自托管 Windows 上的两个 runner 进程不满足隔离要求。冒烟和 UI 各自安装、配置、卸载，互不等待或复用。冒烟及其清理失败仍阻止整体验收，但独立 UI job 可继续完成并上传诊断报告。需要活动且未锁定的 Default 桌面、Explorer、有效显示器、安装/证书信任所需提升权限、运行库和预置模型。桌面不可用必须明确跳过：冒烟仍阻止门禁，扩展 UI 有上传报告时可不阻塞；不能放宽检测或将跳过算作通过。
 

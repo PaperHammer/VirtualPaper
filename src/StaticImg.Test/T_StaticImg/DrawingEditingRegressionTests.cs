@@ -4,6 +4,7 @@ using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.Common.Utils.UndoRedo;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Shader;
@@ -11,6 +12,7 @@ using VirtualPaper.Shader.Models;
 using Windows.UI;
 using Workloads.Creation.StaticImg;
 using Workloads.Creation.StaticImg.Core.Utils;
+using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Extensions;
 using Workloads.Creation.StaticImg.Models;
 using Workloads.Creation.StaticImg.Models.SerializableData;
@@ -21,7 +23,7 @@ namespace StaticImg.Test.T_StaticImg;
 
 [TestClass]
 [DoNotParallelize]
-public class DrawingEditingRegressionTests {
+public partial class DrawingEditingRegressionTests {
     [TestInitialize]
     public void Initialize() {
         _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "VirtualPaper.DrawingEditing-" + Guid.NewGuid().ToString("N"))).FullName;
@@ -294,6 +296,47 @@ public class DrawingEditingRegressionTests {
         var vm = new InkCanvasViewModel(Session(path), null!);
         _viewModels.Add(vm);
         return vm;
+    }
+
+    [TestMethod]
+    [DataRow(96)]
+    [DataRow(144)]
+    [DataRow(192)]
+    public async Task ResizeAllLayers_UndoAndRedo_RestoreExactPixelsAfterSpillingToDisk(int dpi) {
+        var vm = Editable((uint)dpi);
+        var second = vm.Data.AddLayer("Second", needRecord: false);
+        using (var drawing = second.RenderData.RenderTarget.CreateDrawingSession()) {
+            drawing.Clear(Color.FromArgb(255, 60, 90, 120));
+        }
+        var originals = vm.Data.Layers.ToDictionary(layer => layer.Tag, layer => layer.RenderData.RenderTarget.GetPixelBytes());
+        var originalSize = vm.Data.CanvasSize;
+        var resized = new ArcSize(6, 4, (uint)dpi, RebuildMode.ResizeScale);
+        var notifications = new List<ArcSize>();
+        using var command = new LayerResizeScaleCommand(vm.Data, originalSize, resized, notifications.Add);
+        await command.UndoAsync();
+        Assert.IsEmpty(notifications, "Undo before execution must preserve the project.");
+        await command.ExecuteAsync();
+        Assert.AreEqual(resized, vm.Data.CanvasSize);
+        var afterResize = vm.Data.Layers.ToDictionary(layer => layer.Tag, layer => layer.RenderData.RenderTarget.GetPixelBytes());
+        foreach (var layer in vm.Data.Layers) {
+            Assert.IsGreaterThan(originals[layer.Tag].Length, afterResize[layer.Tag].Length);
+        }
+        long memoryBeforeSpill = command.EstimatedMemoryBytes;
+        using var store = new UndoDiskStore("resize-roundtrip", _root);
+        var spillable = (IDiskSpillableUndoCommand)command;
+        Assert.IsTrue(await spillable.TrySpillToDiskAsync(store, CancellationToken.None));
+        Assert.IsGreaterThan(0L, spillable.DiskStorageBytes);
+        Assert.IsLessThan(memoryBeforeSpill, command.EstimatedMemoryBytes);
+        await command.UndoAsync();
+        Assert.AreEqual(originalSize, vm.Data.CanvasSize);
+        foreach (var layer in vm.Data.Layers) CollectionAssert.AreEqual(originals[layer.Tag], layer.RenderData.RenderTarget.GetPixelBytes());
+        await command.ExecuteAsync();
+        Assert.AreEqual(resized, vm.Data.CanvasSize);
+        foreach (var layer in vm.Data.Layers) CollectionAssert.AreEqual(afterResize[layer.Tag], layer.RenderData.RenderTarget.GetPixelBytes());
+        CollectionAssert.AreEqual(new[] { resized, originalSize, resized }, notifications);
+        command.Dispose();
+        Assert.AreEqual(0L, spillable.DiskStorageBytes);
+        Assert.IsEmpty(Directory.GetFiles(store.SessionDirectory, "*.undo"));
     }
 
     private InkCanvasViewModel Editable(uint dpi) {

@@ -5,7 +5,7 @@ foreach ($text in @($workflow, $releaseWorkflow, $acceptanceWorkflow)) {
     }
 }
 $sharedNamePairs = @{ 'build-solution' = 'build-release' }
-foreach ($id in @('package-exe', 'package-msix', 'packages-ready', 'test-exe-acceptance', 'test-msix-acceptance', 'summarize-tests') + $specs.Id) {
+foreach ($id in @('package-exe', 'package-msix', 'packages-ready', 'tests-passed', 'test-exe-acceptance', 'test-msix-acceptance', 'summarize-tests') + $specs.Id) {
     $sharedNamePairs[$id] = $id
 }
 foreach ($pair in $sharedNamePairs.GetEnumerator()) {
@@ -29,6 +29,18 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     $gates = @($metadata, $buildId)
     Assert-JobNeeds $buildId @($metadata) $text
     foreach ($id in @('package-exe', 'package-msix')) { Assert-JobNeeds $id $gates $text }
+    $msix = Get-WorkflowJob 'package-msix' $text
+    $cache = [regex]::Match($msix, '(?ms)^    - name: Cache NuGet packages\r?\n.*?(?=^    - name:|\z)')
+    $checkoutIndex = $msix.IndexOf('    - name: Check out source', [StringComparison]::Ordinal)
+    $downloadIndex = $msix.IndexOf('    - name: Download build output', [StringComparison]::Ordinal)
+    if (-not $cache.Success -or -not $cache.Value.Contains('uses: actions/cache@') -or
+        -not $cache.Value.Contains('path: ~/.nuget/packages') -or -not $cache.Value.Contains('key: nuget-msix-${{ runner.os }}-') -or
+        -not $cache.Value.Contains("hashFiles('src/**/*.csproj'") -or -not $cache.Value.Contains("'global.json'") -or
+        -not $cache.Value.Contains("'.github/scripts/Build-Msix.ps1'") -or
+        -not $cache.Value.Contains('nuget-${{ runner.os }}-') -or
+        $checkoutIndex -lt 0 -or $cache.Index -lt $checkoutIndex -or $downloadIndex -lt $cache.Index) {
+        throw 'MSIX must restore its source-keyed NuGet cache after checkout and before downloading generated build output.'
+    }
     Assert-JobNeeds 'packages-ready' ($gates + @('package-exe', 'package-msix')) $text
     $ready = Get-WorkflowJob 'packages-ready' $text
     if (-not $ready.Contains('if: always() && !cancelled()') -or -not $ready.Contains("'success' } else { 'skipped'")) {
@@ -39,17 +51,47 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
         if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $project)) -or -not $solution.Contains("$($spec.Project)\$($spec.Project).csproj")) {
             throw "Test project missing from solution: $project"
         }
-        Assert-JobNeeds $spec.Id ($gates + 'packages-ready') $text
+        Assert-JobNeeds $spec.Id $gates $text
         $job = Get-WorkflowJob $spec.Id $text
         if ($job -match '(?m)^    if:' -or -not $job.Contains('uses: ./test/actions/run-project') -or
             -not $job.Contains("name: $artifactName") -or -not $job.Contains("require-complete-execution: 'true'")) {
-            throw 'Project jobs must reuse the fixed build after packaging and reject skipped tests.'
+            throw 'Project jobs must reuse the fixed build in parallel with packaging and reject skipped tests.'
         }
     }
+    Assert-JobNeeds 'tests-passed' $specs.Id $text
+    $testGate = Get-WorkflowJob 'tests-passed' $text
+    $gateRun = [regex]::Match($testGate, '(?ms)^      run: \|\r?\n(.*)\z')
+    if (-not $testGate.Contains('if: always() && !cancelled()') -or
+        -not $testGate.Contains('JOB_RESULTS: ${{ toJSON(needs) }}') -or -not $gateRun.Success) {
+        throw 'Tests Passed must aggregate all project outcomes even when a prerequisite failed or skipped.'
+    }
+    $gateScript = [scriptblock]::Create([regex]::Replace($gateRun.Groups[1].Value, '(?m)^        ', ''))
+    $previousJobResults = $env:JOB_RESULTS
+    $fixtureJobs = @{}
+    foreach ($spec in $specs) { $fixtureJobs[$spec.Id] = @{ result = 'success' } }
+    try {
+        $env:JOB_RESULTS = $fixtureJobs | ConvertTo-Json -Depth 4 -Compress
+        & $gateScript
+        foreach ($spec in $specs) {
+            foreach ($result in @('failure', 'cancelled', 'skipped', $null)) {
+                $fixtureJobs[$spec.Id].result = $result
+                $env:JOB_RESULTS = $fixtureJobs | ConvertTo-Json -Depth 4 -Compress
+                $rejected = $false
+                try { & $gateScript } catch { $rejected = $true }
+                if (-not $rejected) { throw "Tests Passed accepted a non-passing project: $($spec.Id) / $result" }
+            }
+            $fixtureJobs.Remove($spec.Id)
+            $env:JOB_RESULTS = $fixtureJobs | ConvertTo-Json -Depth 4 -Compress
+            $rejected = $false
+            try { & $gateScript } catch { $rejected = $true }
+            if (-not $rejected) { throw "Tests Passed accepted missing project results: $($spec.Id)" }
+            $fixtureJobs[$spec.Id] = @{ result = 'success' }
+        }
+    } finally { $env:JOB_RESULTS = $previousJobResults }
     $tests = @('test-exe-acceptance', 'test-msix-acceptance')
     foreach ($channel in @('exe', 'msix')) {
         $id = "test-$channel-acceptance"
-        Assert-JobNeeds $id ($gates + 'packages-ready' + $specs.Id) $text
+        Assert-JobNeeds $id ($gates + @('packages-ready', 'tests-passed')) $text
         $job = Get-WorkflowJob $id $text
         $shaOutput = if ($isRelease) { 'main_sha' } else { 'test_sha' }
         $sourceInput = 'source-sha: ${{ needs.' + $metadata + '.outputs.' + $shaOutput + ' }}'
@@ -66,7 +108,7 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     }
     if ($build -match 'dotnet test |node .github/scripts/test-') { throw 'Application tests must remain independent of the build.' }
     $summary = Get-WorkflowJob 'summarize-tests' $text
-    Assert-JobNeeds 'summarize-tests' ($gates + @('package-exe', 'package-msix', 'packages-ready') + $specs.Id + $tests) $text
+    Assert-JobNeeds 'summarize-tests' ($gates + @('package-exe', 'package-msix', 'packages-ready', 'tests-passed') + $specs.Id + $tests) $text
     if (-not $summary.Contains('./test/Summarize-PipelineTests.ps1') -or -not $summary.Contains('${{ toJSON(needs) }}') -or
         -not $summary.Contains('pattern: test-results-*') -or -not $summary.Contains('-AllowUIFailure')) {
         throw 'Summary must require raw reports and package identities while allowing reported extended UI failures.'
@@ -80,7 +122,7 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
 }
 if ($acceptanceWorkflow -notmatch '(?m)^  workflow_call:' -or
     $acceptanceWorkflow -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|workflow_dispatch|schedule):' -or
-    $acceptanceWorkflow -match '(?m)^    continue-on-error:|AllowUIFailure|UIJobResult|secrets:|New-CIMsixPackage|Build-Msix|Run-ProjectTests|dotnet test ') {
+    $acceptanceWorkflow -match 'AllowUIFailure|UIJobResult|secrets:|New-CIMsixPackage|Build-Msix|Run-ProjectTests|dotnet test ') {
     throw 'Installed acceptance must be a required reusable workflow that only consumes existing packages/builds.'
 }
 $jobSection = ($acceptanceWorkflow -split '(?m)^jobs:\r?\n', 2)[1]
@@ -104,14 +146,18 @@ foreach ($jobId in @('smoke', 'ui')) {
 }
 $smokeSteps = $stepsByJob.smoke; $uiSteps = $stepsByJob.ui
 $acceptanceSteps = @($smokeSteps) + @($uiSteps)
-if ([regex]::Matches($acceptanceWorkflow, '(?m)^      continue-on-error: true\s*$').Count -ne 2 -or
+if ([regex]::Matches($acceptanceWorkflow, '(?m)^    continue-on-error: true\s*$').Count -ne 1 -or
+    -not (Get-WorkflowJob 'ui' $acceptanceWorkflow).Contains('    continue-on-error: true') -or
+    (Get-WorkflowJob 'smoke' $acceptanceWorkflow) -match 'continue-on-error:' -or
     -not $acceptanceWorkflow.Contains('value: ${{ jobs.ui.outputs.ui_run_result }}') -or
-    -not (Get-WorkflowJob 'ui' $acceptanceWorkflow).Contains("ui_run_result: `${{ inputs.channel == 'exe' && steps.exe-ui.outcome || steps.msix-ui.outcome }}")) {
-    throw 'Expose the actual UI step outcome and tolerate failures only in the two extended UI run steps.'
+    -not $acceptanceWorkflow.Contains('value: ${{ jobs.ui.outputs.ui_upload_result }}') -or
+    -not (Get-WorkflowJob 'ui' $acceptanceWorkflow).Contains("ui_run_result: `${{ inputs.channel == 'exe' && steps.exe-ui.outcome || steps.msix-ui.outcome }}") -or
+    -not (Get-WorkflowJob 'ui' $acceptanceWorkflow).Contains("ui_upload_result: `${{ inputs.channel == 'exe' && steps.upload-exe-ui.outcome || steps.upload-msix-ui.outcome }}")) {
+    throw 'Expose actual UI run/upload outcomes; only the UI job may tolerate failure while retaining a failed check.'
 }
 foreach ($step in $acceptanceSteps) {
-    if ($step -match 'continue-on-error:' -and $step -notmatch '(?m)^      id: (exe|msix)-ui\s*$') {
-        throw 'Smoke, package verification and artifact uploads must never tolerate failures.'
+    if ($step -match 'continue-on-error:') {
+        throw 'Step failures must remain visible; only the UI job may tolerate failure, with required uploads checked by the summary.'
     }
 }
 # Execute each job's actual first-step guard without touching installations or a desktop.
@@ -154,8 +200,8 @@ foreach ($channel in @('exe', 'msix')) {
         @($uiSteps | Where-Object { $_ -match '(?m)^      id: (exe|msix)-smoke\s*$' }).Count -or
         -not $smoke[0].Contains("if: success() && inputs.channel == '$channel'") -or
         -not $ui[0].Contains("if: success() && inputs.channel == '$channel'") -or
-        -not $ui[0].Contains('continue-on-error: true')) {
-        throw 'Smoke and UI must stay in separate parallel jobs, with tolerated run failures only in UI.'
+        -not $ui[0].Contains("name: $($channel.ToUpperInvariant()) UI Operation Acceptance")) {
+        throw 'Smoke and UI must stay in separate parallel jobs, with clear channel-specific UI operation acceptance names.'
     }
     if ($channel -eq 'exe') {
         if ($smoke[0] -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild' -or $smoke[0] -match 'ExtendedUIReportPath' -or
@@ -173,6 +219,7 @@ foreach ($artifact in @('installer', 'ui-operation', 'msix-smoke', 'msix-ui')) {
     $channel = if ($artifact.StartsWith('msix-')) { 'msix' } else { 'exe' }
     if ($upload.Count -ne 1 -or -not $upload[0].Contains("if: always() && inputs.channel == '$channel'") -or
         -not $upload[0].Contains('uses: actions/upload-artifact@') -or -not $upload[0].Contains('if-no-files-found: error') -or
+        ($artifact -in @('ui-operation', 'msix-ui') -and -not $upload[0].Contains("id: upload-$channel-ui")) -or
         $ownerSteps -cnotcontains $upload[0]) {
         throw 'Both raw smoke/UI uploads remain required, including when the extended UI run fails.'
     }
@@ -188,7 +235,7 @@ if ($releaseWorkflow -match 'force-with-lease|reset --hard') { throw 'Release sy
 if (-not $action.Contains('-RequireCompleteExecution:')) { throw 'Project gates must reject skipped tests.' }
 $summary = Get-WorkflowJob 'summarize-tests'
 $statusExpression = [regex]::Match($summary, '(?s)const passed = (.*?);').Groups[1].Value
-@{ Expression = $statusExpression; Required = @('validate-pr', 'build-solution', 'packages-ready', 'package-exe', 'package-msix') + $specs.Id + @('test-exe-acceptance', 'test-msix-acceptance') } |
+@{ Expression = $statusExpression; Required = @('validate-pr', 'build-solution', 'packages-ready', 'tests-passed', 'package-exe', 'package-msix') + $specs.Id + @('test-exe-acceptance', 'test-msix-acceptance') } |
     ConvertTo-Json -Compress | & node -e @'
 const fs = require('fs');
 const f = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
@@ -201,6 +248,14 @@ function check(expected, value, ui='Passed', report='success') {
 }
 check(true,jobs);
 for(const name of f.Required) for(const result of ['failure','cancelled','skipped']) check(false,{...jobs,[name]:{result}});
+for (const name of ['test-exe-acceptance', 'test-msix-acceptance']) {
+  const failed = {result:'failure', outputs:{ui_run_result:'failure',ui_upload_result:'success'}};
+  check(true,{...jobs,[name]:failed},'Failed');
+  for (const ui_upload_result of ['failure','cancelled','skipped',undefined]) {
+    check(false,{...jobs,[name]:{...failed,outputs:{...failed.outputs,ui_upload_result}}},'Failed');
+  }
+  check(false,{...jobs,[name]:failed},'Failed','failure');
+}
 for(const ui of ['Skipped','Failed']) check(true,jobs,ui);
 check(false,jobs,'');
 check(false,jobs,'Passed','failure');
@@ -242,6 +297,7 @@ $storeConfig = [regex]::Match($prepare, '(?ms)^    - name: Validate Partner Cent
     Configuration = Get-ReleaseCondition $storeConfig 6
     Package = Get-ReleaseCondition (Get-WorkflowJob 'package-msix' $releaseWorkflow) 4
     Acceptance = Get-ReleaseCondition (Get-WorkflowJob 'test-msix-acceptance' $releaseWorkflow) 4
+    Sync = Get-ReleaseCondition (Get-WorkflowJob 'sync-versions' $releaseWorkflow) 4
     GitHubDraft = Get-ReleaseCondition (Get-WorkflowJob 'draft-release' $releaseWorkflow) 4
     StoreDraft = Get-ReleaseCondition (Get-WorkflowJob 'draft-msstore' $releaseWorkflow) 4
 } | ConvertTo-Json -Compress | & node -e @'
@@ -272,11 +328,16 @@ for (const enabled of [false,true]) for (const plugin of [false,true]) {
   const needs=fixture(enabled,plugin);
   for (const stage of ['Configuration','Package','Acceptance','StoreDraft']) check(stage,enabled,needs);
   check('GitHubDraft',true,needs);
+  check('Sync',!plugin,needs);
+  needs['test-exe-acceptance']={result:'failure',outputs:{ui_run_result:'failure',ui_upload_result:'success'}};
+  check('Sync',!plugin,needs);
   needs['draft-msstore'].result='failure'; check('GitHubDraft',true,needs);
   needs['draft-release'].result='failure'; check('StoreDraft',enabled,needs);
 }
-for (const [stage, packageId] of [['GitHubDraft','package-exe'],['StoreDraft','package-msix']]) {
-  for (const prerequisite of ['prepare-metadata',packageId,'summarize-tests','sync-versions']) {
+for (const [stage, packageId] of [['Sync','package-exe'],['GitHubDraft','package-exe'],['StoreDraft','package-msix']]) {
+  const required = ['prepare-metadata',packageId,'summarize-tests'];
+  if (stage !== 'Sync') required.push('sync-versions');
+  for (const prerequisite of required) {
     for (const result of ['failure','cancelled','skipped']) {
       const needs=fixture(); needs[prerequisite].result=result; check(stage,false,needs);
     }

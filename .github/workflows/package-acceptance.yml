@@ -19,6 +19,9 @@ on:
       ui_run_result:
         description: 'Actual extended UI step outcome, including tolerated failures'
         value: ${{ jobs.ui.outputs.ui_run_result }}
+      ui_upload_result:
+        description: 'Required UI report upload outcome'
+        value: ${{ jobs.ui.outputs.ui_upload_result }}
 
 permissions:
   contents: read
@@ -110,12 +113,15 @@ jobs:
         retention-days: 7
 
   ui:
-    name: ${{ inputs.channel == 'exe' && 'EXE' || 'MSIX' }} UI Acceptance
+    name: ${{ inputs.channel == 'exe' && 'EXE' || 'MSIX' }} UI Operation Acceptance
+    # Show failed UI jobs honestly; the parent summary still requires their report upload.
+    continue-on-error: true
     # Each job owns a fresh hosted VM and its own installation/profile.
     runs-on: windows-latest
     timeout-minutes: 90
     outputs:
       ui_run_result: ${{ inputs.channel == 'exe' && steps.exe-ui.outcome || steps.msix-ui.outcome }}
+      ui_upload_result: ${{ inputs.channel == 'exe' && steps.upload-exe-ui.outcome || steps.upload-msix-ui.outcome }}
     steps:
     - name: Validate acceptance inputs and runner
       env:
@@ -156,10 +162,9 @@ jobs:
       run: |
         . ./test/PackageArtifactSupport.ps1
         $null = Get-PackageArtifact "PackageArtifacts/$env:CHANNEL/package.json" $env:CHANNEL $env:SOURCE_SHA
-    - name: Install EXE and run installed UI then uninstall
+    - name: EXE UI Operation Acceptance
       id: exe-ui
       if: success() && inputs.channel == 'exe'
-      continue-on-error: true
       env:
         SOURCE_SHA: ${{ inputs.source-sha }}
       run: |
@@ -169,14 +174,14 @@ jobs:
         ./test/Run-InstallerTests.ps1 -InstallerPath $installer -NoBuild `
           -ReportPath TestResults/UIOperation/installed-acceptance.json `
           -ExtendedUIReportPath TestResults/UIOperation/ui-operation-results.json
-    - name: Install MSIX and run installed UI then uninstall
+    - name: MSIX UI Operation Acceptance
       id: msix-ui
       if: success() && inputs.channel == 'msix'
-      continue-on-error: true
       run: |
         ./test/Run-MsixTests.ps1 -PackageArtifact PackageArtifacts/msix/package.json -Mode UI `
           -ResultsRoot TestResults/MSIXUI
     - name: Upload test-results-ui-operation
+      id: upload-exe-ui
       if: always() && inputs.channel == 'exe'
       uses: actions/upload-artifact@v7.0.2
       with:
@@ -186,6 +191,7 @@ jobs:
         if-no-files-found: error
         retention-days: 7
     - name: Upload test-results-msix-ui
+      id: upload-msix-ui
       if: always() && inputs.channel == 'msix'
       uses: actions/upload-artifact@v7.0.2
       with:

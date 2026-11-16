@@ -160,6 +160,16 @@ try {
     }
     Write-Output "Report: $reportFullPath"
 }
+catch {
+    # A crashed/timed-out host cannot write its own report. Record a real failure,
+    # without inventing case results or replacing any report the host already wrote.
+    if (-not (Test-Path -LiteralPath $reportFullPath)) {
+        $exitCode = if ($null -ne $process -and $process.HasExited) { $process.ExitCode } else { $null }
+        New-UIOperationFailureReport $_.Exception.Message $environment $exitCode |
+            ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $reportFullPath -Encoding utf8
+    }
+    throw
+}
 finally {
     if ($null -ne $process) {
         if (-not $process.HasExited) { $process.Kill($true); $process.WaitForExit(5000) | Out-Null }

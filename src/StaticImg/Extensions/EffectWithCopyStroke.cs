@@ -1,7 +1,7 @@
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Effects;
 using Microsoft.Graphics.Canvas.Geometry;
-using Microsoft.UI;
+using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Brushes;
 using Workloads.Creation.StaticImg.Core.Utils;
 
@@ -18,10 +18,10 @@ namespace Workloads.Creation.StaticImg.Extensions {
             dsTemp.Units = CanvasUnits.Pixels;
             dsTemp.Blend = CanvasBlend.SourceOver;
             if (IsSinglePoint) {
-                dsTemp.FillGeometry(geometry, Colors.White);
+                dsTemp.FillGeometry(geometry, Color.FromArgb(255, 255, 255, 255));
             }
             else {
-                dsTemp.DrawGeometry(geometry, Colors.White, BrushArgs.Thickness, Style);
+                dsTemp.DrawGeometry(geometry, Color.FromArgb(255, 255, 255, 255), BrushArgs.Thickness, Style);
             }
         }
 

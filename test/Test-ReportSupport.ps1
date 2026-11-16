@@ -51,7 +51,8 @@ try {
         $directory = Join-Path $rawRoot $spec.Artifact
         Write-Trx (Join-Path $directory $spec.Report)
         if ($spec.Coverage) {
-            [IO.File]::WriteAllText((Join-Path $directory 'coverage.cobertura.xml'), '<coverage lines-covered="5" lines-valid="10"/>')
+            $sourceLines = (1..10 | ForEach-Object { '<line number="{0}" hits="{1}"/>' -f $_, [int]($_ -le 5) }) -join ''
+            [IO.File]::WriteAllText((Join-Path $directory 'coverage.cobertura.xml'), "<coverage lines-covered=`"5`" lines-valid=`"10`"><packages><package name=`"VirtualPaper.Fixture`"><classes><class filename=`"src/VirtualPaper.Fixture/Logic.cs`"><lines>$sourceLines</lines></class></classes></package></packages></coverage>")
             $staging = Join-Path $directory 'In/staging'
             New-Item -ItemType Directory -Path $staging -Force | Out-Null
             [IO.File]::WriteAllText((Join-Path $staging 'duplicate.cobertura.xml'), '<ignored/>')
@@ -60,7 +61,9 @@ try {
     # Even if a previous bundle is present, readers only consume the named raw reports.
     Write-Trx (Join-Path $rawRoot 'test-results-combined-previous/core-tests.trx')
     Assert-ReviewCondition (@(Get-ProjectTestReports $rawRoot).Count -eq 8) 'A previous summary must not duplicate project reports.'
-    Assert-ReviewCondition (@(Get-TestCoverageRows $rawRoot).Count -eq 7) 'Count one canonical coverage report per project.'
+    $coverage = @(Get-TestCoverageRows $rawRoot)
+    Assert-ReviewCondition ($coverage.Count -eq 1 -and $coverage[0].Module -eq 'VirtualPaper.Fixture' -and
+        $coverage[0].Covered -eq 5 -and $coverage[0].Valid -eq 10) 'Merge shared source lines across the seven canonical reports.'
 
     $installer = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Uninstall {}
     $ui = @{ Passed = $true; ExpectedCount = 1; Results = @(@{
@@ -77,6 +80,9 @@ try {
     $env:GITHUB_STEP_SUMMARY = Join-Path $fixture 'summary.md'
     & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot
     Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Passed')) 'Summary must validate independent UI results.'
+    $summaryText = Get-Content $env:GITHUB_STEP_SUMMARY -Raw
+    Assert-ReviewCondition ($summaryText.Contains('| VirtualPaper.Fixture | 5 / 10 | 50% |') -and
+        $summaryText.Contains('**Merged source lines:** 5 / 10')) 'Local summary must display product modules and merged totals rather than repeated suite denominators.'
     [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
     Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Release must reject skipped project tests'
     Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Skipped release tests must not emit success outputs.'
@@ -184,7 +190,7 @@ try {
         Assert-ReportThrows { & $runner -JobId $case[1] } $case[0]
     }
     Assert-ReportThrows { & $runner -JobId unknown } 'Unknown project'
-    Write-Host '[OK] TRX validity, report isolation on retry, per-project coverage, explicit UI skips and shared runner failure propagation.'
+    Write-Host '[OK] TRX validity, report isolation on retry, merged product-module coverage, explicit UI skips and shared runner failure propagation.'
 } finally {
     Remove-Item Function:\dotnet -ErrorAction SilentlyContinue
     Remove-Variable ReportTestArguments, ReportTestMode, ReportTestBin, ReportDotnetCalls -Scope Global -ErrorAction SilentlyContinue

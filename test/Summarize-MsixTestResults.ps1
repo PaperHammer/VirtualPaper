@@ -22,8 +22,11 @@ $lines = @('# MSIX acceptance', '', "Package: $($report.PackageFullName)", '', "
     "Project tests passed: $(($projects | Measure-Object Passed -Sum).Sum); UI cases passed: $uiCount.", '',
     '| Stage | Result |', '| --- | --- |')
 $lines += @($report.Stages | ForEach-Object { "| $($_.Name) | $($_.Status) |" })
-$lines += @('', '| Project | Covered lines | Valid lines |', '| --- | --- | --- |')
-$lines += @($coverage | ForEach-Object { "| $($_.Project) | $($_.Covered) | $($_.Valid) |" })
+$lines += @('', 'Product module coverage, merged by source path and line across all project reports.', '', '| Product module | Covered lines | Valid lines | Coverage |', '| --- | ---: | ---: | ---: |')
+$lines += @($coverage | ForEach-Object {
+    $rate = if ($_.Valid -eq 0) { 'N/A' } else { "$([math]::Round(100 * $_.Covered / $_.Valid, 2))%" }
+    "| $($_.Module) | $($_.Covered) | $($_.Valid) | $rate |"
+})
 $lines += @('', 'WACK, cross-version upgrades, clean-machine prerequisites and persistent OS settings are separate release checks.')
 $lines | Set-Content -LiteralPath (Join-Path $Root 'msix-summary.md') -Encoding utf8
 $lines | Write-Output

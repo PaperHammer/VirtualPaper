@@ -31,6 +31,10 @@ foreach ($stage in $focused.Stages) {
     $stage.Status = 'Passed'
 }
 $report = New-PassReport
+$report | Add-Member Error 'Host exited without a report (exit -1073741189)'
+try { Assert-MsixAcceptanceReport $report; throw 'Expected the host failure to be rejected.' }
+catch { if ($_.Exception.Message -notlike '*Host exited without a report (exit -1073741189)*') { throw } }
+$report = New-PassReport
 $report.Stages += [pscustomobject]@{ Name = 'Unknown'; Status = 'Failed' }
 Assert-Rejected { Assert-MsixAcceptanceReport $report }
 foreach ($name in Get-MsixAcceptanceStages) {

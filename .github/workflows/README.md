@@ -17,7 +17,7 @@ The first release migrating from .NET 8 must be a full product release with a `v
 
 Workflow contracts validate project-file activation declarations and icon frames. MSIX packaging also checks the actual association parameters and icons; installed Explorer activation remains a desktop acceptance item.
 
-Installed extended UI reports must include `Feedback.Library.ImportCountCancelAndSummary` and `Feedback.Intelligent.FailureDetails` exactly once, alongside the application modules. These production-control fixtures verify import/result messages and AI failure layouts; they do not replace real inference, installed application cases or clean-machine runtime provisioning. The report contract rejects missing and duplicate feedback cases.
+Installed extended UI reports must contain every selected host case exactly once, including localization, organization, presets, feedback and hardware checks. Contracts compare the required policy with host registration and reject each missing or duplicate case for both EXE and MSIX. Opt-in idle tests and explicit MSIX profile stages remain separate. Controlled feedback fixtures do not replace real inference, installed application cases or clean-machine runtime provisioning.
 
 The shared UI suite requires `ProjectActivation`, which exercises the real Core/UI project-opening path without changing daily file associations.
 

@@ -132,24 +132,51 @@ function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure, [string]$F
     return 'Passed'
 }
 
-# Standard and focused reports remain valid for their callers. Installed extended
-# acceptance additionally requires every application module, regardless of counts.
+# Installed extended acceptance must contain every selected case, not just one per module.
+# Test-UIOperationTestSupport compares this policy with the independently registered host cases.
+function Get-RequiredExtendedUICases {
+    @(
+        'Localization.LiveText.RefreshAndPreserveState'
+        'Localization.LongText.IntelligentLayouts'
+        'Localization.RegionalFormats.EffectsSaveAndReopen'
+        'Localization.FontFallback.MixedScripts'
+        'Feedback.Library.ImportCountCancelAndSummary'
+        'Feedback.Intelligent.FailureDetails'
+        'GeneralEffect.RImage.EditRestoreSaveAndReopen'
+        'GeneralEffect.RImage3D.EditRestoreSaveAndReopen'
+        'Application.NavigationSettings.SaveAndReopen'
+        'Application.PerformanceSettings.SaveAndReopen'
+        'Application.HardwareAcceleration.StartupPolicyAndOptions'
+        'Application.HardwareAcceleration.SoftwareDrawingSaveReopenAndExport'
+        'Application.HardwareAcceleration.SoftwareWebEditSaveReopenAndExport'
+        'Application.WallpaperLibrary.ImportApplyCloseDelete'
+        'Application.WallpaperLibrary.ImportMultipleFormatsAndReopen'
+        'Application.WallpaperLibrary.BuiltInsApplyRenderAndClose'
+        'Application.WallpaperLibrary.OrganizeAndReopen'
+        'Application.EffectPresetManager.CreateCopyDeleteAndReopen'
+        'Application.ScreenSaver.SettingsAndWhitelist'
+        'Application.ScreenFit.PreviewCancelApplyAndReopen'
+        'Application.WallpaperEffects.EditRestoreSaveAndReopen'
+        'Application.GeneralSettings.SaveLanguageThemeAndReopen'
+        'Application.ThemeSync.MainWindowAndTray'
+        'Application.SystemSettings.ExportLogsAndCancel'
+        'Application.StaticEditor.RotateCancelSaveReopenAndExport'
+        'Application.WebEditor.CreateFilesSaveReopenAndExport'
+        'Application.ProjectActivation.StartForwardReuseAndReopen'
+        'Application.EditorExit.ImageCancelSaveAndExit'
+        'Application.EditorExit.WebCancelSaveAndDiscard'
+        'Application.Intelligent.ConfigureCancelAndReopen'
+        'Application.ModelInference.SuperResolutionQueueCancelSaveAndImport'
+        'Application.HardwareAcceleration.DeviceChoiceAndEnhancement'
+        'Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen'
+        'Application.Rendering.DepthInferenceDrawPauseAndResume'
+    )
+}
+
 function Assert-ExtendedUIModules($Report) {
-    foreach ($case in @('Feedback.Library.ImportCountCancelAndSummary', 'Feedback.Intelligent.FailureDetails')) {
+    foreach ($case in Get-RequiredExtendedUICases) {
         if (@($Report.Results | Where-Object Name -CEQ $case).Count -ne 1) {
-            throw "Missing or duplicate required feedback UI case: $case"
-        }
-    }
-    foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor',
-        'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration', 'ProjectActivation')) {
-        if (@($Report.Results | Where-Object Name -Like "Application.$module.*").Count -lt 1) {
-            throw "Missing required installed UI module: $module"
-        }
-    }
-    foreach ($case in @('StartupPolicyAndOptions', 'SoftwareDrawingSaveReopenAndExport',
-        'SoftwareWebEditSaveReopenAndExport', 'DeviceChoiceAndEnhancement')) {
-        if (@($Report.Results | Where-Object Name -CEQ "Application.HardwareAcceleration.$case").Count -ne 1) {
-            throw "Missing or duplicate required hardware acceleration UI case: $case"
+            throw "Missing or duplicate required extended UI case: $case"
         }
     }
 }

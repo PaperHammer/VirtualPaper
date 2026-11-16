@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/PackageArtifactSupport.ps1"
+. "$PSScriptRoot/UIOperationTestSupport.ps1"
 . "$PSScriptRoot/MsixTestSupport.ps1"
 . "$PSScriptRoot/InstallerTestSupport.ps1"
 . "$PSScriptRoot/../.github/scripts/StoreSubmission.ps1"
@@ -156,11 +157,7 @@ try {
     $installer | Add-Member NoteProperty PackageVersion '0.6.0.0'
     Save-Json $installer "$raw/test-results-installer/installer-results.json"
     Save-Json $installer "$raw/test-results-ui-operation/installed-acceptance.json"
-    $uiModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering','ProjectActivation')
-    $hardwareCases = @('StartupPolicyAndOptions','SoftwareDrawingSaveReopenAndExport','SoftwareWebEditSaveReopenAndExport','DeviceChoiceAndEnhancement')
-    $feedbackCases = @('Feedback.Library.ImportCountCancelAndSummary', 'Feedback.Intelligent.FailureDetails')
-    $uiCases = @($uiModules | ForEach-Object { "Application.$_.Fixture" }) +
-        @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" }) + $feedbackCases
+    $uiCases = @(Get-RequiredExtendedUICases)
     $ui = @{ Passed = $true; ExpectedCount = $uiCases.Count; Results = @($uiCases | ForEach-Object {
         @{ Name = $_; Passed = $true; Evidence = @{ CoreProcessId = 1; UiProcessIds = @(2); ProcessesExitedNormally = $true
             PackageFullName = 'owned_1.2611.1.0_x64__publisher'; PackageActivation = 'AUMID'; UnitTestBehaviorOverridesEnabled = $false } }
@@ -237,21 +234,7 @@ try {
     # Counts alone cannot distinguish a reduced UI suite from full installed acceptance.
     foreach ($path in @('test-results-ui-operation/ui-operation-results.json', 'test-results-msix-ui/extended-ui/ui-operation-results.json')) {
         $check = if ($path.StartsWith('test-results-msix-')) { $msixCheck } else { 'EXE artifact identity' }
-        foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor', 'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration', 'ProjectActivation')) {
-            Reject-ChangedReport "$raw/$path" $check {
-                param($report)
-                $report.Results = @($report.Results | Where-Object Name -NotLike "Application.$module.*")
-                $report.ExpectedCount = $report.Results.Count
-            }
-        }
-        foreach ($case in $hardwareCases) {
-            Reject-ChangedReport "$raw/$path" $check {
-                param($report)
-                $report.Results = @($report.Results | Where-Object Name -CNE "Application.HardwareAcceleration.$case")
-                $report.ExpectedCount = $report.Results.Count
-            }
-        }
-        foreach ($case in $feedbackCases) {
+        foreach ($case in $uiCases) {
             Reject-ChangedReport "$raw/$path" $check {
                 param($report)
                 $report.Results = @($report.Results | Where-Object Name -CNE $case)

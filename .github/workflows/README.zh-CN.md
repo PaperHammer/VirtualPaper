@@ -17,22 +17,22 @@
 
 工作流契约检查项目文件激活声明和图标帧。MSIX 打包还检查实际包内的关联参数与图标，安装后的资源管理器激活仍属于桌面验收项。
 
-EXE／MSIX 安装版扩展 UI 报告要求每个已选宿主用例恰好出现一次，包括多语言、壁纸整理、预设、反馈及硬件检查。契约对照必需清单与宿主登记，逐项拒绝缺少或重复的用例；可选真实空闲测试和显式 MSIX 配置阶段仍独立执行。受控反馈夹具不替代真实推理、安装版应用用例或干净机运行时补装。
+EXE／MSIX 安装版扩展 UI 报告声称通过时，要求每个已选宿主用例恰好出现一次，包括多语言、壁纸整理、预设、反馈及硬件检查。契约对照必需清单与宿主登记，逐项拒绝缺少或重复的用例；可选真实空闲测试和显式 MSIX 配置阶段仍独立执行。受控反馈夹具不替代真实推理、安装版应用用例或干净机运行时补装。
 
 共用 UI 测试要求包含 `ProjectActivation` 模块，验证真实 Core/UI 的项目打开链路，不修改日常文件关联。
 
-共享真实 UI 测试集新增壁纸整理与效果预设管理用例，详见[测试清单](../../test/README.zh-CN.md#壁纸库)。标准／扩展测试集均包含两项，渠道隔离和禁止跳过的门禁保持不变。本地源码／编译检查与实际执行 UI 用例分别记录。
+共享真实 UI 测试集新增壁纸整理与效果预设管理用例，详见[测试清单](../../test/README.zh-CN.md#壁纸库)。标准／扩展测试集均包含两项，渠道隔离及冒烟必须通过且无跳过的门禁保持不变。本地源码／编译检查与实际执行 UI 用例分别记录。
 
 两个主入口中相同阶段使用一致的显示名称，包括 `Build Release` 和 `Test Summary`。 Windows 和 Ubuntu 的 run 块均默认使用 PowerShell（`pwsh`），包括打包门禁和汇总。
 
 1. 校验 PR，固定源码 SHA、版本和渠道选择；使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。
 2. `package-exe`、`package-msix` 并行消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 要求选中的包全部生成成功。
 3. 所选包全部成功后，八组共享项目测试只运行一轮，内部并行。Artifact Tests 仅消费构建产物，不检出源码；预期文案和映射已嵌入测试程序集。两路渠道验收均等待全部八组成功；失败或跳过时不开始安装。
-4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，分别使用全新的 GitHub-hosted Windows VM。每路内部顺序执行：冒烟并卸载清理 → 独立重装同一产物 → 扩展 UI 并卸载清理。两渠道可并行，同一渠道内冒烟和 UI 串行。
-5. `Summarize-PipelineTests.ps1` 校验选中渠道的子流程结果及原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。必需阶段失败、跳过或证据缺失均阻塞；两个工作流的 UI 也必须通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
+4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，每路启动互无依赖的 Smoke、UI Acceptance 两个 job，共四个 job 并行使用独立的全新 GitHub-hosted Windows VM。每个 job 自行检出同一固定源码、下载并核验对应构建与安装包、安装及卸载，分别保留报告。
+5. `Summarize-PipelineTests.ps1` 校验选中渠道的子流程结果及原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。包校验、项目测试和冒烟失败／跳过，身份不符或上传／报告缺失仍阻塞。两个工作流仅允许扩展 UI 运行失败及合法的环境跳过；记录真实步骤结果，继续显示 Failed／Skipped，不伪装为通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
 6. Pre-merge 在 PR head 回写 `pre-merge-check`。Pre-release 验收通过后仅在 main 提交一次产品版本，再将该 main 合回 dev，原子推送两分支。随后 `Draft Release (GitHub)` 和选中的 `Draft Release (Microsoft Store)` 并行执行，互不依赖；一路草稿失败不会阻止另一路执行。最后汇总两者结果。
 
-子流程固定只有一个 `windows-latest` job，并拒绝非 GitHub-hosted runner，因此两路调用使用不同 Windows VM 和桌面；不要求或承诺云端物理宿主不同。同一台自托管 Windows 上的两个 runner 进程不满足隔离要求。每路内冒烟和 UI 使用独立安装/配置，顺序执行；冒烟清理失败时不启动 UI。需要活动且未锁定的 Default 桌面、Explorer、有效显示器、安装/证书信任所需提升权限、运行库和预置模型。桌面不可用必须明确跳过并阻止门禁，不能放宽检测。
+子流程的两个独立 job 均固定使用 `windows-latest`，各自拒绝非 GitHub-hosted runner，因此每个 Smoke／UI job 使用独立 Windows VM 和桌面；不要求或承诺云端物理宿主不同。同一台自托管 Windows 上的两个 runner 进程不满足隔离要求。冒烟和 UI 各自安装、配置、卸载，互不等待或复用。冒烟及其清理失败仍阻止整体验收，但独立 UI job 可继续完成并上传诊断报告。需要活动且未锁定的 Default 桌面、Explorer、有效显示器、安装/证书信任所需提升权限、运行库和预置模型。桌面不可用必须明确跳过：冒烟仍阻止门禁，扩展 UI 有上传报告时可不阻塞；不能放宽检测或将跳过算作通过。
 
 EXE UI 使用 `Run-InstallerTests.ps1 -ExtendedUIReportPath ...`，自行安装后对已安装 Core 运行扩展 UI，继续完成生命周期并卸载。它不借用冒烟安装，也不以 Release 目录代替安装体验证。已有安装、AppId 和快捷方式保护仍然有效。
 

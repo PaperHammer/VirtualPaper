@@ -97,7 +97,7 @@ flowchart LR
     F --> G[汇总]
 ```
 
-本地失败阻止后续阶段，尝试安装后仍执行清理；真实 UI 在本地顺序运行。CI 固定 PR/版本化源码，先并行生成选中的包，再运行一轮八组共享项目测试。全部通过后，EXE/MSIX 验收子流程在两台独立 hosted Windows VM 上并行，每路内部先冒烟卸载，再重新安装运行扩展 UI 并卸载。所有选中的检查（含扩展 UI）必须无跳过通过。本地不回写 PR 状态或同步版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+本地失败阻止后续阶段，尝试安装后仍执行清理；真实 UI 在本地顺序运行。CI 固定 PR/版本化源码，先并行生成选中的包，再运行一轮八组共享项目测试。全部通过后，EXE/MSIX 验收子流程各启动互无依赖的 Smoke、UI Acceptance 两个 job，共四台独立 hosted Windows VM 并行，各自安装、配置和卸载。项目测试和冒烟必须无跳过通过；仅扩展 UI 运行可在上传必需报告后不阻塞。本地不回写 PR 状态或同步版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 安装验收使用较短的隔离临时配置路径，避免超出 Inno Setup 6 的路径限制。验收结束后复制到安装报告旁的 `.artifacts/profiles` 目录，再清理临时目录。
 
@@ -167,7 +167,7 @@ msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release '/p:Platform=Any 
 
 环境不适用时，生成包含 `Status: Skipped`、`Passed: false`、`ExpectedCount: 0` 及原因的报告，并以退出码 0 结束。原因包括 `WindowsRequired`、`NoInteractiveDesktop`、`NoDisplay` 和 `NoDesktopShell`。详细信息写入 `.artifacts/environment.json`。
 
-无可用桌面时 UI 写入明确的跳过报告。选中的 CI 安装冒烟/UI 均拒绝跳过；本地严格验收也拒绝失败、超时和报告缺失。桌面检测不修改会话、注册表或显示配置。
+无可用桌面时 UI 写入明确的跳过报告。CI 安装冒烟拒绝跳过；扩展 UI 有上传报告时可不阻塞，并明确保留跳过状态；本地严格验收也拒绝失败、超时和报告缺失。桌面检测不修改会话、注册表或显示配置。
 
 ## 默认覆盖范围
 
@@ -480,7 +480,7 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`，与本地/Web 脚本的 Node.js 设置独立。版本及摘要校验说明见[工作流指南](../.github/workflows/README.zh-CN.md)。
 
-所选包全部成功后，CI 的八组共享项目测试只运行一轮，内部并行。全部通过后，`test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，分别使用全新的 GitHub-hosted Windows VM。每路内部顺序执行冒烟卸载 → 独立重装并扩展 UI → 卸载；清理失败阻止 UI。消费既有渠道产物并核对源码 SHA/哈希，选中渠道的原始冒烟/UI 报告仍必须齐全（每渠道两份）。同一 Windows 桌面上的两个 runner 进程不满足隔离要求。本地完整入口仍先完成冒烟并卸载，再运行独立 Release UI。
+所选包全部成功后，CI 的八组共享项目测试只运行一轮，内部并行。全部通过后，`test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，每路启动独立的 `smoke`、`ui` 两个 job，共四台全新 GitHub-hosted Windows VM 并行运行，冒烟和 UI 互无依赖。每个 job 消费相同的既有渠道产物并核对源码 SHA／哈希，自行安装、配置和卸载；冒烟或其清理失败仍阻止整体验收，独立 UI 可继续完成并保留诊断报告。选中渠道的原始冒烟/UI 报告仍必须齐全（每渠道两份）。同一 Windows 桌面上的两个 runner 进程不满足隔离要求。本地完整入口仍先完成冒烟并卸载，再运行独立 Release UI。
 
 `Run-InstallerTests.ps1` 只对一个真实安装包、一个独有临时安装目录执行必需冒烟：
 
@@ -508,11 +508,11 @@ CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，�
 
 商店发布材料有独立的离线契约 `test/Test-StoreMaterials.ps1`，同时纳入工作流契约校验。检查所有支持语种、字段长度、首发与更新说明、PNG 引用／尺寸、稳定材料哈希、按内容命名的导出图片，以及无效输入不会留下半成品输出。`Test-PackagePipeline.ps1` 以 HTTP 模拟运行实际草稿入口，覆盖安装包／图片 ZIP 引用、文案与截图更新、其他商店数据保留、已上传图片复用、最终回读及材料变化后的重试拒绝。它不采集界面、不安装包，也不连接 Partner Center。统一的源文件／采集／发布标准见 [resources/store](../resources/store/README.zh-CN.md)。
 
-CI 使用 `Summarize-PipelineTests.ps1`：共享 TRX/覆盖率、选中的包、对应子流程结果及原始冒烟/UI 报告均须通过。报告缺失、清理失败、桌面验收跳过或源码/包哈希变化均阻止 PR 成功与版本/草稿写入。工作流契约执行实际发布条件，覆盖精确商店标签、未选渠道跳过、草稿独立执行、插件发布及前置任务失败／取消／跳过。版本同步契约使用隔离本地 Git 仓库，验证 main 单次版本提交、dev 真实合并祖先关系、并行开发保留、重跑幂等、文本/二进制/删除/重命名冲突采用 main、dev 不冲突块保留及原子推送拒绝。旧 `Summarize-TestResults.ps1 -AllowUIFailure` 仅保留诊断兼容用途，两条 CI 均不调用。渠道选择、正式商店变量和重试见[工作流说明](../.github/workflows/README.zh-CN.md)。
+CI 使用 `Summarize-PipelineTests.ps1 -AllowUIFailure`：共享 TRX/覆盖率、选中的包和独立冒烟仍须通过。仅扩展 UI 运行失败及合法的环境跳过不阻塞；渠道仍须上传可读取的生命周期/UI 报告，并输出真实步骤结果。上传／报告缺失、冒烟失败／跳过、包身份不符或源码／包哈希变化仍阻止 PR 成功及版本／草稿写入。汇总保留 UI 的 Failed／Skipped 状态，本地验收保持严格。工作流契约执行实际发布条件，覆盖精确商店标签、未选渠道跳过、草稿独立执行、插件发布及前置任务失败／取消／跳过。版本同步契约使用隔离本地 Git 仓库，验证 main 单次版本提交、dev 真实合并祖先关系、并行开发保留、重跑幂等、文本/二进制/删除/重命名冲突采用 main、dev 不冲突块保留及原子推送拒绝。流水线汇总内部也按同一 UI 策略调用 `Summarize-TestResults.ps1`；报告存在性及产物身份仍由流水线汇总强制校验。渠道选择、正式商店变量和重试见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 工作流契约包含隔离 Git 测试，覆盖仅在 `main` 生成版本提交、合回 `dev`、保留新增开发内容、冲突清理、重跑、下一次发布及原子推送被拒绝。测试仅使用本地 fixture 远端，不向 GitHub 推送。
 
-打包汇总契约还会拒绝安装包哈希／版本不符、MSIX 源代码版本与包身份不符、配置验收报告缺失，以及内置壁纸证据不完整。两个渠道的完整安装 UI 验收均要求八个模块及 `HardwareAcceleration` 的四项用例齐全，即使精简后的报告声称全部预期用例通过也不能放行。反例完成后会恢复并重新验证通过样本；这些契约不会真实安装程序或操作 UI。
+打包汇总契约还会拒绝安装包哈希／版本不符、MSIX 源代码版本与包身份不符、配置验收报告缺失，以及内置壁纸证据不完整。声称扩展 UI 通过的报告必须包含全部必需用例，包括 `HardwareAcceleration` 的四项；两个渠道都拒绝精简后的通过报告。契约另覆盖有上传报告的 UI 失败／跳过、报告缺失／损坏、上传／任务失败，以及渠道小写／混合大小写输入，同时保留 SHA／哈希校验。反例完成后会恢复并重新验证通过样本；这些契约不会真实安装程序或操作 UI。
 
 ## 添加覆盖
 

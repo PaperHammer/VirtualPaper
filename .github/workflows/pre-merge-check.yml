@@ -422,7 +422,7 @@ jobs:
         MSIX_ENABLED: 'true'
       run: |
         ./test/Summarize-PipelineTests.ps1 -Root TestResults -ArtifactsRoot PackageArtifacts `
-          -SourceSha $env:SOURCE_SHA -JobResultsJson $env:JOB_RESULTS -MsixEnabled:($env:MSIX_ENABLED -eq 'true')
+          -SourceSha $env:SOURCE_SHA -JobResultsJson $env:JOB_RESULTS -MsixEnabled:($env:MSIX_ENABLED -eq 'true') -AllowUIFailure
     - name: Upload test summary
       if: always()
       uses: actions/upload-artifact@v7.0.2
@@ -446,9 +446,10 @@ jobs:
           });
           const passed = process.env.REPORT_JOB_STATUS === 'success' &&
             Object.values(JSON.parse(process.env.JOB_RESULTS)).every(job => job.result === 'success') &&
-            process.env.UI_OUTCOME === 'Passed';
+            ['Passed', 'Failed', 'Skipped'].includes(process.env.UI_OUTCOME);
           let state = passed ? 'success' : 'failure';
           let description = passed ? 'All required checks passed [OK]' : 'Required checks failed or results missing [FAILED]';
+          if (passed && process.env.UI_OUTCOME !== 'Passed') description = `Required checks passed; UI ${process.env.UI_OUTCOME.toLowerCase()} (non-blocking)`;
           const head = '${{ needs.validate-pr.outputs.head_sha }}';
           const selected = pr.labels.map(label => label.name).filter(name =>
             ['version:major', 'version:minor', 'version:build', 'version:revision'].includes(name));

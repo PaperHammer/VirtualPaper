@@ -48,6 +48,11 @@ try {
         UploadFile = 'app.msixupload'; UploadSha256 = (Get-FileHash "$msix/app.msixupload").Hash }
     Save-Json $artifact "$msix/package.json"
     $null = Get-PackageArtifact "$msix/package.json" MSIX $sha
+    foreach ($channel in @('msix', 'MsIx')) {
+        $null = Get-PackageArtifact "$msix/package.json" $channel $sha
+        Reject { Get-PackageArtifact "$msix/package.json" $channel ('b' * 40) }
+    }
+    Reject { Get-PackageArtifact "$msix/package.json" exe $sha }
     Reject { Get-PackageArtifact "$msix/package.json" MSIX ('b' * 40) }
     Reject { Resolve-PackageArtifactFile $msix '../app.msix' $artifact.PackageSha256 }
     $files['VirtualPaper.dll'] = 'different application'
@@ -205,6 +210,11 @@ try {
     Set-Content "$fixture/artifacts/exe/setup.exe" 'installer fixture'
     $exeHash = (Get-FileHash "$fixture/artifacts/exe/setup.exe").Hash
     Save-Json @{ FormatVersion = 1; Channel = 'EXE'; SourceSha = $sha; PackageFile = 'setup.exe'; PackageSha256 = $exeHash; PackageVersion = '0.6.0.0' } "$fixture/artifacts/exe/package.json"
+    foreach ($channel in @('EXE', 'exe', 'ExE')) {
+        $null = Get-PackageArtifact "$fixture/artifacts/exe/package.json" $channel $sha
+        Reject { Get-PackageArtifact "$fixture/artifacts/exe/package.json" $channel ('b' * 40) }
+    }
+    Reject { Get-PackageArtifact "$fixture/artifacts/exe/package.json" msix $sha }
     $installer = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Uninstall {}
     $installer | Add-Member NoteProperty InstallerSha256 $exeHash
     $installer | Add-Member NoteProperty PackageVersion '0.6.0.0'
@@ -228,7 +238,9 @@ try {
     }
     $jobs = @{}
     foreach ($id in @('packages-ready','package-exe','package-msix','test-exe-acceptance','test-msix-acceptance') + @(Get-ProjectTestSpecs | ForEach-Object Id)) { $jobs[$id] = @{ result = 'success' } }
+    foreach ($id in @('test-exe-acceptance', 'test-msix-acceptance')) { $jobs[$id].outputs = @{ ui_run_result = 'success' } }
     $arguments = @{ Root = $raw; ArtifactsRoot = "$fixture/artifacts"; SourceSha = $sha }
+    $ciArguments = $arguments.Clone(); $ciArguments.AllowUIFailure = $true
     function Reject-ChangedReport([string] $Path, [string] $CheckName, [scriptblock] $Change) {
         $original = [IO.File]::ReadAllText($Path)
         try {
@@ -236,6 +248,7 @@ try {
             & $Change $report
             Save-Json $report $Path
             Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
+            Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-fail.log" }
             $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
             Require (@($summary.Checks | Where-Object { $_.Name -ceq $CheckName -and $_.Status -ceq 'Failed' }).Count -eq 1) "Expected report guard did not reject $Path : $CheckName"
         } catch { throw "Report mutation check failed for $Path ($CheckName): $_" }
@@ -246,10 +259,12 @@ try {
         foreach ($result in @('failure', 'cancelled', 'skipped')) {
             $jobs[$id].result = $result
             Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
+            Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-fail.log" }
         }
         $jobs.Remove($id)
         Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
         $jobs[$id] = @{ result = 'success' }
+        if ($id -like 'test-*-acceptance') { $jobs[$id].outputs = @{ ui_run_result = 'success' } }
     }
     # A successful reusable-workflow result alone cannot replace raw lifecycle/UI reports.
     foreach ($path in @('test-results-installer/installer-results.json', 'test-results-ui-operation/installed-acceptance.json',
@@ -261,13 +276,23 @@ try {
         [IO.File]::Move($reportPath, "$reportPath.held")
         try {
             Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
+            Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-fail.log" }
+            $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
+            Require (($summary.Checks.Error -join ' ') -notmatch 'EXE and MSIX product versions differ') 'Missing EXE evidence must not be reported as a package version mismatch.'
         } finally { [IO.File]::Move("$reportPath.held", $reportPath) }
     }
     foreach ($path in @('test-results-ui-operation/ui-operation-results.json', 'test-results-msix-ui/extended-ui/ui-operation-results.json')) {
         Save-Json @{ Passed = $false; Status = 'Skipped'; ExpectedCount = 0; Results = @() } "$raw/$path"
         try {
             Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
+            Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-fail.log" }
         } finally { Save-Json $ui "$raw/$path" }
+    }
+    Reject-ChangedReport "$raw/test-results-installer/installer-results.json" 'Shared project tests / EXE smoke / installed UI' {
+        param($report) $report.Checks[1].Passed = $false; $report.Checks[1].Status = 'Failed'
+    }
+    Reject-ChangedReport "$raw/test-results-msix-smoke/msix-acceptance.json" 'MSIX smoke / installed UI / artifact identity' {
+        param($report) $report.Passed = $false; $report.Stages[1].Status = 'Failed'
     }
     foreach ($path in @('test-results-installer/installer-results.json', 'test-results-ui-operation/installed-acceptance.json')) {
         Reject-ChangedReport "$raw/$path" 'EXE artifact identity' { param($report) $report.InstallerSha256 = '0' * 64 }
@@ -300,7 +325,45 @@ try {
             }
         }
     }
+    foreach ($channel in @('exe', 'msix')) {
+        $job = $jobs["test-$channel-acceptance"]
+        $uiPath = if ($channel -eq 'exe') { "$raw/test-results-ui-operation/ui-operation-results.json" }
+            else { "$raw/test-results-msix-ui/extended-ui/ui-operation-results.json" }
+        $lifecyclePath = if ($channel -eq 'exe') { "$raw/test-results-ui-operation/installed-acceptance.json" }
+            else { "$raw/test-results-msix-ui/msix-acceptance.json" }
+        $originalUI = [IO.File]::ReadAllText($uiPath); $originalLifecycle = [IO.File]::ReadAllText($lifecyclePath)
+        try {
+            $failedUI = $originalUI | ConvertFrom-Json
+            $failedUI.Passed = $false; $failedUI.Results[0].Passed = $false
+            Save-Json $failedUI $uiPath
+            $lifecycle = $originalLifecycle | ConvertFrom-Json
+            if ($channel -eq 'exe') { $lifecycle.Checks[1].Passed = $false; $lifecycle.Checks[1].Status = 'Failed' }
+            else { $lifecycle.Passed = $false; ($lifecycle.Stages | Where-Object Name -CEQ 'ExtendedUI').Status = 'Failed' }
+            Save-Json $lifecycle $lifecyclePath
+            $job.outputs.ui_run_result = 'failure'
+            Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-strict-ui-fail.log" }
+            & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-ui-fail.log"
+            $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
+            Require ($summary.Passed -eq $true -and $summary.UIOutcome -ceq 'Failed' -and $summary.Details.$channel.UIRunResult -ceq 'failure') 'Uploaded UI failure must remain visible without blocking CI.'
+            # A failure after a passing UI report (such as cleanup) must also remain visible.
+            [IO.File]::WriteAllText($uiPath, $originalUI); [IO.File]::WriteAllText($lifecyclePath, $originalLifecycle)
+            & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-ui-step-fail.log"
+            $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
+            Require ($summary.Passed -eq $true -and $summary.UIOutcome -ceq 'Failed') 'Do not hide a tolerated step failure behind a passing report.'
+            $job.outputs.ui_run_result = 'success'
+            Save-Json (New-UIOperationSkipReport ([pscustomobject]@{ Available = $false; ReasonCode = 'NoInteractiveDesktop'; Reason = 'Fixture desktop unavailable.' })) $uiPath
+            & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-ui-skip.log"
+            $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
+            Require ($summary.Passed -eq $true -and $summary.UIOutcome -ceq 'Skipped') 'An uploaded environment skip must remain a skip, never a pass.'
+            Set-Content -LiteralPath $uiPath -Value '{}'
+            Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-malformed-ui.log" }
+        } finally {
+            [IO.File]::WriteAllText($uiPath, $originalUI); [IO.File]::WriteAllText($lifecyclePath, $originalLifecycle)
+            $job.outputs.ui_run_result = 'success'
+        }
+    }
     & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-restored.log"
+    & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-restored.log"
     foreach ($id in @('package-msix','test-msix-acceptance')) { $jobs[$id].result = 'skipped' }
     # An unselected channel must not consume leftover evidence from a different run.
     Save-Json @{ Passed = $false; SourceSha = 'b' * 40 } "$raw/test-results-msix-smoke/msix-acceptance.json"
@@ -316,4 +379,4 @@ try {
         [IO.Path]::GetFileName($fixture) -notmatch '^package-pipeline-[0-9a-f]{32}$') { throw 'Unexpected fixture cleanup path.' }
     Remove-Item -LiteralPath $fixture -Recurse -Force
 }
-Write-Host '[OK] Package payloads, strict channel summaries and uncommitted Store draft/retry contracts passed.'
+Write-Host '[OK] Package channels, required smoke/uploads, non-blocking CI UI, strict local summaries and Store draft/retry contracts passed.'

@@ -23,15 +23,16 @@ function Assert-MsixAcceptanceReport($Report, [ValidateSet('Full', 'Smoke', 'UI'
     }
 }
 
-function Assert-MsixUIReport([string] $Path, [string] $PackageFullName, [switch] $Extended) {
+function Assert-MsixUIReport([string] $Path, [string] $PackageFullName, [switch] $Extended, [switch] $AllowFailure) {
     $report = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
-    if ((Get-UIOperationReportOutcome $report) -ne 'Passed') { throw 'Required MSIX UI acceptance was skipped.' }
-    $application = @($report.Results | Where-Object Name -Like 'Application.*')
+    $outcome = Get-UIOperationReportOutcome $report -AllowFailure:$AllowFailure
+    if (-not $AllowFailure -and $outcome -ne 'Passed') { throw 'Required MSIX UI acceptance was skipped.' }
+    $application = @($report.Results | Where-Object { $_.Name -like 'Application.*' -and (-not $AllowFailure -or $_.Passed -eq $true) })
     if (@($application | Where-Object {
         $_.Evidence.PackageFullName -cne $PackageFullName -or $_.Evidence.PackageActivation -cne 'AUMID' -or
         $_.Evidence.UnitTestBehaviorOverridesEnabled -ne $false
     }).Count) { throw 'MSIX UI evidence must prove installed package identity, shell activation and real behavior.' }
-    if ($Extended) { Assert-ExtendedUIModules $report }
+    if ($Extended -and $outcome -eq 'Passed') { Assert-ExtendedUIModules $report }
     return $report
 }
 

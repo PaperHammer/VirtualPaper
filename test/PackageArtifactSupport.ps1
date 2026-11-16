@@ -31,6 +31,7 @@ function Get-PackageArtifact {
     param([Parameter(Mandatory)][string] $ManifestPath,
         [Parameter(Mandatory)][ValidateSet('EXE', 'MSIX')][string] $Channel,
         [string] $SourceSha)
+    $Channel = $Channel.ToUpperInvariant()
     $manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json
     if ($manifest.FormatVersion -ne 1 -or $manifest.Channel -cne $Channel -or
         $manifest.SourceSha -notmatch '^[0-9a-f]{40}$' -or ($SourceSha -and $manifest.SourceSha -cne $SourceSha)) {

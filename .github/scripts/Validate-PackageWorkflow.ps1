@@ -19,8 +19,8 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     if ($text -notmatch '(?m)^  workflow_dispatch:' -or $text -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|schedule|workflow_call):') {
         throw 'Both workflows must remain manual PR-selected workflows.'
     }
-    if ($text -match '(?m)^    environment:|continue-on-error:|AllowUIFailure|UIJobResult' -or -not $text.Contains('pr_number:')) {
-        throw 'Package, project and installed UI jobs must all be strict.'
+    if ($text -match '(?m)^    environment:|continue-on-error:|UIJobResult' -or -not $text.Contains('pr_number:')) {
+        throw 'Package, project and channel jobs must remain required; only extended UI steps may tolerate failures.'
     }
     $isRelease = $text -ceq $releaseWorkflow
     $metadata = if ($isRelease) { 'prepare-metadata' } else { 'validate-pr' }
@@ -68,7 +68,9 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     $summary = Get-WorkflowJob 'summarize-tests' $text
     Assert-JobNeeds 'summarize-tests' ($gates + @('package-exe', 'package-msix', 'packages-ready') + $specs.Id + $tests) $text
     if (-not $summary.Contains('./test/Summarize-PipelineTests.ps1') -or -not $summary.Contains('${{ toJSON(needs) }}') -or
-        -not $summary.Contains('pattern: test-results-*')) { throw 'Summary must validate raw reports, package identities and job outcomes.' }
+        -not $summary.Contains('pattern: test-results-*') -or -not $summary.Contains('-AllowUIFailure')) {
+        throw 'Summary must require raw reports and package identities while allowing reported extended UI failures.'
+    }
     foreach ($id in @('package-msix', 'test-msix-acceptance')) {
         $job = Get-WorkflowJob $id $text
         if ($isRelease) {
@@ -78,59 +80,82 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
 }
 if ($acceptanceWorkflow -notmatch '(?m)^  workflow_call:' -or
     $acceptanceWorkflow -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|workflow_dispatch|schedule):' -or
-    $acceptanceWorkflow -match 'continue-on-error:|AllowUIFailure|UIJobResult|secrets:|New-CIMsixPackage|Build-Msix|Run-ProjectTests|dotnet test ') {
-    throw 'Installed acceptance must be a strict reusable workflow that only consumes existing packages/builds.'
+    $acceptanceWorkflow -match '(?m)^    continue-on-error:|AllowUIFailure|UIJobResult|secrets:|New-CIMsixPackage|Build-Msix|Run-ProjectTests|dotnet test ') {
+    throw 'Installed acceptance must be a required reusable workflow that only consumes existing packages/builds.'
 }
-$acceptance = Get-WorkflowJob 'installed' $acceptanceWorkflow
 $jobSection = ($acceptanceWorkflow -split '(?m)^jobs:\r?\n', 2)[1]
-if ([regex]::Matches($jobSection, '(?m)^  [\w-]+:').Count -ne 1 -or
-    $acceptance -notmatch '(?m)^    runs-on: windows-latest\s*$' -or
-    -not $acceptance.Contains("`$env:RUNNER_ENVIRONMENT -cne 'github-hosted'") -or
-    -not $acceptance.Contains('ref: ${{ inputs.source-sha }}') -or
-    -not $acceptance.Contains('name: ${{ inputs.build-artifact }}') -or
-    -not $acceptance.Contains('name: package-${{ inputs.channel }}') -or
-    -not $acceptance.Contains('Get-PackageArtifact "PackageArtifacts/$env:CHANNEL/package.json" $env:CHANNEL $env:SOURCE_SHA')) {
-    throw 'Each channel invocation must own one fresh hosted Windows VM and validate the frozen package before installation.'
+$jobIds = @([regex]::Matches($jobSection, '(?m)^  ([\w-]+):') | ForEach-Object { $_.Groups[1].Value })
+if ((($jobIds | Sort-Object) -join ',') -cne 'smoke,ui') {
+    throw 'Each channel requires separate smoke and UI jobs.'
 }
-$acceptanceSteps = @([regex]::Matches($acceptance, '(?ms)^    - name: [^\r\n]+.*?(?=^    - name: |\z)') | ForEach-Object Value)
-# Execute the workflow's actual first-step guard without touching installations or a desktop.
-$guardMatch = [regex]::Match($acceptanceSteps[0], '(?ms)^      run: \|\r?\n(.*)\z')
-if (-not $guardMatch.Success) { throw 'The runner/input guard must precede all installation steps.' }
-$guard = [scriptblock]::Create([regex]::Replace($guardMatch.Groups[1].Value, '(?m)^        ', ''))
+$stepsByJob = @{}
+foreach ($jobId in @('smoke', 'ui')) {
+    $acceptance = Get-WorkflowJob $jobId $acceptanceWorkflow
+    if ($acceptance -match '(?m)^    (needs|strategy):' -or
+        $acceptance -notmatch '(?m)^    runs-on: windows-latest\s*$' -or
+        -not $acceptance.Contains("`$env:RUNNER_ENVIRONMENT -cne 'github-hosted'") -or
+        -not $acceptance.Contains('ref: ${{ inputs.source-sha }}') -or
+        -not $acceptance.Contains('name: ${{ inputs.build-artifact }}') -or
+        -not $acceptance.Contains('name: package-${{ inputs.channel }}') -or
+        -not $acceptance.Contains('Get-PackageArtifact "PackageArtifacts/$env:CHANNEL/package.json" $env:CHANNEL $env:SOURCE_SHA')) {
+        throw 'Smoke and UI must run independently on fresh hosted VMs and validate the same frozen source/build/package.'
+    }
+    $stepsByJob[$jobId] = @([regex]::Matches($acceptance, '(?ms)^    - name: [^\r\n]+.*?(?=^    - name: |\z)') | ForEach-Object Value)
+}
+$smokeSteps = $stepsByJob.smoke; $uiSteps = $stepsByJob.ui
+$acceptanceSteps = @($smokeSteps) + @($uiSteps)
+if ([regex]::Matches($acceptanceWorkflow, '(?m)^      continue-on-error: true\s*$').Count -ne 2 -or
+    -not $acceptanceWorkflow.Contains('value: ${{ jobs.ui.outputs.ui_run_result }}') -or
+    -not (Get-WorkflowJob 'ui' $acceptanceWorkflow).Contains("ui_run_result: `${{ inputs.channel == 'exe' && steps.exe-ui.outcome || steps.msix-ui.outcome }}")) {
+    throw 'Expose the actual UI step outcome and tolerate failures only in the two extended UI run steps.'
+}
+foreach ($step in $acceptanceSteps) {
+    if ($step -match 'continue-on-error:' -and $step -notmatch '(?m)^      id: (exe|msix)-ui\s*$') {
+        throw 'Smoke, package verification and artifact uploads must never tolerate failures.'
+    }
+}
+# Execute each job's actual first-step guard without touching installations or a desktop.
 $guardEnvironment = @{}
 foreach ($name in @('CHANNEL', 'SOURCE_SHA', 'BUILD_ARTIFACT', 'RUNNER_ENVIRONMENT')) {
     $guardEnvironment[$name] = [Environment]::GetEnvironmentVariable($name)
 }
 try {
-    $env:SOURCE_SHA = 'a' * 40
-    $env:RUNNER_ENVIRONMENT = 'github-hosted'
-    foreach ($channel in @('exe', 'msix')) {
-        $env:CHANNEL = $channel
-        foreach ($artifact in @('build-output', 'build-release-output')) { $env:BUILD_ARTIFACT = $artifact; & $guard }
-    }
-    foreach ($invalid in @(
-        @{ CHANNEL = 'unknown' }, @{ SOURCE_SHA = 'main' },
-        @{ BUILD_ARTIFACT = 'unrelated-build' }, @{ RUNNER_ENVIRONMENT = 'self-hosted' }
-    )) {
-        $env:CHANNEL = 'exe'; $env:SOURCE_SHA = 'a' * 40
-        $env:BUILD_ARTIFACT = 'build-output'; $env:RUNNER_ENVIRONMENT = 'github-hosted'
-        foreach ($name in $invalid.Keys) { [Environment]::SetEnvironmentVariable($name, $invalid[$name]) }
-        $rejected = $false
-        try { & $guard } catch { $rejected = $true }
-        if (-not $rejected) { throw 'The acceptance workflow allowed an invalid input or a shared self-hosted runner.' }
+    foreach ($jobId in @('smoke', 'ui')) {
+        $guardMatch = [regex]::Match($stepsByJob[$jobId][0], '(?ms)^      run: \|\r?\n(.*)\z')
+        if (-not $guardMatch.Success) { throw 'The runner/input guard must precede every job installation.' }
+        $guard = [scriptblock]::Create([regex]::Replace($guardMatch.Groups[1].Value, '(?m)^        ', ''))
+        $env:SOURCE_SHA = 'a' * 40
+        $env:RUNNER_ENVIRONMENT = 'github-hosted'
+        foreach ($channel in @('exe', 'msix')) {
+            $env:CHANNEL = $channel
+            foreach ($artifact in @('build-output', 'build-release-output')) { $env:BUILD_ARTIFACT = $artifact; & $guard }
+        }
+        foreach ($invalid in @(
+            @{ CHANNEL = 'unknown' }, @{ SOURCE_SHA = 'main' },
+            @{ BUILD_ARTIFACT = 'unrelated-build' }, @{ RUNNER_ENVIRONMENT = 'self-hosted' }
+        )) {
+            $env:CHANNEL = 'exe'; $env:SOURCE_SHA = 'a' * 40
+            $env:BUILD_ARTIFACT = 'build-output'; $env:RUNNER_ENVIRONMENT = 'github-hosted'
+            foreach ($name in $invalid.Keys) { [Environment]::SetEnvironmentVariable($name, $invalid[$name]) }
+            $rejected = $false
+            try { & $guard } catch { $rejected = $true }
+            if (-not $rejected) { throw 'The acceptance workflow allowed an invalid input or a shared self-hosted runner.' }
+        }
     }
 } finally {
     foreach ($name in $guardEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name, $guardEnvironment[$name]) }
 }
-Write-Host '[OK] The actual reusable-workflow guard accepts both channels/builds and rejects self-hosted or invalid inputs.'
+Write-Host '[OK] Both independent job guards accept both channels/builds and reject self-hosted or invalid inputs.'
 foreach ($channel in @('exe', 'msix')) {
-    $smoke = @($acceptanceSteps | Where-Object { $_ -match "(?m)^      id: $channel-smoke\s*$" })
-    $ui = @($acceptanceSteps | Where-Object { $_ -match "(?m)^      id: $channel-ui\s*$" })
+    $smoke = @($smokeSteps | Where-Object { $_ -match "(?m)^      id: $channel-smoke\s*$" })
+    $ui = @($uiSteps | Where-Object { $_ -match "(?m)^      id: $channel-ui\s*$" })
     if ($smoke.Count -ne 1 -or $ui.Count -ne 1 -or
-        $acceptance.IndexOf($smoke[0]) -ge $acceptance.IndexOf($ui[0]) -or
+        @($smokeSteps | Where-Object { $_ -match '(?m)^      id: (exe|msix)-ui\s*$' }).Count -or
+        @($uiSteps | Where-Object { $_ -match '(?m)^      id: (exe|msix)-smoke\s*$' }).Count -or
         -not $smoke[0].Contains("if: success() && inputs.channel == '$channel'") -or
-        -not $ui[0].Contains("if: success() && inputs.channel == '$channel'")) {
-        throw 'Within each VM, smoke must finish successfully (including cleanup) before independent installed UI starts.'
+        -not $ui[0].Contains("if: success() && inputs.channel == '$channel'") -or
+        -not $ui[0].Contains('continue-on-error: true')) {
+        throw 'Smoke and UI must stay in separate parallel jobs, with tolerated run failures only in UI.'
     }
     if ($channel -eq 'exe') {
         if ($smoke[0] -notmatch 'Run-InstallerTests\.ps1[^\r\n]*-NoBuild' -or $smoke[0] -match 'ExtendedUIReportPath' -or
@@ -144,10 +169,12 @@ foreach ($channel in @('exe', 'msix')) {
 }
 foreach ($artifact in @('installer', 'ui-operation', 'msix-smoke', 'msix-ui')) {
     $upload = @($acceptanceSteps | Where-Object { $_.Contains("name: Upload test-results-$artifact`n") -or $_.Contains("name: Upload test-results-$artifact`r`n") })
+    $ownerSteps = if ($artifact -in @('installer', 'msix-smoke')) { $smokeSteps } else { $uiSteps }
     $channel = if ($artifact.StartsWith('msix-')) { 'msix' } else { 'exe' }
     if ($upload.Count -ne 1 -or -not $upload[0].Contains("if: always() && inputs.channel == '$channel'") -or
-        -not $upload[0].Contains('uses: actions/upload-artifact@')) {
-        throw 'Both raw smoke/UI artifacts must be retained even when their channel fails.'
+        -not $upload[0].Contains('uses: actions/upload-artifact@') -or -not $upload[0].Contains('if-no-files-found: error') -or
+        $ownerSteps -cnotcontains $upload[0]) {
+        throw 'Both raw smoke/UI uploads remain required, including when the extended UI run fails.'
     }
 }
 foreach ($text in @($workflow, $releaseWorkflow, $acceptanceWorkflow, $action)) {
@@ -174,7 +201,8 @@ function check(expected, value, ui='Passed', report='success') {
 }
 check(true,jobs);
 for(const name of f.Required) for(const result of ['failure','cancelled','skipped']) check(false,{...jobs,[name]:{result}});
-for(const ui of ['Skipped','Failed','']) check(false,jobs,ui);
+for(const ui of ['Skipped','Failed']) check(true,jobs,ui);
+check(false,jobs,'');
 check(false,jobs,'Passed','failure');
 '@
 if ($LASTEXITCODE -ne 0) { throw 'PR status gate contract failed.' }

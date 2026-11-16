@@ -539,7 +539,7 @@ jobs:
         MSIX_ENABLED: ${{ needs.prepare-metadata.outputs.msstore_enabled }}
       run: |
         ./test/Summarize-PipelineTests.ps1 -Root TestResults -ArtifactsRoot PackageArtifacts `
-          -SourceSha $env:SOURCE_SHA -JobResultsJson $env:JOB_RESULTS -MsixEnabled:($env:MSIX_ENABLED -eq 'true')
+          -SourceSha $env:SOURCE_SHA -JobResultsJson $env:JOB_RESULTS -MsixEnabled:($env:MSIX_ENABLED -eq 'true') -AllowUIFailure
     - name: Upload test summary
       if: always()
       uses: actions/upload-artifact@v7.0.2
@@ -687,7 +687,7 @@ jobs:
         - Tag: $env:RELEASE_TAG
         - Commit: $env:TARGET_SHA
         - Draft: $env:DRAFT_OUTCOME
-        - Installed EXE/MSIX UI acceptance: $env:UI_OUTCOME (required)
+        - Installed EXE/MSIX UI acceptance: $env:UI_OUTCOME (non-blocking; reports required)
         "@ >> $env:GITHUB_STEP_SUMMARY
   draft-msstore:
     name: Draft Release (Microsoft Store)

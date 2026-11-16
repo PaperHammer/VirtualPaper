@@ -91,8 +91,9 @@ Assert-Rejected $report 'Abnormal process exit must fail'
 Assert-Rejected $null 'Missing report must fail'
 $extendedModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering','ProjectActivation')
 $hardwareCases = @('StartupPolicyAndOptions','SoftwareDrawingSaveReopenAndExport','SoftwareWebEditSaveReopenAndExport','DeviceChoiceAndEnhancement')
+$feedbackCases = @('Feedback.Library.ImportCountCancelAndSummary', 'Feedback.Intelligent.FailureDetails')
 $extendedCases = @($extendedModules | ForEach-Object { "Application.$_.Fixture" }) +
-    @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" })
+    @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" }) + $feedbackCases
 $extended = New-PassReport
 $extended.Results = @($extendedCases | ForEach-Object {
     [pscustomobject]@{ Name = $_; Passed = $true
@@ -113,5 +114,17 @@ foreach ($case in $hardwareCases) {
     $rejected = $false
     try { Assert-ExtendedUIModules $extended } catch { $rejected = $true }
     Assert-Equal $rejected $true "Installed extended acceptance must reject missing hardware case: $case"
+}
+foreach ($case in $feedbackCases) {
+    $extended.Results = @($completeResults | Where-Object Name -CNE $case)
+    $extended.ExpectedCount = $extended.Results.Count
+    Assert-Equal (Get-UIOperationReportOutcome $extended) 'Passed' 'A reduced report remains internally consistent'
+    $rejected = $false
+    try { Assert-ExtendedUIModules $extended } catch { $rejected = $true }
+    Assert-Equal $rejected $true "Installed extended acceptance must reject missing feedback case: $case"
+    $extended.Results = @($completeResults + ($completeResults | Where-Object Name -CEQ $case))
+    $rejected = $false
+    try { Assert-ExtendedUIModules $extended } catch { $rejected = $true }
+    Assert-Equal $rejected $true "Installed extended acceptance must reject duplicate feedback case: $case"
 }
 Write-Host '[OK] UI desktop eligibility and report validation contracts passed (no UI, lock or registry operations).'

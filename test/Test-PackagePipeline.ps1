@@ -158,8 +158,9 @@ try {
     Save-Json $installer "$raw/test-results-ui-operation/installed-acceptance.json"
     $uiModules = @('GeneralSettings','WallpaperLibrary','StaticEditor','WebEditor','ModelInference','ScreenSaverLifecycle','Rendering','ProjectActivation')
     $hardwareCases = @('StartupPolicyAndOptions','SoftwareDrawingSaveReopenAndExport','SoftwareWebEditSaveReopenAndExport','DeviceChoiceAndEnhancement')
+    $feedbackCases = @('Feedback.Library.ImportCountCancelAndSummary', 'Feedback.Intelligent.FailureDetails')
     $uiCases = @($uiModules | ForEach-Object { "Application.$_.Fixture" }) +
-        @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" })
+        @($hardwareCases | ForEach-Object { "Application.HardwareAcceleration.$_" }) + $feedbackCases
     $ui = @{ Passed = $true; ExpectedCount = $uiCases.Count; Results = @($uiCases | ForEach-Object {
         @{ Name = $_; Passed = $true; Evidence = @{ CoreProcessId = 1; UiProcessIds = @(2); ProcessesExitedNormally = $true
             PackageFullName = 'owned_1.2611.1.0_x64__publisher'; PackageActivation = 'AUMID'; UnitTestBehaviorOverridesEnabled = $false } }
@@ -247,6 +248,18 @@ try {
             Reject-ChangedReport "$raw/$path" $check {
                 param($report)
                 $report.Results = @($report.Results | Where-Object Name -CNE "Application.HardwareAcceleration.$case")
+                $report.ExpectedCount = $report.Results.Count
+            }
+        }
+        foreach ($case in $feedbackCases) {
+            Reject-ChangedReport "$raw/$path" $check {
+                param($report)
+                $report.Results = @($report.Results | Where-Object Name -CNE $case)
+                $report.ExpectedCount = $report.Results.Count
+            }
+            Reject-ChangedReport "$raw/$path" $check {
+                param($report)
+                $report.Results += @($report.Results | Where-Object Name -CEQ $case)
                 $report.ExpectedCount = $report.Results.Count
             }
         }

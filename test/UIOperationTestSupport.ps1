@@ -135,6 +135,11 @@ function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure, [string]$F
 # Standard and focused reports remain valid for their callers. Installed extended
 # acceptance additionally requires every application module, regardless of counts.
 function Assert-ExtendedUIModules($Report) {
+    foreach ($case in @('Feedback.Library.ImportCountCancelAndSummary', 'Feedback.Intelligent.FailureDetails')) {
+        if (@($Report.Results | Where-Object Name -CEQ $case).Count -ne 1) {
+            throw "Missing or duplicate required feedback UI case: $case"
+        }
+    }
     foreach ($module in @('GeneralSettings', 'WallpaperLibrary', 'StaticEditor', 'WebEditor',
         'ModelInference', 'ScreenSaverLifecycle', 'Rendering', 'HardwareAcceleration', 'ProjectActivation')) {
         if (@($Report.Results | Where-Object Name -Like "Application.$module.*").Count -lt 1) {

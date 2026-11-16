@@ -93,6 +93,36 @@ public class GlobalMessageBatchTests {
     }
 
     [TestMethod]
+    public void SingleMessage_PreservesItsInstanceKeyAndSeverity() {
+        var message = new GlobalMsgInfo("OperationFailure", false, "Specific failure", null, InfoBarSeverity.Error);
+
+        var group = GlobalMessageBatch.Group([new(null, message)]).Single();
+
+        Assert.HasCount(1, group.Messages);
+        Assert.AreSame(message, group.Messages[0]);
+        Assert.AreEqual("OperationFailure", group.Messages[0].Key);
+        Assert.AreEqual(InfoBarSeverity.Error, group.Messages[0].Severity);
+    }
+
+    [TestMethod]
+    public async Task LateChildNotification_AfterNestedScopeCompletion_JoinsTheActiveOuterOperation() {
+        var published = new List<GlobalMessageBatch.Entry>();
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using (GlobalMessageBatch.Begin(entries => published.AddRange(entries))) {
+            Task child;
+            using (GlobalMessageUtil.BeginBatch()) {
+                GlobalMessageUtil.ShowError("Initial failure");
+                child = Task.Run(async () => { await gate.Task; GlobalMessageUtil.ShowError("Late child failure"); });
+            }
+            gate.SetResult();
+            await child.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.IsEmpty(published);
+        }
+
+        CollectionAssert.AreEqual(new[] { "Initial failure", "Late child failure" }, published.Select(entry => entry.Message.Message).ToArray());
+    }
+
+    [TestMethod]
     public void FailedOperation_FlushesAndRestoresThePreviousScope() {
         var published = new List<string>();
         Assert.ThrowsExactly<IOException>(() => {

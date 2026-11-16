@@ -34,6 +34,8 @@ public partial class App : Application {
                     (commandLine[4] == "Localization.RegionalFormats" || commandLine[4] == RegionalFormatTests.CaseName)
                     ? RegionalFormatTests.RunAsync : RegionalFormatTests.RunIsolatedAsync),
             new UiTestCase("Localization.FontFallback.MixedScripts", FontFallbackTests.RunAsync),
+            new UiTestCase("Feedback.Library.ImportCountCancelAndSummary", ImportFeedbackTests.RunAsync),
+            new UiTestCase("Feedback.Intelligent.FailureDetails", IntelligentFeedbackTests.RunAsync),
             new UiTestCase("GeneralEffect.RImage.EditRestoreSaveAndReopen",
                 context => GeneralEffectTests.EditRestoreSaveAndReopenAsync(context, RuntimeType.RImage)),
             new UiTestCase("GeneralEffect.RImage3D.EditRestoreSaveAndReopen",

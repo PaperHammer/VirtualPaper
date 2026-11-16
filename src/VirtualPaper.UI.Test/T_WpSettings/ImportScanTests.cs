@@ -6,13 +6,62 @@ namespace VirtualPaper.UI.Test.T_WpSettings;
 [TestClass]
 public class ImportScanTests {
     private string _root = null!;
+    private readonly List<string> _junctions = [];
 
     [TestInitialize]
     public void Setup() => _root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(),
         "VirtualPaper.ImportScan-" + Guid.NewGuid().ToString("N"))).FullName;
 
     [TestCleanup]
-    public void Cleanup() => Directory.Delete(_root, recursive: true);
+    public void Cleanup() {
+        foreach (string link in _junctions.AsEnumerable().Reverse()) {
+            Assert.IsTrue(Path.GetFullPath(link).StartsWith(_root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+            if (Directory.Exists(link)) Directory.Delete(link, recursive: false);
+        }
+        Directory.Delete(_root, recursive: true);
+    }
+
+    [TestMethod]
+    public async Task JunctionAlias_AndAncestorCycle_ImportEachPhysicalFileOnlyOnce() {
+        string first = Write("first.png", Convert.FromHexString("89504E470D0A1A0A"));
+        string child = Write("nested/child.gif", "GIF89a"u8.ToArray());
+        string nested = Path.GetDirectoryName(child)!;
+        CreateJunction(Path.Combine(nested, "back"), _root);
+        CreateJunction(Path.Combine(_root, "alias"), nested);
+        var result = new LibraryContentsViewModel.ImportResult();
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+
+        var values = await LibraryContentsViewModel.ScanImportFilesAsync([_root, nested], result, cancellation.Token);
+
+        CollectionAssert.AreEquivalent(new[] { first, child }, values.Select(item => item.FilePath).ToArray());
+        Assert.IsEmpty(result.Failed);
+        CollectionAssert.AreEqual("GIF89a"u8.ToArray(), File.ReadAllBytes(child));
+    }
+
+    [TestMethod]
+    public async Task InvalidRoot_DoesNotPreventTheNextRootFromBeingScanned() {
+        string valid = Write("valid.gif", "GIF89a"u8.ToArray());
+        var result = new LibraryContentsViewModel.ImportResult();
+
+        var values = await LibraryContentsViewModel.ScanImportFilesAsync(["invalid\0path", valid], result, CancellationToken.None);
+
+        CollectionAssert.AreEqual(new[] { valid }, values.Select(item => item.FilePath).ToArray());
+        Assert.HasCount(1, result.Failed);
+        Assert.IsInstanceOfType<ArgumentException>(result.Failed[0].Error);
+    }
+
+    [TestMethod]
+    public void DirectoryEnumeration_ReadFailure_IsPropagatedAndDisposesItsEnumerator() {
+        bool disposed = false;
+        IEnumerable<string> Entries() {
+            try { yield return "first.png"; throw new IOException("Directory enumeration failed"); }
+            finally { disposed = true; }
+        }
+
+        Assert.ThrowsExactly<IOException>(() => LibraryContentsViewModel.CollectImportEntries(Entries(), CancellationToken.None));
+
+        Assert.IsTrue(disposed);
+    }
 
     [TestMethod]
     public async Task NestedFolders_KeepStableOrder_DeduplicateSelections_AndKeepUnsupportedFiles() {
@@ -115,5 +164,17 @@ public class ImportScanTests {
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllBytes(path, bytes);
         return path;
+    }
+
+    private void CreateJunction(string link, string target) {
+        var start = new System.Diagnostics.ProcessStartInfo("cmd.exe") {
+            UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true
+        };
+        foreach (string argument in new[] { "/c", "mklink", "/J", link, target }) start.ArgumentList.Add(argument);
+        using var process = System.Diagnostics.Process.Start(start)!;
+        string output = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
+        process.WaitForExit();
+        Assert.AreEqual(0, process.ExitCode, output);
+        _junctions.Add(link);
     }
 }

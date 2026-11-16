@@ -11,6 +11,7 @@ using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Grpc.Service.WallpaperControl;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.UIOperationTest.Infrastructure;
+using VirtualPaper.TestSupport;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
 namespace VirtualPaper.UIOperationTest.Cases;
@@ -82,6 +83,7 @@ internal static class BuiltInWallpaperTests {
         Check(webEntryHashes.SetEquals(imported.Where(item => item.FType == FileType.FWebZip).Select(item => Hash(item.FilePath))), "Web import changed or lost an entry file.");
         Check(bundled.Select(item => item.FType).Order().SequenceEqual(imported.Select(item => item.FType).Order()), "Multi-import lost a media type.");
         await WallpaperLibraryTests.WaitForItemsAsync(root, sources.Count);
+        await VerifyImportSummaryAsync(root, sources.Count);
         await session.CloseUiAsync();
         ui = await session.OpenUiAsync();
         await Task.Run(() => {
@@ -145,6 +147,7 @@ internal static class BuiltInWallpaperTests {
             ApplicationUi.WaitUntilGone(root, "Library.Import.UnsupportedFiles");
         });
         await WallpaperLibraryTests.WaitForItemsAsync(root, existingCount + 1);
+        await VerifyImportSummaryAsync(root, 1);
         var imported = Directory.GetFiles(library, Constants.Field.WpBasicDataFileName, SearchOption.AllDirectories).Select(WpBasicData.Load).ToArray();
         Check(imported.Length == existingCount + 1 && imported.Count(item => Hash(item.FilePath) == hashes[image]) == 1,
             "Mixed-folder import lost the supported image or imported an unsupported file.");
@@ -156,10 +159,39 @@ internal static class BuiltInWallpaperTests {
             ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Library"));
         });
         await WallpaperLibraryTests.WaitForItemsAsync(root, existingCount + 1);
+        // Only unsupported inputs must produce a zero-result message and preserve the library.
+        string unsupportedFolder = Directory.CreateDirectory(Path.Combine(context.Root, "unsupported-only")).FullName;
+        string unsupportedSource = Path.Combine(unsupportedFolder, "notes.txt");
+        await File.WriteAllTextAsync(unsupportedSource, "keep this source");
+        await Task.Run(() => {
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.Import"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.Import.Folder", visible: true));
+            NativeFileDialog.ChooseFolder(ui, ui.MainWindowHandle, unsupportedFolder);
+            ApplicationUi.Find(root, "Library.Import.UnsupportedFiles", visible: true);
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "PrimaryButton", visible: true));
+            ApplicationUi.WaitUntilGone(root, "Library.Import.UnsupportedFiles");
+        });
+        await VerifyImportSummaryAsync(root, 0);
+        await WallpaperLibraryTests.WaitForItemsAsync(root, existingCount + 1);
+        Check(Directory.GetFiles(library, Constants.Field.WpBasicDataFileName, SearchOption.AllDirectories).Length == existingCount + 1,
+            "Unsupported-only import changed persisted library contents");
+        Check(await File.ReadAllTextAsync(unsupportedSource) == "keep this source", "Unsupported-only import changed its input");
         context.Evidence["MixedFolderImportSkipsUnsupportedAndPreservesSources"] = true;
         context.Evidence["NestedFolderImportPreservesSupportedAndUnsupportedPaths"] = true;
         context.Evidence["UnsupportedFilePathsAndRevealTargetsVerified"] = true;
         context.Evidence["ExplorerSelectedUnsupportedFile"] = true;
+        context.Evidence["ImportCountMessagesVerified"] = new[] { 1, 0 };
+    }
+
+    private static Task VerifyImportSummaryAsync(AutomationElement root, int count) {
+        string expected = string.Format(LocalizedTestStrings.Read(AppContext.BaseDirectory, "en-US", "WpLib_ImportCompletedSummary"), count);
+        return AppProcessSession.WaitAsync(() => Task.Run(() => {
+            var bars = root.FindAll(TreeScope.Descendants, new PropertyCondition(AutomationElement.ClassNameProperty, "InfoBar"))
+                .Cast<AutomationElement>().Where(bar => !bar.Current.IsOffscreen).ToArray();
+            return bars.Length == 1 && bars.Count(bar => bar.Current.Name == expected || bar.FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text)).Cast<AutomationElement>()
+                .Any(text => text.Current.Name == expected)) == 1;
+        }), "Exactly one import-count bar: " + count);
     }
 
     private static nint FindExplorerSelection(string target) {

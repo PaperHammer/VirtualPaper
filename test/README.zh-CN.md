@@ -502,7 +502,9 @@ CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，�
 ./test/Test-InstallerWizard.ps1
 ```
 
-CI 使用 `Summarize-PipelineTests.ps1`：共享 TRX/覆盖率、选中的包、对应子流程结果及原始冒烟/UI 报告均须通过。报告缺失、清理失败、桌面验收跳过或源码/包哈希变化均阻止 PR 成功与版本/草稿写入。版本同步契约使用隔离本地 Git 仓库，验证 main 单次版本提交、dev 真实合并祖先关系、并行开发保留、重跑幂等、文本/二进制/删除/重命名冲突采用 main、dev 不冲突块保留及原子推送拒绝。旧 `Summarize-TestResults.ps1 -AllowUIFailure` 仅保留诊断兼容用途，两条 CI 均不调用。渠道选择、正式商店变量和重试见[工作流说明](../.github/workflows/README.zh-CN.md)。
+商店发布材料有独立的离线契约 `test/Test-StoreMaterials.ps1`，同时纳入工作流契约校验。检查所有支持语种、字段长度、首发与更新说明、PNG 引用／尺寸、稳定材料哈希、按内容命名的导出图片，以及无效输入不会留下半成品输出。`Test-PackagePipeline.ps1` 以 HTTP 模拟运行实际草稿入口，覆盖安装包／图片 ZIP 引用、文案与截图更新、其他商店数据保留、已上传图片复用、最终回读及材料变化后的重试拒绝。它不采集界面、不安装包，也不连接 Partner Center。统一的源文件／采集／发布标准见 [resources/store](../resources/store/README.zh-CN.md)。
+
+CI 使用 `Summarize-PipelineTests.ps1`：共享 TRX/覆盖率、选中的包、对应子流程结果及原始冒烟/UI 报告均须通过。报告缺失、清理失败、桌面验收跳过或源码/包哈希变化均阻止 PR 成功与版本/草稿写入。工作流契约执行实际发布条件，覆盖精确商店标签、未选渠道跳过、草稿独立执行、插件发布及前置任务失败／取消／跳过。版本同步契约使用隔离本地 Git 仓库，验证 main 单次版本提交、dev 真实合并祖先关系、并行开发保留、重跑幂等、文本/二进制/删除/重命名冲突采用 main、dev 不冲突块保留及原子推送拒绝。旧 `Summarize-TestResults.ps1 -AllowUIFailure` 仅保留诊断兼容用途，两条 CI 均不调用。渠道选择、正式商店变量和重试见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 工作流契约包含隔离 Git 测试，覆盖仅在 `main` 生成版本提交、合回 `dev`、保留新增开发内容、冲突清理、重跑、下一次发布及原子推送被拒绝。测试仅使用本地 fixture 远端，不向 GitHub 推送。
 

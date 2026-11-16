@@ -83,10 +83,10 @@ function Get-StoreReleaseState($Configuration, [string] $Token, [string] $Marker
             throw 'An unrelated or already committed Store submission exists. It will not be changed or deleted.'
         }
     }
-    return $pending
+    return @{ Pending = $pending; InitialRelease = -not [bool]$app.lastPublishedApplicationSubmission.id }
 }
 
-function New-StoreDraftBody($Submission, [string] $FileName, [string] $Notes) {
+function New-StoreDraftBody($Submission, [string] $FileName, [string] $Notes, $ListingPatch = $null) {
     # Preserve listing, pricing, ratings and declarations from Partner Center.
     $body = @{}
     foreach ($property in @('applicationCategory', 'pricing', 'visibility', 'listings', 'hardwarePreferences',
@@ -105,5 +105,61 @@ function New-StoreDraftBody($Submission, [string] $FileName, [string] $Notes) {
         if ($copy.architecture -ieq 'x64') { $copy.fileStatus = 'PendingDelete' }
         $copy
     }) + @(@{ fileName = $FileName; fileStatus = 'PendingUpload'; minimumDirectXVersion = 'None'; minimumSystemRam = 'None' })
+    if ($null -ne $ListingPatch) {
+        # Patch only managed base-listing fields. Keep reserved names, other locales,
+        # platform overrides, logos, pricing and declarations from Partner Center.
+        $body.listings = if ($Submission.listings) { $Submission.listings | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable } else { @{} }
+        $defaultTitle = $body.listings['en-us'].baseListing.title
+        if (-not $defaultTitle) { $defaultTitle = @($body.listings.Values | ForEach-Object { $_.baseListing.title } | Where-Object { $_ })[0] }
+        foreach ($locale in $ListingPatch.Keys) {
+            if (-not $body.listings.ContainsKey($locale)) { $body.listings[$locale] = @{ baseListing = @{} } }
+            $listing = $body.listings[$locale]
+            if (-not $listing.baseListing) { $listing.baseListing = @{} }
+            $base = $listing.baseListing
+            if (-not $base.title) {
+                if (-not $defaultTitle) { throw 'A reserved Store title is required before adding localized listings.' }
+                $base.title = $defaultTitle
+            }
+            $patch = $ListingPatch[$locale].baseListing
+            foreach ($field in @('shortDescription', 'description', 'features', 'keywords', 'releaseNotes')) { $base[$field] = $patch[$field] }
+            $wanted = @($patch.images.fileName)
+            $reuse = @{}
+            $retained = foreach ($old in $base.images) {
+                if ($old.imageType -cne 'Screenshot') { $old; continue }
+                if ($old.fileName -cin $wanted) {
+                    if ($old.fileStatus -ceq 'Uploaded' -and $old.id) { $reuse[$old.fileName] = $old }
+                } elseif ($old.id) { $old.fileStatus = 'PendingDelete'; $old }
+            }
+            $base.images = @($retained) + @($patch.images | ForEach-Object {
+                if ($reuse.ContainsKey($_.fileName)) {
+                    $image = $reuse[$_.fileName]
+                    $image.description = $_.description
+                    $image
+                } else { $_ }
+            })
+        }
+    }
     return $body
+}
+
+function Assert-StoreDraftListings($Draft, $Expected, [string[]] $Locales) {
+    foreach ($locale in $Locales) {
+        $actual = $Draft.listings.$locale.baseListing
+        $expectedBase = $Expected.listings[$locale].baseListing
+        foreach ($field in @('title', 'shortDescription', 'description', 'features', 'keywords', 'releaseNotes')) {
+            $leftValue = $actual.$field; $rightValue = $expectedBase[$field]
+            if ($leftValue -is [string]) { $leftValue = Get-NormalizedStoreNotes $leftValue }
+            if ($rightValue -is [string]) { $rightValue = Get-NormalizedStoreNotes $rightValue }
+            $left = ConvertTo-Json -InputObject $leftValue -Depth 20 -Compress
+            $right = ConvertTo-Json -InputObject $rightValue -Depth 20 -Compress
+            if ($left -cne $right) { throw "Store draft listing verification failed: $locale/$field" }
+        }
+        $actualImages = @($actual.images | Where-Object { $_.imageType -ceq 'Screenshot' -and $_.fileStatus -cne 'PendingDelete' } |
+            ForEach-Object { [ordered]@{ fileName = $_.fileName; description = $_.description } })
+        $expectedImages = @($expectedBase.images | Where-Object { $_.imageType -ceq 'Screenshot' -and $_.fileStatus -cne 'PendingDelete' } |
+            ForEach-Object { [ordered]@{ fileName = $_.fileName; description = $_.description } })
+        if ((ConvertTo-Json -InputObject $actualImages -Compress) -cne (ConvertTo-Json -InputObject $expectedImages -Compress)) {
+            throw "Store draft screenshot verification failed: $locale"
+        }
+    }
 }

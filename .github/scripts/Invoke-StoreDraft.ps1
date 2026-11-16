@@ -3,8 +3,11 @@
 param(
     [Parameter(Mandatory)][ValidateSet('Validate', 'Draft')][string] $Action,
     [Parameter(Mandatory)][string] $BuildNumber,
+    [Parameter(Mandatory)][ValidatePattern('^\d+\.\d+\.\d+\.\d+$')][string] $ProductVersion,
     [Parameter(Mandatory)][ValidatePattern('^[0-9a-f]{40}$')][string] $SourceSha,
     [string] $PackageArtifact,
+    [string] $MaterialsRoot = (Join-Path $PSScriptRoot '../../resources/store'),
+    [string] $MaterialsOutputRoot = 'TestResults/store-materials',
     [string] $ReportPath = 'store-draft.json'
 )
 $ErrorActionPreference = 'Stop'
@@ -15,43 +18,51 @@ $version = Get-StorePackageVersion $BuildNumber
 if ($env:GITHUB_REPOSITORY -notmatch '^[\w.-]+/[\w.-]+$' -or $env:GITHUB_RUN_ID -notmatch '^\d+$') { throw 'Store drafts require a GitHub workflow run identity.' }
 $marker = "VirtualPaper CI:$env:GITHUB_REPOSITORY`:$env:GITHUB_RUN_ID`:$SourceSha"
 $token = Get-StoreAccessToken $config
-$pending = Get-StoreReleaseState $config $token $marker $version
+$state = Get-StoreReleaseState $config $token $marker $version
+$pending = $state.Pending
+$materialDirectory = & "$PSScriptRoot/../../resources/tools/Export-StoreMaterials.ps1" -Version $ProductVersion `
+    -InitialRelease:($state.InitialRelease) -SourceSha $SourceSha -MaterialsRoot $MaterialsRoot -OutputRoot $MaterialsOutputRoot
+$materials = Get-Content (Join-Path $materialDirectory 'manifest.json') -Raw | ConvertFrom-Json
+$listingPatch = (Get-Content (Join-Path $materialDirectory 'listings.json') -Raw | ConvertFrom-Json -AsHashtable).listings
 if ($Action -eq 'Validate') {
     if ($env:GITHUB_OUTPUT) { "msix_version=$version" >> $env:GITHUB_OUTPUT }
     Write-Host "Store configuration and published version baseline verified: $version"
     return
 }
 $artifact = Get-PackageArtifact -ManifestPath $PackageArtifact -Channel MSIX -SourceSha $SourceSha
-if ($artifact.Store -ne $true -or $artifact.IdentityName -cne $config.IDENTITY_NAME -or
+if ($artifact.ProductVersion -cne $ProductVersion -or $artifact.Store -ne $true -or $artifact.IdentityName -cne $config.IDENTITY_NAME -or
     $artifact.Publisher -cne $config.PUBLISHER -or $artifact.PackageVersion -cne $version) { throw 'Store draft requires the validated formal release artifact.' }
 $path = "applications/$($config.APPLICATION_ID)/submissions"
-$notes = "$marker`nPackage SHA256:$($artifact.PackageSha256)`nSource:$SourceSha`nAutomated package upload only; certification and publication remain manual."
+$notes = "$marker`nPackage SHA256:$($artifact.PackageSha256)`nMaterials SHA256:$($materials.MaterialsSha256)`nSource:$SourceSha`nPackage and listing upload only; certification and publication remain manual."
 if ($pending -and (Get-NormalizedStoreNotes $pending.notesForCertification) -cne $notes) { throw 'Retry artifact differs from the existing Store draft.' }
 $submission = if ($pending) { $pending } else { Invoke-StoreRequest Post $path $token }
 $id = [string]$submission.id
 if ($id -notmatch '^\d+$' -or $submission.status -cne 'PendingCommit') { throw 'Partner Center did not create an uncommitted draft.' }
 @{ ApplicationId = $config.APPLICATION_ID; SubmissionId = $id; Status = 'CreatedUncommitted'
     SourceSha = $SourceSha; PackageVersion = $version; PackageSha256 = $artifact.PackageSha256
-    UploadSha256 = $artifact.UploadSha256; Uploaded = $false; Committed = $false } |
+    UploadSha256 = $artifact.UploadSha256; MaterialsSha256 = $materials.MaterialsSha256
+    ProductVersion = $ProductVersion; ListingLocales = @($listingPatch.Keys); Uploaded = $false; Committed = $false } |
     ConvertTo-Json | Set-Content -LiteralPath $ReportPath -Encoding utf8NoBOM
-$body = New-StoreDraftBody $submission $artifact.UploadFile $notes
+$body = New-StoreDraftBody $submission $artifact.UploadFile $notes $listingPatch
 # Write ownership before uploading, so a failed upload can safely reuse this draft.
 $updated = Invoke-StoreRequest Put "$path/$id" $token $body
 $uploadUrl = if ($updated.fileUploadUrl) { $updated.fileUploadUrl } else { $submission.fileUploadUrl }
 $temporary = Join-Path ([IO.Path]::GetTempPath()) "VirtualPaper.StoreUpload-$([guid]::NewGuid().ToString('N')).zip"
 try {
     $root = Split-Path -Parent ([IO.Path]::GetFullPath($PackageArtifact))
-    Compress-Archive -LiteralPath (Join-Path $root $artifact.UploadFile) -DestinationPath $temporary
+    Compress-Archive -LiteralPath @((Join-Path $root $artifact.UploadFile), (Join-Path $materialDirectory 'images')) -DestinationPath $temporary
     Send-StoreUpload $uploadUrl $temporary
     $draft = Invoke-StoreRequest Get "$path/$id" $token
     if ($draft.status -cne 'PendingCommit' -or $draft.targetPublishMode -cne 'Manual' -or (Get-NormalizedStoreNotes $draft.notesForCertification) -cne $notes) {
         throw 'Store draft verification failed; no commit was requested.'
     }
+    Assert-StoreDraftListings $draft $body @($listingPatch.Keys)
     @{ ApplicationId = $config.APPLICATION_ID; SubmissionId = $id; Status = $draft.status
         SourceSha = $SourceSha; PackageVersion = $version; PackageSha256 = $artifact.PackageSha256
-        UploadSha256 = $artifact.UploadSha256; Uploaded = $true; Committed = $false } |
+        UploadSha256 = $artifact.UploadSha256; MaterialsSha256 = $materials.MaterialsSha256
+        ProductVersion = $ProductVersion; ListingLocales = @($listingPatch.Keys); Uploaded = $true; Committed = $false } |
         ConvertTo-Json | Set-Content -LiteralPath $ReportPath -Encoding utf8NoBOM
     if ($env:GITHUB_STEP_SUMMARY) {
-        "### Microsoft Store draft`n`n- Submission: $id`n- Version: $version`n- Package uploaded; PendingCommit. Certification/publication was not requested." >> $env:GITHUB_STEP_SUMMARY
+        "### Microsoft Store draft`n`n- Submission: $id`n- Version: $version`n- Product: $ProductVersion`n- Listings: $($listingPatch.Count)`n- Materials: $($materials.MaterialsSha256)`n- Package and listing assets uploaded; PendingCommit. Certification/publication was not requested." >> $env:GITHUB_STEP_SUMMARY
     }
 } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary } }

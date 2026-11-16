@@ -197,6 +197,67 @@ if (-not $draft.Contains('draft: true') -or -not $draft.Contains('-AllowDraftRet
 }
 if (-not (Get-WorkflowJob 'prepare-metadata' $releaseWorkflow).Contains('-Action Validate') -or
     -not (Get-WorkflowJob 'draft-msstore' $releaseWorkflow).Contains('-Action Draft')) { throw 'Validate Store configuration before building and drafting.' }
+# Evaluate the actual channel-selection and draft conditions, rather than relying
+# only on matching text or treating a skipped optional channel as a failed draft.
+function Get-ReleaseCondition([string] $Text, [int] $Indent) {
+    $prefix = ' ' * $Indent
+    $block = [regex]::Match($Text, "(?m)^${prefix}if: \|\r?\n((?:${prefix}  [^\r\n]+\r?\n)+)")
+    if ($block.Success) { return $block.Groups[1].Value.Trim() }
+    $inline = [regex]::Match($Text, "(?m)^${prefix}if: ([^\r\n]+)")
+    if (-not $inline.Success) { throw 'Missing release channel condition.' }
+    return $inline.Groups[1].Value.Trim()
+}
+$prepare = Get-WorkflowJob 'prepare-metadata' $releaseWorkflow
+$storeConfig = [regex]::Match($prepare, '(?ms)^    - name: Validate Partner Center configuration\r?\n.*?(?=^    - name:|\z)').Value
+@{
+    Selection = [regex]::Match($prepare, 'const msstore = ([^;]+);').Groups[1].Value
+    Configuration = Get-ReleaseCondition $storeConfig 6
+    Package = Get-ReleaseCondition (Get-WorkflowJob 'package-msix' $releaseWorkflow) 4
+    Acceptance = Get-ReleaseCondition (Get-WorkflowJob 'test-msix-acceptance' $releaseWorkflow) 4
+    GitHubDraft = Get-ReleaseCondition (Get-WorkflowJob 'draft-release' $releaseWorkflow) 4
+    StoreDraft = Get-ReleaseCondition (Get-WorkflowJob 'draft-msstore' $releaseWorkflow) 4
+} | ConvertTo-Json -Compress | & node -e @'
+const fs = require('fs');
+const conditions = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const selected = new Function('pr', `return (${conditions.Selection});`);
+for (const [labels, expected] of [
+  [[], false], [['version:build'], false], [['channel:msstore-preview'], false],
+  [['channel:msstore'], true], [['version:build', 'channel:msstore'], true]
+]) {
+  if (selected({labels: labels.map(name => ({name}))}) !== expected) throw Error('Select Store only by the exact PR label.');
+}
+function fixture(enabled=true, plugin=false) {
+  return {
+    'prepare-metadata': {result:'success', outputs:{msstore_enabled:String(enabled), has_plugin_update:String(plugin)}},
+    'package-exe': {result:'success'}, 'package-msix': {result: enabled ? 'success' : 'skipped'},
+    'summarize-tests': {result:'success'}, 'sync-versions': {result:plugin ? 'skipped' : 'success'},
+    'draft-release': {result:'success'}, 'draft-msstore': {result:enabled ? 'success' : 'skipped'}
+  };
+}
+function check(name, expected, needs, cancelled=false) {
+  const steps = {'release-pr': {outputs:needs['prepare-metadata'].outputs}};
+  const expression=conditions[name].replace(/\b(needs|steps)\.([\w-]+)/g, (_, owner, key) => `${owner}[${JSON.stringify(key)}]`);
+  const actual = new Function('needs', 'steps', 'cancelled', `return (${expression});`)(needs, steps, () => cancelled);
+  if (actual !== expected) throw Error(`Incorrect release condition: ${name} / ${JSON.stringify(needs)}`);
+}
+for (const enabled of [false,true]) for (const plugin of [false,true]) {
+  const needs=fixture(enabled,plugin);
+  for (const stage of ['Configuration','Package','Acceptance','StoreDraft']) check(stage,enabled,needs);
+  check('GitHubDraft',true,needs);
+  needs['draft-msstore'].result='failure'; check('GitHubDraft',true,needs);
+  needs['draft-release'].result='failure'; check('StoreDraft',enabled,needs);
+}
+for (const [stage, packageId] of [['GitHubDraft','package-exe'],['StoreDraft','package-msix']]) {
+  for (const prerequisite of ['prepare-metadata',packageId,'summarize-tests','sync-versions']) {
+    for (const result of ['failure','cancelled','skipped']) {
+      const needs=fixture(); needs[prerequisite].result=result; check(stage,false,needs);
+    }
+  }
+  check(stage,false,fixture(),true);
+}
+'@
+if ($LASTEXITCODE -ne 0) { throw 'Release channel selection or independent draft conditions failed.' }
+Write-Host '[OK] Store-only stages follow the exact PR label; both draft channels run independently after their required gates.'
 $sync = Get-WorkflowJob 'sync-versions' $releaseWorkflow
 if ($sync.IndexOf('Assert-ReleaseTagAvailable') -lt 0 -or $sync.IndexOf('Assert-ReleaseTagAvailable') -gt $sync.IndexOf('Sync-ReleaseVersion')) { throw 'Check release conflicts before synchronizing versions.' }
 $localRunner = Get-Content "$repositoryRoot/test/Run-Tests.ps1" -Raw

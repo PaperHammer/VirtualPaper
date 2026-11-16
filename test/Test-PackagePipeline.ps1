@@ -87,7 +87,11 @@ try {
         if ($Uri -match '/submissions$' -and $Method -eq 'Post') {
             $api.Creates++
             return @{ id = '2'; status = 'PendingCommit'; fileUploadUrl = 'https://fixture.blob.core.windows.net/package?sas=fixture'
-                listings = @{ 'en-us' = @{ baseListing = @{ title = 'Preserved listing' } } }; pricing = @{ priceId = 'Free' }
+                listings = @{ 'en-us' = @{ baseListing = @{ title = 'Preserved listing'; licenseTerms = 'Keep license'
+                    images = @(@{ id = 'old-image'; fileName = 'old.png'; imageType = 'Screenshot'; fileStatus = 'Uploaded' },
+                        @{ id = 'logo'; fileName = 'logo.png'; imageType = 'Icon'; fileStatus = 'Uploaded' }) }
+                    platformOverrides = @{ Windows81 = @{ description = 'Keep override' } } }
+                    'it-it' = @{ baseListing = @{ title = 'Keep other locale' } } }; pricing = @{ priceId = 'Free' }
                 applicationPackages = @(@{ fileName = 'old.msix'; architecture = 'x64'; fileStatus = 'Uploaded' },
                     @{ fileName = 'arm.msix'; architecture = 'ARM64'; fileStatus = 'Uploaded' }) }
         }
@@ -103,10 +107,24 @@ try {
     }
     function Invoke-WebRequest($Method, $Uri, $InFile, $ContentType, $Headers) {
         Require ($Method -eq 'Put' -and (Test-Path -LiteralPath $InFile)) 'Store upload must PUT an existing ZIP.'
+        $archive = [IO.Compression.ZipFile]::OpenRead($InFile)
+        try {
+            Require ($null -ne $archive.GetEntry('app.msixupload')) 'Upload the accepted Store package.'
+            foreach ($listing in $api.Pending.listings.Values) {
+                foreach ($image in $listing.baseListing.images | Where-Object fileStatus -CEQ 'PendingUpload') {
+                    Require ($null -ne $archive.GetEntry($image.fileName)) 'Upload every new image at its declared ZIP path.'
+                }
+            }
+        } finally { $archive.Dispose() }
         $api.Uploads++
         if ($api.FailUpload) { throw 'Fixture upload failure' }
     }
-    $invoke = @{ BuildNumber = '2611R01'; SourceSha = $sha; PackageArtifact = "$msix/package.json"; ReportPath = "$fixture/store-draft.json" }
+    $storeMaterials = Join-Path $fixture 'store-materials'
+    Copy-Item -LiteralPath "$PSScriptRoot/../resources/store" -Destination $storeMaterials -Recurse
+    $notesSource = Get-ChildItem "$storeMaterials/releases" -Filter '*.json' | Sort-Object { [version]$_.BaseName } -Descending | Select-Object -First 1
+    Copy-Item -LiteralPath $notesSource.FullName -Destination "$storeMaterials/releases/0.6.0.0.json" -Force
+    $invoke = @{ BuildNumber = '2611R01'; ProductVersion = '0.6.0.0'; SourceSha = $sha; PackageArtifact = "$msix/package.json"
+        MaterialsRoot = $storeMaterials; MaterialsOutputRoot = "$fixture/material-exports"; ReportPath = "$fixture/store-draft.json" }
     $api.NoBaseline = $true
     Reject { & "$PSScriptRoot/../.github/scripts/Invoke-StoreDraft.ps1" -Action Validate @invoke }
     Require ($api.Creates -eq 0 -and $api.Updates -eq 0 -and $api.Uploads -eq 0) 'An unprepared initial Store submission must fail before any writes.'
@@ -122,12 +140,47 @@ try {
     Require ($api.Creates -eq 1 -and $api.Uploads -eq 3) 'Retry must reuse the same uncommitted draft.'
     Require ($api.Pending.targetPublishMode -ceq 'Manual') 'Draft must keep manual publication.'
     Require ($api.Pending.listings.'en-us'.baseListing.title -ceq 'Preserved listing') 'Preserve Store listing metadata.'
+    Require ($api.Pending.listings.'en-us'.baseListing.licenseTerms -ceq 'Keep license') 'Preserve legal declarations.'
+    Require ($api.Pending.listings.'en-us'.platformOverrides.Windows81.description -ceq 'Keep override') 'Preserve platform overrides.'
+    Require ($api.Pending.listings.'it-it'.baseListing.title -ceq 'Keep other locale') 'Preserve unmanaged locales.'
+    Require ($api.Pending.listings.'zh-cn'.baseListing.title -ceq 'Preserved listing') 'Reuse the reserved brand for a new locale.'
+    Require (($api.Pending.listings.'en-us'.baseListing.images | Where-Object id -CEQ 'logo').fileStatus -ceq 'Uploaded') 'Preserve Store logos.'
+    Require (($api.Pending.listings.'en-us'.baseListing.images | Where-Object id -CEQ 'old-image').fileStatus -ceq 'PendingDelete') 'Replace the managed desktop screenshot set.'
+    $screenshotCount = (Get-Content "$storeMaterials/listings/en-US.json" -Raw | ConvertFrom-Json).screenshots.Count
+    Require (@($api.Pending.listings.'en-us'.baseListing.images | Where-Object fileStatus -CEQ 'PendingUpload').Count -eq $screenshotCount) 'Retries must not duplicate screenshots.'
     $pricingV2 = $api.Pending.Clone(); $pricingV2.pricing = @{ priceId = 'UnknownTier' }
     Require (-not (New-StoreDraftBody $pricingV2 'app.msixupload' 'notes').ContainsKey('pricing')) 'Do not write an unsupported Pricing v2 tier.'
     Require (($api.Pending.applicationPackages | Where-Object fileName -EQ 'old.msix').fileStatus -ceq 'PendingDelete') 'Replace the previous x64 package.'
     Require (($api.Pending.applicationPackages | Where-Object fileName -EQ 'arm.msix').fileStatus -ceq 'Uploaded') 'Preserve other architectures.'
     $draft = Get-Content "$fixture/store-draft.json" -Raw | ConvertFrom-Json
     Require ($draft.Uploaded -eq $true -and $draft.Committed -eq $false) 'Report must distinguish upload from certification.'
+    $localeCount = (Get-Content "$PSScriptRoot/../localization/LanguageCatalog.json" -Raw | ConvertFrom-Json).Languages.Count
+    Require ($draft.MaterialsSha256 -match '^[0-9a-f]{64}$' -and $draft.ListingLocales.Count -eq $localeCount) 'Record the materials used by the draft.'
+    $exportPath = Get-ChildItem "$fixture/material-exports" -Directory | Sort-Object LastWriteTime | Select-Object -First 1
+    $patch = (Get-Content (Join-Path $exportPath.FullName 'listings.json') -Raw | ConvertFrom-Json -AsHashtable).listings
+    $published = $api.Pending | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable
+    $unchangedImage = $published.listings.'en-us'.baseListing.images | Where-Object fileStatus -CEQ 'PendingUpload' | Select-Object -First 1
+    $unchangedImage.fileStatus = 'Uploaded'; $unchangedImage.id = 'reused-image'
+    $nextBody = New-StoreDraftBody $published 'next.msixupload' 'next notes' $patch
+    Require (@($nextBody.listings.'en-us'.baseListing.images | Where-Object { $_.id -ceq 'reused-image' -and $_.fileStatus -ceq 'Uploaded' }).Count -eq 1) 'Reuse unchanged uploaded images.'
+    $badRemote = $nextBody | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable
+    $badRemote.listings.'en-us'.baseListing.description = 'Server did not apply the listing'
+    Reject { Assert-StoreDraftListings $badRemote $nextBody @('en-us') }
+    $badRemote = $nextBody | ConvertTo-Json -Depth 100 | ConvertFrom-Json -AsHashtable
+    $badRemote.listings.'en-us'.baseListing.images = @()
+    Reject { Assert-StoreDraftListings $badRemote $nextBody @('en-us') }
+    Reject { New-StoreDraftBody @{ listings = @{}; applicationPackages = @() } 'new.msixupload' 'notes' $patch }
+    $copyPath = "$storeMaterials/listings/en-US.json"
+    $oldCopy = [IO.File]::ReadAllText($copyPath)
+    $changedCopy = $oldCopy | ConvertFrom-Json -AsHashtable
+    $changedCopy.shortDescription += ' Changed.'
+    Save-Json $changedCopy $copyPath
+    $oldUpdates = $api.Updates
+    Reject { & "$PSScriptRoot/../.github/scripts/Invoke-StoreDraft.ps1" -Action Draft @invoke }
+    Require ($api.Updates -eq $oldUpdates) 'Reject changed material content before writing a retry draft.'
+    [IO.File]::WriteAllText($copyPath, $oldCopy)
+    $badProduct = $invoke.Clone(); $badProduct.ProductVersion = '0.6.1.0'
+    Reject { & "$PSScriptRoot/../.github/scripts/Invoke-StoreDraft.ps1" -Action Draft @badProduct }
     $env:GITHUB_RUN_ID = '99999'
     Reject { & "$PSScriptRoot/../.github/scripts/Invoke-StoreDraft.ps1" -Action Draft @invoke }
     Require ($api.Creates -eq 1) 'Never replace another run or a manual Store submission.'

@@ -400,3 +400,7 @@ resources/tools/monaco-editor-*.tgz
 # Local development scripts and verification artifacts
 /scripts/
 /.artifacts/
+
+# Reviewed Store release notes are source inputs, not build output.
+!/resources/store/releases/
+!/resources/store/releases/*.json

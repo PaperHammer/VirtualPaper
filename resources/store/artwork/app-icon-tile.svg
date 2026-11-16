@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 640 640">
+  <title>Virtual Paper rounded tile icon</title>
+  <desc>Smooth vector curves and gradients based on the original Virtual Paper logo; no lettering or embedded bitmap.</desc>
+  <defs>
+    <clipPath id="wingOutline">
+      <path d="M181.000 20.000 C170.292 123.521 135.257 219.808 56.000 293.000 C93.300 385.162 104.845 504.658 73.000 603.000 C128.050 615.546 188.919 616.957 248.000 611.000 C394.686 596.210 585.709 477.046 583.000 300.000 C522.295 339.451 459.962 374.970 385.000 380.000 C420.573 307.626 466.946 197.583 413.000 116.000 C378.086 179.496 320.592 245.631 256.000 283.000 C257.004 184.562 231.821 96.971 181.000 20.000 Z" />
+    </clipPath>
+    <linearGradient id="wingColor" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="640">
+      <stop offset="0.031250" stop-color="#88F4C2" />
+      <stop offset="0.171875" stop-color="#8FEDD0" />
+      <stop offset="0.312500" stop-color="#8BE4E3" />
+      <stop offset="0.437500" stop-color="#89DDF6" />
+      <stop offset="0.500000" stop-color="#86D8FC" />
+      <stop offset="0.625000" stop-color="#8FCBF9" />
+      <stop offset="0.703125" stop-color="#9CC7FB" />
+      <stop offset="0.781250" stop-color="#A9C0F9" />
+      <stop offset="0.859375" stop-color="#B8B9F8" />
+      <stop offset="0.921875" stop-color="#C5B4F9" />
+      <stop offset="0.957812" stop-color="#C7B1F6" />
+    </linearGradient>
+    <linearGradient id="foldColor" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="640">
+      <stop offset="0.442188" stop-color="#6FD2FB" />
+      <stop offset="0.546875" stop-color="#70CBFB" />
+      <stop offset="0.625000" stop-color="#7BC4FA" />
+      <stop offset="0.703125" stop-color="#86BBFA" />
+      <stop offset="0.781250" stop-color="#98B2F8" />
+      <stop offset="0.859375" stop-color="#ACABF7" />
+      <stop offset="0.921875" stop-color="#B9A5F7" />
+      <stop offset="0.957812" stop-color="#B9A5F7" />
+    </linearGradient>
+    <linearGradient id="tileBackground" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#4669A8" />
+      <stop offset="1" stop-color="#6B50A0" />
+    </linearGradient>
+  </defs>
+  <rect width="640" height="640" rx="120" ry="120" fill="url(#tileBackground)" />
+  <g transform="matrix(0.8 0 0 0.8 64 64)">
+    <g clip-path="url(#wingOutline)">
+      <path d="M181.000 20.000 C170.292 123.521 135.257 219.808 56.000 293.000 C93.300 385.162 104.845 504.658 73.000 603.000 C128.050 615.546 188.919 616.957 248.000 611.000 C394.686 596.210 585.709 477.046 583.000 300.000 C522.295 339.451 459.962 374.970 385.000 380.000 C420.573 307.626 466.946 197.583 413.000 116.000 C378.086 179.496 320.592 245.631 256.000 283.000 C257.004 184.562 231.821 96.971 181.000 20.000 Z" fill="url(#wingColor)" />
+      <path d="M181 321 L256 283 C262 390 206 521 73 603 C136 534 173 422 181 321 Z" fill="url(#foldColor)" />
+      <path d="M270 394 L385 380 C335 481 219 566 73 603 C169 543 230 465 270 394 Z" fill="url(#foldColor)" />
+    </g>
+  </g>
+</svg>

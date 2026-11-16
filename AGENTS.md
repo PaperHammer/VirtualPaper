@@ -22,6 +22,8 @@ Maintain translations only in `localization/Strings/<locale>/Resources.resw` and
 
 ## Test skill and entry points
 
+Store listing copy, versioned release notes, screenshot sources and capture/release standards live in [resources/store](resources/store/README.md) ([中文](resources/store/README.zh-CN.md)). Maintain these reviewed inputs in the repository; Pre-release consumes the fixed source snapshot to update only its owned, uncommitted Store draft.
+
 For requests to run, select, extend or diagnose tests, read the repository skill at [.agents/skills/testing/SKILL.md](.agents/skills/testing/SKILL.md). Follow its linked guides only for the relevant test layer. Agents without skill discovery can read that file directly.
 
 - Complete local acceptance: `pwsh -NoProfile -File test/Run-Tests.ps1` from an elevated PowerShell on a clean Windows test installation.

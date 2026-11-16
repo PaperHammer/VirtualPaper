@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 & (Join-Path $repositoryRoot 'test/Test-RuntimeDeployment.ps1')
 & (Join-Path $repositoryRoot 'test/Test-StoreIdentity.ps1')
+& (Join-Path $repositoryRoot 'test/Test-StoreMaterials.ps1')
 & (Join-Path $repositoryRoot 'test/Test-LegalDocuments.ps1')
 & (Join-Path $repositoryRoot 'test/Test-LocalizationResources.ps1')
 & (Join-Path $repositoryRoot 'test/Test-LocalizationResourceSupport.ps1')
@@ -36,6 +37,15 @@ function Assert-JobNeeds([string]$Id, [string[]]$Expected, [string]$Text = $work
 # Retain branch-independent release and local-runner checks from the existing workflow.
 $releasePrepare = Get-WorkflowJob 'prepare-metadata' $releaseWorkflow
 $releaseDraft = Get-WorkflowJob 'draft-release' $releaseWorkflow
+$storeDraft = Get-WorkflowJob 'draft-msstore' $releaseWorkflow
+foreach ($job in @($releasePrepare, $storeDraft)) {
+    if (-not $job.Contains('-ProductVersion $env:PRODUCT_VERSION') -or -not $job.Contains('outputs.new_version }}')) {
+        throw 'Store preparation and draft upload must select materials for the calculated product version.'
+    }
+}
+if (-not $storeDraft.Contains('name: store-materials') -or -not $storeDraft.Contains('path: TestResults/store-materials/')) {
+    throw 'Store drafts must retain the exported listing and screenshot evidence.'
+}
 if (-not $releasePrepare.Contains('Assert-ReleaseTagAvailable') -or
     -not (Get-WorkflowJob 'test-ui-logic' $releaseWorkflow).Contains('node .github/scripts/test-depth-player.cjs') -or
     -not (Get-WorkflowJob 'test-ml' $releaseWorkflow).Contains("include-ml-integration: 'true'")) {

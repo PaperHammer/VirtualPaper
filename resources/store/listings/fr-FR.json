@@ -1,0 +1,50 @@
+{
+  "shortDescription": "Donnez vie à votre bureau avec des fonds animés, des effets interactifs, des outils de création et une IA locale.",
+  "description": "Virtual Paper est une application de fonds d’écran animés gratuite et open source pour Windows. Personnalisez votre bureau avec des images, des vidéos, des images animées et des fonds Web interactifs, ou commencez par la collection incluse.\n\nOrganisez vos fonds d’écran grâce aux favoris, aux étiquettes, à la recherche et aux filtres. Choisissez un fond différent pour chaque écran, dupliquez-le sur plusieurs écrans ou étendez-le sur l’ensemble du bureau.\n\nAjoutez des effets de parallaxe et d’ambiance, puis enregistrez vos combinaisons préférées sous forme de préréglages réutilisables. Créez des fonds d’écran avec des calques et des outils de dessin, ou concevez des fonds interactifs dans l’éditeur Web avec aperçu en direct.\n\nUtilisez les outils d’IA locaux pour transformer le style de vos images, les améliorer et les adapter à votre écran. Passez instantanément d’une langue d’interface à l’autre parmi les dix proposées et commencez sans créer de compte.",
+  "features": [
+    "Images, vidéos, images animées et fonds Web interactifs",
+    "Fonds inclus, favoris, étiquettes, recherche et filtres",
+    "Fonds distincts, dupliqués ou étendus sur plusieurs écrans",
+    "Effets de parallaxe et d’ambiance avec préréglages réutilisables",
+    "Éditeur d’images avec calques et éditeur Web avec aperçu en direct",
+    "IA locale : transfert de style, amélioration et adaptation à l’écran",
+    "Dix langues d’interface avec changement immédiat"
+  ],
+  "keywords": [
+    "fond d’écran",
+    "fond animé",
+    "bureau",
+    "éditeur d’images",
+    "fond Web"
+  ],
+  "screenshots": [
+    {
+      "id": "00-overview",
+      "caption": "Découvrez Virtual Paper avec les thèmes clair et sombre."
+    },
+    {
+      "id": "01-library",
+      "caption": "Organisez vos fonds d’écran avec les favoris, les étiquettes et les filtres."
+    },
+    {
+      "id": "02-effects",
+      "caption": "Personnalisez vos fonds avec des effets de parallaxe et d’ambiance."
+    },
+    {
+      "id": "03-presets",
+      "caption": "Découvrez les préréglages intégrés et enregistrez vos propres combinaisons."
+    },
+    {
+      "id": "04-image-editor",
+      "caption": "Créez et modifiez des projets d’image avec des calques et des outils de dessin."
+    },
+    {
+      "id": "05-web-editor",
+      "caption": "Concevez des fonds Web interactifs avec une arborescence, un éditeur de code et un aperçu en direct."
+    },
+    {
+      "id": "06-screen-fit",
+      "caption": "Choisissez une image de la bibliothèque et adaptez-la à votre écran."
+    }
+  ]
+}

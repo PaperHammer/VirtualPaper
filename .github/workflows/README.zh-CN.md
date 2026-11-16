@@ -30,7 +30,7 @@ EXE／MSIX 安装版扩展 UI 报告要求每个已选宿主用例恰好出现�
 3. 所选包全部成功后，八组共享项目测试只运行一轮，内部并行。两路渠道验收均等待全部八组成功；失败或跳过时不开始安装。
 4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，分别使用全新的 GitHub-hosted Windows VM。每路内部顺序执行：冒烟并卸载清理 → 独立重装同一产物 → 扩展 UI 并卸载清理。两渠道可并行，同一渠道内冒烟和 UI 串行。
 5. `Summarize-PipelineTests.ps1` 校验选中渠道的子流程结果及原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。必需阶段失败、跳过或证据缺失均阻塞；两个工作流的 UI 也必须通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
-6. Pre-merge 在 PR head 回写 `pre-merge-check`。Pre-release 验收通过后仅在 main 提交一次产品版本，再将该 main 合回 dev，原子推送两分支后并行创建 GitHub EXE 草稿和选中的 Partner Center 草稿，最后汇总两者结果。
+6. Pre-merge 在 PR head 回写 `pre-merge-check`。Pre-release 验收通过后仅在 main 提交一次产品版本，再将该 main 合回 dev，原子推送两分支。随后 `Draft Release (GitHub)` 和选中的 `Draft Release (Microsoft Store)` 并行执行，互不依赖；一路草稿失败不会阻止另一路执行。最后汇总两者结果。
 
 子流程固定只有一个 `windows-latest` job，并拒绝非 GitHub-hosted runner，因此两路调用使用不同 Windows VM 和桌面；不要求或承诺云端物理宿主不同。同一台自托管 Windows 上的两个 runner 进程不满足隔离要求。每路内冒烟和 UI 使用独立安装/配置，顺序执行；冒烟清理失败时不启动 UI。需要活动且未锁定的 Default 桌面、Explorer、有效显示器、安装/证书信任所需提升权限、运行库和预置模型。桌面不可用必须明确跳过并阻止门禁，不能放宽检测。
 
@@ -58,11 +58,15 @@ Store 包版本独立于 `AssemblyVersion`：`2611R02` 映射为 `1.2611.2.0`。
 
 ## 分开的发布草稿
 
+Pre-release 中全部商店操作由已检查 PR 的精确 `channel:msstore` 标签控制，不读取 Git tag。未带此标签时，跳过 Partner Center 校验、MSIX 打包／安装验收及 Store draft job，无需商店凭据。两路草稿共享验收／版本同步门禁，彼此没有依赖；已选渠道的打包／验收失败仍阻止共同门禁通过。
+
 GitHub 保留原 EXE/插件的发布 tag 和更新资产，不额外创建 MSIX 专属 GitHub Release，保持现有客户端更新选择逻辑。草稿不会自动公开或标为 latest。
 
-有 `channel:msstore` 时，`Invoke-StoreDraft.ps1` 创建/更新 Partner Center MSIX 提交，保留商品介绍、价格、声明及其他架构，替换原 x64 包并上传已验证的 Store 包。保留 `targetPublishMode=Manual`、`status=PendingCommit`，不会调用提交、请求认证或上架接口。上传成功不等于认证通过。
+有 `channel:msstore` 时，`Invoke-StoreDraft.ps1` 创建/更新 Partner Center MSIX 提交，合入已审查的本地文案、更新说明和桌面截图，保留商店名称、未管理的条目数据、价格、声明及其他架构，替换原 x64 包，将已验证的 Store 包和引用图片一并上传。保留 `targetPublishMode=Manual`、`status=PendingCommit`，不会调用提交、请求认证或上架接口。上传成功不等于认证通过。
 
-重试只复用同仓库、同 workflow run、同源码 SHA/包哈希所拥有的未提交草稿。其他运行、人工草稿或已提交草稿均拒绝修改，更不会删除。如果创建成功但未写入归属标记，需要显式处理该待提交草稿后再重试。API 创建的提交应继续通过 API 管理，微软文档提示不要转到 Partner Center 编辑同一提交。参阅[商店 API 前置条件](https://learn.microsoft.com/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services)。
+重试只复用同仓库、同 workflow run、同源码 SHA、包哈希及材料哈希所拥有的未提交草稿。其他运行、人工草稿或已提交草稿均拒绝修改，更不会删除。如果创建成功但未写入归属标记，需要显式处理该待提交草稿后再重试。API 创建的提交应继续通过 API 管理，微软文档提示不要转到 Partner Center 编辑同一提交。参阅[商店 API 说明](https://learn.microsoft.com/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services)。
+
+统一维护标准见 [resources/store](../../resources/store/README.zh-CN.md)：当前文案放在 `listings/<locale>.json`，版本说明放在 `releases/<计算后的产品版本>.json`，图片及共享／来源登记放在 `screenshots/`。准备阶段提前检查，草稿 job 从同一已提交快照导出并保留可阅读的 `store-materials` 产物；首次商店提交自动留空更新说明。也可运行 `Export-StoreMaterials.ps1 -Version <产品版本> -InitialRelease` 离线交接，不写远端。修改文案／图片需要新的已审查源码快照，旧 job rerun 仍使用原材料。
 
 ## 补充检查与版本标签
 
@@ -122,8 +126,6 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 - 一次性创建四个固定的 `version:*` 标签。
 - 修改本地工作流不会删除远端 `release`、`bugfix` 等旧分支。确认没有未合并工作后再单独清理。
 
-先预留产品名，并在 Partner Center 完成包含年龄评级的初始提交配置，才能使用提交 API；产品创建仍由人工完成。
-
 保留四个 `version:*` 标签，并添加 `channel:msstore`。分支规则要求 `pre-merge-check`，旧检查名称另行移除。修改本地文件不会远端创建标签或修改保护；工作流运行期间不要手动创建同名 tag 或发布草稿。
 
 ## 报告和本地验证
@@ -132,7 +134,7 @@ PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提
 
 跨版本升级使用独立本地入口 `test/Run-UpgradeTests.ps1`，输入两个源码／安装包快照及各自匹配的测试工具，不替代强制同包覆盖安装，也不触发工作流。区域格式／字体用例纳入原有真实 UI 清单；准备方式与截图检查见[测试指南](../../test/README.zh-CN.md)。
 
-原始报告使用 `test-results-*`，汇总使用 `test-summary-*`/`release-test-summary`。JSON/Markdown 记录渠道结果、源码 SHA，包清单记录版本和哈希。`store-draft.json` 记录提交 ID、上传包/安装包哈希与 `Committed=false`，不包含 token 或 SAS URL。包/草稿/汇总保留 30 天，构建/原始报告保留 7 天；上传支持覆盖重试，下载保留摘要校验。
+原始报告使用 `test-results-*`，汇总使用 `test-summary-*`/`release-test-summary`。JSON/Markdown 记录渠道结果、源码 SHA，包清单记录版本和哈希。`store-draft.json` 记录提交 ID、上传包／安装包／材料哈希、产品版本、语种清单与 `Committed=false`，不包含 token 或 SAS URL。包/草稿/汇总保留 30 天，构建/原始报告保留 7 天；上传支持覆盖重试，下载保留摘要校验。
 
 运行 `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` 验证 DAG（打包 → 全部共享项目测试 → 渠道子流程）、固定 hosted VM 隔离、冒烟/UI 顺序、严格报告失败/跳过/缺失、包载荷、版本同步、插件包，以及商店 HTTP 模拟和重试契约。它不安装应用，也不连接 Partner Center/GitHub。完整本地入口仍为 EXE 的 `test/Run-Tests.ps1` 和 MSIX 的 `test/Run-MsixTests.ps1`，详见[测试说明](../../test/README.zh-CN.md)。
 

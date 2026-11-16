@@ -30,6 +30,7 @@
 | 共用项目系统与文件监视 | [ProjectSystem](../src/VirtualPaper.Common/Utils/ProjectSystem/) |
 | 源文案与 XAML 资源生成 | [语言资源](../src/VirtualPaper.UIComponent/Localization/README.zh-CN.md) |
 | CI、版本管理与发布 | [工作流指南](../.github/workflows/README.zh-CN.md) |
+| 多语言商店详情、更新说明与截图 | [商店发布材料](../resources/store/README.zh-CN.md) |
 
 ## 文档维护
 

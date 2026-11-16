@@ -30,7 +30,7 @@ Shared stages use the same display names in both entry workflows, including `Bui
 3. After all selected packages succeed, run the eight shared project test jobs once, in parallel. Both channel acceptance calls wait for all eight jobs to pass; a failure or skip blocks installation.
 4. `test-exe-acceptance` and `test-msix-acceptance` call the same `package-acceptance.yml` template on separate fresh GitHub-hosted Windows VMs. Within each VM, run smoke through uninstall/cleanup, then independently reinstall the same artifact for extended UI and uninstall/cleanup. The channels may run in parallel; smoke and UI within a channel are sequential.
 5. `Summarize-PipelineTests.ps1` validates selected channel results and their raw smoke/UI reports (two per channel), TRX/coverage, installer lifecycle, actual installed UI, source SHA and package SHA256. Missing/failed/skipped required checks block success. UI is required in both workflows. An unselected Store channel is `NotSelected`, never a passing test.
-6. Pre-merge writes the final `pre-merge-check` status on the PR head. Pre-release commits the product version on main once after acceptance, merges that main into dev and atomically pushes both refs, then independently creates the GitHub EXE draft and selected Partner Center draft. A final job summarizes both draft results.
+6. Pre-merge writes the final `pre-merge-check` status on the PR head. Pre-release commits the product version on main once after acceptance, merges that main into dev and atomically pushes both refs. `Draft Release (GitHub)` and the selected `Draft Release (Microsoft Store)` then run in parallel without depending on each other; a failed draft does not prevent the other job from executing. A final job summarizes both results.
 
 The reusable workflow fixes its single job to `windows-latest` and rejects a non-GitHub-hosted runner. Each channel therefore owns a separate Windows VM and desktop; distinct physical cloud hosts are not promised or required. Two runner processes on the same self-hosted desktop are not an allowed substitute. Smoke and UI use separate installations/profiles sequentially within each VM; smoke cleanup failure blocks UI. They require an active, unlocked Default desktop, Explorer, a usable display, elevation for installation/trust, runtime prerequisites and the preinstalled model assets. Unavailable desktop checks remain explicit skips and fail the gate. Do not turn skips into passes to work around runner limitations.
 
@@ -58,11 +58,15 @@ Version synchronization writes the version fields only on `main`, creates its bu
 
 ## Separate release drafts
 
+Pre-release selects all Store operations using the checked PR's exact `channel:msstore` label, not a Git tag. Without it, Partner Center validation, MSIX packaging/installed acceptance and the Store draft job are skipped; no Store credentials are required. The two draft jobs share the acceptance/version-sync barrier and have no cross-channel dependency. Selected package/acceptance failures still block that common barrier.
+
 GitHub retains the existing EXE/plugin release tag and update assets. No additional MSIX-only GitHub Release is created, so existing clients' release selection remains unchanged. Drafts are not public and are not automatically marked latest.
 
-For `channel:msstore`, `Invoke-StoreDraft.ps1` creates/updates a Partner Center MSIX submission, preserves listing/pricing/declarations and other architectures, replaces the previous x64 package and uploads the validated Store archive. It leaves `targetPublishMode=Manual` and `status=PendingCommit`: no submission commit, certification request or publication occurs. Upload success is not certification success.
+For `channel:msstore`, `Invoke-StoreDraft.ps1` creates/updates a Partner Center MSIX submission, merges reviewed local copy/release notes/desktop screenshots, preserves reserved titles, unmanaged listing data, pricing/declarations and other architectures, replaces the previous x64 package and uploads the validated Store archive with referenced images. It leaves `targetPublishMode=Manual` and `status=PendingCommit`: no submission commit, certification request or publication occurs. Upload success is not certification success.
 
-Store retries reuse only an uncommitted draft owned by the same repository/workflow run/source SHA and package hash. Unrelated/manual submissions and already committed submissions are rejected, never deleted. If creation succeeds but ownership cannot be recorded, resolve the pending draft explicitly before retrying. Once an API-owned submission exists, continue managing it through the API; Microsoft's API warns against editing it in Partner Center. See [submission API prerequisites](https://learn.microsoft.com/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services).
+Store retries reuse only an uncommitted draft owned by the same repository/workflow run/source SHA, package hash and material hash. Unrelated/manual submissions and already committed submissions are rejected, never deleted. If creation succeeds but ownership cannot be recorded, resolve the pending draft explicitly before retrying. Once an API-owned submission exists, continue managing it through the API; Microsoft's API warns against editing it in Partner Center. See [submission API guidance](https://learn.microsoft.com/windows/uwp/monetize/create-and-manage-submissions-using-windows-store-services).
+
+The unified maintenance standard is [resources/store](../../resources/store/README.md): current copy in `listings/<locale>.json`, notes in `releases/<calculated-product-version>.json`, images and sharing/provenance in `screenshots/`. Preparation validates them early; the draft job exports the same committed snapshot and retains the readable `store-materials` artifact. First-submission release notes are automatically blank. `Export-StoreMaterials.ps1 -Version <product-version> -InitialRelease` also provides an offline handoff without remote writes. Updated copy/images need a new reviewed source snapshot; rerunning an old job keeps its original materials.
 
 ## Additional checks and version labels
 
@@ -122,8 +126,6 @@ Fill the four public identifiers in [packaging/msix/StoreIdentity.json](../../pa
 - Create the four fixed `version:*` labels once.
 - Local workflow changes do not delete old remote branches such as `release` or `bugfix`. Clean them up separately after checking for unmerged work.
 
-Reserve the product and complete the initial Partner Center submission setup, including age ratings, before using the submission API. Product creation itself is manual.
-
 Keep the four `version:*` labels and add `channel:msstore`. Branch protection must require `pre-merge-check` (remove obsolete status names separately). Workflows do not change repository labels/rules remotely. Do not modify/release matching tags while a workflow is running.
 
 ## Reports and local checks
@@ -132,7 +134,7 @@ Workflow contracts also run `test/Test-LegalDocuments.ps1` for all supported off
 
 Cross-version upgrades use the independent local `test/Run-UpgradeTests.ps1` entry with two source/package snapshots and phase-matched test tools. They do not replace mandatory same-package smoke or dispatch either workflow. Regional-format/font cases join the existing real UI inventory; see the [testing guide](../../test/README.md) for preparation and screenshot review.
 
-Raw reports use `test-results-*`; bundles use `test-summary-*`/`release-test-summary`. Summary JSON/Markdown retain channel outcomes and source SHA; package manifests retain versions/hashes. `store-draft.json` records the submission ID, uploaded archive/package hashes and `Committed=false`, without access tokens or SAS URLs. Package/draft/summary artifacts last 30 days; build/raw reports last 7 days. Artifact uploads use overwrite on retries; downloads validate digests.
+Raw reports use `test-results-*`; bundles use `test-summary-*`/`release-test-summary`. Summary JSON/Markdown retain channel outcomes and source SHA; package manifests retain versions/hashes. `store-draft.json` records the submission ID, uploaded archive/package/material hashes, product version, listing locales and `Committed=false`, without access tokens or SAS URLs. Package/draft/summary artifacts last 30 days; build/raw reports last 7 days. Artifact uploads use overwrite on retries; downloads validate digests.
 
 Run `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1` for the DAG (packages → all project jobs → channel calls), fixed hosted-VM isolation, sequential smoke/UI, strict missing/failed/skipped reports, artifact payloads, metadata/version synchronization, plugin package and Store HTTP-mock/retry contracts. It does not install applications or contact Partner Center/GitHub. Local complete acceptance remains `test/Run-Tests.ps1` for EXE and `test/Run-MsixTests.ps1` for MSIX; see the [testing guide](../../test/README.md).
 

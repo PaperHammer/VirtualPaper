@@ -4,11 +4,6 @@ using NLog;
 using Windows.ApplicationModel.Core;
 
 /*
- * 0.6.1.0 待办：多语言发布素材。
- *
- * 多语言发布素材
- *   准备各语种的商店详情、更新说明和截图。
- *
  * AI 生成壁纸	接入 Stable Diffusion / ComfyUI
  *
  * 壁纸轮播

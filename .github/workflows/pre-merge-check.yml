@@ -394,7 +394,7 @@ jobs:
         }
   test-exe-acceptance:
     name: EXE Installed Acceptance
-    needs: [validate-pr, build-solution, packages-ready, tests-passed]
+    needs: [validate-pr, build-solution, package-exe, tests-passed]
     uses: ./.github/workflows/package-acceptance.yml
     with:
       channel: exe
@@ -402,7 +402,7 @@ jobs:
       build-artifact: build-output
   test-msix-acceptance:
     name: MSIX Installed Acceptance
-    needs: [validate-pr, build-solution, packages-ready, tests-passed]
+    needs: [validate-pr, build-solution, package-msix, tests-passed]
     uses: ./.github/workflows/package-acceptance.yml
     with:
       channel: msix

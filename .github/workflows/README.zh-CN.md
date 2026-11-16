@@ -28,8 +28,8 @@ EXE／MSIX 安装版扩展 UI 报告声称通过时，要求每个已选宿主�
 两个主入口中相同阶段使用一致的显示名称，包括 `Build Release` 和 `Test Summary`。 Windows 和 Ubuntu 的 run 块均默认使用 PowerShell（`pwsh`），包括打包门禁和汇总。
 
 1. 校验 PR，固定源码 SHA、版本和渠道选择；使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。
-2. `package-exe`、`package-msix` 与项目测试并行，消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 要求选中的包全部生成成功。
-3. Release 构建完成后，八组共享项目测试各运行一次，与打包并行，不等待 `packages-ready`。Artifact Tests 仅消费构建产物，不检出源码；预期文案和映射已嵌入测试程序集。`tests-passed`（Tests Passed）先以 `project_results` JSON 输出八组任务结果，再判定是否全部通过，不检出源码、下载产物或重复测试。Summary 读取该输出，不再直接依赖八组任务，仍校验原始报告。两路渠道验收同时等待 `packages-ready` 和 `tests-passed`；项目测试失败、取消、跳过或结果缺失时不开始安装。
+2. `package-exe`、`package-msix` 与项目测试并行，消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 在最终汇总时要求选中的包全部生成成功，不再阻挡各渠道验收。
+3. Release 构建完成后，八组共享项目测试各运行一次，与打包并行，不等待 `packages-ready`。Artifact Tests 仅消费构建产物，不检出源码；预期文案和映射已嵌入测试程序集。`tests-passed`（Tests Passed）先以 `project_results` JSON 输出八组任务结果，再判定是否全部通过，不检出源码、下载产物或重复测试。Summary 读取该输出，不再直接依赖八组任务，仍校验原始报告。各渠道验收只等待自己的包和 `tests-passed`，不等待另一种包；项目测试失败、取消、跳过或结果缺失时不开始安装。
 4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，每路启动互无依赖的 Smoke、UI Acceptance 两个 job，共四个 job 并行使用独立的全新 GitHub-hosted Windows VM。每个 job 自行检出同一固定源码、下载并核验对应构建与安装包、安装及卸载，分别保留报告。
 5. `Summarize-PipelineTests.ps1` 校验两个汇总关卡、各项目及选中渠道的任务结果和原始冒烟/UI 报告（每渠道两份）、TRX/覆盖率、安装生命周期、真实 UI、源码 SHA 和包哈希。包校验、项目测试和冒烟失败／跳过，身份不符或上传／报告缺失仍阻塞。两个工作流仅允许扩展 UI 运行失败及合法的环境跳过；记录真实步骤结果，继续显示 Failed／Skipped，不伪装为通过。未选择商店渠道显示 `NotSelected`，不能算测试通过。
 6. Pre-merge 在 PR head 回写 `pre-merge-check`。Pre-release 验收通过后仅在 main 提交一次产品版本，再将该 main 合回 dev，原子推送两分支。随后 `Draft Release (GitHub)` 和选中的 `Draft Release (Microsoft Store)` 并行执行，互不依赖；一路草稿失败不会阻止另一路执行。最后汇总两者结果。

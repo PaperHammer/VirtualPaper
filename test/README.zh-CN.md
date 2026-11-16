@@ -97,7 +97,7 @@ flowchart LR
     F --> G[汇总]
 ```
 
-本地失败阻止后续阶段，尝试安装后仍执行清理；真实 UI 在本地顺序运行。CI 固定 PR／版本化源码，Release 构建后同时启动所选渠道打包和八组共享项目测试。所选包汇入 `Packages Ready`，八组测试结果汇入 `Tests Passed`，两个关卡通过后，EXE/MSIX 验收子流程各启动互无依赖的 Smoke、UI Acceptance 两个 job，共四台独立 hosted Windows VM 并行，各自安装、配置和卸载。项目测试和冒烟必须无跳过通过；仅扩展 UI 运行可在上传必需报告后不阻塞。本地不回写 PR 状态或同步版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
+本地失败阻止后续阶段，尝试安装后仍执行清理；真实 UI 在本地顺序运行。CI 固定 PR／版本化源码，Release 构建后同时启动所选渠道打包和八组共享项目测试。所选包汇入 `Packages Ready`，八组测试结果汇入 `Tests Passed`，各渠道的包与 `Tests Passed` 通过后，对应 EXE/MSIX 验收子流程即可启动，不等待另一种包；每路启动互无依赖的 Smoke、UI Acceptance 两个 job，共四台独立 hosted Windows VM 并行，各自安装、配置和卸载。项目测试和冒烟必须无跳过通过；仅扩展 UI 运行可在上传必需报告后不阻塞。本地不回写 PR 状态或同步版本，详见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 安装验收使用较短的隔离临时配置路径，避免超出 Inno Setup 6 的路径限制。验收结束后复制到安装报告旁的 `.artifacts/profiles` 目录，再清理临时目录。
 
@@ -488,7 +488,7 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`，与本地/Web 脚本的 Node.js 设置独立。版本及摘要校验说明见[工作流指南](../.github/workflows/README.zh-CN.md)。
 
-共享 Release 构建完成后，CI 同时运行所选渠道打包及八组共享项目测试，项目测试不再等待 `packages-ready`。`tests-passed` 只汇总八组结果，不检出、下载或重跑；失败、取消、跳过及结果缺失均不能通过。`packages-ready` 和 `tests-passed` 两个关卡通过后，`test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，每路启动独立的 `smoke`、`ui` 两个 job，共四台全新 GitHub-hosted Windows VM 并行运行，冒烟和 UI 互无依赖。每个 job 消费相同的既有渠道产物并核对源码 SHA／哈希，自行安装、配置和卸载；冒烟或其清理失败仍阻止整体验收，独立 UI 可继续完成并保留诊断报告。选中渠道的原始冒烟/UI 报告仍必须齐全（每渠道两份）。同一 Windows 桌面上的两个 runner 进程不满足隔离要求。本地完整入口仍先完成冒烟并卸载，再运行独立 Release UI。
+共享 Release 构建完成后，CI 同时运行所选渠道打包及八组共享项目测试，项目测试不再等待 `packages-ready`。`tests-passed` 只汇总八组结果，不检出、下载或重跑；失败、取消、跳过及结果缺失均不能通过。`test-exe-acceptance`、`test-msix-acceptance` 各自在自己的包和 `tests-passed` 通过后调用 `package-acceptance.yml`，不等待另一种包；`packages-ready` 仍由最终汇总强制校验。每路启动独立的 `smoke`、`ui` 两个 job，共四台全新 GitHub-hosted Windows VM 并行运行，冒烟和 UI 互无依赖。每个 job 消费相同的既有渠道产物并核对源码 SHA／哈希，自行安装、配置和卸载；冒烟或其清理失败仍阻止整体验收，独立 UI 可继续完成并保留诊断报告。选中渠道的原始冒烟/UI 报告仍必须齐全（每渠道两份）。同一 Windows 桌面上的两个 runner 进程不满足隔离要求。本地完整入口仍先完成冒烟并卸载，再运行独立 Release UI。
 
 仅 UI job 使用任务级 `continue-on-error`，运行步骤及检查保留失败标记。父流程汇总要求 `ui_upload_result=success`，验证上传报告并保留真实 `ui_run_result`；上传失败或缺失仍阻塞。宿主崩溃／超时且尚未写出报告时，运行脚本生成 Failed 诊断报告，记录错误及可用的退出码，不补造用例结果。已有报告不会被替换，本地严格验收仍失败。
 

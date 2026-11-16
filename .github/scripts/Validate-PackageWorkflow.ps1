@@ -108,7 +108,7 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     $tests = @('test-exe-acceptance', 'test-msix-acceptance')
     foreach ($channel in @('exe', 'msix')) {
         $id = "test-$channel-acceptance"
-        Assert-JobNeeds $id ($gates + @('packages-ready', 'tests-passed')) $text
+        Assert-JobNeeds $id ($gates + @("package-$channel", 'tests-passed')) $text
         $job = Get-WorkflowJob $id $text
         $shaOutput = if ($isRelease) { 'main_sha' } else { 'test_sha' }
         $sourceInput = 'source-sha: ${{ needs.' + $metadata + '.outputs.' + $shaOutput + ' }}'
@@ -116,7 +116,7 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
             -not $job.Contains("channel: $channel") -or -not $job.Contains("build-artifact: $artifactName") -or
             -not $job.Contains($sourceInput) -or $job -match '(?m)^    (runs-on|steps|strategy|secrets):' -or
             ($channel -eq 'exe' -and $job -match '(?m)^    if:')) {
-            throw 'Each channel must call the shared acceptance workflow after all project jobs, using the same frozen build/source.'
+            throw 'Each channel must use its own package and the project test gate without waiting for the other package, retaining the frozen build/source.'
         }
     }
     $build = Get-WorkflowJob $buildId $text

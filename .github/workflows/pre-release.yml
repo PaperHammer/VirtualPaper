@@ -514,7 +514,7 @@ jobs:
         }
   test-exe-acceptance:
     name: EXE Installed Acceptance
-    needs: [prepare-metadata, build-release, packages-ready, tests-passed]
+    needs: [prepare-metadata, build-release, package-exe, tests-passed]
     uses: ./.github/workflows/package-acceptance.yml
     with:
       channel: exe
@@ -522,7 +522,7 @@ jobs:
       build-artifact: build-release-output
   test-msix-acceptance:
     name: MSIX Installed Acceptance
-    needs: [prepare-metadata, build-release, packages-ready, tests-passed]
+    needs: [prepare-metadata, build-release, package-msix, tests-passed]
     if: needs.prepare-metadata.outputs.msstore_enabled == 'true'
     uses: ./.github/workflows/package-acceptance.yml
     with:

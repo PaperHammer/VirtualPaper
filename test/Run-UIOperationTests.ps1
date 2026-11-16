@@ -3,7 +3,12 @@ param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Debug',
     [string]$ReportPath = (Join-Path ([IO.Path]::GetTempPath()) ('virtualpaper-ui-operation-' + [guid]::NewGuid().ToString('N') + '.json')),
     [string]$CoreExe,
+    [switch]$InstalledExe,
     [string]$HostExe,
+    [string]$PackageFullName,
+    [string]$CIOwnershipPath,
+    [string]$BuiltInPayload,
+    [string]$DataRoot,
     [ValidatePattern('^[A-Za-z][A-Za-z0-9]*(\.[A-Za-z][A-Za-z0-9]*)*$')][string]$Module,
     [ValidateSet('Standard', 'Extended')][string]$Suite = 'Standard',
     [ValidateRange(30, 900)][int]$TimeoutSeconds = 180,
@@ -11,6 +16,24 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 if ($Module -and $Suite -ne 'Standard') { throw 'Choose either a single module or an extended suite.' }
+if ($InstalledExe -and (-not $CoreExe -or $PackageFullName)) { throw 'Installed EXE acceptance requires its explicit Core executable.' }
+if ($DataRoot -and -not $PackageFullName) { throw 'An external retained DataRoot is only supported for installed MSIX acceptance.' }
+. (Join-Path $PSScriptRoot 'PackageArtifactSupport.ps1')
+$ciArtifact = $null
+if ($CIOwnershipPath) {
+    if (-not $PackageFullName) { throw 'CI ownership requires installed package activation.' }
+    $ciArtifact = Assert-MsixCIOwnership $CIOwnershipPath $PackageFullName
+}
+if ($PackageFullName -and -not $ciArtifact -and $PackageFullName -notmatch '^PaperHammer\.VirtualPaper\.Test\.[0-9a-f]{16}_') {
+    throw 'MSIX UI acceptance requires a per-run test identity from Run-MsixTests.ps1; daily Store/preview packages cannot be used.'
+}
+if ($DataRoot) {
+    $DataRoot = [IO.Path]::GetFullPath($DataRoot)
+    $relativeRoot = [IO.Path]::GetRelativePath([IO.Path]::GetTempPath(), $DataRoot)
+    if ($relativeRoot -notmatch '^VirtualPaper\.MsixAcceptance-[0-9a-f]{32}[\\/].+') {
+        throw 'Retained MSIX profiles must be inside a Run-MsixTests.ps1 temporary profile directory.'
+    }
+}
 if ($Suite -eq 'Extended' -and -not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 900 }
 . (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
 $projectPath = Join-Path $PSScriptRoot 'VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
@@ -39,7 +62,15 @@ if (-not $NoBuild) {
     & $msbuildPath (Join-Path $repositoryRoot 'src/VirtualPaper.sln') /t:Build /restore "/p:Configuration=$Configuration" '/p:Platform=Any CPU' /m /v:minimal /nologo *> $buildLog
     if ($LASTEXITCODE -ne 0) { Get-Content -LiteralPath $buildLog -Tail 25; throw 'Application/test build failed' }
 }
-if (-not $CoreExe) { $CoreExe = Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.exe" }
+if ($PackageFullName) {
+    if ($CoreExe) { throw 'Choose installed package activation or an unpackaged Core executable.' }
+    $installed = @(Get-AppxPackage | Where-Object PackageFullName -CEQ $PackageFullName)
+    if ($installed.Count -ne 1) { throw 'The exact MSIX package must be installed for the current user.' }
+    if ($ciArtifact -and ($installed[0].Name -cne $ciArtifact.IdentityName -or $installed[0].Publisher -cne $ciArtifact.Publisher -or
+        $installed[0].Version.ToString() -cne $ciArtifact.PackageVersion)) { throw 'Installed CI package differs from its artifact.' }
+    $CoreExe = Join-Path $installed[0].InstallLocation 'VirtualPaper.exe'
+}
+if (-not $CoreExe) { $CoreExe = Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net10.0-windows10.0.19041.0/VirtualPaper.exe" }
 $CoreExe = [IO.Path]::GetFullPath($CoreExe)
 if (-not (Test-Path -LiteralPath $CoreExe)) { throw "Core executable not found: $CoreExe" }
 if (-not (Test-Path -LiteralPath (Join-Path (Split-Path -Parent $CoreExe) 'Plugins/UI/VirtualPaper.UI.exe'))) {
@@ -75,11 +106,30 @@ if ($Module) {
     $startInfo.ArgumentList.Add('Extended')
 }
 $sessionId = [guid]::NewGuid().ToString('N')
-$sessionRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
-New-Item -ItemType Directory -Path $sessionRoot | Out-Null
+# Keep WebView2 media/cache paths below native MAX_PATH even under a long TEMP.
+$sessionRoot = if ($DataRoot) { [IO.Path]::GetFullPath($DataRoot) } else {
+    [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VPUI-' + $sessionId)))
+}
+New-Item -ItemType Directory -Path $sessionRoot -Force | Out-Null
 $startInfo.Environment['VIRTUALPAPER_TEST_SESSION'] = $sessionId
 $startInfo.Environment['VIRTUALPAPER_TEST_DATA_ROOT'] = $sessionRoot
 $startInfo.Environment['VIRTUALPAPER_TEST_CORE_EXE'] = $CoreExe
+if ($InstalledExe) { $startInfo.Environment['VIRTUALPAPER_TEST_INSTALLED_EXE'] = '1' }
+else { [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_INSTALLED_EXE') }
+if ($BuiltInPayload) {
+    $BuiltInPayload = [IO.Path]::GetFullPath($BuiltInPayload)
+    if (-not (Test-Path -LiteralPath $BuiltInPayload -PathType Container)) { throw 'Installed built-in wallpaper fixture is missing.' }
+    $startInfo.Environment['VIRTUALPAPER_TEST_BUILTIN_PAYLOAD'] = $BuiltInPayload
+} else { [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_BUILTIN_PAYLOAD') }
+if ($PackageFullName) {
+    $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_FULL_NAME'] = $PackageFullName
+    $startInfo.Environment['VIRTUALPAPER_TEST_PACKAGE_AUMID'] = "$($installed[0].PackageFamilyName)!App"
+    $startInfo.Environment['VIRTUALPAPER_TEST_ACTIVATION_RESUMER'] = Join-Path $PSScriptRoot "VirtualPaper.InstallerTest/bin/$Configuration/net10.0-windows10.0.19041.0/VirtualPaper.InstallerTest.exe"
+} else {
+    [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_PACKAGE_FULL_NAME')
+    [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_PACKAGE_AUMID')
+    [void]$startInfo.Environment.Remove('VIRTUALPAPER_TEST_ACTIVATION_RESUMER')
+}
 $process = $null
 try {
     $process = [Diagnostics.Process]::Start($startInfo)
@@ -93,16 +143,15 @@ try {
     if (-not (Test-Path -LiteralPath $reportFullPath)) { throw "Host exited without a report (exit $($process.ExitCode))" }
     $report = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
     if ($Suite -eq 'Extended') {
-        foreach ($moduleName in @('ModelInference', 'ScreenSaverLifecycle', 'Rendering')) {
-            if (@($report.Results | Where-Object { $_.Name -like "Application.$moduleName.*" }).Count -lt 1) {
-                throw "Extended acceptance is missing the $moduleName case."
-            }
-        }
+        Assert-ExtendedUIModules $report
     }
     $applicationRuns = @($report.Results | Where-Object { $_.Name -like 'Application.*' })
-    if ($process.ExitCode -ne 0 -or (Get-UIOperationReportOutcome $report) -ne 'Passed') {
+    if ($process.ExitCode -ne 0 -or (Get-UIOperationReportOutcome $report -FocusedModule $Module) -ne 'Passed') {
         throw "UI operation tests failed: $($report | ConvertTo-Json -Depth 5)"
     }
+    if ($PackageFullName -and @($applicationRuns | Where-Object {
+        $_.Evidence.PackageFullName -cne $PackageFullName -or $_.Evidence.PackageActivation -cne 'AUMID'
+    }).Count) { throw 'MSIX UI acceptance did not retain verified package identity and AUMID activation.' }
     $report.Results | Format-Table Name, Passed, DurationMilliseconds
     foreach ($applicationRun in $applicationRuns) {
         if (@($applicationRun.Evidence.RuntimeErrors).Count -gt 0) {
@@ -110,6 +159,16 @@ try {
         }
     }
     Write-Output "Report: $reportFullPath"
+}
+catch {
+    # A crashed/timed-out host cannot write its own report. Record a real failure,
+    # without inventing case results or replacing any report the host already wrote.
+    if (-not (Test-Path -LiteralPath $reportFullPath)) {
+        $exitCode = if ($null -ne $process -and $process.HasExited) { $process.ExitCode } else { $null }
+        New-UIOperationFailureReport $_.Exception.Message $environment $exitCode |
+            ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $reportFullPath -Encoding utf8
+    }
+    throw
 }
 finally {
     if ($null -ne $process) {
@@ -123,18 +182,20 @@ finally {
     if (Test-Path -LiteralPath (Join-Path $sessionRoot 'user_settings.json')) {
         Copy-Item -LiteralPath (Join-Path $sessionRoot 'user_settings.json') -Destination $artifactPath
     }
-    $expectedRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VirtualPaper.UIOperationSession-' + $sessionId)))
-    if ($sessionRoot -ne $expectedRoot -or -not $sessionRoot.StartsWith([IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
-        throw 'Unexpected test session cleanup path'
-    }
-    # WebView2 can release its cache after the player/Core has exited. Wait for
-    # that release instead of touching any unrelated browser or application.
-    $cleanupTimer = [Diagnostics.Stopwatch]::StartNew()
-    while (Test-Path -LiteralPath $sessionRoot) {
-        try { Remove-Item -LiteralPath $sessionRoot -Recurse -Force; break }
-        catch [IO.IOException] {
-            if ($cleanupTimer.Elapsed.TotalSeconds -ge 15) { throw }
-            Start-Sleep -Milliseconds 200
+    if (-not $DataRoot) {
+        $expectedRoot = [IO.Path]::GetFullPath((Join-Path $env:TEMP ('VPUI-' + $sessionId)))
+        if ($sessionRoot -ne $expectedRoot -or -not $sessionRoot.StartsWith([IO.Path]::GetFullPath($env:TEMP).TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+            throw 'Unexpected test session cleanup path'
+        }
+        # WebView2 can release its cache after the player/Core has exited. Wait for
+        # that release instead of touching any unrelated browser or application.
+        $cleanupTimer = [Diagnostics.Stopwatch]::StartNew()
+        while (Test-Path -LiteralPath $sessionRoot) {
+            try { Remove-Item -LiteralPath $sessionRoot -Recurse -Force; break }
+            catch [IO.IOException] {
+                if ($cleanupTimer.Elapsed.TotalSeconds -ge 15) { throw }
+                Start-Sleep -Milliseconds 200
+            }
         }
     }
     Write-Output "Artifacts: $artifactPath"

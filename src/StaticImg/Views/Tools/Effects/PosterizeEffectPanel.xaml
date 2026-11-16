@@ -21,9 +21,9 @@
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
         </Grid>
         <input:ArcSlider x:Name="Slider"
-            Minimum="2" Maximum="256" Value="256"
-            TickFrequency="32" TickPlacement="BottomRight"
-            SmallChange="2" StepFrequency="2"
+            Minimum="2" Maximum="16" Value="16"
+            TickFrequency="2" TickPlacement="BottomRight"
+            SmallChange="1" StepFrequency="1"
             ValueChanged="Slider_ValueChanged"/>
     </StackPanel>
 </local:EffectPanelBase>

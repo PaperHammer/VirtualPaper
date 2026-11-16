@@ -1,0 +1,74 @@
+{
+  "FormatVersion": 1,
+  "SourceSha": "c552098a238532436743533f1361ab3bd7a7b7de",
+  "CapturedOn": "2026-11-16",
+  "BuildConfiguration": "Release",
+  "CoreSha256": "695524f7de52d961611001a628a7866ee962c5b97a2cbfc9bef76df6af0ba8bb",
+  "UiSha256": "fac591f306662606cd1503d82ceb250b8c9ac793ef3529217e53f0c2b275b3fa",
+  "SharedScreenshotLocale": "en-US",
+  "Scenes": {
+    "00-overview": {
+      "Shared": "en-US/00-overview.png",
+      "Locales": {},
+      "Source": "resources/readme/hero.svg",
+      "SourceSha256": "ad548a2ad5a4065e2005b79882d728f29b379d76ff1e3b37f373ace184e3706d",
+      "Kind": "Composite",
+      "UiLanguage": "en-US",
+      "CapturedOn": "2026-11-04"
+    },
+    "01-library": {
+      "Shared": "en-US/01-library.png",
+      "Locales": {
+        "zh-CN": "zh-CN/01-library.png",
+        "en-US": "en-US/01-library.png",
+        "zh-TW": "zh-TW/01-library.png",
+        "ja-JP": "ja-JP/01-library.png",
+        "ko-KR": "ko-KR/01-library.png",
+        "de-DE": "de-DE/01-library.png",
+        "fr-FR": "fr-FR/01-library.png",
+        "es-ES": "es-ES/01-library.png",
+        "pt-BR": "pt-BR/01-library.png",
+        "ru-RU": "ru-RU/01-library.png"
+      }
+    },
+    "02-effects": {
+      "Shared": "en-US/02-effects.png",
+      "Locales": {
+        "zh-CN": "zh-CN/02-effects.png",
+        "en-US": "en-US/02-effects.png"
+      }
+    },
+    "03-presets": {
+      "Shared": "en-US/03-presets.png",
+      "Locales": {
+        "zh-CN": "zh-CN/03-presets.png",
+        "en-US": "en-US/03-presets.png"
+      }
+    },
+    "04-image-editor": {
+      "Shared": "en-US/04-image-editor.png",
+      "Locales": {
+        "zh-CN": "zh-CN/04-image-editor.png",
+        "en-US": "en-US/04-image-editor.png"
+      }
+    },
+    "05-web-editor": {
+      "Shared": "en-US/05-web-editor.png",
+      "Locales": {
+        "zh-CN": "zh-CN/05-web-editor.png",
+        "en-US": "en-US/05-web-editor.png"
+      }
+    },
+    "06-screen-fit": {
+      "Shared": "en-US/06-screen-fit.png",
+      "Locales": {
+        "zh-CN": "zh-CN/06-screen-fit.png",
+        "en-US": "en-US/06-screen-fit.png"
+      }
+    }
+  },
+  "CaptureMethod": "PrintWindow; invisible DWM frame trimmed without rescaling",
+  "CursorIncluded": false,
+  "CoreBinary": "VirtualPaper.exe",
+  "UiBinary": "Plugins/UI/VirtualPaper.UI.dll"
+}

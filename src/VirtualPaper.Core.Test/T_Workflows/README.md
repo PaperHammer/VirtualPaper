@@ -40,6 +40,12 @@ validates Web entry metadata, checks the production index, and verifies that sou
 assets and the user item are unchanged. Actual ISS deployment and desktop playback
 are covered separately by installer smoke and WallpaperLibrary UI cases.
 
+`BuiltInWallpaperInstallerTests` exercises the MSIX seeding service with real files:
+failed copies never publish a partial wallpaper, staging is cleaned, retry
+succeeds, filename collisions preserve user data, and later collections only add
+missing folders. `PackageTestActivationTests` checks isolated package activation,
+path normalization, and rejection of incomplete or ambiguous test arguments.
+
 These workflows do not launch real XAML pages or verify rendered pixels. Desktop
 UI interaction is covered separately by [UIOperationTest](../../../test/README.md).
 Rendering/performance acceptance still requires separate validation.

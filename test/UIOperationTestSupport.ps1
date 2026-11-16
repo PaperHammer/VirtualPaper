@@ -96,7 +96,16 @@ function New-UIOperationSkipReport($Environment) {
     }
 }
 
-function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
+function New-UIOperationFailureReport([string] $Message, $Environment, [Nullable[int]] $HostExitCode) {
+    if ([string]::IsNullOrWhiteSpace($Message)) { throw 'A UI host failure requires an error message.' }
+    [pscustomobject]@{
+        Status = 'Failed'; Passed = $false; Skipped = $false
+        ExpectedCount = 0; Results = @(); Error = $Message
+        HostExitCode = $HostExitCode; Environment = $Environment
+    }
+}
+
+function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure, [string]$FocusedModule) {
     if ($Report.Skipped -eq $true -or $Report.Status -eq 'Skipped') {
         $environment = $Report.Environment
         if ($Report.Status -ne 'Skipped' -or $Report.Skipped -cne $true -or $Report.Passed -cne $false -or
@@ -111,15 +120,72 @@ function Get-UIOperationReportOutcome($Report, [switch]$AllowFailure) {
     }
     $names = @($Report.Results | ForEach-Object { $_.Name })
     $applications = @($Report.Results | Where-Object { $_.Name -like 'Application.*' })
+    # Explicit component-only runs do not start Core. Full acceptance still
+    # requires application lifecycle evidence, and focused names must match.
+    $focusMatches = -not $FocusedModule -or @($names | Where-Object {
+        [string]$name = $_
+        $name -ceq $FocusedModule -or $name.StartsWith("$FocusedModule.", [StringComparison]::Ordinal) -or
+        $name -ceq "Application.$FocusedModule" -or $name.StartsWith("Application.$FocusedModule.", [StringComparison]::Ordinal)
+    }).Count -eq $names.Count
     if ($Report.Passed -ne $true -or $Report.ExpectedCount -lt 1 -or
         @($Report.Results).Count -ne $Report.ExpectedCount -or
         @($Report.Results | Where-Object { $_.Passed -ne $true }).Count -gt 0 -or
         @($names | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0 -or
-        @($names | Sort-Object -Unique).Count -ne $names.Count -or $applications.Count -lt 1 -or
+        @($names | Sort-Object -Unique).Count -ne $names.Count -or -not $focusMatches -or
+        ($applications.Count -lt 1 -and -not $FocusedModule) -or
         @($applications | Where-Object { $_.Evidence.CoreProcessId -lt 1 -or
             @($_.Evidence.UiProcessIds).Count -lt 1 -or $_.Evidence.ProcessesExitedNormally -ne $true }).Count -gt 0) {
         if ($AllowFailure) { return 'Failed' }
         throw 'WinUI operation results are missing, incomplete or failed.'
     }
     return 'Passed'
+}
+
+# Installed extended acceptance must contain every selected case, not just one per module.
+# Test-UIOperationTestSupport compares this policy with the independently registered host cases.
+function Get-RequiredExtendedUICases {
+    @(
+        'Localization.LiveText.RefreshAndPreserveState'
+        'Localization.LongText.IntelligentLayouts'
+        'Localization.RegionalFormats.EffectsSaveAndReopen'
+        'Localization.FontFallback.MixedScripts'
+        'Feedback.Library.ImportCountCancelAndSummary'
+        'Feedback.Intelligent.FailureDetails'
+        'GeneralEffect.RImage.EditRestoreSaveAndReopen'
+        'GeneralEffect.RImage3D.EditRestoreSaveAndReopen'
+        'Application.NavigationSettings.SaveAndReopen'
+        'Application.PerformanceSettings.SaveAndReopen'
+        'Application.HardwareAcceleration.StartupPolicyAndOptions'
+        'Application.HardwareAcceleration.SoftwareDrawingSaveReopenAndExport'
+        'Application.HardwareAcceleration.SoftwareWebEditSaveReopenAndExport'
+        'Application.WallpaperLibrary.ImportApplyCloseDelete'
+        'Application.WallpaperLibrary.ImportMultipleFormatsAndReopen'
+        'Application.WallpaperLibrary.BuiltInsApplyRenderAndClose'
+        'Application.WallpaperLibrary.OrganizeAndReopen'
+        'Application.EffectPresetManager.CreateCopyDeleteAndReopen'
+        'Application.ScreenSaver.SettingsAndWhitelist'
+        'Application.ScreenFit.PreviewCancelApplyAndReopen'
+        'Application.WallpaperEffects.EditRestoreSaveAndReopen'
+        'Application.GeneralSettings.SaveLanguageThemeAndReopen'
+        'Application.ThemeSync.MainWindowAndTray'
+        'Application.SystemSettings.ExportLogsAndCancel'
+        'Application.StaticEditor.RotateCancelSaveReopenAndExport'
+        'Application.WebEditor.CreateFilesSaveReopenAndExport'
+        'Application.ProjectActivation.StartForwardReuseAndReopen'
+        'Application.EditorExit.ImageCancelSaveAndExit'
+        'Application.EditorExit.WebCancelSaveAndDiscard'
+        'Application.Intelligent.ConfigureCancelAndReopen'
+        'Application.ModelInference.SuperResolutionQueueCancelSaveAndImport'
+        'Application.HardwareAcceleration.DeviceChoiceAndEnhancement'
+        'Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen'
+        'Application.Rendering.DepthInferenceDrawPauseAndResume'
+    )
+}
+
+function Assert-ExtendedUIModules($Report) {
+    foreach ($case in Get-RequiredExtendedUICases) {
+        if (@($Report.Results | Where-Object Name -CEQ $case).Count -ne 1) {
+            throw "Missing or duplicate required extended UI case: $case"
+        }
+    }
 }

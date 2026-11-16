@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Graphics.Canvas;
-using Microsoft.UI;
+using Windows.UI;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -41,10 +41,10 @@ namespace Workloads.Creation.StaticImg.ViewModels {
             }
         }
 
-        internal async Task LoadAsync() {
+        internal async Task<bool> LoadAsync() {
             string inputPath = _session.DesignFileUtil.FilePath;
             if (Path.GetExtension(inputPath) == FileExtension.FE_Design) {
-                await Data.LoadAsync(_session);
+                return await Data.LoadAsync(_session);
             } else {
                 Data.InitData();
 
@@ -70,15 +70,16 @@ namespace Workloads.Creation.StaticImg.ViewModels {
                 if (File.Exists(inputPath)) {
                     await SetRenderDataAsync(inputPath, Data.SelectedLayer);
                 }
+                return true;
             }
         }
 
         private async Task SetRenderDataAsync(string filePath, LayerInfo layerInfo) {
             var renderTarget = layerInfo.RenderData.RenderTarget;
             var device = renderTarget.Device;
-            var bitmap = await CanvasBitmap.LoadAsync(device, filePath);
+            using var bitmap = await CanvasBitmap.LoadAsync(device, filePath);
             using (var ds = renderTarget.CreateDrawingSession()) {
-                ds.Clear(Colors.Transparent);
+                ds.Clear(Color.FromArgb(0, 0, 0, 0));
                 ds.DrawImage(
                     bitmap,
                     new Rect(0, 0, renderTarget.SizeInPixels.Width, renderTarget.SizeInPixels.Height),

@@ -80,6 +80,7 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
                 LayersListView.ContextFlyout.Hide();
             }
             else {
+                LayersListView.ContextFlyout.AreOpenCloseAnimationsEnabled = UiAnimation.IsEnabled;
                 LayersListView.ContextFlyout.ShowAt(_rightTappedItem);
             }
         }

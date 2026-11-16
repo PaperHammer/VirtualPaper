@@ -2,12 +2,12 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Navigation;
 using VirtualPaper.Models.Cores.Interfaces;
-using Windows.UI.ViewManagement;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UIComponent.Navigation {
     public static class NavigationAnimation {
         public static bool IsEnabled(ISettings settings) =>
-            settings.NavigationAnimationsEnabled && new UISettings().AnimationsEnabled;
+            settings.NavigationAnimationsEnabled && UiAnimation.IsEnabled;
 
         public static NavigationTransitionInfo CreateTransition(
             ISettings settings, SlideNavigationTransitionEffect? slideEffect = null) {

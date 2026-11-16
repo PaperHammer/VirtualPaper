@@ -2,7 +2,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -73,13 +72,13 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
             }
         }
 
-        Color _foregroundColor = Colors.Black;
+        Color _foregroundColor = Color.FromArgb(255, 0, 0, 0);
         public Color ForegroundColor {
             get => _foregroundColor;
             set { if (_foregroundColor == value) return; _foregroundColor = value; OnPropertyChanged(); }
         }
 
-        Color _backgroundColor = Colors.White;
+        Color _backgroundColor = Color.FromArgb(255, 255, 255, 255);
         public Color BackgroundColor {
             get => _backgroundColor;
             set { if (_backgroundColor == value) return; _backgroundColor = value; OnPropertyChanged(); }

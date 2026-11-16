@@ -33,6 +33,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
         /// </summary>
         public uint TargetHeight { get; }
 
+        public bool UseGpu { get; }
+
         // ── 结果 ──
         public string? ResultFilePath { get; private set; }
         public string? ResultResolution { get; private set; }
@@ -48,7 +50,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
             EnhanceMode mode,
             int magnification,
             uint targetWidth,
-            uint targetHeight) {
+            uint targetHeight,
+            bool useGpu = true) {
             SourceFilePath = sourceFilePath;
             SourceFileSize = sourceFileSize;
             SourceFileExt = sourceFileExt;
@@ -58,6 +61,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
             Magnification = magnification;
             TargetWidth = targetWidth;
             TargetHeight = targetHeight;
+            UseGpu = useGpu;
             ResultResolution = $"{TargetWidth} * {TargetHeight}";
             ResultFileExt = SourceFileExt;
         }

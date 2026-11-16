@@ -26,7 +26,9 @@ namespace VirtualPaper.Models.Cores {
         public bool IsAutoStart { get; set; }
         public bool IsFirstRun { get; set; }
         public bool NavigationAnimationsEnabled { get; set; } = true;
+        public bool UiHardwareAccelerationEnabled { get; set; } = true;
         public bool RemindUnpreservedIntelligentResults { get; set; } = true;
+        public int AiUseNoticeVersion { get; set; }
         #endregion
 
         #region dirs
@@ -95,12 +97,7 @@ namespace VirtualPaper.Models.Cores {
             ScreenSaverEffect = ScrEffect.None;
             WhiteListScr = [];
 
-            try {
-                Language = CultureInfo.CurrentUICulture.Name;
-            }
-            catch (ArgumentNullException) {
-                Language = "zh-CN";
-            }
+            Language = SupportedLanguages.ResolveLanguage([CultureInfo.CurrentUICulture.Name]);
         }
     }
 }

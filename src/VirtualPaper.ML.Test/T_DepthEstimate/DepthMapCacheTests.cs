@@ -52,8 +52,8 @@ public class DepthMapCacheTests {
     public async Task CancellationDuringRun_DoesNotPublish_AndReleasesGate() {
         using var cts = new CancellationTokenSource();
         await Assert.ThrowsAsync<OperationCanceledException>(() => Generate(cts.Token, cts.Cancel));
-        Assert.AreEqual(0, Directory.GetFiles(folder, "depth-*.png").Length);
-        Assert.AreEqual(0, Directory.GetDirectories(folder, ".depth-*").Length);
+        Assert.IsEmpty(Directory.GetFiles(folder, "depth-*.png"));
+        Assert.IsEmpty(Directory.GetDirectories(folder, ".depth-*"));
         Assert.IsTrue(File.Exists(await Generate()));
     }
 

@@ -1,12 +1,15 @@
 using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Common.Utils.Files.Models;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
@@ -89,32 +92,29 @@ namespace VirtualPaper.Utils {
         }
 
         internal static void CreateGif(string filePath, string thuFilePath, FileType ftype, CancellationToken token) {
-            Mat ResizeTo1080p(Mat img) {
-                Size newSize = new(Math.Min(img.Cols, 960), Math.Min(img.Rows, 600));
-                Mat resizedImg = new();
-                Cv2.Resize(img, resizedImg, newSize);
-
-                return resizedImg;
-            }
-
             if (ftype == FileType.FImage) {
                 using var bitmap = new Bitmap(filePath);
                 using var mat = BitmapConverter.ToMat(bitmap);
-                using var resizedMat = ResizeTo1080p(mat);
+                using var resizedMat = new Mat();
+                ResizeThumbnail(mat, resizedMat);
                 using var resizedBitmap = BitmapConverter.ToBitmap(resizedMat);
                 resizedBitmap.Save(thuFilePath);
                 return;
             }
-            else if (ftype == FileType.FGif) {
+
+            GifBitmapEncoder encoder = new();
+            if (ftype == FileType.FGif) {
                 using var gifStream = File.OpenRead(filePath);
                 var decoder = new GifBitmapDecoder(gifStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
-                var frames = decoder.Frames.Select(f => {
-                    using var bitmap = BitmapSourceToBitmap(f);
+                foreach (var frame in decoder.Frames) {
+                    token.ThrowIfCancellationRequested();
+                    using var bitmap = new Bitmap(frame.PixelWidth, frame.PixelHeight, PixelFormat.Format32bppPArgb);
+                    CopyBitmapPixels(frame, bitmap);
                     using var mat = BitmapConverter.ToMat(bitmap);
-                    return ResizeTo1080p(mat);
-                }).ToList();
-                SaveGifFrames(frames, thuFilePath);
-                return;
+                    using var resized = new Mat();
+                    ResizeThumbnail(mat, resized);
+                    AddGifFrame(resized);
+                }
             }
             else if (ftype == FileType.FVideo) {
                 using var cap = new VideoCapture(filePath);
@@ -125,8 +125,7 @@ namespace VirtualPaper.Utils {
                 double fps = Math.Min(cap.Get(VideoCaptureProperties.Fps), 24); // 设置最大帧率为24fps
                 int frameLimit = (int)Math.Min(cap.FrameCount, fps * 3); // 最多取3秒的帧数
 
-                List<Mat> frames = [];
-                for (int i = 0; i < frameLimit && !token.IsCancellationRequested; i++) {
+                for (int i = 0; i < frameLimit; i++) {
                     token.ThrowIfCancellationRequested();
 
                     cap.Set(VideoCaptureProperties.PosFrames, i);
@@ -134,48 +133,47 @@ namespace VirtualPaper.Utils {
                     cap.Read(frame);
                     if (frame.Empty()) break;
 
-                    using var resizedFrame = ResizeTo1080p(frame);
-                    frames.Add(resizedFrame.Clone());
+                    using var resizedFrame = new Mat();
+                    ResizeThumbnail(frame, resizedFrame);
+                    AddGifFrame(resizedFrame);
                 }
-
-                SaveGifFrames(frames, thuFilePath);
+            }
+            else {
+                return;
             }
 
-            void SaveGifFrames(List<Mat> frames, string outputPath) {
-                GifBitmapEncoder encoder = new();
-                foreach (var frame in frames) {
-                    token.ThrowIfCancellationRequested();
+            token.ThrowIfCancellationRequested();
+            using var ms = new MemoryStream();
+            encoder.Save(ms);
+            var fileBytes = ms.ToArray();
+            var newBytes = new List<byte>(fileBytes.Take(13));
+            newBytes.AddRange(_applicationExtension);
+            newBytes.AddRange(fileBytes.Skip(13));
+            File.WriteAllBytes(thuFilePath, [.. newBytes]);
 
-                    using Bitmap bitmap = BitmapConverter.ToBitmap(frame);
+            void AddGifFrame(Mat frame) {
+                token.ThrowIfCancellationRequested();
+                using Bitmap bitmap = BitmapConverter.ToBitmap(frame);
+                IntPtr handle = bitmap.GetHbitmap();
+                try {
                     var src = Imaging.CreateBitmapSourceFromHBitmap(
-                        bitmap.GetHbitmap(),
-                        IntPtr.Zero,
-                        Int32Rect.Empty,
-                        BitmapSizeOptions.FromEmptyOptions());
-
+                        handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
                     encoder.Frames.Add(BitmapFrame.Create(src));
                 }
-
-                using var ms = new MemoryStream();
-                encoder.Save(ms);
-                var fileBytes = ms.ToArray();
-                var newBytes = new List<byte>(fileBytes.Take(13));
-                newBytes.AddRange(_applicationExtension);
-                newBytes.AddRange(fileBytes.Skip(13));
-
-                File.WriteAllBytes(outputPath, [.. newBytes]);
+                finally { Native.DeleteObject(handle); }
             }
 
-            Bitmap BitmapSourceToBitmap(BitmapSource s) {
-                // The caller owns this bitmap and disposes it after converting the frame.
-                Bitmap bmp = new(s.PixelWidth, s.PixelHeight, PixelFormat.Format32bppPArgb);
-                BitmapData data = bmp.LockBits(new Rectangle(System.Drawing.Point.Empty, bmp.Size), ImageLockMode.WriteOnly, bmp.PixelFormat);
-                // GIF frames are commonly indexed; convert before copying into a 32-bit bitmap.
-                var converted = new FormatConvertedBitmap(s, System.Windows.Media.PixelFormats.Pbgra32, null, 0);
-                converted.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
-                bmp.UnlockBits(data);
+            static void ResizeThumbnail(Mat source, Mat target) =>
+                Cv2.Resize(source, target, new Size(Math.Min(source.Cols, 960), Math.Min(source.Rows, 600)));
 
-                return bmp;
+            static void CopyBitmapPixels(BitmapSource source, Bitmap target) {
+                // The caller owns the bitmap; this helper only owns the pixel lock.
+                BitmapData data = target.LockBits(new Rectangle(System.Drawing.Point.Empty, target.Size), ImageLockMode.WriteOnly, target.PixelFormat);
+                try {
+                    var converted = new FormatConvertedBitmap(source, System.Windows.Media.PixelFormats.Pbgra32, null, 0);
+                    converted.CopyPixels(Int32Rect.Empty, data.Scan0, data.Height * data.Stride, data.Stride);
+                }
+                finally { target.UnlockBits(data); }
             }
         }
 
@@ -256,25 +254,22 @@ namespace VirtualPaper.Utils {
                         var fps = capture.Fps;
                         int width = capture.FrameWidth;
                         int height = capture.FrameHeight;
-                        double ratio = (double)width / height;
+                        if (width <= 0 || height <= 0) throw new InvalidDataException("The media dimensions could not be read.");
 
                         fileProperty.Resolution = $"{width} * {height} ({fps:0.00} fps)";
-                        fileProperty.AspectRatio = GetRatio(ratio);
+                        fileProperty.AspectRatio = AspectRatioUtil.Format(width, height);
 
                         capture.Release();
 
                         break;
                     }
                 case FileType.FImage: {
-                        using var img = new Mat(filePath);
-
-                        Size sz = img.Size();
+                        Size sz = ReadImageSize(filePath);
                         int width = sz.Width;
                         int height = sz.Height;
-                        double ratio = (double)width / height;
 
                         fileProperty.Resolution = $"{width} * {height}";
-                        fileProperty.AspectRatio = GetRatio(ratio);
+                        fileProperty.AspectRatio = AspectRatioUtil.Format(width, height);
 
                         break;
                     }
@@ -283,17 +278,35 @@ namespace VirtualPaper.Utils {
             return fileProperty;
         }
 
-        private static string GetRatio(double aspectRatio) {
-            if (Math.Abs(aspectRatio - 1.6) < 0.01) {
-                return "16:10";
+        private static Size ReadImageSize(string filePath) {
+            try {
+                using var stream = File.OpenRead(filePath);
+                // Read dimensions without creating a decoded pixel buffer or retaining the file.
+                var decoder = BitmapDecoder.Create(stream,
+                    BitmapCreateOptions.DelayCreation | BitmapCreateOptions.IgnoreColorProfile, BitmapCacheOption.None);
+                var frame = decoder.Frames[0];
+                int width = frame.PixelWidth, height = frame.PixelHeight;
+                if (width > 0 && height > 0) {
+                    // Match OpenCV's EXIF-oriented dimensions for JPEG and TIFF images.
+                    string? orientationQuery = decoder switch {
+                        JpegBitmapDecoder => "/app1/ifd/{ushort=274}",
+                        TiffBitmapDecoder => "/ifd/{ushort=274}",
+                        _ => null
+                    };
+                    if (orientationQuery != null && frame.Metadata is BitmapMetadata metadata &&
+                        metadata.GetQuery(orientationQuery) is ushort orientation && orientation is >= 5 and <= 8) {
+                        (width, height) = (height, width);
+                    }
+                    return new Size(width, height);
+                }
             }
-            else if (Math.Abs(aspectRatio - 1.7778) < 0.01) {
-                return "16:9";
+            catch (Exception ex) when (ex is NotSupportedException or FileFormatException or IOException or ArgumentException or COMException) {
+                // Some formats or metadata are unsupported by Windows codecs; keep OpenCV compatibility.
             }
-            else if (Math.Abs(aspectRatio - 1.3333) < 0.01) {
-                return "4:3";
-            }
-            return "-";
+
+            using var image = new Mat(filePath);
+            if (image.Empty()) throw new InvalidDataException("The image could not be read.");
+            return image.Size();
         }
 
         // Add NETSCAPE2.0 Application Extension for looping.

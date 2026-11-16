@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\LocalizedTestStrings.cs" Link="Support\LocalizedTestStrings.cs" />
     <ProjectReference Include="..\..\src\VirtualPaper.Common\VirtualPaper.Common.csproj" />
     <ProjectReference Include="..\..\src\VirtualPaper.Grpc.Service\VirtualPaper.Grpc.Service.csproj" />
     <PackageReference Include="GrpcDotNetNamedPipes" Version="3.0.0" />

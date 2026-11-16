@@ -32,7 +32,7 @@ internal static class Program {
         if (args.Length is < 1 or > 2) throw new ArgumentException("Usage: Generate <repository-root> [--verify]");
         if (args.Length == 2 && args[1] != "--verify") throw new ArgumentException("The only optional argument is --verify.");
         string root = Path.GetFullPath(args[0]);
-        string core = Path.Combine(root, "src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0");
+        string core = Path.Combine(root, "src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0");
         AssemblyLoadContext.Default.Resolving += (_, name) => {
             foreach (string folder in new[] { core, Path.Combine(core, "Plugins/UI") }) {
                 string file = Path.Combine(folder, name.Name + ".dll");

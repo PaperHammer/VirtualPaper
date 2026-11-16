@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:l="using:WinUI3Localizer"
     xmlns:dialogs="using:VirtualPaper.UIComponent.Dialogs"
+    xmlns:library="using:VirtualPaper.WpSettingsPanel.Utils"
     DialogWidth="540" DialogMaxHeight="760"
     l:Uids.Uid="Ui_ScreenFit_Title_Title__Text_Apply_PrimaryButtonText__Text_Cancel_CloseButtonText"
 
@@ -15,16 +16,77 @@
     Opened="Dialog_Opened"
     Closed="Dialog_Closed"
     Closing="Dialog_Closing">
+    <dialogs:ArcContentDialog.Resources>
+        <library:WallpaperSourceThumbnailConverter x:Key="SourceThumbnailConverter"/>
+    </dialogs:ArcContentDialog.Resources>
     <StackPanel x:Name="FitContent" Spacing="12">
         <TextBlock Text="{x:Bind ViewModel.LayoutMessage}" TextWrapping="Wrap" Foreground="{ThemeResource SystemFillColorCautionBrush}"
             Visibility="{x:Bind ViewModel.LayoutMessage, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}"/>
-        <ContentControl IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" HorizontalContentAlignment="Stretch">
+        <Grid>
             <StackPanel Spacing="12">
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <Button x:Name="SelectImageButton" AutomationProperties.AutomationId="ScreenFit.SelectImage" l:Uids.Uid="Ui_ScreenFit_SelectImage_Content" Click="SelectImage_Click"/>
-                    <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.SourcePath, Mode=OneWay}" VerticalAlignment="Center"
+                <Grid ColumnSpacing="8" MinHeight="32">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <DropDownButton x:Name="SelectImageButton" AutomationProperties.AutomationId="ScreenFit.SelectImage"
+                        IsEnabled="{x:Bind ViewModel.CanEdit, Mode=OneWay}" l:Uids.Uid="Ui_ScreenFit_SelectImage_Content">
+                        <DropDownButton.Flyout>
+                            <Flyout x:Name="SourceFlyout" Placement="BottomEdgeAlignedLeft" Opened="SourceFlyout_Opened" Closed="SourceFlyout_Closed">
+                                <Grid Width="400" Height="380" RowSpacing="12">
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <AutoSuggestBox x:Name="SourceSearch" Height="36" QueryIcon="Find" TextChanged="SourceSearch_TextChanged"
+                                            l:Uids.Uid="Ui_EffectPreset_SourceSearch" AutomationProperties.AutomationId="ScreenFit.Source.Search"/>
+                                        <ToggleButton x:Name="SourceFavorites" Grid.Column="1" Height="36" Padding="10 0" CornerRadius="6"
+                                            Checked="SourceFavorites_Changed" Unchecked="SourceFavorites_Changed"
+                                            l:Uids.Uid="Ui_WpLib_Favorites" AutomationProperties.AutomationId="ScreenFit.Source.FavoritesOnly"/>
+                                    </Grid>
+                                    <ListView x:Name="SourcePicker" Grid.Row="1" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="Source_ItemClick"
+                                        AutomationProperties.AutomationId="ScreenFit.Source.List" ScrollViewer.HorizontalScrollMode="Disabled">
+                                        <ListView.ItemsPanel><ItemsPanelTemplate><ItemsStackPanel/></ItemsPanelTemplate></ListView.ItemsPanel>
+                                        <ListView.ItemContainerStyle>
+                                            <Style TargetType="ListViewItem">
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="Padding" Value="6"/>
+                                                <Setter Property="CornerRadius" Value="6"/>
+                                            </Style>
+                                        </ListView.ItemContainerStyle>
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate x:DataType="library:WallpaperIndexEntry">
+                                                <Grid ColumnSpacing="12" ToolTipService.ToolTip="{x:Bind DisplayName}"
+                                                    AutomationProperties.AutomationId="{x:Bind Uid}" AutomationProperties.Name="{x:Bind DisplayName}">
+                                                    <Grid.ColumnDefinitions><ColumnDefinition Width="72"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                                    <Border Width="72" Height="44" CornerRadius="4" Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                                                        <Grid>
+                                                            <FontIcon x:Name="SourceNoPreview" Glyph="&#xEB9F;" FontSize="20" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                AutomationProperties.AccessibilityView="Raw" Visibility="{x:Bind ThumbnailPath, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=!HasValue}"/>
+                                                            <Image Source="{x:Bind ThumbnailPath, Converter={StaticResource SourceThumbnailConverter}}" Stretch="UniformToFill"
+                                                                ImageFailed="SourceThumbnail_ImageFailed" AutomationProperties.AccessibilityView="Raw"/>
+                                                        </Grid>
+                                                    </Border>
+                                                    <StackPanel Grid.Column="1" Spacing="2" VerticalAlignment="Center">
+                                                        <TextBlock Text="{x:Bind DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                                        <TextBlock Text="{x:Bind Author}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" MaxLines="1"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                    <TextBlock x:Name="SourceEmpty" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" Visibility="Collapsed" l:Uids.Uid="Ui_EffectPreset_SourceEmpty"/>
+                                    <Button Grid.Row="2" HorizontalAlignment="Stretch" Click="BrowseImage_Click" l:Uids.Uid="Ui_ScreenFit_BrowseFile"
+                                        AutomationProperties.AutomationId="ScreenFit.BrowseFile"/>
+                                </Grid>
+                            </Flyout>
+                        </DropDownButton.Flyout>
+                    </DropDownButton>
+                    <ProgressRing x:Name="SourceLoading" Grid.Column="1" Width="20" Height="20" IsActive="False" Opacity="0"
+                        AutomationProperties.AutomationId="ScreenFit.Loading" l:Uids.Uid="Ui_ScreenFit_Loading"/>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.SourcePath, Mode=OneWay}" VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.CanEdit, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
                         TextTrimming="CharacterEllipsis" MaxLines="1" ToolTipService.ToolTip="{x:Bind ViewModel.SourcePath, Mode=OneWay}"/>
+                    <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.ProgressText, Mode=OneWay}" VerticalAlignment="Center"
+                        Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}"
+                        TextTrimming="CharacterEllipsis" MaxLines="1" ToolTipService.ToolTip="{x:Bind ViewModel.ProgressText, Mode=OneWay}"/>
                 </Grid>
                 <ContentControl x:Name="FitOptions" IsEnabled="{x:Bind ViewModel.CanConfigure, Mode=OneWay}" HorizontalContentAlignment="Stretch">
                     <StackPanel Spacing="12">
@@ -79,12 +141,7 @@
                     </StackPanel>
                 </ContentControl>
             </StackPanel>
-        </ContentControl>
-        <StackPanel Orientation="Horizontal" Spacing="10"
-            Visibility="{x:Bind ViewModel.IsBusy, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
-            <ProgressRing Width="20" Height="20" IsActive="{x:Bind ViewModel.IsBusy, Mode=OneWay}"/>
-            <TextBlock Text="{x:Bind ViewModel.ProgressText, Mode=OneWay}" VerticalAlignment="Center"/>
-        </StackPanel>
+        </Grid>
         <TextBlock Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}" TextWrapping="Wrap" Foreground="{ThemeResource SystemFillColorCriticalBrush}"
             Visibility="{x:Bind ViewModel.ErrorMessage, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}, ConverterParameter=HasValue}"/>
     </StackPanel>

@@ -50,6 +50,19 @@ foreach ($change in @(
 }
 Assert-Equal (Get-UIOperationReportOutcome (New-SkipReport)) 'Skipped' 'Explicit unavailable-environment report'
 Assert-Equal (Get-UIOperationReportOutcome (New-PassReport)) 'Passed' 'Existing host report remains supported'
+$component = [pscustomobject]@{ Passed = $true; ExpectedCount = 1
+    Results = @([pscustomobject]@{ Name = 'Localization.LongText.Layout'; Passed = $true; Evidence = @{} }) }
+Assert-Rejected $component 'Full acceptance must not accept component-only results'
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization) 'Passed' 'Explicit component group'
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization.LongText.Layout) 'Passed' 'Exact component case'
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule GeneralEffect -AllowFailure) 'Failed' 'Wrong focused group'
+$component.Results[0].Passed = $false
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization -AllowFailure) 'Failed' 'Focused failures remain failures'
+$component.Results[0].Passed = $true; $component.ExpectedCount = 2
+Assert-Equal (Get-UIOperationReportOutcome $component -FocusedModule Localization -AllowFailure) 'Failed' 'Focused reports must be complete'
+$application = New-PassReport
+$application.Results[0].Evidence.ProcessesExitedNormally = $false
+Assert-Equal (Get-UIOperationReportOutcome $application -FocusedModule Example -AllowFailure) 'Failed' 'Focused application exit must remain normal'
 foreach ($mutation in @('Passed','Count','Results','Available','Reason','Code','MissingFlag')) {
     $report = New-SkipReport
     switch ($mutation) {
@@ -76,4 +89,64 @@ $report = New-PassReport
 $report.Results[0].Evidence.ProcessesExitedNormally = $false
 Assert-Rejected $report 'Abnormal process exit must fail'
 Assert-Rejected $null 'Missing report must fail'
+# Exercise the runner's actual error handler without launching any UI/process.
+$runnerAst = [System.Management.Automation.Language.Parser]::ParseFile("$PSScriptRoot/Run-UIOperationTests.ps1", [ref]$null, [ref]$null)
+$handler = $runnerAst.Find({ param($node)
+    $node -is [System.Management.Automation.Language.CatchClauseAst] -and
+        $node.Body.Extent.Text.Contains('New-UIOperationFailureReport')
+}, $true).Body.Extent.Text
+$failureHandler = [scriptblock]::Create($handler.Substring(1, $handler.Length - 2))
+$reportFullPath = Join-Path ([IO.Path]::GetTempPath()) "VirtualPaper.UIHostFailure-$([guid]::NewGuid().ToString('N')).json"
+$environment = Resolve-UIOperationEnvironment ([pscustomobject](New-DesktopState))
+try {
+    foreach ($process in @($null, [pscustomobject]@{ HasExited = $false }, [pscustomobject]@{ HasExited = $true; ExitCode = -1073741189 })) {
+        $rejected = $false
+        try { try { throw 'Fixture host failure or timeout' } catch { & $failureHandler } } catch { $rejected = $true }
+        Assert-Equal $rejected $true 'The runner must still fail after writing the diagnostic report'
+        $failure = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
+        Assert-Equal $failure.Status 'Failed' 'Host errors must not be reported as passed or skipped'
+        Assert-Equal $failure.Error 'Fixture host failure or timeout' 'Preserve the actual host failure'
+        Assert-Equal $failure.HostExitCode $(if ($process.HasExited) { $process.ExitCode } else { $null }) 'Capture only an exited host code'
+        Assert-Equal @($failure.Results).Count 0 'Do not invent completed case results'
+        Assert-Equal (Get-UIOperationReportOutcome $failure -AllowFailure) 'Failed' 'CI may record a host failure'
+        Assert-Rejected $failure 'Host failures must still block strict local acceptance'
+        Remove-Item -LiteralPath $reportFullPath
+    }
+    foreach ($original in @((New-PassReport | ConvertTo-Json -Depth 8), '{invalid report')) {
+        [IO.File]::WriteAllText($reportFullPath, $original)
+        try { try { throw 'Failure after an existing report' } catch { & $failureHandler } } catch { }
+        Assert-Equal ([IO.File]::ReadAllText($reportFullPath)) $original 'Never replace an existing complete, partial or malformed host report'
+    }
+} finally {
+    if (Test-Path -LiteralPath $reportFullPath) { Remove-Item -LiteralPath $reportFullPath }
+}
+# Read the registered cases independently of the report-gate policy.
+$source = Get-Content -LiteralPath "$PSScriptRoot/VirtualPaper.UIOperationTest/App.xaml.cs" -Raw
+$extendedCases = @([regex]::Matches($source, 'new UiTestCase\("([^"]+)"') | ForEach-Object { $_.Groups[1].Value } |
+    Where-Object { $_ -notlike 'Application.MsixProfile.*' -and $_ -cne 'Application.ScreenSaverIdle.RealIdleInputWakeAndRepeat' })
+Assert-Equal ($extendedCases.Count -gt 0) $true 'Extended registration inventory must not be empty'
+$requiredCases = @(Get-RequiredExtendedUICases)
+Assert-Equal (@($requiredCases | Sort-Object -Unique).Count) $requiredCases.Count 'Required cases must be unique'
+Assert-Equal (@(Compare-Object $extendedCases $requiredCases -CaseSensitive).Count) 0 'Required policy must match the selected extended registration inventory'
+$extended = New-PassReport
+$extended.Results = @($extendedCases | ForEach-Object {
+    [pscustomobject]@{ Name = $_; Passed = $true
+        Evidence = [pscustomobject]@{ CoreProcessId = 10; UiProcessIds = @(11); ProcessesExitedNormally = $true } }
+})
+$extended.ExpectedCount = $extended.Results.Count
+Assert-ExtendedUIModules $extended
+$completeResults = $extended.Results
+foreach ($case in $extendedCases) {
+    $extended.Results = @($completeResults | Where-Object Name -CNE $case)
+    $extended.ExpectedCount = $extended.Results.Count
+    Assert-Equal (Get-UIOperationReportOutcome $extended) 'Passed' 'A reduced report remains internally consistent'
+    $rejected = $false
+    try { Assert-ExtendedUIModules $extended } catch { $rejected = $true }
+    Assert-Equal $rejected $true "Installed extended acceptance must reject missing case: $case"
+    $extended.Results = @($completeResults + ($completeResults | Where-Object Name -CEQ $case))
+    $extended.ExpectedCount = $extended.Results.Count
+    $rejected = $false
+    try { Assert-ExtendedUIModules $extended } catch { $rejected = $true }
+    Assert-Equal $rejected $true "Installed extended acceptance must reject duplicate case: $case"
+}
 Write-Host '[OK] UI desktop eligibility and report validation contracts passed (no UI, lock or registry operations).'

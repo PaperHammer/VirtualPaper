@@ -1,0 +1,50 @@
+{
+  "shortDescription": "Bring your desktop to life with live wallpapers, interactive effects, creative tools and local AI.",
+  "description": "Virtual Paper is a free, open-source live wallpaper app for Windows. Make your desktop your own with images, videos, animated images and interactive Web wallpapers, or get started with the included collection.\n\nKeep your wallpapers organized with favorites, tags, search and filters. Choose a different wallpaper for each display, duplicate one across screens or span it across your desktop.\n\nAdd parallax and atmosphere effects, then save your favorite combinations as reusable presets. Create image wallpapers with layers and drawing tools, or build interactive wallpapers in the Web editor with live preview.\n\nUse local AI tools to transform image styles, enhance images and fit them to your screen. Switch instantly between ten interface languages and get started without an account.",
+  "features": [
+    "Image, video, animated-image and interactive Web wallpapers",
+    "Included wallpapers, favorites, tags, search and filters",
+    "Per-display, duplicated and extended wallpaper layouts",
+    "Parallax, atmosphere effects and reusable effect presets",
+    "Layered image editor and Web editor with live preview",
+    "Local AI style transfer, image enhancement and screen fitting",
+    "Ten interface languages with live language switching"
+  ],
+  "keywords": [
+    "wallpaper",
+    "live wallpaper",
+    "desktop",
+    "image editor",
+    "web wallpaper"
+  ],
+  "screenshots": [
+    {
+      "id": "00-overview",
+      "caption": "Explore Virtual Paper in light and dark themes."
+    },
+    {
+      "id": "01-library",
+      "caption": "Organize your wallpaper collection with favorites, tags and filters."
+    },
+    {
+      "id": "02-effects",
+      "caption": "Customize wallpapers with parallax and atmosphere effects."
+    },
+    {
+      "id": "03-presets",
+      "caption": "Explore built-in effect presets and save your own combinations."
+    },
+    {
+      "id": "04-image-editor",
+      "caption": "Create and edit image projects with layers and drawing tools."
+    },
+    {
+      "id": "05-web-editor",
+      "caption": "Build interactive Web wallpapers with a file tree, code editor and live preview."
+    },
+    {
+      "id": "06-screen-fit",
+      "caption": "Choose an image from your library and fit it to your display."
+    }
+  ]
+}

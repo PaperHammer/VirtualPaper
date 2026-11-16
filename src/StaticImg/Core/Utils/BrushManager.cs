@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Linq;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.UI;
 using Windows.UI;
 
 namespace Workloads.Creation.StaticImg.Core.Utils {
@@ -19,17 +19,16 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
         float Angle = 0f); // 仅书法笔需要角度
 
     /// <summary>
-    /// 笔刷管理器（静态工具类）
+    /// 项目独享的笔刷缓存，与项目的绘图设备保持一致
     /// </summary>
-    internal static class BrushManager {
-        static BrushManager() {
-            _baseTextures = LoadBaseTextures();
-        }
+    internal sealed class BrushManager(CanvasDevice device) : IDisposable {
 
         /// <summary>
         /// 获取或创建笔刷
         /// </summary>
-        public static ICanvasBrush GetBrush(BrushGenerateArgs args, CanvasDevice device) {
+        public ICanvasBrush GetBrush(BrushGenerateArgs args) {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var device = _device;
             if (_brushCache.TryGetValue(args, out var cachedBrush))
                 return cachedBrush;
 
@@ -51,21 +50,23 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
         /// <summary>
         /// 清空所有缓存
         /// </summary>
-        public static void ClearCache() {
-            foreach (var brush in _solidBrushCache.Values)
-                brush.Dispose();
-            foreach (var brush in _brushCache.Values)
+        public void Dispose() {
+            if (_disposed) return;
+            _disposed = true;
+            foreach (var brush in _brushCache.Values.Distinct())
                 brush.Dispose();
 
             _solidBrushCache.Clear();
             _brushCache.Clear();
+            foreach (var texture in _baseTextures.Values) texture.Dispose();
+            _baseTextures.Clear();
         }
 
         #region 核心笔刷创建方法
-        private static CanvasSolidColorBrush CreateSolidColorBrush(BrushGenerateArgs args) {
+        private CanvasSolidColorBrush CreateSolidColorBrush(BrushGenerateArgs args) {
             var key = (args.BrushColor, args.Opacity);
             if (!_solidBrushCache.TryGetValue(key, out var brush)) {
-                brush = new CanvasSolidColorBrush(CanvasDevice.GetSharedDevice(), args.BrushColor) {
+                brush = new CanvasSolidColorBrush(_device, args.BrushColor) {
                     Opacity = args.Opacity
                 };
                 _solidBrushCache[key] = brush;
@@ -73,8 +74,8 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             return brush;
         }
 
-        private static CanvasImageBrush CreateCalligraphyBrush(BrushGenerateArgs args, CanvasDevice device) {
-            var texture = _baseTextures[BrushType.Calligraphy];
+        private CanvasImageBrush CreateCalligraphyBrush(BrushGenerateArgs args, CanvasDevice device) {
+            var texture = GetTexture(BrushType.Calligraphy);
             return new CanvasImageBrush(device, texture) {
                 Transform = Matrix3x2.CreateRotation(args.Angle) *
                            Matrix3x2.CreateScale(args.Thickness / (float)texture.Size.Width),
@@ -99,11 +100,11 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             };
         }
 
-        private static CanvasImageBrush CreateOilBrush(BrushGenerateArgs args, CanvasDevice device) {
+        private CanvasImageBrush CreateOilBrush(BrushGenerateArgs args, CanvasDevice device) {
             using var cmdList = new CanvasCommandList(device);
             using (var ds = cmdList.CreateDrawingSession()) {
                 ds.FillCircle(args.Thickness / 2, args.Thickness / 2, args.Thickness / 2, args.BrushColor);
-                ds.DrawImage(_baseTextures[BrushType.Oil]);
+                ds.DrawImage(GetTexture(BrushType.Oil));
             }
 
             return new CanvasImageBrush(device, cmdList) {
@@ -113,8 +114,8 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             };
         }
 
-        private static CanvasImageBrush CreateWatercolorBrush(BrushGenerateArgs args, CanvasDevice device) {
-            var texture = _baseTextures[BrushType.Watercolor];
+        private CanvasImageBrush CreateWatercolorBrush(BrushGenerateArgs args, CanvasDevice device) {
+            var texture = GetTexture(BrushType.Watercolor);
             return new CanvasImageBrush(device, texture) {
                 Transform = Matrix3x2.CreateScale(args.Thickness / (float)texture.Size.Width),
                 Opacity = args.Opacity * 0.7f,
@@ -137,7 +138,7 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             };
         }
 
-        private static CompositeBrush CreatePencilBrush(BrushGenerateArgs args, CanvasDevice device) {
+        private CompositeBrush CreatePencilBrush(BrushGenerateArgs args, CanvasDevice device) {
             // 计算灰度颜色（RGB转灰度）
             byte gray = (byte)(args.BrushColor.R * 0.3 + args.BrushColor.G * 0.59 + args.BrushColor.B * 0.11);
             var baseColor = Color.FromArgb(args.BrushColor.A, gray, gray, gray);
@@ -148,7 +149,7 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
             };
 
             // 创建纹理笔刷（铅笔噪点）
-            var textureBrush = new CanvasImageBrush(device, _baseTextures[BrushType.Pencil]) {
+            var textureBrush = new CanvasImageBrush(device, GetTexture(BrushType.Pencil)) {
                 Transform = Matrix3x2.CreateScale(args.Thickness / 50f),
                 Opacity = args.Hardness * 0.5f,  // 纹理层占比50%
                 ExtendX = CanvasEdgeBehavior.Wrap,
@@ -167,28 +168,31 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
 
         #region 纹理资源管理
 
-        private static IReadOnlyDictionary<BrushType, CanvasBitmap> LoadBaseTextures() {
-            var device = CanvasDevice.GetSharedDevice();
-            return new Dictionary<BrushType, CanvasBitmap> {
-                [BrushType.Calligraphy] = GenerateCalligraphyTexture(device),
-                [BrushType.Oil] = GenerateOilTexture(device),
-                [BrushType.Watercolor] = GenerateWatercolorTexture(device),
-                [BrushType.Pencil] = GeneratePencilTexture(device)
+        private CanvasBitmap GetTexture(BrushType type) {
+            if (_baseTextures.TryGetValue(type, out var cached)) return cached;
+            var texture = type switch {
+                BrushType.Calligraphy => GenerateCalligraphyTexture(_device),
+                BrushType.Oil => GenerateOilTexture(_device),
+                BrushType.Watercolor => GenerateWatercolorTexture(_device),
+                BrushType.Pencil => GeneratePencilTexture(_device),
+                _ => throw new NotSupportedException($"Unsupported brush texture: {type}")
             };
+            _baseTextures.Add(type, texture);
+            return texture;
         }
 
         private static CanvasBitmap GenerateCalligraphyTexture(CanvasDevice device) {
             var renderTarget = new CanvasRenderTarget(device, 256, 256, 96);
             using (var ds = renderTarget.CreateDrawingSession()) {
                 // 毛笔笔触纹理（椭圆+噪点）
-                ds.FillEllipse(128, 128, 100, 30, Colors.Black);
+                ds.FillEllipse(128, 128, 100, 30, Color.FromArgb(255, 0, 0, 0));
 
                 // 添加笔触细节
                 var rnd = new Random();
                 for (int i = 0; i < 500; i++) {
                     float x = 128 + rnd.Next(-80, 80);
                     float y = 128 + rnd.Next(-20, 20);
-                    ds.DrawCircle(x, y, rnd.Next(1, 3), Colors.Gray);
+                    ds.DrawCircle(x, y, rnd.Next(1, 3), Color.FromArgb(255, 128, 128, 128));
                 }
             }
             return renderTarget;
@@ -316,9 +320,11 @@ namespace Workloads.Creation.StaticImg.Core.Utils {
         }
         #endregion
 
-        private static readonly IReadOnlyDictionary<BrushType, CanvasBitmap> _baseTextures;
-        private static readonly Dictionary<(Color, float Opacity), CanvasSolidColorBrush> _solidBrushCache = [];
-        private static readonly Dictionary<BrushGenerateArgs, ICanvasBrush> _brushCache = [];
+        private readonly Dictionary<BrushType, CanvasBitmap> _baseTextures = [];
+        private readonly CanvasDevice _device = device;
+        private bool _disposed;
+        private readonly Dictionary<(Color, float Opacity), CanvasSolidColorBrush> _solidBrushCache = [];
+        private readonly Dictionary<BrushGenerateArgs, ICanvasBrush> _brushCache = [];
     }
 
     /// <summary>

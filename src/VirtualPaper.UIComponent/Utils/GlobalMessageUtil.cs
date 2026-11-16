@@ -7,20 +7,65 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Templates;
+using VirtualPaper.UIComponent.Dialogs;
+using VirtualPaper.UIComponent.Others;
+using VirtualPaper.Common.Logging;
 
 namespace VirtualPaper.UIComponent.Utils {
     /// <summary>
     /// 全局消息服务
     /// </summary>
     public static class GlobalMessageUtil {
+        /// <summary>
+        /// 同一次异步操作按消息级别汇总；嵌套调用共享结果，结束后恢复正常提示。
+        /// 带操作按钮、自动关闭及显式替换的状态消息仍立即显示。
+        /// </summary>
+        public static IDisposable BeginBatch() => GlobalMessageBatch.Begin(PublishBatch);
+
+        private static void PublishBatch(System.Collections.Generic.IReadOnlyList<GlobalMessageBatch.Entry> entries) {
+            foreach (var (window, messages) in GlobalMessageBatch.Group(entries)) {
+                if (messages.Length == 1) {
+                    AddMsg(window, messages[0]);
+                    continue;
+                }
+                var details = messages.Select(message => message.Message).ToArray();
+                AddMsg(window, new GlobalMsgInfo(null, false,
+                    string.Format(LanguageUtil.GetI18n("Messages_BatchSummary"), details.Length), null,
+                    messages[0].Severity, LanguageUtil.GetI18n("Text_Details"), async () => {
+                        try {
+                            var owner = window ?? ArcWindowManager.MainWindow;
+                            var dialog = new ArcContentDialog {
+                                Title = LanguageUtil.GetI18n("Text_Details"),
+                                Content = new MessageSummaryView(details),
+                                PrimaryButtonText = LanguageUtil.GetI18n("Text_Close"),
+                                DefaultButton = ContentDialogButton.Primary,
+                                DialogWidth = 720,
+                                XamlRoot = owner.Content.XamlRoot,
+                                RequestedTheme = owner.ContentHost.AppRoot.RequestedTheme
+                            };
+                            await dialog.ShowAsync();
+                        }
+                        catch (Exception ex) {
+                            ArcLog.GetLogger<MessageSummaryView>().Error(ex);
+                            ShowException(ex, arcWindow: window);
+                        }
+                    }));
+            }
+        }
+
         private static void AddMsg(
             ArcWindow? arcWindow,
             GlobalMsgInfo globalMsgInfo,
             bool isAllowDuplication = false,
-            bool replaceExisting = false) {
-            if (Constants.IsTestMode) return;
+            bool replaceExisting = false,
+            bool aggregate = true) {
+            if (!Constants.IsTestMode)
+                arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main));
+            // Action messages and explicit replacement updates retain their existing behavior.
+            if (aggregate && !isAllowDuplication && !replaceExisting && globalMsgInfo.ActionCommand == null
+                && GlobalMessageBatch.TryAdd(new(arcWindow, globalMsgInfo))) return;
 
-            arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main))!;
+            if (Constants.IsTestMode || arcWindow == null) return;
             ExecuteOnUIThread(() => {
                 // 固定 key 默认用于抑制重复消息；需要展示最新状态时，先移除同 key
                 // 的旧消息，再添加新实例，使消息文本和操作回调一起更新。
@@ -52,6 +97,7 @@ namespace VirtualPaper.UIComponent.Utils {
         }
 
         public static void CloseAndRemoveMsg(ArcWindow arcWindow, string key) {
+            GlobalMessageBatch.Remove(arcWindow, key);
             if (Constants.IsTestMode) return;
 
             ExecuteOnUIThread(() => {
@@ -195,7 +241,7 @@ namespace VirtualPaper.UIComponent.Utils {
             if (Constants.IsTestMode) return;
 
             var msgInfo = new GlobalMsgInfo(key, false, message, null, severity);
-            AddMsg(arcWindow, msgInfo);
+            AddMsg(arcWindow, msgInfo, aggregate: false);
 
             System.Threading.Tasks.Task.Delay(autoCloseDelay).ContinueWith(t => {
                 if (msgInfo.Key != null) {

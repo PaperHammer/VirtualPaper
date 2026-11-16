@@ -38,28 +38,42 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         _commands = new(channel);
     }
 
-    public async Task StartAsync(Action<Settings>? configure = null) {
+    public async Task StartAsync(Action<Settings>? configure = null, bool preserveProfile = false, bool freshProfile = false,
+        string[]? projectPaths = null) {
         string coreExe = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE")
             ?? throw new InvalidOperationException("Core executable path is missing.");
         Directory.CreateDirectory(Constants.CommonPaths.AppDataDir);
         var settings = new Settings {
             IsFirstRun = false, IsUpdated = false, IsAutoStart = false, IsScreenSaverOn = false,
             NavigationAnimationsEnabled = true, Language = "en-US",
+            // Unrelated cases use an acknowledged profile; first-use cases explicitly reset this to zero.
+            AiUseNoticeVersion = 1,
             // A host runs several application cases; each Core must get an empty library.
             WallpaperDir = Path.Combine(Constants.CommonPaths.LibraryDir, Guid.NewGuid().ToString("N"),
                 Constants.FolderName.WpStoreFolderName)
         };
         configure?.Invoke(settings);
         UiTestContext.Check(!settings.IsRunningLock, "Desktop locking is excluded from process tests.");
-        Directory.CreateDirectory(settings.WallpaperDir);
-        File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, SettingsContext.Default.Settings));
-        File.WriteAllText(Constants.CommonPaths.AppRulesPath, "[]");
-        File.WriteAllText(Constants.CommonPaths.WallpaperLayoutPath, "[]");
-        File.WriteAllText(Constants.CommonPaths.RecentUsedPath, "[]");
-        _core = Process.Start(new ProcessStartInfo(coreExe) {
+        if (!preserveProfile && !freshProfile) Directory.CreateDirectory(settings.WallpaperDir);
+        if (freshProfile) {
+            UiTestContext.Check(!File.Exists(SettingsPath), "First-run package acceptance requires a new profile.");
+        } else if (!preserveProfile) {
+            File.WriteAllText(SettingsPath, JsonSerializer.Serialize(settings, SettingsContext.Default.Settings));
+            File.WriteAllText(Constants.CommonPaths.AppRulesPath, "[]");
+            File.WriteAllText(Constants.CommonPaths.WallpaperLayoutPath, "[]");
+            File.WriteAllText(Constants.CommonPaths.RecentUsedPath, "[]");
+        }
+        var startInfo = new ProcessStartInfo(coreExe) {
             WorkingDirectory = Path.GetDirectoryName(coreExe)!, UseShellExecute = false,
             WindowStyle = ProcessWindowStyle.Hidden
-        }) ?? throw new InvalidOperationException("Core process could not start.");
+        };
+        if (projectPaths is { Length: > 0 }) {
+            startInfo.ArgumentList.Add("--open-project");
+            foreach (string path in projectPaths) startInfo.ArgumentList.Add(path);
+        }
+        _core = PackageActivation.ExpectedFullName != null ? PackageActivation.Start(projectPaths?.FirstOrDefault())
+            : InstalledProjectActivation.IsEnabled && projectPaths is { Length: > 0 } ? InstalledProjectActivation.Start(projectPaths[0]) : Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Core process could not start.");
 
         await WaitAsync(async () => {
             if (_core.HasExited) throw new InvalidOperationException($"Core exited during startup: {_core.ExitCode}");
@@ -69,11 +83,49 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             }
             catch (global::Grpc.Core.RpcException) { return false; }
         }, "Core settings RPC readiness");
+        if ((PackageActivation.ExpectedFullName != null || InstalledProjectActivation.IsEnabled) && projectPaths is { Length: > 1 })
+            await ForwardProjectFilesAsync(projectPaths.Skip(1).ToArray());
+    }
+
+    public async Task ForwardProjectFilesAsync(params string[] paths) {
+        if (PackageActivation.ExpectedFullName != null) {
+            foreach (string path in paths) {
+                using var process = PackageActivation.Start(path);
+                if (process.Id != CoreId) {
+                    await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+                    UiTestContext.Check(process.ExitCode == 0, "The package file-activation forwarder exited abnormally.");
+                }
+            }
+            return;
+        }
+        if (InstalledProjectActivation.IsEnabled) {
+            foreach (string path in paths) {
+                using var process = InstalledProjectActivation.Start(path);
+                await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+                UiTestContext.Check(process.ExitCode == 0, "The Shell project forwarder exited abnormally.");
+            }
+            return;
+        }
+        string coreExe = Environment.GetEnvironmentVariable("VIRTUALPAPER_TEST_CORE_EXE")!;
+        var start = new ProcessStartInfo(coreExe) { UseShellExecute = false,
+            WorkingDirectory = Path.GetDirectoryName(coreExe)!, WindowStyle = ProcessWindowStyle.Hidden };
+        start.ArgumentList.Add("--open-project");
+        foreach (string path in paths) start.ArgumentList.Add(path);
+        using var forwarder = Process.Start(start) ?? throw new InvalidOperationException("Project forwarding process did not start.");
+        try {
+            await forwarder.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+            UiTestContext.Check(forwarder.ExitCode == 0, "Project forwarding process exited abnormally.");
+        }
+        finally { if (!forwarder.HasExited) { forwarder.Kill(entireProcessTree: true); await forwarder.WaitForExitAsync(); } }
     }
 
     public async Task<Process> OpenUiAsync() {
         await _commands.ShowUIAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(10));
         _showUiRequests++;
+        return await WaitForUiAsync();
+    }
+
+    public async Task<Process> WaitForUiAsync(bool firstRun = false, bool activateWindow = true) {
         var lastRequest = Stopwatch.StartNew();
         await WaitAsync(async () => {
             if (_core!.HasExited) throw new InvalidOperationException("Core exited before UI became ready.");
@@ -82,7 +134,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
                 // OS process exit can precede Core's Exited callback cleanup.
                 // ShowUI is idempotent; retry within readiness timeout rather
                 // than treating its first acknowledgement as a ready window.
-                if (lastRequest.ElapsedMilliseconds >= 250) {
+                if (!firstRun && lastRequest.ElapsedMilliseconds >= 250) {
                     await _commands.ShowUIAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(10));
                     _showUiRequests++;
                     lastRequest.Restart();
@@ -95,9 +147,10 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             return _ui.MainWindowHandle != IntPtr.Zero;
         }, "Real UI process window");
         _uiIds.Add(_ui!.Id);
+        PackageActivation.AssertIdentity(_ui);
         // Module-only runs do not execute the component cases that activate the
         // host first. Acquire real focus before operating this process's pickers.
-        await Task.Run(() => ApplicationUi.ActivateOwnedWindowAsync(_ui.MainWindowHandle));
+        if (activateWindow) await Task.Run(() => ApplicationUi.ActivateOwnedWindowAsync(_ui.MainWindowHandle));
         return _ui;
     }
 
@@ -148,6 +201,7 @@ internal sealed class AppProcessSession : IAsyncDisposable {
             return Task.FromResult(_ui.MainWindowHandle != 0);
         }, "Core automatically restarted UI");
         _uiIds.Add(_ui!.Id);
+        PackageActivation.AssertIdentity(_ui);
         return _ui;
     }
 
@@ -205,11 +259,13 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         return saved!;
     }
 
-    public static async Task<string> ReadTextSharedAsync(string path) {
-        // Observe atomic saves without preventing the application from replacing the file.
+    public static Task<string> ReadTextSharedAsync(string path) {
+        // Snapshot small config/log files synchronously and close before returning
+        // to the UI dispatcher. An awaited read can retain the handle across a
+        // dispatcher turn and interfere with Core's exclusive File.Create saves.
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync();
+        return Task.FromResult(reader.ReadToEnd());
     }
 
     public void RecordEvidence(UiTestContext context) {
@@ -219,6 +275,8 @@ internal sealed class AppProcessSession : IAsyncDisposable {
         context.Evidence["UiProcessIds"] = UiIds.ToArray();
         context.Evidence["ShowUiRequests"] = _showUiRequests;
         context.Evidence["ProcessesExitedNormally"] = true;
+        context.Evidence["PackageFullName"] = PackageActivation.ExpectedFullName;
+        context.Evidence["PackageActivation"] = PackageActivation.ExpectedFullName != null ? "AUMID" : "Executable";
         context.Evidence["UnitTestBehaviorOverridesEnabled"] = Constants.IsTestMode;
         context.Evidence["SkippedSystemOperations"] = new[] {
             "Session locking: excluded by user",

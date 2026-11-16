@@ -8,11 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Toolkit.Uwp.Notifications;
 using Microsoft.Win32;
 using NLog;
-using Octokit.Internal;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Common.Utils;
 using VirtualPaper.Common.Utils.Files;
+using VirtualPaper.Common.Utils.PInvoke;
 using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Cores.AppUpdate;
@@ -67,10 +67,27 @@ namespace VirtualPaper {
 
         public App() {
             TestProcessEnvironment.ConfigureLogging("Core");
+
+            #region 尝试读取命令行参数
+            // 读取命令行参数，获取要打开的项目路径
+            string[] projectPaths;
+            try { projectPaths = ProjectFileActivation.ReadArguments(Environment.GetCommandLineArgs().Skip(1).ToArray()); }
+            catch (ArgumentException ex) {
+                MessageBox.Show(LanguageManager.Instance["Shell_ProjectOpenFailed"] + "\n" + ex.Message, "Virtual Paper",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+                return;
+            }
+            #endregion
+
             #region 唯一实例检查
             try {
                 // 保证全局只有一个实例
                 if (!_mutex.WaitOne(TimeSpan.FromSeconds(1), false)) {
+                    if (projectPaths.Length > 0) {
+                        _ = OpenProjectsAsync(projectPaths);
+                        return;
+                    }
                     MessageBox.Show(
                         LanguageManager.Instance["Virtual_Paper_isRunning"],
                         "Virtual Paper",
@@ -95,7 +112,8 @@ namespace VirtualPaper {
             try {
                 // 清空缓存
                 FileUtil.RemoveDirectory(Constants.CommonPaths.TempDir);
-                FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
+                if (!Constants.ApplicationType.IsMSIX)
+                    FileUtil.RemoveDirectory(Constants.CommonPaths.PendingInstallerUpdateDir);
             }
             catch { }
 
@@ -133,11 +151,10 @@ namespace VirtualPaper {
             #endregion
 
             #region 用户配置
-            SplashWindow? spl = null;
             bool isFirstRun = UserSettings.Settings.IsFirstRun;
+            SplashWindow? spl = isFirstRun || projectPaths.Length > 0 ? new SplashWindow(0, 500) : null;
+            spl?.Show();
             if (UserSettings.Settings.IsUpdated || isFirstRun) {
-                spl = isFirstRun ? new SplashWindow(0, 500) : null;
-                spl?.Show();
                 UserSettings.Settings.IsFirstRun = false;
                 UserSettings.Save<ISettings>();
             }
@@ -157,6 +174,19 @@ namespace VirtualPaper {
             UserSettings.Save<ISettings>();
             #endregion
 
+            // Inno Setup deploys these for the EXE channel. MSIX installs only
+            // immutable package files, so seed missing folders before UI/library startup.
+            if (Constants.ApplicationType.IsMSIX) {
+                try {
+                    BuiltInWallpaperInstaller.InstallMissing(
+                        Path.Combine(AppContext.BaseDirectory, Constants.FolderName.BuiltInWallpapersFolderName),
+                        UserSettings.Settings.BuiltInWallpapersDir);
+                }
+                catch (Exception ex) {
+                    ArcLog.GetLogger<App>().Error("Failed to deploy bundled MSIX wallpapers.", ex);
+                }
+            }
+
             #region 启动相关后台服务
             try {
                 // 启动针对从 Windows 发出的到该窗口的消息监听服务
@@ -170,6 +200,7 @@ namespace VirtualPaper {
                 InitMemorySharedContext();
             }
             catch (Exception ex) {
+                spl?.Close();
                 ArcLog.GetLogger<App>().Error(ex);
                 MessageBox.Show(string.Format(
                     LanguageManager.Instance["Startup_CoreRuntimeFailed"],
@@ -179,8 +210,6 @@ namespace VirtualPaper {
             #endregion
 
             try {
-                spl?.Close();
-
                 //restore wallpaper(s) from previous run.
                 var wpControl = Services.GetRequiredService<IWallpaperControl>();
                 _ = wpControl.RestoreWallpaperAsync();
@@ -191,12 +220,13 @@ namespace VirtualPaper {
                     _ = Services.GetRequiredService<IScrControl>().StartAsync();
                 }
 
-                //first run Setup-Wizard show..
-                if (isFirstRun) {
-                    _ = Services.GetRequiredService<IUIRunnerService>().ShowUIAsync();
-                }
+                Task? uiStartup = null;
+                if (projectPaths.Length > 0) uiStartup = OpenProjectsAsync(projectPaths);
+                else if (isFirstRun) uiStartup = Services.GetRequiredService<IUIRunnerService>().ShowUIAsync();
+                if (spl != null && uiStartup != null) _ = CloseStartupSplashAsync(uiStartup, spl);
             }
             catch (Exception ex) {
+                spl?.Close();
                 ArcLog.GetLogger<App>().Error(ex);
                 MessageBox.Show(string.Format(
                     LanguageManager.Instance["Startup_CoreRuntimeFailed"],
@@ -227,6 +257,60 @@ namespace VirtualPaper {
                 }
             };
             #endregion
+        }
+
+        private async Task CloseStartupSplashAsync(Task startup, SplashWindow splash) {
+            bool failed = false;
+            try {
+                await startup;
+                var runner = Services.GetRequiredService<IUIRunnerService>();
+                // Process.Start returns before the WinUI window appears. Poll only
+                // during cold startup; failures must not leave a permanent splash.
+                var started = Stopwatch.StartNew();
+                while (!IsShuttingDown && !runner.IsVisibleUI) {
+                    if (started.Elapsed >= TimeSpan.FromSeconds(30))
+                        throw new TimeoutException("The UI window did not become visible.");
+                    await Task.Delay(100);
+                }
+            }
+            catch (Exception ex) {
+                failed = true;
+                ArcLog.GetLogger<App>().Error(ex);
+            }
+            finally {
+                if (!Dispatcher.HasShutdownStarted) await Dispatcher.InvokeAsync(splash.Close);
+            }
+
+            if (failed && !IsShuttingDown && !Dispatcher.HasShutdownStarted) {
+                await Dispatcher.InvokeAsync(() => MessageBox.Show(LanguageManager.Instance["UIRunnerService_VirtualPaperExceptionGeneral"],
+                    "Virtual Paper", MessageBoxButton.OK, MessageBoxImage.Error));
+            }
+        }
+
+        private async Task OpenProjectsAsync(string[] paths) {
+            // Only the secondary-process branch calls this before DI initialization.
+            if (_serviceProvider != null) {
+                await Services.GetRequiredService<IUIRunnerService>().OpenProjectsAsync(paths);
+                return;
+            }
+
+            try {
+                var client = new Grpc_CommandsService.Grpc_CommandsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
+                var host = await client.GetActivationHostAsync(new Google.Protobuf.WellKnownTypes.Empty(), deadline: DateTime.UtcNow.AddSeconds(20));
+                _ = Native.AllowSetForegroundWindow((uint)host.ProcessId);
+                var request = new Grpc_ProjectPaths();
+                request.Paths.AddRange(paths);
+                await client.OpenProjectsAsync(request, deadline: DateTime.UtcNow.AddSeconds(20));
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<App>().Error(ex);
+                await Dispatcher.InvokeAsync(() => MessageBox.Show(LanguageManager.Instance["Shell_ProjectOpenFailed"],
+                    "Virtual Paper", MessageBoxButton.OK, MessageBoxImage.Error));
+            }
+            finally {
+                // The secondary process has no services; exit without Core's shutdown workflow.
+                await Dispatcher.InvokeAsync(() => Shutdown());
+            }
         }
 
         private void InitMemorySharedContext() {

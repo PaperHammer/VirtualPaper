@@ -28,7 +28,7 @@ public class BuiltInWallpaperWorkflowTests {
         var originalHashes = Directory.GetFiles(source, "*", SearchOption.AllDirectories)
             .ToDictionary(path => path, path => SHA256.HashData(File.ReadAllBytes(path)));
         var library = await environment.OpenLibraryAsync();
-        Assert.AreEqual(metadata.Length + 1, library.Index.Query(0, int.MaxValue).Count);
+        Assert.HasCount(metadata.Length + 1, library.Index.Query(0, int.MaxValue));
         foreach (string path in metadata) {
             var data = WpBasicData.Load(path);
             Assert.IsTrue(data.IsAvailable(), data.Title);
@@ -79,7 +79,7 @@ public class BuiltInWallpaperWorkflowTests {
                     using (var project = JsonDocument.Parse(File.ReadAllText(Path.Combine(data.FolderPath, "project.json")))) {
                         string entry = Path.GetFullPath(project.RootElement.GetProperty("file").GetString()!, data.FolderPath);
                         Assert.AreEqual(data.FilePath, entry);
-                        Assert.IsTrue(File.ReadAllText(entry).Contains("playbackChanged"));
+                        Assert.Contains("playbackChanged", File.ReadAllText(entry));
                     }
                     break;
                 default: Assert.Fail("Add decode coverage for the new built-in type: " + data.FType); break;

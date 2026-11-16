@@ -19,7 +19,7 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
             OnPropertyChanged(nameof(Label));
         }
 
-        // 使用 bool? 与 CheckBox.IsChecked（也是 Nullable<bool>）类型完全匹配，
+        // 使用 bool? 与 ToggleButton.IsChecked（也是 Nullable<bool>）类型完全匹配，
         // 确保 x:Bind TwoWay 在选中/取消两个方向均能正常写回。
         private bool? _isSelected = false;
         public bool? IsSelected {

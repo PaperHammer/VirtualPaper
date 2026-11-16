@@ -1,3 +1,4 @@
+using Google.Protobuf.WellKnownTypes;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.Models;
@@ -34,7 +35,9 @@ namespace VirtualPaper.DataAssistor {
                 AspectRatio = source.AspectRatio,
                 FileSize = source.FileSize,
                 FileExtension = source.FileExtension,
-                
+                IsSubscribed = source.IsSubscribed,
+                CreatedTime = Timestamp.FromDateTime(source.CreatedTime.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(source.CreatedTime, DateTimeKind.Utc) : source.CreatedTime.ToUniversalTime()),
             };
 
             return grpc_WpBasicData;
@@ -117,6 +120,8 @@ namespace VirtualPaper.DataAssistor {
                 AspectRatio = source.AspectRatio,
                 FileSize = source.FileSize,
                 FileExtension = source.FileExtension,
+                IsSubscribed = source.IsSubscribed,
+                CreatedTime = source.CreatedTime?.ToDateTime() ?? default,
             };
 
             return basicData;
@@ -207,7 +212,9 @@ namespace VirtualPaper.DataAssistor {
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
                 NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
+                UiHardwareAccelerationEnabled = settings.UiHardwareAccelerationEnabled,
                 RemindUnpreservedIntelligentResults = settings.RemindUnpreservedIntelligentResults,
+                AiUseNoticeVersion = settings.AiUseNoticeVersion,
 
                 WallpaperDir = settings.WallpaperDir,
                 BuiltInWallpapersDir = settings.BuiltInWallpapersDir,
@@ -277,7 +284,9 @@ namespace VirtualPaper.DataAssistor {
                 IsAutoStart = settings.IsAutoStart,
                 IsFirstRun = settings.IsFirstRun,
                 NavigationAnimationsEnabled = !settings.HasNavigationAnimationsEnabled || settings.NavigationAnimationsEnabled,
+                UiHardwareAccelerationEnabled = !settings.HasUiHardwareAccelerationEnabled || settings.UiHardwareAccelerationEnabled,
                 RemindUnpreservedIntelligentResults = !settings.HasRemindUnpreservedIntelligentResults || settings.RemindUnpreservedIntelligentResults,
+                AiUseNoticeVersion = settings.HasAiUseNoticeVersion ? Math.Max(0, settings.AiUseNoticeVersion) : 0,
 
                 WallpaperDir = settings.WallpaperDir,
                 BuiltInWallpapersDir = settings.HasBuiltInWallpapersDir && !string.IsNullOrWhiteSpace(settings.BuiltInWallpapersDir)

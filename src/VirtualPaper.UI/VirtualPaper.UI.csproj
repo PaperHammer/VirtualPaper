@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
 		<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
 		<ApplicationManifest>app.manifest</ApplicationManifest>
 		<Platforms>x64</Platforms>
@@ -12,18 +12,21 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
+	<PropertyGroup>
+		<LocalizationResourceKind>Metadata</LocalizationResourceKind>
+	</PropertyGroup>
+	<Import Project="..\..\localization\Localization.targets" />
 
 	<!--NETSDK1152-->
 	<!--ref: https://learn.microsoft.com/zh-cn/dotnet/core/compatibility/sdk/6.0/duplicate-files-in-output-->
 	<PropertyGroup>
 		<ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
-		<DefaultLanguage>zh-CN</DefaultLanguage>
 	</PropertyGroup>
 
 	<!-- 排除 ONNX Runtime 重复的原生 DLL（在 MSIX payload 重复检测之前从 PackagingOutputs 移除 NuGet 缓存副本） -->
 	<Target Name="RemoveDuplicateOnnxRuntimeDlls" BeforeTargets="_ComputeAppxPackagePayload" AfterTargets="GetPackagingOutputs">
 		<ItemGroup>
-			<PackagingOutputs Remove="@(PackagingOutputs)" Condition="('%(Filename)%(Extension)' == 'onnxruntime.dll' or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll') and $([System.String]::new('%(FullPath)').Contains('.nuget'))" />
+			<PackagingOutputs Remove="@(PackagingOutputs)" Condition="('%(Filename)%(Extension)' == 'onnxruntime.dll' or '%(Filename)%(Extension)' == 'onnxruntime_providers_shared.dll' or '%(Filename)%(Extension)' == 'DirectML.dll') and $([System.String]::new('%(FullPath)').Contains('.nuget'))" />
 		</ItemGroup>
 	</Target>
 
@@ -59,11 +62,18 @@
 		</Content>
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="..\..\doc\legal\**\*" Exclude="..\..\doc\legal\README.md">
+			<Link>Legal\%(RecursiveDir)%(Filename)%(Extension)</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+	</ItemGroup>
+
 	<PropertyGroup>
 		<OutputPath>..\VirtualPaper\Plugins\UI\</OutputPath>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<DefaultLanguage>zh-cn</DefaultLanguage>
 		<RootNamespace>VirtualPaper.UI</RootNamespace>
 		<ApplicationIcon>Assets\virtualpaper.ico</ApplicationIcon>
 	</PropertyGroup>
@@ -84,7 +94,7 @@
 		<None Remove="Assets\SplashScreen.scale-200.png" />
 		<None Remove="Assets\Square150x150Logo.scale-200.png" />
 		<None Remove="Assets\Square44x44Logo.scale-200.png" />
-		<None Remove="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-32_altform-unplated.png" />
 		<None Remove="Assets\staticImg\Dark\project_create_staticimg_dark.png" />
 		<None Remove="Assets\staticImg\ic_fluent_border_24_filled.png" />
 		<None Remove="Assets\staticImg\ic_fluent_resize_small_24_filled.png" />

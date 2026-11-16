@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Utils.DI;
+using System.Collections.Generic;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.EditPanel.Views;
 using VirtualPaper.Grpc.Client.Interfaces;
@@ -44,10 +45,30 @@ namespace VirtualPaper.EditPanel {
 
         #region navigate
         private void FrameCardComp_Loaded(object sender, RoutedEventArgs e) {
+            if (_ready.Task.IsCompleted) return;
             Payload = new FrameworkPayload() {
                 [NaviPayloadKey.EditPage.ToString()] = this,
             };
             NavigateByState(EditPanelState.ConfigSpace);
+            _ready.TrySetResult();
+        }
+
+        public async Task OpenProjectsAsync(IReadOnlyList<string> paths) {
+            await _ready.Task;
+            while (true) {
+                // Reuse the workspace that owns unsaved projects.
+                if (FrameCardComp.Content is not WorkSpace) {
+                    Payload?.Remove(NaviPayloadKey.Project);
+                    NavigateByState(EditPanelState.WorkSpace);
+                }
+                if (FrameCardComp.Content is not WorkSpace workspace)
+                    throw new InvalidOperationException("The project workspace is not available.");
+                await workspace.Ready;
+                // Initial loading can fail and navigate back to the start page.
+                if (!ReferenceEquals(FrameCardComp.Content, workspace)) continue;
+                await workspace.OpenProjectsAsync(paths);
+                return;
+            }
         }
 
         public void NavigateByState(EditPanelState nextPanel, params NaviPayloadData[] naviPayloadDatas) {
@@ -97,5 +118,6 @@ namespace VirtualPaper.EditPanel {
             return false;
         }
         #endregion
+        private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
     }
 }

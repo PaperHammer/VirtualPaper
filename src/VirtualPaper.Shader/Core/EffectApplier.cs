@@ -38,7 +38,7 @@ namespace VirtualPaper.Shader.Core {
 
                 // Effect2
                 ShaderType.Sepia => new SepiaEffect { Source = source },
-                ShaderType.Posterize => new PosterizeEffect { RedValueCount = (int)p.Value, GreenValueCount = (int)p.Value2, BlueValueCount = (int)p.Value3, Source = source },
+                ShaderType.Posterize => new PosterizeEffect { RedValueCount = Math.Clamp((int)p.Value, 2, 16), GreenValueCount = Math.Clamp((int)p.Value2, 2, 16), BlueValueCount = Math.Clamp((int)p.Value3, 2, 16), Source = source },
                 ShaderType.LuminanceToAlpha => BuildLuminanceToAlpha(p, source),
                 ShaderType.ChromaKey => new ChromaKeyEffect { Color = ColorFromVector(p.Color1), Tolerance = Clamp(p.Value, 0, 1), InvertAlpha = p.Flag, Feather = p.Mode == 1, Source = source },
                 ShaderType.Colouring => new HueRotationEffect { Angle = p.Value * MathF.PI / 180f, Source = new SepiaEffect { Source = source } },

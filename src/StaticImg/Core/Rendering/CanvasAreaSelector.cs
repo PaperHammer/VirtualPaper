@@ -10,6 +10,7 @@ using Windows.Foundation;
 using Windows.UI;
 using Workloads.Creation.StaticImg.Core.Utils;
 using Workloads.Creation.StaticImg.Events;
+using Workloads.Creation.StaticImg.Extensions;
 
 namespace Workloads.Creation.StaticImg.Core.Rendering {
     /// <summary>
@@ -234,23 +235,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
 
             CanvasRenderTarget target = RenderTarget;
 
-            var newOriginalSnapshot = new CanvasRenderTarget(
-                target,
-                target.SizeInPixels.Width,
-                target.SizeInPixels.Height,
-                target.Dpi,
-                target.Format,
-                target.AlphaMode);
-
-            try {
-                using var ds = newOriginalSnapshot.CreateDrawingSession();
-                ds.Clear(Colors.Transparent);
-                ds.DrawImage(target);
-            }
-            catch {
-                newOriginalSnapshot.Dispose();
-                throw;
-            }
+            var newOriginalSnapshot = target.Clone();
 
             _resources.ReplaceOriginalContentSnapshot(newOriginalSnapshot, target);
         }
@@ -379,7 +364,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
             }
         }
 
-        protected new void HandleDeviceLost() {
+        protected override void HandleDeviceLost() {
             base.HandleDeviceLost();
             ReleaseOriginalContentSnapshot();
             ReleaseSelectedRegionSnapshot();

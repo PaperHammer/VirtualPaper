@@ -63,6 +63,7 @@ namespace VirtualPaper.Common.Utils.IPC {
         vp_cpicker,
         vp_chekbox,
         vp_general_effect,
+        cmd_open_projects,
     }
 
     public enum ConsoleMessageType {

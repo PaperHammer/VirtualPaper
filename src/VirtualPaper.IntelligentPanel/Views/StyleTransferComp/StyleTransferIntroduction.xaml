@@ -32,58 +32,88 @@
         </Storyboard>
     </UserControl.Resources>
 
-    <Grid x:Name="introductionGrid" 
-        HorizontalAlignment="Center"
-        VerticalAlignment="Center">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="auto"/>
-            <ColumnDefinition Width="16"/>
-            <ColumnDefinition Width="auto"/>
-        </Grid.ColumnDefinitions>
+    <Grid SizeChanged="IntroductionRoot_SizeChanged">
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup>
+                <VisualState x:Name="WideLayout">
+                    <VisualState.Setters>
+                        <Setter Target="PreviewColumn.Width" Value="480"/>
+                        <Setter Target="IntroductionGap.Width" Value="24"/>
+                        <Setter Target="IntroductionTextColumn.Width" Value="*"/>
+                        <Setter Target="IntroductionText.(Grid.Row)" Value="0"/>
+                        <Setter Target="IntroductionText.(Grid.Column)" Value="2"/>
+                        <Setter Target="IntroductionText.Margin" Value="0"/>
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="NarrowLayout">
+                    <VisualState.Setters>
+                        <Setter Target="PreviewColumn.Width" Value="*"/>
+                        <Setter Target="IntroductionGap.Width" Value="0"/>
+                        <Setter Target="IntroductionTextColumn.Width" Value="0"/>
+                        <Setter Target="IntroductionText.(Grid.Row)" Value="1"/>
+                        <Setter Target="IntroductionText.(Grid.Column)" Value="0"/>
+                        <Setter Target="IntroductionText.Margin" Value="0,24,0,0"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        <ScrollViewer Margin="24" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto" HorizontalContentAlignment="Center" VerticalContentAlignment="Center">
+            <Grid x:Name="introductionGrid" MaxWidth="904"
+                HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition x:Name="PreviewColumn" Width="*"/>
+                    <ColumnDefinition x:Name="IntroductionGap" Width="0"/>
+                    <ColumnDefinition x:Name="IntroductionTextColumn" Width="0"/>
+                </Grid.ColumnDefinitions>
 
-        <Border
-            Width="480"
-            Height="270"
-            CornerRadius="12"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            VerticalAlignment="Center">
-            <Grid>
-                <Image x:Name="originImage"
-                       Source="{x:Bind _intelli_Demo_StyleTransfer_Origin, Converter={StaticResource ResourceKeyToImageConverter}}"
-                       Stretch="UniformToFill"
-                       Opacity="1"/>
+                <Viewbox MaxWidth="480" Stretch="Uniform" StretchDirection="DownOnly">
+                    <Border Width="480"
+                        Height="270"
+                        CornerRadius="12"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        VerticalAlignment="Center">
+                        <Grid>
+                            <Image x:Name="originImage"
+                                   Source="{x:Bind _intelli_Demo_StyleTransfer_Origin, Converter={StaticResource ResourceKeyToImageConverter}}"
+                                   Stretch="UniformToFill"
+                                   Opacity="1"/>
 
-                <Image x:Name="resultImage"
-                       Source="{x:Bind _intelli_Demo_StyleTransfer_Result, Converter={StaticResource ResourceKeyToImageConverter}}"
-                       Stretch="UniformToFill"
-                       Opacity="0"/>
+                            <Image x:Name="resultImage"
+                                   Source="{x:Bind _intelli_Demo_StyleTransfer_Result, Converter={StaticResource ResourceKeyToImageConverter}}"
+                                   Stretch="UniformToFill"
+                                   Opacity="0"/>
+                        </Grid>
+                    </Border>
+                </Viewbox>
+
+                <StackPanel x:Name="IntroductionText"
+                    Grid.Row="1" Margin="0,24,0,0"
+                    MaxWidth="400"
+                    Spacing="12">
+
+                    <TextBlock
+                        l:Uids.Uid="Ui_Intelligent_Intro_Title_Text"
+                        FontSize="28"
+                        FontWeight="SemiBold"
+                        TextWrapping="Wrap"/>
+
+                    <TextBlock
+                        l:Uids.Uid="Ui_Intelligent_Intro_Desc_Text"
+                        FontSize="14"
+                        LineHeight="24"
+                        TextWrapping="Wrap"/>
+
+                    <TextBlock
+                        l:Uids.Uid="Ui_Intelligent_Intro_Warning_Text"
+                        FontSize="14"
+                        LineHeight="24"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        TextWrapping="Wrap"/>
+                </StackPanel>
             </Grid>
-        </Border>
-
-        <StackPanel
-            Grid.Column="2"
-            MaxWidth="400"
-            Spacing="12">
-
-            <TextBlock 
-                l:Uids.Uid="Ui_Intelligent_Intro_Title_Text"
-                FontSize="28"
-                FontWeight="SemiBold"
-                TextWrapping="Wrap"/>
-
-            <TextBlock 
-                l:Uids.Uid="Ui_Intelligent_Intro_Desc_Text"
-                FontSize="14"
-                LineHeight="24"
-                TextWrapping="Wrap"/>
-
-            <TextBlock 
-                l:Uids.Uid="Ui_Intelligent_Intro_Warning_Text"
-                FontSize="14"
-                LineHeight="24"
-                Foreground="Gray"
-                TextWrapping="Wrap"/>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </UserControl>

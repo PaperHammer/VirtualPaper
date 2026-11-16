@@ -1,4 +1,5 @@
 using System.IO;
+using System.Globalization;
 using System.Reflection;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
@@ -28,9 +29,11 @@ namespace VirtualPaper.Services {
             IMonitorManager moitorManager,
             IJsonSaver jsonSaver,
             Action<bool> configureAutoStart,
-            string? installerLanguagePath = null) {
+            string? installerLanguagePath = null,
+            IEnumerable<string>? preferredLanguages = null) {
             _jsonSaver = jsonSaver;
             _installerLanguagePath = installerLanguagePath ?? Path.Combine(AppContext.BaseDirectory, Constants.CoreField.InstallerLanguageFileName);
+            _preferredLanguages = preferredLanguages?.ToArray();
 
             Load<ISettings>();
             Load<List<IApplicationRules>>();
@@ -46,11 +49,6 @@ namespace VirtualPaper.Services {
                 Settings.AppName = Constants.CoreField.AppName;
                 Settings.AppVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
                 Settings.IsUpdated = true;
-            }
-
-            var lang = SupportedLanguages.GetLanguage(Settings.Language);
-            if (lang.Codes.FirstOrDefault(x => x == Settings.Language) == null) {
-                Settings.Language = lang.Codes[0];
             }
 
             try {
@@ -70,10 +68,13 @@ namespace VirtualPaper.Services {
                 catch (Exception e) {
                     ArcLog.GetLogger<UserSettingsService>().Error(e);
                     Settings = new Settings();
-                    ApplyInstallerLanguage();
+                    ApplyInitialLanguage();
                     saveRequired = true;
                 }
                 saveRequired |= SettingsDefaults.Apply(Settings);
+                string language = SupportedLanguages.GetLanguage(Settings.Language).Codes[0];
+                saveRequired |= !string.Equals(Settings.Language, language, StringComparison.Ordinal);
+                Settings.Language = language;
                 if (saveRequired) Save<ISettings>();
             }
             else if (typeof(T) == typeof(List<IApplicationRules>)) {
@@ -114,17 +115,23 @@ namespace VirtualPaper.Services {
             }
         }
 
-        private void ApplyInstallerLanguage() {
+        private void ApplyInitialLanguage() {
+            string? installerLanguage = null;
             try {
-                if (!File.Exists(_installerLanguagePath)) return;
-                Settings.Language = File.ReadAllText(_installerLanguagePath).Trim() switch {
-                    "english" => "en-US",
-                    "chinese" => "zh-CN",
-                    _ => Settings.Language
-                };
+                if (File.Exists(_installerLanguagePath)) installerLanguage = File.ReadAllText(_installerLanguagePath).Trim();
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) {
                 ArcLog.GetLogger<UserSettingsService>().Error(exception);
+            }
+            Settings.Language = SupportedLanguages.ResolveLanguage(new[] { installerLanguage }
+                .Concat(_preferredLanguages ?? GetPreferredLanguages()));
+        }
+
+        private static string[] GetPreferredLanguages() {
+            try { return [.. Windows.System.UserProfile.GlobalizationPreferences.Languages]; }
+            catch (Exception exception) {
+                ArcLog.GetLogger<UserSettingsService>().Warn($"Could not read the preferred UI languages: {exception.Message}");
+                return [CultureInfo.CurrentUICulture.Name];
             }
         }
 
@@ -152,5 +159,6 @@ namespace VirtualPaper.Services {
         private readonly string _recentUsedPath = Constants.CommonPaths.RecentUsedPath;
         private readonly IJsonSaver _jsonSaver;
         private readonly string _installerLanguagePath;
+        private readonly string[]? _preferredLanguages;
     }
 }

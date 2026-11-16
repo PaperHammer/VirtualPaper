@@ -1,0 +1,50 @@
+{
+  "shortDescription": "Belebe deinen Desktop mit Live-Hintergründen, interaktiven Effekten, kreativen Werkzeugen und lokaler KI.",
+  "description": "Virtual Paper ist eine kostenlose, quelloffene Live-Wallpaper-App für Windows. Gestalte deinen Desktop mit Bildern, Videos, animierten Bildern und interaktiven Web-Hintergründen oder starte mit der mitgelieferten Sammlung.\n\nBehalte mit Favoriten, Tags, Suche und Filtern den Überblick über deine Hintergründe. Wähle für jeden Bildschirm einen eigenen Hintergrund, zeige denselben auf mehreren Bildschirmen oder lasse ihn über den gesamten Desktop reichen.\n\nErgänze Parallaxen- und Atmosphäreneffekte und speichere deine Lieblingskombinationen als wiederverwendbare Vorgaben. Erstelle Bildhintergründe mit Ebenen und Zeichenwerkzeugen oder gestalte interaktive Hintergründe im Web-Editor mit Live-Vorschau.\n\nMit lokalen KI-Werkzeugen kannst du Bildstile verändern, Bilder verbessern und an deinen Bildschirm anpassen. Wechsle sofort zwischen zehn Oberflächensprachen und starte ohne Registrierung.",
+  "features": [
+    "Bilder, Videos, animierte Bilder und interaktive Web-Hintergründe",
+    "Mitgelieferte Hintergründe, Favoriten, Tags, Suche und Filter",
+    "Separate, duplizierte und erweiterte Bildschirmhintergründe",
+    "Parallaxen- und Atmosphäreneffekte mit wiederverwendbaren Vorgaben",
+    "Bildeditor mit Ebenen und Web-Editor mit Live-Vorschau",
+    "Lokale KI für Stilübertragung, Bildverbesserung und Bildschirmanpassung",
+    "Zehn Oberflächensprachen mit sofortigem Sprachwechsel"
+  ],
+  "keywords": [
+    "Hintergrund",
+    "Live-Wallpaper",
+    "Desktop",
+    "Bildeditor",
+    "Web-Wallpaper"
+  ],
+  "screenshots": [
+    {
+      "id": "00-overview",
+      "caption": "Entdecken Sie Virtual Paper im hellen und dunklen Design."
+    },
+    {
+      "id": "01-library",
+      "caption": "Organisiere deine Hintergrundsammlung mit Favoriten, Tags und Filtern."
+    },
+    {
+      "id": "02-effects",
+      "caption": "Gestalte Hintergründe mit Parallaxen- und Atmosphäreneffekten."
+    },
+    {
+      "id": "03-presets",
+      "caption": "Entdecke integrierte Effektvorgaben und speichere eigene Kombinationen."
+    },
+    {
+      "id": "04-image-editor",
+      "caption": "Erstelle und bearbeite Bildprojekte mit Ebenen und Zeichenwerkzeugen."
+    },
+    {
+      "id": "05-web-editor",
+      "caption": "Entwickle interaktive Web-Hintergründe mit Dateibaum, Code-Editor und Live-Vorschau."
+    },
+    {
+      "id": "06-screen-fit",
+      "caption": "Wähle ein Bild aus deiner Sammlung und passe es an deinen Bildschirm an."
+    }
+  ]
+}

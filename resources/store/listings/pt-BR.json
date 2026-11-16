@@ -1,0 +1,50 @@
+{
+  "shortDescription": "Dê vida à sua área de trabalho com papéis de parede animados, efeitos interativos, ferramentas criativas e IA local.",
+  "description": "O Virtual Paper é um aplicativo de papéis de parede animados gratuito e de código aberto para Windows. Personalize sua área de trabalho com imagens, vídeos, imagens animadas e papéis de parede Web interativos ou comece pela coleção incluída.\n\nOrganize seus papéis de parede com favoritos, etiquetas, pesquisa e filtros. Escolha um papel de parede diferente para cada monitor, duplique-o em várias telas ou estenda-o por toda a área de trabalho.\n\nAdicione efeitos de paralaxe e de ambiente e salve suas combinações favoritas como predefinições reutilizáveis. Crie papéis de parede com camadas e ferramentas de desenho ou desenvolva fundos interativos no editor Web com prévia em tempo real.\n\nUse as ferramentas locais de IA para transformar o estilo das imagens, aprimorá-las e ajustá-las à sua tela. Alterne instantaneamente entre dez idiomas de interface e comece sem criar uma conta.",
+  "features": [
+    "Imagens, vídeos, imagens animadas e papéis de parede Web interativos",
+    "Papéis de parede incluídos, favoritos, etiquetas, pesquisa e filtros",
+    "Papéis de parede independentes, duplicados ou estendidos entre monitores",
+    "Efeitos de paralaxe e de ambiente com predefinições reutilizáveis",
+    "Editor de imagens com camadas e editor Web com prévia em tempo real",
+    "IA local para transferência de estilo, aprimoramento e ajuste à tela",
+    "Dez idiomas de interface com troca imediata"
+  ],
+  "keywords": [
+    "papel de parede",
+    "papel animado",
+    "área de trabalho",
+    "editor de imagens",
+    "papel Web"
+  ],
+  "screenshots": [
+    {
+      "id": "00-overview",
+      "caption": "Conheça o Virtual Paper nos temas claro e escuro."
+    },
+    {
+      "id": "01-library",
+      "caption": "Organize sua coleção com favoritos, etiquetas e filtros."
+    },
+    {
+      "id": "02-effects",
+      "caption": "Personalize papéis de parede com efeitos de paralaxe e de ambiente."
+    },
+    {
+      "id": "03-presets",
+      "caption": "Explore as predefinições incluídas e salve suas próprias combinações de efeitos."
+    },
+    {
+      "id": "04-image-editor",
+      "caption": "Crie e edite projetos de imagem com camadas e ferramentas de desenho."
+    },
+    {
+      "id": "05-web-editor",
+      "caption": "Desenvolva papéis de parede Web interativos com árvore de arquivos, editor de código e prévia em tempo real."
+    },
+    {
+      "id": "06-screen-fit",
+      "caption": "Escolha uma imagem da biblioteca e ajuste-a à sua tela."
+    }
+  ]
+}

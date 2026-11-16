@@ -9,7 +9,7 @@ using Workloads.Creation.WebBackdrop.ViewModels;
 namespace WebBackdrop.Test.T_WebBackdrop;
 
 [TestClass]
-public class WebEditorViewModelTests {
+public partial class WebEditorViewModelTests {
     [TestInitialize]
     public void Initialize() {
         _testRoot = Path.Combine(
@@ -76,13 +76,45 @@ public class WebEditorViewModelTests {
         await _viewModel.OpenFileAsync(path);
         WebEditorFile file = _viewModel.ActiveFile!;
         file.Content = "copy-content";
+        file.SetSavedState(false);
 
         bool saved = await _viewModel.SaveFileAsAsync(file, copyPath);
 
         Assert.IsTrue(saved);
         Assert.AreEqual("copy-content", File.ReadAllText(copyPath));
+        Assert.AreEqual("old", File.ReadAllText(path));
         Assert.AreEqual(path, file.FilePath);
         Assert.AreSame(file, _viewModel.ActiveFile);
+        Assert.AreEqual("copy-content", file.Content);
+        Assert.IsFalse(file.IsSaved);
+        Assert.IsFalse(_viewModel.IsAllSaved);
+    }
+
+    [TestMethod]
+    public async Task SaveAll_WhenSomeFilesFail_PreservesTheirOriginalsAndStillSavesOtherFiles() {
+        var files = new List<WebEditorFile>();
+        foreach (string name in new[] { "locked.txt", "load-failed.txt", "valid.txt" }) {
+            string path = Path.Combine(_testRoot, name);
+            File.WriteAllText(path, "original");
+            await _viewModel.OpenFileAsync(path);
+            var file = _viewModel.ActiveFile!;
+            file.Content = "edited " + name;
+            file.SetSavedState(false);
+            files.Add(file);
+        }
+        files[1].SetLoadFailed();
+        using var fileLock = new FileStream(files[0].FilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+        Assert.IsFalse(await _viewModel.SaveAllAsync());
+
+        Assert.AreEqual("original", File.ReadAllText(files[0].FilePath));
+        Assert.AreEqual("original", File.ReadAllText(files[1].FilePath));
+        Assert.IsFalse(files[0].IsSaved);
+        Assert.IsTrue(files[1].IsLoadFailed);
+        Assert.IsFalse(files[1].IsSaved);
+        Assert.AreEqual("edited valid.txt", File.ReadAllText(files[2].FilePath));
+        Assert.IsTrue(files[2].IsSaved);
+        Assert.IsFalse(_viewModel.IsAllSaved);
     }
 
     [TestMethod]
@@ -121,7 +153,7 @@ public class WebEditorViewModelTests {
     }
 
     [TestMethod]
-    public async Task OpeningBeyondCacheLimit_EvictsOldestSavedInactiveFiles() {
+    public async Task OpeningBeyondCacheLimit_EvictsOldestSavedInactiveFilesAndRestoresThemOnReopen() {
         var evicted = new List<string>();
         _viewModel.FileCacheEvicted += evicted.Add;
 
@@ -139,6 +171,20 @@ public class WebEditorViewModelTests {
             },
             evicted);
         Assert.AreEqual("file-33.txt", _viewModel.ActiveFile!.FileName);
+
+        string firstPath = Path.Combine(_testRoot, "file-00.txt");
+        Assert.IsNull(_viewModel.GetOpenFile(firstPath));
+        Assert.IsFalse(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(firstPath));
+        File.WriteAllText(firstPath, "updated on disk");
+
+        await _viewModel.OpenFileAsync(firstPath);
+
+        Assert.AreEqual(firstPath, _viewModel.ActiveFile!.FilePath);
+        Assert.AreEqual("updated on disk", _viewModel.ActiveFile.Content);
+        Assert.AreSame(_viewModel.GetOpenFile(firstPath), _viewModel.ActiveFile);
+        Assert.IsTrue(_viewModel.ActiveFile.IsSaved);
+        Assert.IsTrue(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(firstPath));
+        Assert.HasCount(32, _viewModel.CachedFiles);
     }
 
     [TestMethod]

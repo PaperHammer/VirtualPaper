@@ -1,0 +1,50 @@
+{
+  "shortDescription": "Da vida a tu escritorio con fondos animados, efectos interactivos, herramientas creativas e IA local.",
+  "description": "Virtual Paper es una aplicación de fondos de pantalla animados gratuita y de código abierto para Windows. Personaliza tu escritorio con imágenes, vídeos, imágenes animadas y fondos web interactivos, o empieza con la colección incluida.\n\nOrganiza tus fondos con favoritos, etiquetas, búsqueda y filtros. Elige un fondo diferente para cada pantalla, duplícalo en varios monitores o extiéndelo entre varios monitores.\n\nAñade efectos de paralaje y ambiente, y guarda tus combinaciones favoritas como ajustes preestablecidos reutilizables. Crea fondos con capas y herramientas de dibujo, o diseña fondos interactivos en el editor web con vista previa en directo.\n\nUsa las herramientas de IA local para transformar el estilo de tus imágenes, mejorarlas y adaptarlas a tu pantalla. Cambia al instante entre diez idiomas de interfaz y empieza sin crear una cuenta.",
+  "features": [
+    "Imágenes, vídeos, imágenes animadas y fondos web interactivos",
+    "Fondos incluidos, favoritos, etiquetas, búsqueda y filtros",
+    "Fondos independientes, duplicados o extendidos entre pantallas",
+    "Efectos de paralaje y ambiente con ajustes preestablecidos reutilizables",
+    "Editor de imágenes por capas y editor web con vista previa en directo",
+    "IA local para transferencia de estilo, mejora y adaptación a la pantalla",
+    "Diez idiomas de interfaz con cambio inmediato"
+  ],
+  "keywords": [
+    "fondo de pantalla",
+    "fondo animado",
+    "escritorio",
+    "editor de imágenes",
+    "fondo web"
+  ],
+  "screenshots": [
+    {
+      "id": "00-overview",
+      "caption": "Descubre Virtual Paper con los temas claro y oscuro."
+    },
+    {
+      "id": "01-library",
+      "caption": "Organiza tu colección de fondos con favoritos, etiquetas y filtros."
+    },
+    {
+      "id": "02-effects",
+      "caption": "Personaliza los fondos con efectos de paralaje y ambiente."
+    },
+    {
+      "id": "03-presets",
+      "caption": "Explora los ajustes integrados y guarda tus propias combinaciones de efectos."
+    },
+    {
+      "id": "04-image-editor",
+      "caption": "Crea y edita proyectos de imagen con capas y herramientas de dibujo."
+    },
+    {
+      "id": "05-web-editor",
+      "caption": "Diseña fondos web interactivos con árbol de archivos, editor de código y vista previa en directo."
+    },
+    {
+      "id": "06-screen-fit",
+      "caption": "Elige una imagen de tu biblioteca y adáptala a la pantalla."
+    }
+  ]
+}

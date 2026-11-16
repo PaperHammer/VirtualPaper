@@ -11,7 +11,11 @@
 - [项目概览](project-overview.md)：产品范围、技术栈、主要进程和源码模块。
 - [架构](architecture.md)：Core、依赖方向、壁纸运行时和数据流。
 - [开发与构建](development-guide.md)：环境要求、构建、测试和建议的阅读顺序。
+- [打包说明](../packaging/README.zh-CN.md)：EXE/MSIX 构建入口、产物位置和验收。
+- [微软商店 MSIX](../packaging/msix/README.zh-CN.md)：Core 入口打包、本地预览和商店身份参数。
 - [WebBackdrop](webbackdrop.md)：Web 壁纸项目格式、编辑器、文件树、预览和保存。
+- [素材生成工具](../resources/tools/README.zh-CN.md)：内置壁纸与应用图标生成。
+- [隐私、AI 处理与版权说明](legal/README.md)：各支持语言的离线文档与许可证原文。
 
 ## 源码入口
 
@@ -26,6 +30,7 @@
 | 共用项目系统与文件监视 | [ProjectSystem](../src/VirtualPaper.Common/Utils/ProjectSystem/) |
 | 源文案与 XAML 资源生成 | [语言资源](../src/VirtualPaper.UIComponent/Localization/README.zh-CN.md) |
 | CI、版本管理与发布 | [工作流指南](../.github/workflows/README.zh-CN.md) |
+| 多语言商店详情、更新说明与截图 | [商店发布材料](../resources/store/README.zh-CN.md) |
 
 ## 文档维护
 

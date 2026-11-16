@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows.Threading;
+using System.Threading.Channels;
 using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,29 @@ namespace VirtualPaper.GrpcServers {
         public override async Task<Empty> ShowUI(Empty _, ServerCallContext context) {
             await _runner.ShowUIAsync();
             return new Empty();
+        }
+
+        public override async Task<Empty> OpenProjects(Grpc_ProjectPaths request, ServerCallContext context) {
+            try { await _runner.OpenProjectsAsync(request.Paths); }
+            catch (ArgumentException ex) { throw new RpcException(new Status(StatusCode.InvalidArgument, ex.Message)); }
+            return new Empty();
+        }
+
+        public override Task<Grpc_ActivationHost> GetActivationHost(Empty _, ServerCallContext context) =>
+            Task.FromResult(new Grpc_ActivationHost { ProcessId = Environment.ProcessId });
+
+        public override Task<Grpc_ProjectOpenRequest> GetPendingProjectOpen(Empty _, ServerCallContext context) {
+            var response = new Grpc_ProjectOpenRequest();
+            if (_runner.GetPendingProjectOpen() is { } request) {
+                response.Id = request.Id;
+                response.Paths.AddRange(request.Paths);
+            }
+            return Task.FromResult(response);
+        }
+
+        public override Task<Empty> CompleteProjectOpen(Grpc_ProjectOpenId request, ServerCallContext context) {
+            _runner.CompleteProjectOpen(request.Id);
+            return Task.FromResult(new Empty());
         }
 
         public override Task<Empty> CloseUI(Empty _, ServerCallContext context) {
@@ -65,31 +89,26 @@ namespace VirtualPaper.GrpcServers {
         }
 
         public override async Task SubscribeUIRecievedCmd(Empty request, IServerStreamWriter<Grpc_UIRecievedCmd> responseStream, ServerCallContext context) {
+            var messages = System.Threading.Channels.Channel.CreateUnbounded<MessageType>(new UnboundedChannelOptions { SingleReader = true });
+            void Receive(object? sender, MessageType message) => messages.Writer.TryWrite(message);
+            _runner.UISendCmd += Receive;
             try {
-                while (!context.CancellationToken.IsCancellationRequested) {
-                    var tcs = new TaskCompletionSource<bool>();
-                    MessageType message = default;
-                    _runner.UISendCmd += UIRecievedCmd;
-                    void UIRecievedCmd(object? s, MessageType e) {
-                        _runner.UISendCmd -= UIRecievedCmd;
-                        message = e;
-                        tcs.TrySetResult(true);
-                    }
-                    using var item = context.CancellationToken.Register(() => { tcs.TrySetResult(false); });
-                    await tcs.Task;
-
-                    if (context.CancellationToken.IsCancellationRequested) {
-                        _runner.UISendCmd -= UIRecievedCmd;
-                        break;
-                    }
-
+                // Subscribe first, then cover requests that arrived before this connection.
+                if (_runner.GetPendingProjectOpen() != null) messages.Writer.TryWrite(MessageType.cmd_open_projects);
+                // Stay subscribed while a pipe write is in flight, so consecutive opens are not lost.
+                await foreach (var message in messages.Reader.ReadAllAsync(context.CancellationToken)) {
                     await responseStream.WriteAsync(new() {
                         IpcMsg = (int)message,
                     });
                 }
             }
+            catch (OperationCanceledException) when (context.CancellationToken.IsCancellationRequested) { }
             catch (Exception e) {
                 App.Log.Error(e);
+            }
+            finally {
+                _runner.UISendCmd -= Receive;
+                messages.Writer.TryComplete();
             }
         }
 

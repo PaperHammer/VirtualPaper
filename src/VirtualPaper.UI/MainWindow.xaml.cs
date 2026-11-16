@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
@@ -15,6 +16,7 @@ using VirtualPaper.Grpc.Service.TwoWay;
 using VirtualPaper.IntelligentPanel;
 using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.UI.Services;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
@@ -44,10 +46,12 @@ namespace VirtualPaper.UI {
 
             _commandsClient = commandsClient;
             _twoWayClient = twoWayClient;
+            _projectOpens = new ProjectOpenCoordinator(commandsClient, OpenProjectsAsync, ReportProjectOpenError);
             _commandsClient.UIRecieveCmd += CommandsClient_UIRecieveCmd;
             _twoWayClient.MessageReceived += TwoWayClient_MessageReceived;
             this.AppWindow.Closing += AppWindow_Closing;
             this.Closed += MainWindow_Closed;
+            MainGrid.Loaded += async (_, _) => await _projectOpens.StartAsync();
         }
 
         private bool _isSafeToClose = false;
@@ -89,14 +93,40 @@ namespace VirtualPaper.UI {
         });
 
         private async Task<bool> CheckPagesAndTasksAsync() {
-            if (!await NaviContent.CheckAllPagesCanCloseAsync()) return false;
-            return await _intelligentTasks.CanCloseAsync();
+            await _projectOpens.PauseAsync();
+            bool canClose = false;
+            try {
+                canClose = await NaviContent.CheckAllPagesCanCloseAsync() && await _intelligentTasks.CanCloseAsync();
+                return canClose;
+            }
+            finally {
+                if (!canClose) {
+                    _ = _projectOpens.ResumeAsync();
+                }
+            }
+        }
+
+        private Task ProcessPendingProjectsAsync() =>
+            CrossThreadInvoker.InvokeOnUIThreadAsync(_projectOpens.ProcessAsync);
+
+        private async Task OpenProjectsAsync(IReadOnlyList<string> paths) {
+            NavigationViewControl.SelectedItem = Nav_Edit;
+            // SelectionChanged already navigates; keep the workspace that owns unsaved projects.
+            if (!NaviContent.PageMap.TryGetValue(typeof(Edit), out var page) || page is not Edit editor)
+                throw new InvalidOperationException("The project workspace is not available.");
+            await editor.OpenProjectsAsync(paths);
+        }
+
+        private void ReportProjectOpenError(Exception ex) {
+            ArcLog.GetLogger<MainWindow>().Error(ex);
+            GlobalMessageUtil.ShowException(ex, arcWindow: this);
         }
 
         private int _isClosing;
         private async Task CloseConfirmedAsync(TwoWayMessage? closeResult = null) {
             bool initiateClose = Interlocked.Exchange(ref _isClosing, 1) == 0;
             if (initiateClose) {
+                _projectOpens.Stop();
                 try {
                     // Arm Core's timeout only after all pages have agreed to close.
                     await _commandsClient.NotifyUIClosingAsync();
@@ -167,6 +197,9 @@ namespace VirtualPaper.UI {
             try {
                 MessageType messageType = (MessageType)type;
                 switch (messageType) {
+                    case MessageType.cmd_open_projects:
+                        await ProcessPendingProjectsAsync();
+                        break;
                     case MessageType.cmd_active:
                         CrossThreadInvoker.InvokeOnUIThread(() => {
                             if (Volatile.Read(ref _isClosing) != 0) return;
@@ -240,5 +273,6 @@ namespace VirtualPaper.UI {
         private readonly ICommandsClient _commandsClient;
         private readonly ITwoWayClient _twoWayClient;
         private readonly ArcWindowManagerKey _windowKey;
+        private readonly ProjectOpenCoordinator _projectOpens;
     }
 }

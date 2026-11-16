@@ -1,0 +1,14 @@
+Santa Rosa Waves
+Original footage: Santa Rosa Island Waves.webm
+Original creator: Blervis
+Source: https://commons.wikimedia.org/wiki/File:Santa_Rosa_Island_Waves.webm
+License evidence: https://commons.wikimedia.org/w/index.php?title=File:Santa_Rosa_Island_Waves.webm&oldid=978833989
+Original download: https://upload.wikimedia.org/wikipedia/commons/1/19/Santa_Rosa_Island_Waves.webm
+Original SHA-256: 206cdb0c0786abb7e5fcf54bee9aeec42cbc9bea73a2899a8f703e36b0c23546
+The creator identifies this as their own work and dedicates it under CC0 1.0 Universal. Verified 2026-11-06.
+License: https://creativecommons.org/publicdomain/zero/1.0/ (full text in CC0-1.0.txt).
+You may use, copy, modify and redistribute this footage, including as standalone media and for commercial purposes, without attribution or share-alike requirements.
+Adaptation by VirtualPaper: Real-time 1920x1080 excerpt encoded as silent H.264 at 30 fps from approximately 29.98 fps footage; short loop crossfade. No generated motion, optical-flow interpolation, reversal or upscaling.
+VirtualPaper also dedicates any copyright it holds in these media adaptations and thumbnails under CC0 1.0. No additional media-use restrictions are imposed by this application or its code license.
+Creator and source are recorded for provenance, not as an attribution condition. No endorsement by the creator is implied.
+CC0 waives copyright and related rights to the extent legally possible; it does not clear third-party trademark, privacy or other rights, and provides no warranties.

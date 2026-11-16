@@ -16,6 +16,8 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public string? StyleNameKey { get; }
         public string StyleFileSize { get; }
         public string StyleFileExt { get; }
+        // 仅控制后续高清处理，风格迁移本身仍使用 CPU。
+        public bool UseGpu { get; }
 
         public string? ResultFilePath { get; private set; }
         public string? ResultResolution { get; private set; }
@@ -28,7 +30,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public StyleTransferData(
             string sourcePath, string sourceFileSize, string sourceFileExt, uint width, uint height,
             string styleImagePath, string? styleName, string styleFileSize, string styleFileExt,
-            string? styleNameKey = null) {
+            string? styleNameKey = null, bool useGpu = true) {
             Id = Guid.NewGuid();
             SourceFilePath = sourcePath;
             Width = width;
@@ -40,6 +42,7 @@ namespace VirtualPaper.IntelligentPanel.Models {
             StyleNameKey = styleNameKey;
             StyleFileSize = styleFileSize;
             StyleFileExt = styleFileExt;
+            UseGpu = useGpu;
         }
 
         public async Task SetResultAsync(string resultPath) {

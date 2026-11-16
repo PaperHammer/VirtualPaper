@@ -80,14 +80,16 @@ namespace VirtualPaper.UIComponent.Context {
         }
 
         private void LeaveLoading(IDisposable blockingHandle) {
-            if (!IsValid) return;
+            try {
+                if (!IsValid) return;
 
-            LoadingControl!.Visibility = Visibility.Collapsed;
-            LoadingControl.CurValue = 0;
-            LoadingControl.TotalValue = 0;
-            LoadingControl.ProgressbarEnable = false;
-            LoadingControl.CtsToken = null;
-            blockingHandle.Dispose();
+                LoadingControl!.Visibility = Visibility.Collapsed;
+                LoadingControl.CurValue = 0;
+                LoadingControl.TotalValue = 0;
+                LoadingControl.ProgressbarEnable = false;
+                LoadingControl.CtsToken = null;
+            }
+            finally { blockingHandle.Dispose(); }
         }
 
         private readonly WeakReference<Loading> _loadingReference;

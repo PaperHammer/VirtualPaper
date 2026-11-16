@@ -1,0 +1,2211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Microsoft ResX Schema
+
+    Version 2.0
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
+    associated with the data types.
+
+    Example:
+
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+
+    There are any number of "resheader" rows that contain simple
+    name/value pairs.
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
+    mimetype set.
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
+    extensible. For a given mimetype the value must be set accordingly:
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
+    read any of the formats listed below.
+
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppSettings_SelBarItem1_General" xml:space="preserve">
+    <value>通用</value>
+  </data>
+  <data name="AppSettings_SelBarItem2_Performance" xml:space="preserve">
+    <value>性能</value>
+  </data>
+  <data name="AppSettings_SelBarItem3_System" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="AppSettings_SelBarItem4_Others" xml:space="preserve">
+    <value>其他</value>
+  </data>
+  <data name="Text_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Text_Detect" xml:space="preserve">
+    <value>检测</value>
+  </data>
+  <data name="Text_Identify" xml:space="preserve">
+    <value>识别</value>
+  </data>
+  <data name="Effect_Help_Parallax" xml:space="preserve">
+    <value>鼠标跟随的视差效果。当鼠标焦点在桌面时，让壁纸在视觉上以鼠标为焦点进行展示。</value>
+  </data>
+  <data name="Effect_Help_Scaling" xml:space="preserve">
+    <value>Fill：内容将被缩放，以此在占满整个内容框且不一定保持宽高比。宽高比不匹配时，对象将被拉伸以适应内容框。
+
+Contain：内容将被缩放，以此在占满整个内容框并保持其宽高比。宽高比不匹配时，该对象将被添加“黑边”或“白边”。
+
+Cover：内容将被缩放，以此在占满整个内容框并保持其宽高比。宽高比不匹配时，该对象将被裁剪。
+
+None：保持原有尺寸。
+
+Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪种方式得到的图像尺寸更小。</value>
+  </data>
+  <data name="Dialog_Content_ApplyError" xml:space="preserve">
+    <value>应用壁纸失败，请重试</value>
+  </data>
+  <data name="Dialog_Content_GetMonitorsAsync" xml:space="preserve">
+    <value>可用显示器数量：</value>
+  </data>
+  <data name="Dialog_Content_Import_Failed_Lib" xml:space="preserve">
+    <value>仅支持以下文件类型：
+    动图 .gif  .apng
+    静态图片 .jpg  .jpeg  .bmp  .png
+    视频 .mp4  .webm
+
+该文件无法导入: </value>
+  </data>
+  <data name="Dialog_Content_Import_NeedUpdate" xml:space="preserve">
+    <value>该文件可执行更新以适应新特性,是否更新?</value>
+  </data>
+  <data name="Dialog_Content_LibraryDelete" xml:space="preserve">
+    <value>将从壁纸库中删除此壁纸及其文件，此操作无法撤销。</value>
+  </data>
+  <data name="Dialog_Content_LibraryDeleteMany" xml:space="preserve">
+    <value>将从壁纸库中删除选中的壁纸及其文件，此操作无法撤销。</value>
+  </data>
+  <data name="Dialog_Content_OnlyPictureAndGif" xml:space="preserve">
+    <value>仅支持以下文件类型：
+    动图 .gif
+    静态图片 .jpg  .jpeg  .bmp  .png</value>
+  </data>
+  <data name="Dialog_Content_WpIsUsing" xml:space="preserve">
+    <value>该文件正作为某显示器壁纸，无法删除</value>
+  </data>
+  <data name="Dialog_Title_CreateType" xml:space="preserve">
+    <value>选择壁纸运行时类型</value>
+  </data>
+  <data name="Dialog_Title_Prompt" xml:space="preserve">
+    <value>提示</value>
+  </data>
+  <data name="Dialog_Title_LibraryDelete" xml:space="preserve">
+    <value>删除壁纸？</value>
+  </data>
+  <data name="Dialog_Title_LibraryDeleteMany" xml:space="preserve">
+    <value>删除这 {0} 张壁纸？</value>
+  </data>
+  <data name="Dialog_Title_LibraryUpgrade" xml:space="preserve">
+    <value>升级壁纸数据？</value>
+  </data>
+  <data name="Dialog_Title_RecentProjectMissing" xml:space="preserve">
+    <value>移除失效记录？</value>
+  </data>
+  <data name="Text_Create" xml:space="preserve">
+    <value>创建</value>
+  </data>
+  <data name="Text_RemoveRecord" xml:space="preserve">
+    <value>移除记录</value>
+  </data>
+  <data name="Text_Rename" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="Text_Upgrade" xml:space="preserve">
+    <value>升级</value>
+  </data>
+  <data name="InfobarMsg_Cancel" xml:space="preserve">
+    <value>操作已取消</value>
+  </data>
+  <data name="InfobarMsg_Err" xml:space="preserve">
+    <value>发生错误</value>
+  </data>
+  <data name="InfobarMsg_Success" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="AppUpdater_UpdateFailedMessage" xml:space="preserve">
+    <value>更新发生错误，请重试或下载完整安装包进行更新</value>
+  </data>
+  <data name="Settings_General_Version_Plugins" xml:space="preserve">
+    <value>组件版本</value>
+  </data>
+  <data name="PluginsUpdate_InvalidInfo" xml:space="preserve">
+    <value>更新信息无效</value>
+  </data>
+  <data name="PluginsUpdate_Starting" xml:space="preserve">
+    <value>正在开始更新...</value>
+  </data>
+  <data name="PluginsUpdate_Completed" xml:space="preserve">
+    <value>更新完成，UI 即将重启</value>
+  </data>
+  <data name="PluginsUpdate_Failed" xml:space="preserve">
+    <value>更新失败：{0}</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Downloading" xml:space="preserve">
+    <value>正在下载组件...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_BackingUp" xml:space="preserve">
+    <value>正在备份当前组件...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Replacing" xml:space="preserve">
+    <value>正在替换组件文件...</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Completed" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="PluginsUpdate_Stage_Failed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="PluginsUpdate_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Text_Apply" xml:space="preserve">
+    <value>应用</value>
+  </data>
+  <data name="Text_ApplyToLockBG" xml:space="preserve">
+    <value>应用到锁屏</value>
+  </data>
+  <data name="Text_RemoveFromLib" xml:space="preserve">
+    <value>从库中删除</value>
+  </data>
+  <data name="WpLib_SelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="WpLib_InvertSelection" xml:space="preserve">
+    <value>反选</value>
+  </data>
+  <data name="WpLib_SelectedCount" xml:space="preserve">
+    <value>已选择 {0} 项</value>
+  </data>
+  <data name="WpLib_AddWallpaper" xml:space="preserve">
+    <value>添加壁纸</value>
+  </data>
+  <data name="WpLib_SelectItems" xml:space="preserve">
+    <value>批量选择</value>
+  </data>
+  <data name="WpLib_DisplayControls" xml:space="preserve">
+    <value>屏幕控制</value>
+  </data>
+  <data name="Text_ShowOnDisk" xml:space="preserve">
+    <value>打开文件所在目录</value>
+  </data>
+  <data name="Text_UpdateConfig" xml:space="preserve">
+    <value>更新基础信息</value>
+  </data>
+  <data name="ScreenSaver_Add" xml:space="preserve">
+    <value>添加应用</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffects" xml:space="preserve">
+    <value>屏幕保护动态效果</value>
+  </data>
+  <data name="ScreenSaver_DynamicEffectsExplain" xml:space="preserve">
+    <value>当使用静态图像作为屏幕保护背景时，建议开启此项</value>
+  </data>
+  <data name="ScreenSaver_RunningLock" xml:space="preserve">
+    <value>在恢复时显示登录界面</value>
+  </data>
+  <data name="ScreenSaver_RunningLockExplain" xml:space="preserve">
+    <value>为了您的设备数据安全，建议开启此选项</value>
+  </data>
+  <data name="ScreenSaver_SeekFromList" xml:space="preserve">
+    <value>搜索应用</value>
+  </data>
+  <data name="ScreenSaver_Server" xml:space="preserve">
+    <value>启用屏幕保护</value>
+  </data>
+  <data name="ScreenSaver_ServerExplain" xml:space="preserve">
+    <value>将主显示器正在使用的壁纸作为屏保背景。</value>
+  </data>
+  <data name="ScreenSaver_WaitingTime" xml:space="preserve">
+    <value>等待时间（分钟）</value>
+  </data>
+  <data name="ScreenSaver_WhiteListExplain" xml:space="preserve">
+    <value>以下应用在前台运行时，不会触发屏幕保护。</value>
+  </data>
+  <data name="ScreenSaver_WhiteListTitle" xml:space="preserve">
+    <value>应用白名单</value>
+  </data>
+  <data name="ScreenSaver__effectBubble" xml:space="preserve">
+    <value>气泡</value>
+  </data>
+  <data name="ScreenSaver__effectNone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage" xml:space="preserve">
+    <value>存储路径</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorageExplain" xml:space="preserve">
+    <value>修改目录后将会拷贝所有内容至新目录下</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_ModifyTooltip" xml:space="preserve">
+    <value>修改目录</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppFileStorage_OpenTooltip" xml:space="preserve">
+    <value>浏览目录</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguage" xml:space="preserve">
+    <value>语言设置</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppLanguageExplain" xml:space="preserve">
+    <value>语言切换即时生效。</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop" xml:space="preserve">
+    <value>UI 纹理</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdropExplain" xml:space="preserve">
+    <value>修改背景纹理需要重启 UI 界面</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Acrylic_Hyperlink" xml:space="preserve">
+    <value>亚克力</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppSystemBackdrop_Mica_Hyperlink" xml:space="preserve">
+    <value>云母</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppTheme" xml:space="preserve">
+    <value>应用主题</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeExplain" xml:space="preserve">
+    <value>修改主题需要重启 UI 界面</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AppThemeHyperlink" xml:space="preserve">
+    <value>Windows 主题设置</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStart" xml:space="preserve">
+    <value>开机自启动</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction_AutoStatExplain" xml:space="preserve">
+    <value>Virtual Paper 自启动以此在开机时自动还原壁纸设置</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdAcrylic" xml:space="preserve">
+    <value>亚克力</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdDefault" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__sysbdMica" xml:space="preserve">
+    <value>云母</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeDark" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeFollowSystem" xml:space="preserve">
+    <value>跟随系统</value>
+  </data>
+  <data name="Settings_General_AppearanceAndAction__themeLight" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="Settings_General_Text_AppearanceAndAction" xml:space="preserve">
+    <value>外观 &amp; 行为</value>
+  </data>
+  <data name="Settings_General_Text_Version" xml:space="preserve">
+    <value>版本</value>
+  </data>
+  <data name="Settings_General_Version_Download" xml:space="preserve">
+    <value>立即下载</value>
+  </data>
+  <data name="Settings_General_Version_DownloadCancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Settings_General_Version_DownloadStart" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="Settings_General_Version_FindNew" xml:space="preserve">
+    <value>发现新版本</value>
+  </data>
+  <data name="Settings_General_Version_Install" xml:space="preserve">
+    <value>安装</value>
+  </data>
+  <data name="Settings_General_Version_LastCheckDate" xml:space="preserve">
+    <value>上次检测时间：</value>
+  </data>
+  <data name="Settings_General_Version_MsStore" xml:space="preserve">
+    <value>微软商店版</value>
+  </data>
+  <data name="Settings_General_Version_NewVersionDownLoadedTitle" xml:space="preserve">
+    <value>下载完成</value>
+  </data>
+  <data name="Settings_General_Version_Release_Notes" xml:space="preserve">
+    <value>发行说明</value>
+  </data>
+  <data name="Settings_General_Version_SeeNews" xml:space="preserve">
+    <value>查看更新内容</value>
+  </data>
+  <data name="Settings_General_Version_UpdateCheck" xml:space="preserve">
+    <value>检查更新</value>
+  </data>
+  <data name="Settings_General_Version_UpdateErr" xml:space="preserve">
+    <value>更新失败，请检查网络情况</value>
+  </data>
+  <data name="Settings_General_Version_UptoNewest" xml:space="preserve">
+    <value>已是最新版本！</value>
+  </data>
+  <data name="Settings_Others_About_Basic" xml:space="preserve">
+    <value>VirtualPaper 是一款免费开源的 Windows 壁纸应用，支持图片、视频、GIF 和交互式 Web 壁纸，集成图像编辑、本地 AI 处理、3D 视差与氛围特效。适用于 Windows 10 及以上系统。</value>
+  </data>
+  <data name="Settings_Others_More_Document" xml:space="preserve">
+    <value>文档</value>
+  </data>
+  <data name="Settings_Others_More_DocumentExplain" xml:space="preserve">
+    <value>操作手册与帮助</value>
+  </data>
+  <data name="Settings_Others_More_ReportBug" xml:space="preserve">
+    <value>报告漏洞缺陷</value>
+  </data>
+  <data name="Settings_Others_More_ReportBugExplain" xml:space="preserve">
+    <value>报告软件问题，共同维护应用程序</value>
+  </data>
+  <data name="Settings_Others_More_RequestFunc" xml:space="preserve">
+    <value>申请新功能</value>
+  </data>
+  <data name="Settings_Others_More_RequestFuncExplain" xml:space="preserve">
+    <value>发表你的想法，共同完善应用程序</value>
+  </data>
+  <data name="Settings_Others_More_SourceCode" xml:space="preserve">
+    <value>Github 仓库</value>
+  </data>
+  <data name="Settings_Others_More_SourceCodeExplain" xml:space="preserve">
+    <value>点击星星表达赞赏</value>
+  </data>
+  <data name="Settings_Others_Text_About" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="Settings_Others_Text_More" xml:space="preserve">
+    <value>更多</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPoweredn" xml:space="preserve">
+    <value>电池供电</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_BatteryPowerednExplain" xml:space="preserve">
+    <value>当电源断开时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSaving" xml:space="preserve">
+    <value>省电模式</value>
+  </data>
+  <data name="Settings_Perforemance_Laptop_PowerSavingExplain" xml:space="preserve">
+    <value>当 Windows 启用节能模式时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Play_Audio" xml:space="preserve">
+    <value>仅在桌面为焦点时播放音频</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocus" xml:space="preserve">
+    <value>其他应用程序聚焦时</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFocusExplain" xml:space="preserve">
+    <value>当其他应用程序获得焦点时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreen" xml:space="preserve">
+    <value>焦点应用程序全屏时</value>
+  </data>
+  <data name="Settings_Perforemance_Play_OthersFullScreenExplain" xml:space="preserve">
+    <value>当焦点应用程序设置为全屏时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_KeepRun" xml:space="preserve">
+    <value>保持运行</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Pause" xml:space="preserve">
+    <value>暂停</value>
+  </data>
+  <data name="Settings_Perforemance_Play__playStatu_Silence" xml:space="preserve">
+    <value>静音</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktop" xml:space="preserve">
+    <value>远程桌面</value>
+  </data>
+  <data name="Settings_Perforemance_System_RemoteDesktopExplain" xml:space="preserve">
+    <value>当启动远程桌面时壁纸的状态</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanism" xml:space="preserve">
+    <value>状态生效机制</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForAll" xml:space="preserve">
+    <value>所有：当某个屏幕上的应用触发规则后，所有屏幕的壁纸均修改运行状态</value>
+  </data>
+  <data name="Settings_Perforemance_System_StatuMechanismExplain_ForPer" xml:space="preserve">
+    <value>每个：只在应用触发规则的屏幕上修改壁纸运行状态</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_all" xml:space="preserve">
+    <value>所有</value>
+  </data>
+  <data name="Settings_Perforemance_System__statuMechanism_per" xml:space="preserve">
+    <value>每个</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Laptop" xml:space="preserve">
+    <value>笔记本电脑</value>
+  </data>
+  <data name="Settings_Perforemance_Text_Play" xml:space="preserve">
+    <value>播放</value>
+  </data>
+  <data name="Settings_Perforemance_Text_System" xml:space="preserve">
+    <value>系统</value>
+  </data>
+  <data name="Settings_System_Developer_Debug" xml:space="preserve">
+    <value>调试器</value>
+  </data>
+  <data name="Settings_System_Developer_DebugExplain" xml:space="preserve">
+    <value>显示程序执行时的具体操作信息</value>
+  </data>
+  <data name="Settings_System_Developer_Log" xml:space="preserve">
+    <value>日志</value>
+  </data>
+  <data name="Settings_System_Developer_LogExplain" xml:space="preserve">
+    <value>创建日志保报告</value>
+  </data>
+  <data name="Settings_System_Text_Debug" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Settings_System_Text_Developer" xml:space="preserve">
+    <value>开发者</value>
+  </data>
+  <data name="SidebarAccount" xml:space="preserve">
+    <value>账户</value>
+  </data>
+  <data name="SidebarAppSettings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="SidebarGallery" xml:space="preserve">
+    <value>画廊</value>
+  </data>
+  <data name="SidebarProject" xml:space="preserve">
+    <value>项目</value>
+  </data>
+  <data name="SidebarRepository" xml:space="preserve">
+    <value>仓库</value>
+  </data>
+  <data name="Text_Adjust" xml:space="preserve">
+    <value>调整</value>
+  </data>
+  <data name="Text_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Text_Confirm" xml:space="preserve">
+    <value>确认</value>
+  </data>
+  <data name="Text_Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Text_Loading" xml:space="preserve">
+    <value>数据加载中，请稍后</value>
+  </data>
+  <data name="Text_Restore" xml:space="preserve">
+    <value>还原</value>
+  </data>
+  <data name="Text_WpArrange" xml:space="preserve">
+    <value>壁纸布局</value>
+  </data>
+  <data name="WpArrange_Duplicate" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="WpArrange_DuplicateExplain" xml:space="preserve">
+    <value>其他显示器与主显示器壁纸保持一致</value>
+  </data>
+  <data name="WpArrange_Expand" xml:space="preserve">
+    <value>跨越</value>
+  </data>
+  <data name="WpArrange_ExpandExplain" xml:space="preserve">
+    <value>以主显示器壁纸为主体，跨越显示到所有显示器上</value>
+  </data>
+  <data name="WpArrange_Per" xml:space="preserve">
+    <value>独立</value>
+  </data>
+  <data name="WpArrange_PerExplain" xml:space="preserve">
+    <value>每个显示器的壁纸独立显示</value>
+  </data>
+  <data name="Text_AspectRatio" xml:space="preserve">
+    <value>比例：</value>
+  </data>
+  <data name="Text_Details" xml:space="preserve">
+    <value>详细信息</value>
+  </data>
+  <data name="Text_FileExtension" xml:space="preserve">
+    <value>文件类型：</value>
+  </data>
+  <data name="Text_FileSize" xml:space="preserve">
+    <value>文件大小：</value>
+  </data>
+  <data name="Text_Resolution" xml:space="preserve">
+    <value>分辨率：</value>
+  </data>
+  <data name="Text_Type" xml:space="preserve">
+    <value>壁纸类型：</value>
+  </data>
+  <data name="Text_EffectConfig" xml:space="preserve">
+    <value>可用自定义设置</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Explain" xml:space="preserve">
+    <value>可实现较为真实但性能消耗高的视差效果</value>
+  </data>
+  <data name="WpCreateDialog_AIWp_Title" xml:space="preserve">
+    <value>根据 AI 模型推理的 3D 壁纸</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Explain" xml:space="preserve">
+    <value>可实现伪3D但性能消耗适中的视差效果</value>
+  </data>
+  <data name="WpCreateDialog_CommonWp_Title" xml:space="preserve">
+    <value>普通壁纸</value>
+  </data>
+  <data name="WpLib_TypeFilter_All" xml:space="preserve">
+    <value>筛选</value>
+  </data>
+  <data name="WpLib_TypeFilterHeading" xml:space="preserve"><value>类型</value></data>
+  <data name="WpLib_CardType_Image" xml:space="preserve"><value>图片</value></data>
+  <data name="WpLib_CardType_Gif" xml:space="preserve"><value>动图</value></data>
+  <data name="WpLib_CardType_Web" xml:space="preserve"><value>网页</value></data>
+  <data name="WpLib_TypeFilter_StaticImage" xml:space="preserve">
+    <value>图片</value>
+  </data>
+  <data name="WpLib_TypeFilter_DynamicImage" xml:space="preserve">
+    <value>动态图片</value>
+  </data>
+  <data name="WpLib_TypeFilter_Video" xml:space="preserve">
+    <value>视频</value>
+  </data>
+  <data name="WpLib_TypeFilter_WebInteractive" xml:space="preserve">
+    <value>网页</value>
+  </data>
+  <data name="WpLib_Search_Placeholder" xml:space="preserve">
+    <value>搜索壁纸...</value>
+  </data>
+  <data name="WpSettings_NavTitle_LibraryContents" xml:space="preserve">
+    <value>库内容</value>
+  </data>
+  <data name="WpSettings_NavTitle_ScrSettings" xml:space="preserve">
+    <value>屏幕保护</value>
+  </data>
+  <data name="Text_Edit_Desc" xml:space="preserve">
+    <value>简介：</value>
+  </data>
+  <data name="Text_Edit_Tags" xml:space="preserve">
+    <value>标签：</value>
+  </data>
+  <data name="Text_Edit_Title" xml:space="preserve">
+    <value>标题：</value>
+  </data>
+  <data name="Text_Edit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="Text_Preview" xml:space="preserve">
+    <value>预览</value>
+  </data>
+  <data name="Text_Off" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="Text_On" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Dialog_Content_WallpaperDirectoryChangePathInvalid" xml:space="preserve">
+    <value>无法将存储目录设置为应用程序数据根目录</value>
+  </data>
+  <data name="Text_VersionInfo" xml:space="preserve">
+    <value>版本：</value>
+  </data>
+  <data name="InfobarMsg_ImportErr" xml:space="preserve">
+    <value>该文件无法导入</value>
+  </data>
+  <data name="Text_FileUsing" xml:space="preserve">
+    <value>当前文件正在作为壁纸使用中，请关闭后重试</value>
+  </data>
+  <data name="Project_RecentUsed" xml:space="preserve">
+    <value>打开最近使用的项目(R)</value>
+  </data>
+  <data name="Project_SearchRecentUsed" xml:space="preserve">
+    <value>搜索最近使用的项目</value>
+  </data>
+  <data name="Project_StartUp" xml:space="preserve">
+    <value>开始</value>
+  </data>
+  <data name="Project_StartUp_OpenFile" xml:space="preserve">
+    <value>打开文件(F)</value>
+  </data>
+  <data name="Project_StartUp_OpenFile_Desc" xml:space="preserve">
+    <value>打开受支持的文件</value>
+  </data>
+  <data name="Project_StartUp_OpenFolder_Desc" xml:space="preserve">
+    <value>浏览或编辑文件夹中受支持的文件</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd" xml:space="preserve">
+    <value>打开设计稿(V)</value>
+  </data>
+  <data name="Project_StartUp_OpenVsd_Desc" xml:space="preserve">
+    <value>打开本地 .vpd 文件</value>
+  </data>
+  <data name="Project_StartUp_NewVpd" xml:space="preserve">
+    <value>新建设计稿</value>
+  </data>
+  <data name="Project_StartUp_NewVpd_Desc" xml:space="preserve">
+    <value>选择项目模板以开始</value>
+  </data>
+  <data name="Project_ContinueWithoutFile" xml:space="preserve">
+    <value>继续但无需文件(W)</value>
+  </data>
+  <data name="Project_DeployNewDraft" xml:space="preserve">
+    <value>配置新的设计稿</value>
+  </data>
+  <data name="Project_DeployNewDraft_Create" xml:space="preserve">
+    <value>创建(N)</value>
+  </data>
+  <data name="Project_DeployNewDraft_PreviousStep" xml:space="preserve">
+    <value>上一步</value>
+  </data>
+  <data name="Project_NewDraftName" xml:space="preserve">
+    <value>设计稿名称(J)</value>
+  </data>
+  <data name="Project_NewDraftName_Placeholder" xml:space="preserve">
+    <value>输入设计稿名称</value>
+  </data>
+  <data name="Project_NewDraftPosition" xml:space="preserve">
+    <value>位置</value>
+  </data>
+  <data name="Project_NewDraftPosition_BrowserFolder_Tooltip" xml:space="preserve">
+    <value>浏览目录</value>
+  </data>
+  <data name="Project_DeployNewDraft_Desc" xml:space="preserve">
+    <value>设计稿将存储于目录:</value>
+  </data>
+  <data name="Project_NewName_InvalidTip" xml:space="preserve">
+    <value>名称为空或无效（最多 30 个字符）</value>
+  </data>
+  <data name="WebBackdrop_FileTree_FilterPlaceholder" xml:space="preserve">
+    <value>筛选文件...</value>
+  </data>
+  <data name="Project_NewPosition_InvalidTip" xml:space="preserve">
+    <value>位置为空或无效（最多 200 个字符）</value>
+  </data>
+  <data name="Project_DeployNewDraft_NextStep" xml:space="preserve">
+    <value>下一步</value>
+  </data>
+  <data name="Project_SearchTemplate" xml:space="preserve">
+    <value>搜索项目模板</value>
+  </data>
+  <data name="Project_TemplateConfig" xml:space="preserve">
+    <value>创建新项目</value>
+  </data>
+  <data name="Project_NewProjectName" xml:space="preserve">
+    <value>项目名称</value>
+  </data>
+  <data name="Project_NewProjectName_Placeholder" xml:space="preserve">
+    <value>输入项目名称</value>
+  </data>
+  <data name="DirExsits" xml:space="preserve">
+    <value>已存在相同路径</value>
+  </data>
+  <data name="Draft_SI_LayerLocked" xml:space="preserve">
+    <value>当前选择的图层处于锁定状态，将无法编辑</value>
+  </data>
+  <data name="Draft_Canvas_DefaultName" xml:space="preserve">
+    <value>图层</value>
+  </data>
+  <data name="Draft_SI_LayerNotAvailable" xml:space="preserve">
+    <value>当前项目存在异常，请尝试重新加载</value>
+  </data>
+  <data name="SIG_Text_AddLayer" xml:space="preserve">
+    <value>新增图层</value>
+  </data>
+  <data name="SIG_Text_DeleteLayer" xml:space="preserve">
+    <value>删除图层</value>
+  </data>
+  <data name="SIG_Text_RenameLayer" xml:space="preserve">
+    <value>重命名图层</value>
+  </data>
+  <data name="SIG_Text_CopyLayer" xml:space="preserve">
+    <value>复制图层</value>
+  </data>
+  <data name="RenameDialog_Text_AfterChange" xml:space="preserve">
+    <value>变更后:</value>
+  </data>
+  <data name="RenameDialog_Text_BeforeChange" xml:space="preserve">
+    <value>变更前:</value>
+  </data>
+  <data name="Dialog_Title_Rename" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="Project_CannotDelete_OnlyCanvas" xml:space="preserve">
+    <value>无法删除唯一的图层</value>
+  </data>
+  <data name="Project_STI_LayerSaveFailed" xml:space="preserve">
+    <value>图层保存失败: </value>
+  </data>
+  <data name="Project_STI_LayerLoadFailed" xml:space="preserve">
+    <value>图层加载失败: </value>
+  </data>
+  <data name="ArcColorPicker_AddToCustom" xml:space="preserve">
+    <value>添加到自定义颜色</value>
+  </data>
+  <data name="StaticImg_CanvasSizeInput_Illegal" xml:space="preserve">
+    <value>画布宽度和高度必须在 1–{0} 像素以内（当前显卡上限）。已恢复为 {1} × {2}。</value>
+  </data>
+  <data name="Account_Email_InvalidTip" xml:space="preserve">
+    <value>邮箱格式不合法</value>
+  </data>
+  <data name="Account_Pwd_InvalidTip" xml:space="preserve">
+    <value>密码长度在 8 到 32 个字符之间；至少包含一个大写字母；
+至少包含一个小写字母；
+至少包含一个数字；
+至少包含一个特殊字符</value>
+  </data>
+  <data name="Account_LoginWithAccount" xml:space="preserve">
+    <value>登录到你的账户</value>
+  </data>
+  <data name="Account_EmailText" xml:space="preserve">
+    <value>邮箱</value>
+  </data>
+  <data name="Account_EmailTextWithColon" xml:space="preserve">
+    <value>邮箱：</value>
+  </data>
+  <data name="Account_PwdText" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="Account_PwdTextWithColon" xml:space="preserve">
+    <value>密码：</value>
+  </data>
+  <data name="Account_RegisterWithEmail" xml:space="preserve">
+    <value>注册新账户</value>
+  </data>
+  <data name="Account_ConfirmPwdText" xml:space="preserve">
+    <value>确认密码</value>
+  </data>
+  <data name="Account_ConfirmPwdTextWithColon" xml:space="preserve">
+    <value>确认密码：</value>
+  </data>
+  <data name="Account_CodeText" xml:space="preserve">
+    <value>验证码</value>
+  </data>
+  <data name="Account_CodeTextWithColon" xml:space="preserve">
+    <value>验证码：</value>
+  </data>
+  <data name="Account_UsernameText" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="Account_UsernameTextWithColon" xml:space="preserve">
+    <value>用户名：</value>
+  </data>
+  <data name="Account_LoginText" xml:space="preserve">
+    <value>登录</value>
+  </data>
+  <data name="Account_RegisterText" xml:space="preserve">
+    <value>注册</value>
+  </data>
+  <data name="Account_BackText" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="Account_RequestCodeText" xml:space="preserve">
+    <value>获取</value>
+  </data>
+  <data name="Server_Success" xml:space="preserve">
+    <value>操作成功</value>
+  </data>
+  <data name="Server_InnerError" xml:space="preserve">
+    <value>服务器内部错误，请稍后重试</value>
+  </data>
+  <data name="Server_EmailFormatIllegal" xml:space="preserve">
+    <value>邮箱 格式不正确</value>
+  </data>
+  <data name="Server_EmailOccupied" xml:space="preserve">
+    <value>邮箱 已被占用</value>
+  </data>
+  <data name="Server_UsernameFormatIllegal" xml:space="preserve">
+    <value>用户名 格式不正确</value>
+  </data>
+  <data name="Server_UsernameOccupied" xml:space="preserve">
+    <value>用户名 已被占用</value>
+  </data>
+  <data name="Server_PasswordFormatIllegal" xml:space="preserve">
+    <value>密码 格式不正确</value>
+  </data>
+  <data name="Server_ConfirmPasswordIllegal" xml:space="preserve">
+    <value>两次输入的 密码 不同</value>
+  </data>
+  <data name="Server_UsernameNotFindOrPasswordError" xml:space="preserve">
+    <value>用户不存在 或 密码错误</value>
+  </data>
+  <data name="Server_SecurityCodeError" xml:space="preserve">
+    <value>验证码 错误或已失效</value>
+  </data>
+  <data name="Server_PotentialRisks" xml:space="preserve">
+    <value>当前操作存在潜在风险，已终止</value>
+  </data>
+  <data name="Server_Inaccessible" xml:space="preserve">
+    <value>无法访问该内容</value>
+  </data>
+  <data name="Account_Username_InvalidTip" xml:space="preserve">
+    <value>用户名长度在 3 到 20 个在字符之间；
+只能使用以下类型的字符：
+  - 英文字母（大小写均可）
+  - 数字（0-9）
+  - 下划线 _
+  - 点 .
+  - 连字符 -
+  - 多数 Unicode 字符
+用户名不能以点 . 或连字符 - 开头或结尾；
+以下词语不可作为用户名：
+  - admin
+  - root
+  - test
+  - guest
+  - user
+  - system
+</value>
+  </data>
+  <data name="Server_CannotAccess" xml:space="preserve">
+    <value>无法连接到服务器</value>
+  </data>
+  <data name="Account_ConfirmPwd_InvalidTip" xml:space="preserve">
+    <value>两次密码不一致</value>
+  </data>
+  <data name="Account_SelBarItem1_Cloud" xml:space="preserve">
+    <value>云端</value>
+  </data>
+  <data name="Account_SelBarItem2_Star" xml:space="preserve">
+    <value>收藏夹</value>
+  </data>
+  <data name="Account_SelBarItem3_Upload" xml:space="preserve">
+    <value>上传</value>
+  </data>
+  <data name="InnerErr" xml:space="preserve">
+    <value>客户端内部i错误</value>
+  </data>
+  <data name="Account_DefaultSign" xml:space="preserve">
+    <value>还没有留下痕迹~</value>
+  </data>
+  <data name="Account_AvatarDesc" xml:space="preserve">
+    <value>添加照片，个性化你的账户。你的个人资料照片会显示在使用你的帐户的应用上</value>
+  </data>
+  <data name="Account_ChangeAvatar" xml:space="preserve">
+    <value>更换头像</value>
+  </data>
+  <data name="Account_Username" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="Account_Sign" xml:space="preserve">
+    <value>个性签名</value>
+  </data>
+  <data name="Account_UserAccount" xml:space="preserve">
+    <value>账户</value>
+  </data>
+  <data name="Account_PersonalInfo" xml:space="preserve">
+    <value>个人资料</value>
+  </data>
+  <data name="Account_Email" xml:space="preserve">
+    <value>邮箱</value>
+  </data>
+  <data name="Account_Sign_InvalidTip" xml:space="preserve">
+    <value>个性签名规则：
+  - 任何语言的字母
+  - 任何数字
+  - 标点符号
+  -  特殊符号
+  - 空格分隔符
+  - 长度限制0到100个字符</value>
+  </data>
+  <data name="Text_FileNotAccess" xml:space="preserve">
+    <value>文件解析失败，尝试检查文件有效性</value>
+  </data>
+  <data name="Text_FileSizeIllegal_5MB" xml:space="preserve">
+    <value>文件大小异常（不超过 5MB）</value>
+  </data>
+  <data name="Account_Usersign_InvalidTip_Sim" xml:space="preserve">
+    <value>签名 不合法，请检查格式要求</value>
+  </data>
+  <data name="Account_UpdateUserInfo_Fail" xml:space="preserve">
+    <value>数据更新失败，请稍后重试</value>
+  </data>
+  <data name="Account_Username_InvalidTip_Sim" xml:space="preserve">
+    <value>用户名 格式不正确</value>
+  </data>
+  <data name="Account_Logout" xml:space="preserve">
+    <value>退出登录</value>
+  </data>
+  <data name="MenuFlyout_Text_DetailAndEditInfo" xml:space="preserve">
+    <value>详情与编辑</value>
+  </data>
+  <data name="MenuFlyout_Text_Downlaod" xml:space="preserve">
+    <value>下载</value>
+  </data>
+  <data name="App_UserNotLogin" xml:space="preserve">
+    <value>用户登录数据异常，尝试重新登录</value>
+  </data>
+  <data name="Text_DeleteFromServer" xml:space="preserve">
+    <value>从云端删除</value>
+  </data>
+  <data name="Server_Account_Locked" xml:space="preserve">
+    <value>账户已被锁定，请联系管理员处理</value>
+  </data>
+  <data name="Server_Authentication_Failed" xml:space="preserve">
+    <value>账户身份认证失败，请尝试重新登录</value>
+  </data>
+  <data name="SIG_CanvasSet_Header" xml:space="preserve">
+    <value>画布</value>
+  </data>
+  <data name="SIG_CanvasSet_AdjustSize" xml:space="preserve">
+    <value>调整画布大小</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelWidth" xml:space="preserve">
+    <value>宽度(像素)</value>
+  </data>
+  <data name="SIG_CanvasSet_PixelHeight" xml:space="preserve">
+    <value>高度(像素)</value>
+  </data>
+  <data name="SIG_CanvasSet_LockAspectRatio" xml:space="preserve">
+    <value>锁定纵横比</value>
+  </data>
+  <data name="SIG_CanvasSet_SacleContent" xml:space="preserve">
+    <value>同步缩放画布内容</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateAndFlip" xml:space="preserve">
+    <value>旋转和翻转</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateLeftNinety" xml:space="preserve">
+    <value>向左旋转90°</value>
+  </data>
+  <data name="SIG_CanvasSet_RotateRightNinety" xml:space="preserve">
+    <value>向右旋转90°</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipHorizon" xml:space="preserve">
+    <value>水平翻转</value>
+  </data>
+  <data name="SIG_CanvasSet_FlipVertical" xml:space="preserve">
+    <value>垂直翻转</value>
+  </data>
+  <data name="Project_SI_Text_Layer" xml:space="preserve">
+    <value>图层</value>
+  </data>
+  <data name="Project_SI_Text_Copy" xml:space="preserve">
+    <value>副本</value>
+  </data>
+  <data name="Project_SI_Text_UnnamedLayer" xml:space="preserve">
+    <value>未命名图层</value>
+  </data>
+  <data name="Project_SI_FileNotFound" xml:space="preserve">
+    <value>该文件不存在或已被移除，是否从列表中删除？</value>
+  </data>
+  <data name="SIG_Text_RemoveFromList" xml:space="preserve">
+    <value>从列表中移出</value>
+  </data>
+  <data name="SIG_Text_CopyPath" xml:space="preserve">
+    <value>复制路径</value>
+  </data>
+  <data name="Settings_General_Version_DownloadingTitle" xml:space="preserve">
+    <value>正在下载…</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedTitle" xml:space="preserve">
+    <value>下载失败</value>
+  </data>
+  <data name="Settings_General_Version_DownloadFailedMsg" xml:space="preserve">
+    <value>无法下载更新，请检查网络连接后重试。</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedTitle" xml:space="preserve">
+    <value>文件校验失败</value>
+  </data>
+  <data name="Settings_General_Version_VerifyFailedMsg" xml:space="preserve">
+    <value>下载的更新包可能已损坏，请重新尝试下载</value>
+  </data>
+  <data name="Settings_General_Version_DownLoadedMsg" xml:space="preserve">
+    <value>更新包已准备好，点击“安装”按钮以开始更新</value>
+  </data>
+  <data name="Text_ApplyAndClose" xml:space="preserve">
+    <value>应用并关闭</value>
+  </data>
+  <data name="Webview_SelBarItem1_GeneralEffect" xml:space="preserve">
+    <value>基础效果</value>
+  </data>
+  <data name="Webview_SelBarItem2_GeneralInfo" xml:space="preserve">
+    <value>基础信息</value>
+  </data>
+  <data name="Text_FileInPreview" xml:space="preserve">
+    <value>当前文件正在预览中，请关闭后重试</value>
+  </data>
+  <data name="Details_Text_FileProperty" xml:space="preserve">
+    <value>文件属性</value>
+  </data>
+  <data name="Webview_SelBarItem3_GeneralInfoEdit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="Text_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="RunningAsAdminWarning" xml:space="preserve">
+    <value>管理员权限运行时，部分功能可能无法使用</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles" xml:space="preserve">
+    <value>选择文件</value>
+  </data>
+  <data name="Add_To_Lib_SelectFiles_Explain" xml:space="preserve">
+    <value>将受支持的文件添加到壁纸库</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolder" xml:space="preserve">
+    <value>选择文件夹</value>
+  </data>
+  <data name="Add_To_Lib_SelectFolderExplain" xml:space="preserve">
+    <value>将文件夹内所有受支持的文件添加到壁纸库</value>
+  </data>
+  <data name="Add_To_Lib_DragDropFile" xml:space="preserve">
+    <value>拖拽至此以添加</value>
+  </data>
+  <data name="Lib_NotAnyMore" xml:space="preserve">
+    <value>没有更多啦</value>
+  </data>
+  <data name="Text_Drop_Files" xml:space="preserve">
+    <value>拖放文件</value>
+  </data>
+  <data name="Add_To_Lib_AddWallpaperDrop" xml:space="preserve">
+    <value>添加壁纸</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Name" xml:space="preserve">
+    <value>静态图像</value>
+  </data>
+  <data name="Draft_Template_StaticImage_Desc" xml:space="preserve">
+    <value>像素级位图编辑模式，适用于绘画、修图及常规图像处理</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Name" xml:space="preserve">
+    <value>Web 壁纸</value>
+  </data>
+  <data name="Draft_Template_WebBackdrop_Desc" xml:space="preserve">
+    <value>基于 Web 技术的交互壁纸模板，支持使用 HTML/CSS/JS 创建动态、可交互的桌面壁纸</value>
+  </data>
+  <data name="Project_Create_New" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="Project_Open" xml:space="preserve">
+    <value>打开</value>
+  </data>
+  <data name="Project_Drops_Contains_Invalid_FIles" xml:space="preserve">
+    <value>识别到包含不受支持的文件类型，已自动忽略</value>
+  </data>
+  <data name="Project_FileSave_Failed" xml:space="preserve">
+    <value>文件保存失败：</value>
+  </data>
+  <data name="Project_FileLoad_Failed" xml:space="preserve">
+    <value>文件加载失败：</value>
+  </data>
+  <data name="Project_SI_Text_BackgroundLayer" xml:space="preserve">
+    <value>背景</value>
+  </data>
+  <data name="Project_FileLoad_FileCorrupted" xml:space="preserve">
+    <value>文件可能损毁：</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerNew" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerCopy" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_FitView" xml:space="preserve">
+    <value>适应窗口大小</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomIn" xml:space="preserve">
+    <value>放大</value>
+  </data>
+  <data name="Project_StaticImg_Text_Tooltip_ZoomOut" xml:space="preserve">
+    <value>缩小</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Selection" xml:space="preserve">
+    <value>选择</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_PaintBrush" xml:space="preserve">
+    <value>画笔</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Fill" xml:space="preserve">
+    <value>填充</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Eraser" xml:space="preserve">
+    <value>擦除</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_Crop" xml:space="preserve">
+    <value>裁剪</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasSet" xml:space="preserve">
+    <value>画布</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Content" xml:space="preserve">
+    <value>包含未保存的更改，是否保存？</value>
+  </data>
+  <data name="Project_Unsave_Intercept_Title" xml:space="preserve">
+    <value>未保存的更改</value>
+  </data>
+  <data name="Text_Unsave" xml:space="preserve">
+    <value>不保存</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_File" xml:space="preserve">
+    <value>文件(F)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_CreateNew" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_SaveAll" xml:space="preserve">
+    <value>全部保存</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Exit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Edit" xml:space="preserve">
+    <value>编辑(E)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Undo" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Redo" xml:space="preserve">
+    <value>重做</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Help" xml:space="preserve">
+    <value>帮助(H)</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_About" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Manual" xml:space="preserve">
+    <value>手册</value>
+  </data>
+  <data name="Project_StaticImg_MenuBar_Text_Export" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="Project_Export_Success" xml:space="preserve">
+    <value>成功导出：</value>
+  </data>
+  <data name="Project_Export_Failed" xml:space="preserve">
+    <value>导出失败：</value>
+  </data>
+  <data name="Project_Export_PathNotBeNone" xml:space="preserve">
+    <value>导出路径不能为空</value>
+  </data>
+  <data name="Project_Export_InternalError" xml:space="preserve">
+    <value>内部异常，尝试重启应用以解决</value>
+  </data>
+  <data name="Project_StaticImg_Text_Palette" xml:space="preserve">
+    <value>调色板</value>
+  </data>
+  <data name="Text_Complete" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="Project_StaticImg_Text_Eraser" xml:space="preserve">
+    <value>橡皮擦</value>
+  </data>
+  <data name="Project_StaticImg_Text_WidthPixel" xml:space="preserve">
+    <value>宽度(像素)</value>
+  </data>
+  <data name="Project_StaticImg_Text_OpacityPercent" xml:space="preserve">
+    <value>不透明度(百分比)</value>
+  </data>
+  <data name="Project_StaticImg_Text_LayerSet" xml:space="preserve">
+    <value>图层集</value>
+  </data>
+  <data name="Project_StaticImg_Text_Paintbrush" xml:space="preserve">
+    <value>画笔</value>
+  </data>
+  <data name="Project_StaticImg_Text_PaintbrushBox" xml:space="preserve">
+    <value>画笔箱</value>
+  </data>
+  <data name="Project_StaticImg_Text_ThicknessPixel" xml:space="preserve">
+    <value>粗细(像素)</value>
+  </data>
+  <data name="Project_SI_FileTypeMismatch" xml:space="preserve">
+    <value>文件内容异常，无法打开</value>
+  </data>
+  <data name="Text_Save_As" xml:space="preserve">
+    <value>另存为</value>
+  </data>
+  <data name="EffectPrefix_Saturation" xml:space="preserve">
+    <value>饱和度</value>
+  </data>
+  <data name="EffectPrefix_Brightness" xml:space="preserve">
+    <value>亮度</value>
+  </data>
+  <data name="EffectPrefix_Contrast" xml:space="preserve">
+    <value>对比度</value>
+  </data>
+  <data name="EffectPrefix_Speed" xml:space="preserve">
+    <value>速度</value>
+  </data>
+  <data name="EffectPrefix_Volume" xml:space="preserve">
+    <value>音量</value>
+  </data>
+  <data name="EffectPrefix_Hue" xml:space="preserve">
+    <value>色调</value>
+  </data>
+  <data name="EffectPrefix_Scale_Way" xml:space="preserve">
+    <value>缩放方式</value>
+  </data>
+  <data name="EffectPrefix_Parallax" xml:space="preserve">
+    <value>视差</value>
+  </data>
+  <data name="EffectPrefix_Time_Perception" xml:space="preserve">
+    <value>时间感知</value>
+  </data>
+  <data name="Effect_Help_TimeAtmospherePerception" xml:space="preserve">
+    <value>根据当前时间与地理位置计算日出日落时刻，在白天/黄昏/夜晚为壁纸额外添加亮度与色调，使桌面氛围与真实光线环境保持同步</value>
+  </data>
+  <data name="SidebarIntelligent" xml:space="preserve">
+    <value>智能</value>
+  </data>
+  <data name="SidebarIntelligentFullName" xml:space="preserve">
+    <value>智能工具</value>
+  </data>
+  <data name="Intelligent_SelBarItem1_StyleTranfer" xml:space="preserve">
+    <value>风格化</value>
+  </data>
+  <data name="Intelligent_SelBarItem2_SuperResolution" xml:space="preserve">
+    <value>图像增强</value>
+  </data>
+  <data name="Intelligent_Intro_Title" xml:space="preserve">
+    <value>图像风格迁移</value>
+  </data>
+  <data name="Intelligent_Intro_Desc" xml:space="preserve">
+    <value>基于 AI 模型将一张图像的艺术风格迁移到另一张图像上。上传内容图与风格参考图，自动融合两者，生成兼具原始内容与目标风格的全新图像。</value>
+  </data>
+  <data name="Intelligent_Intro_Warning" xml:space="preserve">
+    <value>注意：受本地轻量化模型限制，图像在处理前会先进行压缩，生成后再恢复至原始尺寸，最终结果可能存在一定精度损失。</value>
+  </data>
+  <data name="Intelligent_SR_Title" xml:space="preserve">
+    <value>图像增强</value>
+  </data>
+  <data name="Intelligent_SR_Desc" xml:space="preserve">
+    <value>利用 AI 超分辨率技术对图像进行增强处理。
+- 清晰修复：对模糊、低质量图像进行细节还原与锐化
+- 无损放大：在保留原图细节的前提下提升图像分辨率</value>
+  </data>
+  <data name="Intelligent_SR_Warning" xml:space="preserve">
+    <value>注意：超分模型在处理过程中会对细节进行重建与补全，输出图像与原图存在差异属正常现象。受本地轻量化模型限制，处理时间可能较长。</value>
+  </data>
+  <data name="Intelligent_AddTask" xml:space="preserve">
+    <value>任务已提交</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img" xml:space="preserve">
+    <value>原图</value>
+  </data>
+  <data name="Intelligent_Task_Scr_Img_Import" xml:space="preserve">
+    <value>点击或拖拽导入原图</value>
+  </data>
+  <data name="Intelligent_Style_Lib" xml:space="preserve">
+    <value>风格库</value>
+  </data>
+  <data name="Intelligent_Style_Inner_Select" xml:space="preserve">
+    <value>选择内置风格</value>
+  </data>
+  <data name="Intelligent_Style_Type_Custom" xml:space="preserve">
+    <value>自定义</value>
+  </data>
+  <data name="Intelligent_Task_Style_Img_Import" xml:space="preserve">
+    <value>点击或从风格库选择</value>
+  </data>
+  <data name="Intelligent_Style_Img_Desc" xml:space="preserve">
+    <value>风格图仅用于局部采样，建议 1MB 左右即可。输出分辨率取决于原图。</value>
+  </data>
+  <data name="Intelligent_Style_Type_Anime" xml:space="preserve">
+    <value>动漫</value>
+  </data>
+  <data name="Intelligent_Style_Type_Cartoon" xml:space="preserve">
+    <value>卡通</value>
+  </data>
+  <data name="Intelligent_Style_Type_Gongbi" xml:space="preserve">
+    <value>工笔</value>
+  </data>
+  <data name="Intelligent_Style_Type_Pencil" xml:space="preserve">
+    <value>铅笔</value>
+  </data>
+  <data name="Intelligent_Style_Type_Watercolor" xml:space="preserve">
+    <value>水彩</value>
+  </data>
+  <data name="Intelligent_Style_Type_InkWash" xml:space="preserve">
+    <value>水墨</value>
+  </data>
+  <data name="Intelligent_Style_Type_OilPainting" xml:space="preserve">
+    <value>油画</value>
+  </data>
+  <data name="Intelligent_Style_Type_ColoredPencil" xml:space="preserve">
+    <value>彩铅</value>
+  </data>
+  <data name="Intelligent_Style_Type_OutlineDrawing" xml:space="preserve">
+    <value>白描</value>
+  </data>
+  <data name="Intelligent_Style_Type_Ukiyoe" xml:space="preserve">
+    <value>浮世绘</value>
+  </data>
+  <data name="Intelligent_Task_Style" xml:space="preserve">
+    <value>风格</value>
+  </data>
+  <data name="Text_ImportLib" xml:space="preserve">
+    <value>入库</value>
+  </data>
+  <data name="Text_Result" xml:space="preserve">
+    <value>结果</value>
+  </data>
+  <data name="Text_Task_Status_Created" xml:space="preserve">
+    <value>已创建</value>
+  </data>
+  <data name="Text_Task_Status_Queue" xml:space="preserve">
+    <value>等待中...</value>
+  </data>
+  <data name="Text_Task_Status_Processing" xml:space="preserve">
+    <value>处理中...</value>
+  </data>
+  <data name="Text_Task_Status_Completed" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="Text_Task_Status_Filed" xml:space="preserve">
+    <value>失败</value>
+  </data>
+  <data name="Text_Task_Status_Unknown" xml:space="preserve">
+    <value>未知</value>
+  </data>
+  <data name="Text_File_Not_Available" xml:space="preserve">
+    <value>源文件无法访问或已被删除</value>
+  </data>
+  <data name="Add_To_Lib_Success" xml:space="preserve">
+    <value>成功导入本地库</value>
+  </data>
+  <data name="Intelligent_Enhance_Mode" xml:space="preserve">
+    <value>模式</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore" xml:space="preserve">
+    <value>画质修复</value>
+  </data>
+  <data name="Intelligent_Enhance_QualityRestore_Desc" xml:space="preserve">
+    <value>保持原始分辨率，去除模糊/噪点/压缩伪影</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution" xml:space="preserve">
+    <value>超分放大</value>
+  </data>
+  <data name="Intelligent_Enhance_SuperResolution_Desc" xml:space="preserve">
+    <value>提升图片分辨率，补充高频细节</value>
+  </data>
+  <data name="Intelligent_Enhance_Magnification" xml:space="preserve">
+    <value>放大倍率</value>
+  </data>
+  <data name="Intelligent_Enhance_Output" xml:space="preserve">
+    <value>输出分辨率：</value>
+  </data>
+  <data name="Intelligent_Enhance_Tip" xml:space="preserve">
+    <value>画质修复适用于分辨率够但画质差的图片；超分放大适用于分辨率不足的图片</value>
+  </data>
+  <data name="Text_Error_InvalidFile" xml:space="preserve">
+    <value>文件可能已经损坏，无法读取</value>
+  </data>
+  <data name="Project_StaticImg_ToolName_CanvasEffect" xml:space="preserve">
+    <value>效果</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Adjust" xml:space="preserve">
+    <value>调整</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Color" xml:space="preserve">
+    <value>颜色</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Special" xml:space="preserve">
+    <value>特效</value>
+  </data>
+  <data name="Project_StaticImg_EffectGroup_Blend" xml:space="preserve">
+    <value>混合</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_GrayScale" xml:space="preserve">
+    <value>灰度</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Invert" xml:space="preserve">
+    <value>反转</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Exposure" xml:space="preserve">
+    <value>曝光</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Brightness" xml:space="preserve">
+    <value>亮度</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Saturation" xml:space="preserve">
+    <value>饱和</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Hue" xml:space="preserve">
+    <value>色相旋转</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Contrast" xml:space="preserve">
+    <value>对比度</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Temperature" xml:space="preserve">
+    <value>冷暖</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Highlights" xml:space="preserve">
+    <value>高光和阴影</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sepia" xml:space="preserve">
+    <value>褪色</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Pixelate" xml:space="preserve">
+    <value>像素化</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Emboss" xml:space="preserve">
+    <value>浮雕</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Blur" xml:space="preserve">
+    <value>模糊</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Sharpen" xml:space="preserve">
+    <value>锐化</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Noise" xml:space="preserve">
+    <value>噪点</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Vignette" xml:space="preserve">
+    <value>暗角</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Glow" xml:space="preserve">
+    <value>发光</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Bloom" xml:space="preserve">
+    <value>光晕</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Distort" xml:space="preserve">
+    <value>扭曲</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Multiply" xml:space="preserve">
+    <value>正片叠底</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Screen" xml:space="preserve">
+    <value>滤色</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_Overlay" xml:space="preserve">
+    <value>叠加</value>
+  </data>
+  <data name="Project_StaticImg_Text_Effect_SoftLight" xml:space="preserve">
+    <value>柔光</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Grayscale" xml:space="preserve">
+    <value>灰度</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Invert" xml:space="preserve">
+    <value>反转</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Exposure" xml:space="preserve">
+    <value>曝光</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Brightness" xml:space="preserve">
+    <value>亮度</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Saturation" xml:space="preserve">
+    <value>饱和</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Hue" xml:space="preserve">
+    <value>色相旋转</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Contrast" xml:space="preserve">
+    <value>对比度</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Temperature" xml:space="preserve">
+    <value>冷暖</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Highlights" xml:space="preserve">
+    <value>高光和阴影</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sepia" xml:space="preserve">
+    <value>褪色</value>
+  </data>
+  <data name="Project_StaticImg_Effect_OilPaint" xml:space="preserve">
+    <value>油画</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sketch" xml:space="preserve">
+    <value>素描</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Watercolor" xml:space="preserve">
+    <value>水彩</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pixelate" xml:space="preserve">
+    <value>像素化</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Emboss" xml:space="preserve">
+    <value>浮雕</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Pointillism" xml:space="preserve">
+    <value>点彩</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Crosshatch" xml:space="preserve">
+    <value>交叉线</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Cartoon" xml:space="preserve">
+    <value>卡通</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Blur" xml:space="preserve">
+    <value>模糊</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Sharpen" xml:space="preserve">
+    <value>锐化</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Noise" xml:space="preserve">
+    <value>噪点</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Vignette" xml:space="preserve">
+    <value>暗角</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Glow" xml:space="preserve">
+    <value>发光</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Bloom" xml:space="preserve">
+    <value>光晕</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Distort" xml:space="preserve">
+    <value>扭曲</value>
+  </data>
+  <data name="Project_StaticImg_Effect_Multiply" xml:space="preserve">
+    <value>正片叠底</value>
+  </data>
+  <data name="Project_StaticImg_Effect_SoftLight" xml:space="preserve">
+    <value>柔光</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_GrayScale" xml:space="preserve">
+    <value>去除颜色信息，转为灰度图</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Invert" xml:space="preserve">
+    <value>反转所有颜色，产生底片效果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Exposure" xml:space="preserve">
+    <value>调整图像整体明暗程度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Brightness" xml:space="preserve">
+    <value>调整图像亮度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Saturation" xml:space="preserve">
+    <value>调整颜色鲜艳程度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Hue" xml:space="preserve">
+    <value>旋转色相环角度，改变整体色调</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Contrast" xml:space="preserve">
+    <value>调整明暗区域之间的差异</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Temperature" xml:space="preserve">
+    <value>调整冷暖色调与色彩偏移</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Highlights" xml:space="preserve">
+    <value>分别调整高光与阴影区域</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sepia" xml:space="preserve">
+    <value>经典复古棕褐色调</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Pixelate" xml:space="preserve">
+    <value>将图像分解为色块像素</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Emboss" xml:space="preserve">
+    <value>产生立体浮雕凹凸效果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Blur" xml:space="preserve">
+    <value>柔化图像，减少细节</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Sharpen" xml:space="preserve">
+    <value>增强边缘与细节清晰度</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Noise" xml:space="preserve">
+    <value>添加随机噪点纹理</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Vignette" xml:space="preserve">
+    <value>边缘渐暗，聚焦中心</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Glow" xml:space="preserve">
+    <value>为亮部添加发光光晕</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Bloom" xml:space="preserve">
+    <value>让高光区域产生柔和光晕</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Distort" xml:space="preserve">
+    <value>对图像进行液化变形</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Multiply" xml:space="preserve">
+    <value>正片叠底，加深合成结果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Screen" xml:space="preserve">
+    <value>滤色模式，提亮合成结果</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_Overlay" xml:space="preserve">
+    <value>叠加模式，增强对比</value>
+  </data>
+  <data name="Project_StaticImg_Text_EffectDesc_SoftLight" xml:space="preserve">
+    <value>柔光模式，产生柔和对比</value>
+  </data>
+  <data name="Settings_General_Version_InstallerReady" xml:space="preserve">
+    <value>安装包已就绪，点击安装。安装需完全退出应用，请注意保存数据</value>
+  </data>
+  <data name="Settings_General_Version_PluginsReady" xml:space="preserve">
+    <value>组件更新已就绪，点击安装。安装需关闭主窗口，请注意保存数据</value>
+  </data>
+  <data name="Text_NoPreview" xml:space="preserve">
+    <value>暂无预览</value>
+  </data>
+  <data name="WebBackdrop_NewFile" xml:space="preserve"><value>新建文件</value></data>
+  <data name="WebBackdrop_NewFolder" xml:space="preserve"><value>新建文件夹</value></data>
+  <data name="WebBackdrop_AddItems" xml:space="preserve"><value>添加项目</value></data>
+  <data name="WebBackdrop_Cut" xml:space="preserve"><value>剪切</value></data>
+  <data name="WebBackdrop_Copy" xml:space="preserve"><value>复制</value></data>
+  <data name="WebBackdrop_Paste" xml:space="preserve"><value>粘贴</value></data>
+  <data name="WebBackdrop_CopyPath" xml:space="preserve"><value>复制路径</value></data>
+  <data name="WebBackdrop_CopyRelativePath" xml:space="preserve"><value>复制相对路径</value></data>
+  <data name="WebBackdrop_Rename" xml:space="preserve"><value>重命名...</value></data>
+  <data name="WebBackdrop_Delete" xml:space="preserve"><value>删除</value></data>
+  <data name="WebBackdrop_RevealInExplorer" xml:space="preserve"><value>在资源管理器中显示</value></data>
+  <data name="WebBackdrop_Save" xml:space="preserve"><value>保存</value></data>
+  <data name="WebBackdrop_SaveAs" xml:space="preserve"><value>另存为...</value></data>
+  <data name="WebBackdrop_SearchInFiles" xml:space="preserve"><value>在文件中搜索</value></data>
+  <data name="WebBackdrop_MatchCase" xml:space="preserve"><value>区分大小写</value></data>
+  <data name="WebBackdrop_MatchWholeWord" xml:space="preserve"><value>全字匹配</value></data>
+  <data name="WebBackdrop_SearchFilesByName" xml:space="preserve"><value>按名称搜索文件</value></data>
+  <data name="WebBackdrop_QuickOpenPlaceholder" xml:space="preserve"><value>按名称搜索文件 (Ctrl+P)</value></data>
+  <data name="WebBackdrop_ProjectInspector" xml:space="preserve"><value>项目检查器</value></data>
+  <data name="WebBackdrop_Wallpaper" xml:space="preserve"><value>壁纸</value></data>
+  <data name="WebBackdrop_Title" xml:space="preserve"><value>标题</value></data>
+  <data name="WebBackdrop_Entry" xml:space="preserve"><value>入口</value></data>
+  <data name="WebBackdrop_Current" xml:space="preserve"><value>当前项</value></data>
+  <data name="WebBackdrop_NoItemSelected" xml:space="preserve"><value>未选择任何项目。</value></data>
+  <data name="WebBackdrop_Name" xml:space="preserve"><value>名称</value></data>
+  <data name="WebBackdrop_Language" xml:space="preserve"><value>语言</value></data>
+  <data name="WebBackdrop_Type" xml:space="preserve"><value>类型</value></data>
+  <data name="WebBackdrop_Status" xml:space="preserve"><value>状态</value></data>
+  <data name="WebBackdrop_Size" xml:space="preserve"><value>大小</value></data>
+  <data name="WebBackdrop_Lines" xml:space="preserve"><value>行数</value></data>
+  <data name="WebBackdrop_Modified" xml:space="preserve"><value>修改时间</value></data>
+  <data name="WebBackdrop_RelativePath" xml:space="preserve"><value>相对路径</value></data>
+  <data name="WebBackdrop_Image" xml:space="preserve"><value>图片</value></data>
+  <data name="WebBackdrop_Unsupported" xml:space="preserve"><value>不支持</value></data>
+  <data name="WebBackdrop_Saved" xml:space="preserve"><value>已保存</value></data>
+  <data name="WebBackdrop_Unsaved" xml:space="preserve"><value>未保存</value></data>
+  <data name="WebBackdrop_Folder" xml:space="preserve"><value>文件夹</value></data>
+  <data name="WebBackdrop_Problems" xml:space="preserve"><value>问题</value></data>
+  <data name="WebBackdrop_FileTypeCannotOpen" xml:space="preserve"><value>无法直接打开此文件类型。</value></data>
+  <data name="WebBackdrop_SelectFileToStart" xml:space="preserve"><value>选择一个文件以开始</value></data>
+  <data name="WebBackdrop_OpenFileHint" xml:space="preserve"><value>从文件资源管理器中打开文件以编辑和预览。</value></data>
+  <data name="WebBackdrop_WallpaperTitle" xml:space="preserve"><value>壁纸标题</value></data>
+  <data name="WebBackdrop_Description" xml:space="preserve"><value>描述</value></data>
+  <data name="WebBackdrop_ShortDescription" xml:space="preserve"><value>简短描述</value></data>
+  <data name="WebBackdrop_Author" xml:space="preserve"><value>作者</value></data>
+  <data name="WebBackdrop_AuthorName" xml:space="preserve"><value>作者名称</value></data>
+  <data name="WebBackdrop_Tags" xml:space="preserve"><value>标签（使用分号分隔）</value></data>
+  <data name="WebBackdrop_EntryFile" xml:space="preserve"><value>入口文件</value></data>
+  <data name="WebBackdrop_SaveProjectJson" xml:space="preserve"><value>保存 project.json</value></data>
+  <data name="WebBackdrop_Tabs2" xml:space="preserve"><value>制表符: 2</value></data>
+  <data name="WebBackdrop_Tabs4" xml:space="preserve"><value>制表符: 4</value></data>
+  <data name="WebBackdrop_Spaces2" xml:space="preserve"><value>空格: 2</value></data>
+  <data name="WebBackdrop_Spaces4" xml:space="preserve"><value>空格: 4</value></data>
+  <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>空格: 8</value></data>
+  <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>行 {0}，列 {1}</value></data>
+  <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>行 {0}，列 {1}（已选择 {2}{3} 个字符）</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>无法打开文件：{0}&#x0A;文件可能已损坏或无法读取。&#x0A;{1}</value></data>
+  <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>无法保存文件：{0}&#x0A;文件加载失败且可能已损坏，请关闭后重新打开。</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>无法保存文件：{0}&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>无法保存所有文件，请检查错误后重试。</value></data>
+  <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>找不到项目文件夹，请检查项目设置。</value></data>
+  <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>文件“{0}”在存在未保存更改时被磁盘上的其他程序修改。&#x0A;&#x0A;是否重新加载磁盘版本并放弃编辑器中的更改？</value></data>
+  <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>文件冲突</value></data>
+  <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>从磁盘重新加载</value></data>
+  <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>保留我的更改</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>无法重新加载文件：{0}&#x0A;文件可能已损坏或无法读取。&#x0A;{1}</value></data>
+  <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>无法保存项目文件，导入已中止。</value></data>
+  <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>无法保存项目文件，导出已中止。</value></data>
+  <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>壁纸库面板不可用。</value></data>
+  <data name="WebBackdrop_FailedParseProjectFile" xml:space="preserve"><value>无法解析项目文件：{0}&#x0A;{1}</value></data>
+  <data name="WebBackdrop_CannotSaveCorruptProject" xml:space="preserve"><value>无法保存项目文件：{0}&#x0A;文件已损坏，请修复或恢复后再进行更改。</value></data>
+  <data name="WebBackdrop_FullProjectArchive" xml:space="preserve"><value>完整项目存档 (.zip)</value></data>
+  <data name="WebBackdrop_WebWallpaperPackage" xml:space="preserve"><value>网页壁纸包 (.zip)</value></data>
+  <data name="WebBackdrop_Find" xml:space="preserve"><value>查找</value></data>
+  <data name="WebBackdrop_FindInFiles" xml:space="preserve"><value>在文件中查找</value></data>
+  <data name="WebBackdrop_Selection" xml:space="preserve"><value>选择(S)</value></data>
+  <data name="WebBackdrop_GoBack" xml:space="preserve"><value>后退</value></data>
+  <data name="WebBackdrop_GoForward" xml:space="preserve"><value>前进</value></data>
+  <data name="WebBackdrop_CopyLineUp" xml:space="preserve"><value>向上复制行</value></data>
+  <data name="WebBackdrop_CopyLineDown" xml:space="preserve"><value>向下复制行</value></data>
+  <data name="WebBackdrop_MoveLineUp" xml:space="preserve"><value>向上移动行</value></data>
+  <data name="WebBackdrop_MoveLineDown" xml:space="preserve"><value>向下移动行</value></data>
+  <data name="WebBackdrop_Debug" xml:space="preserve"><value>调试</value></data>
+  <data name="WebBackdrop_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="WebBackdrop_Saving" xml:space="preserve"><value>正在保存...</value></data>
+  <data name="WebBackdrop_RecoveryMessage" xml:space="preserve"><value>检测到上次异常退出前未保存的编辑（{0} 个文件）。&#x0A;是否恢复这些编辑？</value></data>
+  <data name="WebBackdrop_RecoveryTitle" xml:space="preserve"><value>恢复未保存的编辑</value></data>
+  <data name="WebBackdrop_Recover" xml:space="preserve"><value>恢复</value></data>
+  <data name="WebBackdrop_DiscardEdits" xml:space="preserve"><value>放弃编辑</value></data>
+  <data name="WebBackdrop_NoProblems" xml:space="preserve"><value>当前没有检测到问题。</value></data>
+  <data name="WebBackdrop_NoOutput" xml:space="preserve"><value>暂无输出。</value></data>
+  <data name="WebBackdrop_HiddenFiles" xml:space="preserve"><value>还有 {0} 个文件未显示</value></data>
+  <data name="WebBackdrop_HiddenProblems" xml:space="preserve"><value>… 还有 {0} 个问题未显示</value></data>
+  <data name="Text_PanelUnavailable" xml:space="preserve"><value>面板不可用。</value></data>
+  <data name="Text_ResizeDataUnavailable" xml:space="preserve"><value>缩放数据不可用。</value></data>
+  <data name="StaticImg_EffectParam_Intensity" xml:space="preserve"><value>强度</value></data>
+  <data name="StaticImg_EffectParam_Blur" xml:space="preserve"><value>模糊</value></data>
+  <data name="StaticImg_EffectParam_Hue" xml:space="preserve"><value>色相</value></data>
+  <data name="StaticImg_EffectParam_Angle" xml:space="preserve"><value>角度</value></data>
+  <data name="StaticImg_EffectParam_Opacity" xml:space="preserve"><value>透明度</value></data>
+  <data name="StaticImg_EffectParam_Width" xml:space="preserve"><value>宽度</value></data>
+  <data name="StaticImg_EffectParam_Height" xml:space="preserve"><value>高度</value></data>
+  <data name="StaticImg_EffectParam_Mode" xml:space="preserve"><value>模式</value></data>
+  <data name="StaticImg_EffectParam_Exposure" xml:space="preserve"><value>曝光</value></data>
+  <data name="StaticImg_EffectParam_Brightness" xml:space="preserve"><value>亮度</value></data>
+  <data name="StaticImg_EffectParam_Saturation" xml:space="preserve"><value>饱和度</value></data>
+  <data name="StaticImg_EffectParam_Contrast" xml:space="preserve"><value>对比度</value></data>
+  <data name="StaticImg_EffectParam_Vignette" xml:space="preserve"><value>暗角</value></data>
+  <data name="StaticImg_EffectParam_Sharpen" xml:space="preserve"><value>锐化</value></data>
+  <data name="StaticImg_EffectParam_Temperature" xml:space="preserve"><value>色温</value></data>
+  <data name="StaticImg_EffectParam_Tint" xml:space="preserve"><value>色调</value></data>
+  <data name="StaticImg_EffectParam_Shadows" xml:space="preserve"><value>阴影</value></data>
+  <data name="StaticImg_EffectParam_Highlights" xml:space="preserve"><value>高光</value></data>
+  <data name="StaticImg_EffectParam_Clarity" xml:space="preserve"><value>清晰度</value></data>
+  <data name="StaticImg_EffectParam_MaskBlur" xml:space="preserve"><value>蒙版模糊</value></data>
+  <data name="StaticImg_EffectParam_Threshold" xml:space="preserve"><value>阈值</value></data>
+  <data name="StaticImg_EffectParam_Frequency" xml:space="preserve"><value>频率</value></data>
+  <data name="StaticImg_EffectParam_Phase" xml:space="preserve"><value>相位</value></data>
+  <data name="StaticImg_EffectParam_Amplitude" xml:space="preserve"><value>振幅</value></data>
+  <data name="StaticImg_EffectParam_Spread" xml:space="preserve"><value>扩散</value></data>
+  <data name="StaticImg_EffectParam_Radius" xml:space="preserve"><value>半径</value></data>
+  <data name="StaticImg_EffectParam_Pressure" xml:space="preserve"><value>压力</value></data>
+  <data name="StaticImg_EffectParam_Lightness" xml:space="preserve"><value>明度</value></data>
+  <data name="StaticImg_EffectParam_Density" xml:space="preserve"><value>浓度</value></data>
+  <data name="StaticImg_EffectParam_Scale" xml:space="preserve"><value>缩放</value></data>
+  <data name="StaticImg_EffectParam_Tolerance" xml:space="preserve"><value>容差</value></data>
+  <data name="StaticImg_EffectParam_Offset" xml:space="preserve"><value>偏移</value></data>
+  <data name="StaticImg_EffectParam_Exponent" xml:space="preserve"><value>指数</value></data>
+  <data name="StaticImg_EffectParam_OffsetX" xml:space="preserve"><value>偏移 X</value></data>
+  <data name="StaticImg_EffectParam_OffsetY" xml:space="preserve"><value>偏移 Y</value></data>
+  <data name="StaticImg_EffectParam_Levels" xml:space="preserve"><value>色阶</value></data>
+  <data name="StaticImg_EffectParam_LevelsGreen" xml:space="preserve"><value>绿色色阶</value></data>
+  <data name="StaticImg_EffectParam_BlackPoint" xml:space="preserve"><value>黑场</value></data>
+  <data name="StaticImg_EffectParam_WhitePoint" xml:space="preserve"><value>白场</value></data>
+  <data name="StaticImg_EffectParam_InvertAlpha" xml:space="preserve"><value>反转 Alpha</value></data>
+  <data name="StaticImg_EffectParam_Feather" xml:space="preserve"><value>羽化</value></data>
+  <data name="StaticImg_EffectParam_OverlayEdges" xml:space="preserve"><value>叠加边缘</value></data>
+  <data name="StaticImg_EffectParam_Previewing" xml:space="preserve"><value>预览中</value></data>
+  <data name="StaticImg_EffectParam_WidthPixels" xml:space="preserve"><value>宽度（像素）</value></data>
+  <data name="StaticImg_EffectParam_HeightPixels" xml:space="preserve"><value>高度（像素）</value></data>
+  <data name="Text_Name" xml:space="preserve"><value>名称</value></data>
+  <data name="Text_More" xml:space="preserve"><value>更多</value></data>
+  <data name="PlayerWeb_DetailsWindowTitle" xml:space="preserve"><value>Virtual Paper 网页壁纸详细信息</value></data>
+  <data name="PlayerWeb_AdjustWindowTitle" xml:space="preserve"><value>调整网页壁纸</value></data>
+  <data name="WebBackdrop_MonacoLoading" xml:space="preserve"><value>Monaco 编辑器正在加载...</value></data>
+  <data name="EffectPrefix_Atmosphere" xml:space="preserve">
+    <value>氛围特效</value>
+  </data>
+  <data name="EffectPrefix_AtmosphereIntensity" xml:space="preserve">
+    <value>氛围强度</value>
+  </data>
+  <data name="Atmosphere_None" xml:space="preserve"><value>关闭</value></data>
+  <data name="Atmosphere_Stardust" xml:space="preserve"><value>星尘</value></data>
+  <data name="Atmosphere_Snow" xml:space="preserve"><value>飘雪</value></data>
+  <data name="Atmosphere_Fireflies" xml:space="preserve"><value>萤火</value></data>
+  <data name="Atmosphere_Meteor" xml:space="preserve"><value>流星</value></data>
+  <data name="EffectPrefix_AtmosphereStyle" xml:space="preserve"><value>特效样式</value></data>
+  <data name="Atmosphere_Rain" xml:space="preserve"><value>雨</value></data>
+  <data name="Atmosphere_Petals" xml:space="preserve"><value>花瓣</value></data>
+  <data name="Atmosphere_Bokeh" xml:space="preserve"><value>柔光</value></data>
+  <data name="AtmosphereStyle_Dust" xml:space="preserve"><value>光点</value></data>
+  <data name="AtmosphereStyle_Stars" xml:space="preserve"><value>星芒</value></data>
+  <data name="AtmosphereStyle_SnowDots" xml:space="preserve"><value>雪点</value></data>
+  <data name="AtmosphereStyle_Snowflakes" xml:space="preserve"><value>小雪花</value></data>
+  <data name="AtmosphereStyle_WarmFireflies" xml:space="preserve"><value>暖色萤火</value></data>
+  <data name="AtmosphereStyle_BlueFireflies" xml:space="preserve"><value>蓝色萤火</value></data>
+  <data name="AtmosphereStyle_ShootingStars" xml:space="preserve"><value>流星雨</value></data>
+  <data name="AtmosphereStyle_Comets" xml:space="preserve"><value>彩色彗星</value></data>
+  <data name="AtmosphereStyle_Drizzle" xml:space="preserve"><value>细雨</value></data>
+  <data name="AtmosphereStyle_Downpour" xml:space="preserve"><value>骤雨</value></data>
+  <data name="AtmosphereStyle_CherryBlossoms" xml:space="preserve"><value>樱花</value></data>
+  <data name="AtmosphereStyle_RosePetals" xml:space="preserve"><value>玫瑰花瓣</value></data>
+  <data name="AtmosphereStyle_SoftLights" xml:space="preserve"><value>柔光光斑</value></data>
+  <data name="AtmosphereStyle_Bubbles" xml:space="preserve"><value>透明气泡</value></data>
+  <data name="EffectPrefix_ParallaxStrength" xml:space="preserve"><value>视差强度</value></data>
+  <data name="ParallaxStrength_Gentle" xml:space="preserve"><value>轻柔</value></data>
+  <data name="ParallaxStrength_Standard" xml:space="preserve"><value>标准</value></data>
+  <data name="ParallaxStrength_Strong" xml:space="preserve"><value>明显</value></data>
+  <data name="EffectPrefix_ParallaxAutoDrift" xml:space="preserve"><value>自动漂移</value></data>
+  <data name="Effect_Help_ParallaxAutoDrift" xml:space="preserve"><value>让画面缓慢自动移动，可单独开启；视差强度同时影响鼠标跟随和自动漂移。</value></data>
+  <data name="ParallaxMode_Mouse" xml:space="preserve"><value>鼠标跟随</value></data>
+  <data name="ParallaxMode_Auto" xml:space="preserve"><value>自动漂移</value></data>
+  <data name="EffectPrefix_Parallax3D" xml:space="preserve"><value>3D 视差</value></data>
+  <data name="ScreenFit_Title" xml:space="preserve"><value>高清适配</value></data>
+  <data name="ScreenFit_SelectImage" xml:space="preserve"><value>选择图片</value></data>
+  <data name="ScreenFit_Monitor" xml:space="preserve"><value>目标显示器</value></data>
+  <data name="ScreenFit_Mode" xml:space="preserve"><value>适配方式</value></data>
+  <data name="ScreenFit_Contain" xml:space="preserve"><value>完整显示（留黑边）</value></data>
+  <data name="ScreenFit_Cover" xml:space="preserve"><value>裁剪填满（居中）</value></data>
+  <data name="ScreenFit_Preview" xml:space="preserve"><value>桌面效果预览</value></data>
+  <data name="ScreenFit_PreviewSample" xml:space="preserve"><value>图例</value></data>
+  <data name="ScreenFit_Plan" xml:space="preserve"><value>原图 {0} × {1}；可见原图范围约 {2} × {3}，居中显示。</value></data>
+  <data name="ScreenFit_Enhance" xml:space="preserve"><value>可选：高清增强</value></data>
+  <data name="ScreenFit_EnhanceSize" xml:space="preserve"><value>增强副本：{0} × {1}，保持原图比例，最高放大 4 倍。原文件不会改变。</value></data>
+  <data name="ScreenFit_NoEnhancementNeeded" xml:space="preserve"><value>原图已满足当前显示方式所需尺寸，无需增强。</value></data>
+  <data name="ScreenFit_ReadFailed" xml:space="preserve"><value>无法读取图片，请选择有效的静态图片。</value></data>
+  <data name="ScreenFit_DisplayChanged" xml:space="preserve"><value>显示器或布局已变化，请关闭窗口后重新选择。</value></data>
+  <data name="ScreenFit_Enhancing" xml:space="preserve"><value>正在高清增强，可点击取消停止…</value></data>
+  <data name="ScreenFit_Applying" xml:space="preserve"><value>正在入库并应用…</value></data>
+  <data name="ScreenFit_Canceled" xml:space="preserve"><value>已取消。可以关闭窗口，或不启用增强后重新应用。</value></data>
+  <data name="ScreenFit_EnhanceFailed" xml:space="preserve"><value>高清增强失败。可关闭增强后使用原图重试。</value></data>
+  <data name="ScreenFit_ApplyFailed" xml:space="preserve"><value>入库或应用失败，请重试。</value></data>
+  <data name="ScreenFit_IndependentOnly" xml:space="preserve"><value>首版仅支持独立显示。请先在显示器控制中切换为独立显示，再打开此功能。</value></data>
+  <data name="Settings_Performance_InterfaceAnimations" xml:space="preserve"><value>界面动画</value></data>
+  <data name="Settings_Performance_InterfaceAnimationsExplain" xml:space="preserve"><value>为页面切换、卡片和控件显示过渡动画。立即生效，并遵循 Windows 动画设置。</value></data>
+  <data name="ScreenSaver_Remove" xml:space="preserve"><value>从白名单移除</value></data>
+  <data name="ScreenSaver_WhiteListEmpty" xml:space="preserve"><value>尚未添加应用</value></data>
+  <data name="ScreenSaver_WhiteListEmptyDescription" xml:space="preserve"><value>添加应用后，该应用在前台运行时将不会触发屏保。</value></data>
+  <data name="ScreenSaver_WhiteListNoResults" xml:space="preserve"><value>没有匹配的应用</value></data>
+  <data name="ScreenSaver_WhiteListNoResultsDescription" xml:space="preserve"><value>请尝试其他应用名称，或清空搜索条件。</value></data>
+  <!-- Live XAML property resources. Plain keys above remain available to code. -->
+  <data name="Intelligent_Result_Temporary" xml:space="preserve"><value>仅临时保存</value></data>
+  <data name="Intelligent_Result_Exported" xml:space="preserve"><value>已导出</value></data>
+  <data name="Intelligent_Result_Imported" xml:space="preserve"><value>已入库</value></data>
+  <data name="Intelligent_Result_ExportedAndImported" xml:space="preserve"><value>已导出 · 已入库</value></data>
+  <data name="Intelligent_Close_Title" xml:space="preserve"><value>关闭智能任务？</value></data>
+  <data name="Intelligent_Close_Active" xml:space="preserve"><value>还有 {0} 个任务正在排队、处理或保存。关闭将中断尚未完成的操作。</value></data>
+  <data name="Intelligent_Close_Temporary" xml:space="preserve"><value>还有 {0} 个已完成的结果尚未导出或加入壁纸库。关闭后无法从任务列表恢复，临时文件将在下次应用启动时清理。</value></data>
+  <data name="Intelligent_Close_DontRemind" xml:space="preserve"><value>不再提醒未保存的已完成结果</value></data>
+  <data name="Intelligent_Close_Return" xml:space="preserve"><value>返回处理</value></data>
+  <data name="Intelligent_Close_Confirm" xml:space="preserve"><value>仍然关闭</value></data>
+  <data name="Intelligent_Remove_Title" xml:space="preserve"><value>删除临时结果？</value></data>
+  <data name="Intelligent_Remove_Temporary" xml:space="preserve"><value>此结果尚未导出或加入壁纸库。删除任务也会删除临时结果。</value></data>
+  <data name="Intelligent_Result_PreservationTooltip" xml:space="preserve"><value>导出结果或加入壁纸库，即可在关闭后保留。</value></data>
+  <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>智能任务未保存结果提醒</value></data>
+  <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>关闭时提醒尚未导出或入库的结果。未完成的任务始终需要确认。</value></data>
+  <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>提醒未保存的智能任务结果</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>无法另存项目。请选择当前项目之外的空文件夹，原项目文件未被修改。&#x0A;{0}</value></data>
+  <data name="WpLib_Favorites" xml:space="preserve"><value>仅看收藏</value></data>
+  <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>收藏与标签</value></data>
+  <data name="WpLib_FinishSelection" xml:space="preserve"><value>完成</value></data>
+  <data name="WpLib_SearchExplain" xml:space="preserve"><value>搜索整个壁纸库的标题、描述、作者和标签</value></data>
+  <data name="WpLib_SelectLoaded" xml:space="preserve"><value>选择所有已加载的壁纸</value></data>
+  <data name="WpLib_Sort" xml:space="preserve"><value>壁纸排序</value></data>
+  <data name="WpLib_SortLabel" xml:space="preserve"><value>排序</value></data>
+  <data name="WpLib_SortNewest" xml:space="preserve"><value>最新优先</value></data>
+  <data name="WpLib_SortOldest" xml:space="preserve"><value>最早优先</value></data>
+  <data name="WpLib_SortTitle" xml:space="preserve"><value>按标题排序</value></data>
+  <data name="WpLib_SortAuthor" xml:space="preserve"><value>按作者排序</value></data>
+  <data name="WpLib_TagFilter" xml:space="preserve"><value>标签</value></data>
+  <data name="WpLib_TagSearchPlaceholder" xml:space="preserve"><value>输入标签关键词</value></data>
+  <data name="WpLib_ClearFilters" xml:space="preserve"><value>清除筛选</value></data>
+  <data name="WpLib_Organize" xml:space="preserve"><value>整理选中的壁纸</value></data>
+  <data name="WpLib_AddFavorite" xml:space="preserve"><value>添加到收藏</value></data>
+  <data name="WpLib_RemoveFavorite" xml:space="preserve"><value>取消收藏</value></data>
+  <data name="WpLib_EditTags" xml:space="preserve"><value>编辑个人标签</value></data>
+  <data name="WpLib_EditInfo" xml:space="preserve"><value>编辑信息</value></data>
+  <data name="WpLib_IncludedTags" xml:space="preserve"><value>壁纸自带标签（只读）：{0}</value></data>
+  <data name="WpLib_EditTitle" xml:space="preserve"><value>标题</value></data>
+  <data name="WpLib_EditDescription" xml:space="preserve"><value>描述</value></data>
+  <data name="WpLib_TitlePlaceholder" xml:space="preserve"><value>输入壁纸标题</value></data>
+  <data name="WpLib_DescriptionPlaceholder" xml:space="preserve"><value>添加这张壁纸的描述</value></data>
+  <data name="WpLib_EditAuthor" xml:space="preserve"><value>作者</value></data>
+  <data name="WpLib_YourTags" xml:space="preserve"><value>个人标签</value></data>
+  <data name="WpLib_AuthorTokenPlaceholder" xml:space="preserve"><value>输入作者后按回车添加</value></data>
+  <data name="WpLib_TagTokenPlaceholder" xml:space="preserve"><value>输入标签后按回车添加</value></data>
+  <data name="WpLib_RemoveToken" xml:space="preserve"><value>移除此项</value></data>
+  <data name="WpLib_TagsPlaceholder" xml:space="preserve"><value>多个标签以逗号或分号分隔</value></data>
+  <data name="WpLib_TagsExplain" xml:space="preserve"><value>个人标签仅用于你的搜索和筛选，不会修改壁纸原有标签。</value></data>
+  <data name="WpLib_TagMode" xml:space="preserve"><value>应用到选中的壁纸</value></data>
+  <data name="WpLib_TagsAdd" xml:space="preserve"><value>添加标签</value></data>
+  <data name="WpLib_TagsRemove" xml:space="preserve"><value>移除标签</value></data>
+  <data name="WpLib_TagsReplace" xml:space="preserve"><value>替换个人标签</value></data>
+  <data name="WpLib_Empty" xml:space="preserve"><value>壁纸库还是空的，添加一些喜欢的壁纸吧。</value></data>
+  <data name="EffectPreset_Title" xml:space="preserve"><value>效果预设</value></data>
+  <data name="EffectPreset_More" xml:space="preserve"><value>更多壁纸库操作</value></data>
+  <data name="EffectPreset_Manage" xml:space="preserve"><value>效果预设…</value></data>
+  <data name="EffectPreset_ManagerHint" xml:space="preserve"><value>这里保存预设。在壁纸的效果设置中选择预设，即可应用到壁纸。</value></data>
+  <data name="EffectPreset_List" xml:space="preserve"><value>预设</value></data>
+  <data name="EffectPreset_UnsavedHint" xml:space="preserve"><value>点击“保存预设”保留修改；切换预设或关闭将丢弃尚未保存的内容。</value></data>
+  <data name="EffectPreset_ReadOnly" xml:space="preserve"><value>内置预设 · 只读</value></data>
+  <data name="EffectPreset_ReadOnlyHint" xml:space="preserve"><value>内置预设不可编辑。可点击“基于所选新建”创建可编辑副本。</value></data>
+  <data name="EffectPreset_Name" xml:space="preserve"><value>预设名称</value></data>
+  <data name="EffectPreset_Type" xml:space="preserve"><value>壁纸类型</value></data>
+  <data name="EffectPreset_TypeHint" xml:space="preserve"><value>此预设支持的壁纸类型。选择类型不会应用预设。</value></data>
+  <data name="EffectPreset_Source" xml:space="preserve"><value>壁纸</value></data>
+  <data name="EffectPreset_SelectWallpaper" xml:space="preserve"><value>选择壁纸</value></data>
+  <data name="EffectPreset_SourceSearch" xml:space="preserve"><value>搜索名称或作者</value></data>
+  <data name="EffectPreset_SourceEmpty" xml:space="preserve"><value>没有匹配的壁纸</value></data>
+  <data name="EffectPreset_SourceConfig" xml:space="preserve"><value>已保存的效果</value></data>
+  <data name="EffectPreset_FromWallpaper" xml:space="preserve"><value>从壁纸创建</value></data>
+  <data name="EffectPreset_New" xml:space="preserve"><value>新建（默认值）</value></data>
+  <data name="EffectPreset_Copy" xml:space="preserve"><value>基于所选新建</value></data>
+  <data name="EffectPreset_CopyHint" xml:space="preserve"><value>复制所选预设的参数，使用副本名称和新 ID 创建可编辑预设。</value></data>
+  <data name="EffectPreset_Delete" xml:space="preserve"><value>删除</value></data>
+  <data name="EffectPreset_Discard" xml:space="preserve"><value>放弃修改</value></data>
+  <data name="EffectPreset_NewName" xml:space="preserve"><value>新预设</value></data>
+  <data name="EffectPreset_CopySuffix" xml:space="preserve"><value>（副本）</value></data>
+  <data name="EffectPreset_User" xml:space="preserve"><value>用户预设</value></data>
+  <data name="EffectPreset_Actions" xml:space="preserve"><value>更多预设操作</value></data>
+  <data name="EffectPreset_NameHint" xml:space="preserve"><value>输入预设名称</value></data>
+  <data name="EffectPreset_SourceHint" xml:space="preserve"><value>选择一张壁纸，使用它已保存的效果创建预设。</value></data>
+  <data name="EffectPreset_BuiltIn" xml:space="preserve"><value>内置</value></data>
+  <data name="EffectPreset_Draft" xml:space="preserve"><value>新预设 · 尚未保存</value></data>
+  <data name="EffectPreset_Modified" xml:space="preserve"><value>有未保存的修改</value></data>
+  <data name="EffectPreset_Save" xml:space="preserve"><value>保存预设</value></data>
+  <data name="EffectPreset_UseSource" xml:space="preserve"><value>创建预设</value></data>
+  <data name="EffectPreset_Saving" xml:space="preserve"><value>正在保存修改…</value></data>
+  <data name="EffectPreset_DeleteConfirm" xml:space="preserve"><value>删除此预设？已使用这些效果的壁纸会保留原有设置。</value></data>
+  <data name="EffectPreset_NoSource" xml:space="preserve"><value>这张壁纸尚无已保存的效果。可先保存一次壁纸效果设置，或直接新建预设。</value></data>
+  <data name="EffectPreset_DuplicateName" xml:space="preserve"><value>已有同名用户预设，请使用其他名称。</value></data>
+  <data name="EffectPreset_LoadError" xml:space="preserve"><value>无法加载效果预设，已保存的数据未被更改。</value></data>
+  <data name="EffectPreset_SaveError" xml:space="preserve"><value>无法保存效果预设，请检查名称和存储权限后重试。</value></data>
+  <data name="EffectPreset_ApplyError" xml:space="preserve"><value>无法应用此预设，请检查适用的壁纸类型和效果值。</value></data>
+  <data name="EffectPreset_Selector" xml:space="preserve"><value>效果预设</value></data>
+  <data name="EffectPreset_TrialHint" xml:space="preserve"><value>在此试用预设，点击“应用并关闭”后保存到当前壁纸。</value></data>
+  <data name="EffectPreset_CancelTrial" xml:space="preserve"><value>取消预设预览</value></data>
+  <data name="EffectPreset_Custom" xml:space="preserve"><value>自定义设置</value></data>
+  <data name="EffectPreset_Default" xml:space="preserve"><value>默认效果</value></data>
+  <data name="EffectPreset_Natural" xml:space="preserve"><value>自然</value></data>
+  <data name="EffectPreset_Soft" xml:space="preserve"><value>柔和色彩</value></data>
+  <data name="EffectPreset_Snow" xml:space="preserve"><value>轻雪</value></data>
+  <data name="EffectPreset_Stardust" xml:space="preserve"><value>星尘</value></data>
+  <data name="EffectPreset_Type_RUnknown" xml:space="preserve"><value>所有壁纸类型</value></data>
+  <data name="EffectPreset_Type_RImage" xml:space="preserve"><value>图片 / GIF</value></data>
+  <data name="EffectPreset_Type_RImage3D" xml:space="preserve"><value>3D 图片</value></data>
+  <data name="EffectPreset_Type_RVideo" xml:space="preserve"><value>视频</value></data>
+  <data name="EffectPreset_Type_RWeb" xml:space="preserve"><value>网页</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Downloading" xml:space="preserve"><value>暂停</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Installing" xml:space="preserve"><value>安装中...</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Paused" xml:space="preserve"><value>继续</value></data>
+  <data name="Core_AppUpdater_ActionButtonText_Ready" xml:space="preserve"><value>下载</value></data>
+  <data name="Core_AppUpdater_SpeedText_Ready" xml:space="preserve"><value>剩余时间</value></data>
+  <data name="Core_AppUpdater_StatusText_Completed" xml:space="preserve"><value>下载完成！</value></data>
+  <data name="Core_AppUpdater_StatusText_DownloadFailed" xml:space="preserve"><value>无法访问资源，尝试检查网络后重试</value></data>
+  <data name="Core_AppUpdater_StatusText_Downloading" xml:space="preserve"><value>正在下载...</value></data>
+  <data name="Core_AppUpdater_StatusText_Installed" xml:space="preserve"><value>安装完成！</value></data>
+  <data name="Core_AppUpdater_StatusText_Installing" xml:space="preserve"><value>正在安装更新...</value></data>
+  <data name="Core_AppUpdater_StatusText_Paused" xml:space="preserve"><value>下载已暂停</value></data>
+  <data name="Core_AppUpdater_StatusText_Ready" xml:space="preserve"><value>准备下载...</value></data>
+  <data name="Core_AppUpdater_StatusText_VerifyFailed" xml:space="preserve"><value>文件校验失败，请重试下载</value></data>
+  <data name="Core_AppUpdater_StatusText_Verifying" xml:space="preserve"><value>校验资源完整性...</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForCompleted" xml:space="preserve"><value>尚未完成安装，确定要退出吗？</value></data>
+  <data name="Core_AppUpdater_Update_DescriptionCancelQuestion_ForDownloading" xml:space="preserve"><value>当前更新正在下载中，是否确认中断并关闭？</value></data>
+  <data name="Core_AppUpdater_Update_ExceptionAppUpdateFail" xml:space="preserve"><value>更新失败；请尝试从以下地址下载安装程序手动更新:
+https://github.com/PaperHammer/VirtualPaper/releases</value></data>
+  <data name="Core_AppUpdater_Update_TitleCancelQuestion" xml:space="preserve"><value>正在进行更新</value></data>
+  <data name="Core_Common_TextCancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Core_Common_TextClose" xml:space="preserve"><value>关闭</value></data>
+  <data name="Core_Common_TextConfirm" xml:space="preserve"><value>确认</value></data>
+  <data name="Core_Common_TextError" xml:space="preserve"><value>错误</value></data>
+  <data name="Core_Common_TextRetry" xml:space="preserve"><value>重试</value></data>
+  <data name="Core_Find_New_Verison" xml:space="preserve"><value>发现新版本！</value></data>
+  <data name="Core_Find_New_Version_Restart" xml:space="preserve"><value>发现组件更新！</value></data>
+  <data name="Core_Systray_TextCloseAllWallpapers" xml:space="preserve"><value>关闭所有壁纸</value></data>
+  <data name="Core_Systray_TextDEBubble" xml:space="preserve"><value>气泡</value></data>
+  <data name="Core_Systray_TextDENone" xml:space="preserve"><value>无</value></data>
+  <data name="Core_Systray_TextDynamicEffect" xml:space="preserve"><value>动态效果</value></data>
+  <data name="Core_Systray_TextExit" xml:space="preserve"><value>退出</value></data>
+  <data name="Core_Systray_TextIsOnScrSaver" xml:space="preserve"><value>启用屏保</value></data>
+  <data name="Core_Systray_TextIsRunningLock" xml:space="preserve"><value>恢复时显示登录界面</value></data>
+  <data name="Core_Systray_TextOpenApp" xml:space="preserve"><value>打开主界面</value></data>
+  <data name="Core_Systray_TextOpenScrSaverSet" xml:space="preserve"><value>屏幕保护</value></data>
+  <data name="Core_Systray_TextPauseWallpapers" xml:space="preserve"><value>暂停所有壁纸</value></data>
+  <data name="Core_Systray_TextReportBug" xml:space="preserve"><value>报告漏洞</value></data>
+  <data name="Core_UIRunnerService_VirtualPaperExceptionGeneral" xml:space="preserve"><value>发生错误，尝试重启程序以解决问题。若多次发生，请上报错误或联系开发者，并重新下载</value></data>
+  <data name="Core_Virtual_Paper_isRunning" xml:space="preserve"><value>Virtual Paper 正在后台运行</value></data>
+  <data name="Core_Virtual_Paper_isRunning_Greetings" xml:space="preserve"><value>愿你有美好的一天！</value></data>
+  <data name="Core_WndProcMsg_DescExplorerCrash" xml:space="preserve"><value>发生严重错误!
+Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virtual Paper 与 Windows 或者其他桌面个性化软件之间出现冲突。为避免更多问题，已将所有壁纸终止。</value></data>
+  <data name="Core_WndProcMsg_TitleAppName" xml:space="preserve"><value>Virtual Paper</value></data>
+  <data name="Core_WpControl_TextFileNotFound" xml:space="preserve"><value>无法找到目标文件</value></data>
+  <data name="Core_WpControl_VirtualPaperExceptionWorkerWSetupFail" xml:space="preserve"><value>需要进行一些设置才能正常运行:
+1. 按Win+R键，打开运行。
+2. 在 "运行 "中输入SystemPropertiesPerformance.exe，点击 "确定"，打开性能选项。
+3. 启用/勾选 "窗口内的动画控件和元素"（如果已经勾选，则取消勾选）并应用。
+4. 点击 "应用"，然后按 "确定"，关闭该窗口。
+如果还是不行，关闭并重新启动或重启系统。(在某些 Windows 10 预览版本中不工作)</value></data>
+  <data name="Core_PluginsUpdate_InvalidInfo" xml:space="preserve"><value>更新信息无效</value></data>
+  <data name="Core_PluginsUpdate_Starting" xml:space="preserve"><value>正在开始更新...</value></data>
+  <data name="Core_PluginsUpdate_Completed" xml:space="preserve"><value>更新完成，UI 即将重启</value></data>
+  <data name="Core_PluginsUpdate_Failed" xml:space="preserve"><value>更新失败：{0}</value></data>
+  <data name="Core_PluginsUpdate_Stage_Downloading" xml:space="preserve"><value>正在下载组件...</value></data>
+  <data name="Core_PluginsUpdate_Stage_BackingUp" xml:space="preserve"><value>正在备份当前组件...</value></data>
+  <data name="Core_PluginsUpdate_Stage_Replacing" xml:space="preserve"><value>正在替换组件文件...</value></data>
+  <data name="Core_PluginsUpdate_Stage_Completed" xml:space="preserve"><value>已完成</value></data>
+  <data name="Core_PluginsUpdate_Stage_Failed" xml:space="preserve"><value>失败</value></data>
+  <data name="Core_PluginsUpdate_Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="Core_PluginsUpdate_PostponeTip" xml:space="preserve"><value>更新已就绪，关闭主窗口以触发更新</value></data>
+  <data name="Core_InstallerUpdate_PostponeTip" xml:space="preserve"><value>安装包已就绪，完全退出应用后触发安装</value></data>
+  <data name="Core_PluginUpdate_Title_Updating" xml:space="preserve"><value>正在更新组件...</value></data>
+  <data name="Core_PluginUpdate_Title_Completed" xml:space="preserve"><value>更新完成</value></data>
+  <data name="Core_PluginUpdate_Title_Failed" xml:space="preserve"><value>更新失败</value></data>
+  <data name="Core_PluginUpdate_Preparing" xml:space="preserve"><value>准备中...</value></data>
+  <data name="Core_PluginUpdate_ReplacedPlugin" xml:space="preserve"><value>已替换 {0}</value></data>
+  <data name="Core_Startup_AutoStartDisabledByUser" xml:space="preserve"><value>你已禁止 Virtual Paper 在登录时自动运行。如需重新启用，请前往任务管理器的“启动应用”页面。</value></data>
+  <data name="Core_Startup_AppDataCreateFailedTitle" xml:space="preserve"><value>无法创建应用数据目录，Virtual Paper 即将退出</value></data>
+  <data name="Core_Startup_CoreRuntimeFailed" xml:space="preserve"><value>核心运行时初始化失败，请重启或重新安装 Virtual Paper。
+{0}</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Title" xml:space="preserve"><value>停止更新下载？</value></data>
+  <data name="Core_AppUpdater_Close_Downloading_Content" xml:space="preserve"><value>更新正在下载中。是否停止下载并关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_StopDownload" xml:space="preserve"><value>停止下载并关闭</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Title" xml:space="preserve"><value>放弃本次下载？</value></data>
+  <data name="Core_AppUpdater_Close_Paused_Content" xml:space="preserve"><value>更新下载已暂停。是否放弃本次下载并关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_DiscardDownload" xml:space="preserve"><value>放弃下载并关闭</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Title" xml:space="preserve"><value>停止更新校验？</value></data>
+  <data name="Core_AppUpdater_Close_Verifying_Content" xml:space="preserve"><value>正在校验更新文件。是否停止校验并关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_StopVerification" xml:space="preserve"><value>停止校验并关闭</value></data>
+  <data name="Core_AppUpdater_Close_Title" xml:space="preserve"><value>关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_Content" xml:space="preserve"><value>是否关闭更新窗口？</value></data>
+  <data name="Core_AppUpdater_Close_Window" xml:space="preserve"><value>关闭窗口</value></data>
+  <data name="Core_AppUpdater_Close_DownloadFailed_Content" xml:space="preserve"><value>更新下载失败。关闭窗口后，可以稍后重新尝试更新。</value></data>
+  <data name="Core_AppUpdater_Close_VerifyFailed_Content" xml:space="preserve"><value>更新文件校验失败。关闭窗口后，可以稍后重新下载更新。</value></data>
+  <data name="Core_AppUpdater_Close_BackToUpdate" xml:space="preserve"><value>返回更新</value></data>
+  <data name="Core_AppUpdater_UpdateReady_Title" xml:space="preserve"><value>更新已准备就绪</value></data>
+  <data name="Core_Common_TextGotIt" xml:space="preserve"><value>知道了</value></data>
+  <data name="Common_FileAccess_Message" xml:space="preserve"><value>对文件“{0}”执行{1}操作时发生错误，请检查文件完整性及相关权限。</value></data>
+  <data name="Common_FileAccess_Read" xml:space="preserve"><value>读取</value></data>
+  <data name="Common_FileAccess_Write" xml:space="preserve"><value>写入</value></data>
+  <data name="Common_FileAccess_Access" xml:space="preserve"><value>访问</value></data>
+  <data name="Installer_DeleteEverythigMsgBox" xml:space="preserve"><value>是否删除用户配置信息？</value></data>
+  <data name="Installer_ClosingMsgBox" xml:space="preserve"><value>应用程序正在运行，是否关闭？</value></data>
+  <data name="Installer_InitialLanguageSaveFailed" xml:space="preserve"><value>无法保存应用的初始语言。</value></data>
+  <data name="Core_AppUpdater_WindowTitle" xml:space="preserve"><value>Virtual Paper 更新</value></data>
+  <data name="Settings_Performance_HardwareAcceleration" xml:space="preserve"><value>硬件加速</value></data>
+  <data name="Settings_Performance_HardwareAccelerationExplain" xml:space="preserve"><value>允许主界面中受支持的功能使用 GPU 加速。下次启动主界面时生效。</value></data>
+  <data name="Settings_Performance_HardwareAccelerationRestart" xml:space="preserve"><value>重新启动主界面后，此更改将生效。</value></data>
+  <data name="Intelligent_Backend_Gpu" xml:space="preserve"><value>GPU 加速</value></data>
+  <data name="Intelligent_Backend_CpuFallback" xml:space="preserve"><value>已回退到 CPU</value></data>
+  <data name="Intelligent_Backend_Cpu" xml:space="preserve"><value>CPU 处理</value></data>
+  <data name="Intelligent_Backend_Mixed" xml:space="preserve"><value>CPU + GPU</value></data>
+  <data name="Intelligent_Backend_MixedCpuFallback" xml:space="preserve"><value>CPU + GPU · 已回退到 CPU</value></data>
+  <data name="StaticImg_DrawingDeviceLost" xml:space="preserve"><value>图形设备出现异常。为保护项目，已停止编辑和保存。请重新打开上次保存的版本。未保存的更改无法恢复。</value></data>
+  <data name="Inference_UseGpu" xml:space="preserve">
+    <value>使用 GPU 加速</value>
+  </data>
+  <data name="Inference_SuperResolutionGpuHint" xml:space="preserve">
+    <value>建议开启。GPU 通常能缩短处理时间，但会增加显存占用。不可用时会自动改用 CPU。</value>
+  </data>
+  <data name="Inference_StyleGpuUnavailable" xml:space="preserve">
+    <value>当前风格迁移模型使用 CPU，GPU 可用于后续高清处理。</value>
+  </data>
+  <data name="Inference_EnhancementUseGpu" xml:space="preserve">
+    <value>使用 GPU 进行高清处理</value>
+  </data>
+  <data name="Inference_EnhancementGpuHint" xml:space="preserve">
+    <value>建议开启。仅用于后续高清处理，风格迁移仍使用 CPU。GPU 不可用时会自动改用 CPU。</value>
+  </data>
+  <data name="Shell_OpenWithVirtualPaper" xml:space="preserve">
+    <value>使用 VirtualPaper 打开</value>
+  </data>
+  <data name="Shell_DesignFileType" xml:space="preserve">
+    <value>VirtualPaper 图像项目</value>
+  </data>
+  <data name="Shell_WebFileType" xml:space="preserve">
+    <value>VirtualPaper Web 项目</value>
+  </data>
+  <data name="Shell_ProjectOpenFailed" xml:space="preserve">
+    <value>无法打开项目。请确认文件可用后重试。</value>
+  </data>
+  <data name="Settings_Others_Legal_Privacy" xml:space="preserve">
+    <value>隐私政策</value>
+  </data>
+  <data name="Settings_Others_Legal_Ai" xml:space="preserve">
+    <value>AI 处理与权利说明</value>
+  </data>
+  <data name="Settings_Others_Legal_Copyright" xml:space="preserve">
+    <value>版权与许可证</value>
+  </data>
+  <data name="AiUseNotice_Title" xml:space="preserve">
+    <value>使用 AI 功能前</value>
+  </data>
+  <data name="AiUseNotice_LocalProcessing" xml:space="preserve">
+    <value>AI 功能在本机处理素材，不会将您的素材上传至云端 AI 服务。处理结果可能存在误差。</value>
+  </data>
+  <data name="AiUseNotice_Rights" xml:space="preserve">
+    <value>AI 处理不会自动赋予您原始素材或处理结果的著作权。公开发布、再分发或商业使用前，请确认您拥有所需的权利或授权。</value>
+  </data>
+  <data name="AiUseNotice_ReadMore" xml:space="preserve">
+    <value>查看《AI 处理与权利说明》</value>
+  </data>
+  <data name="AiUseNotice_Continue" xml:space="preserve">
+    <value>了解并继续</value>
+  </data>
+  <data name="ScreenFit_BrowseFile" xml:space="preserve"><value>浏览文件…</value></data>
+  <data name="WpLib_NoResults" xml:space="preserve"><value>没有匹配的壁纸，请尝试其他关键字或清空筛选条件。</value></data>
+  <data name="WpLib_ClearSearchAndFilters" xml:space="preserve"><value>清空搜索与筛选</value></data>
+  <data name="WpLib_UnsupportedFilesTitle" xml:space="preserve"><value>不支持的文件</value></data>
+  <data name="WpLib_UnsupportedFilesDescription" xml:space="preserve"><value>以下文件的格式不受支持，已跳过且未导入壁纸库。</value></data>
+  <data name="Settings_General_Storage_MigrationScanning" xml:space="preserve"><value>正在扫描壁纸目录…</value></data>
+  <data name="Settings_General_Storage_MigrationCopying" xml:space="preserve"><value>正在复制壁纸…</value></data>
+  <data name="Settings_General_Storage_MigrationUpdating" xml:space="preserve"><value>正在更新配置…</value></data>
+  <data name="Settings_General_Storage_MigrationRestoring" xml:space="preserve"><value>正在恢复壁纸播放…</value></data>
+  <data name="Settings_General_Storage_MigrationCleaning" xml:space="preserve"><value>正在清理旧目录…</value></data>
+  <data name="Settings_General_Storage_MigrationRollingBack" xml:space="preserve"><value>正在恢复原有配置…</value></data>
+  <data name="Messages_BatchSummary" xml:space="preserve"><value>本次操作有 {0} 条提示，请查看详情。</value></data>
+  <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>本次已导入 {0} 项壁纸。</value></data>
+  <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>导入已取消，本次已导入 {0} 项壁纸。</value></data>
+</root>

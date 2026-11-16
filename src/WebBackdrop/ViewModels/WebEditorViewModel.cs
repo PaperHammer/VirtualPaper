@@ -159,6 +159,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         }
 
         public async Task<bool> SaveAllAsync() {
+            using var messages = GlobalMessageUtil.BeginBatch();
             var tasks = _cahcedFiles
                 .Where(file => !file.IsSaved)
                 .Select(SaveFileAsync);
@@ -246,6 +247,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         #region Run / Debug
 
         public async void DebugProject() {
+            using var messages = GlobalMessageUtil.BeginBatch();
             var context = ArcPageContextManager.GetContext(_contextKey);
             var loadingContext = context?.LoadingContext;
             using var cts = new CancellationTokenSource();

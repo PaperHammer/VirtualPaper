@@ -17,12 +17,13 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
         public async Task RebuildIndexAsync(IEnumerable<string> storeDirs, CancellationToken token = default) {
             var items = new ConcurrentBag<WallpaperIndexEntry>();
 
-            var folders = storeDirs
+            var roots = storeDirs.ToArray();
+            var folders = await Task.Run(() => roots
                 .SelectMany(dir => {
                     var root = new DirectoryInfo(dir);
                     return root.Exists ? root.GetDirectories() : Array.Empty<DirectoryInfo>();
                 })
-                .ToArray();
+                .ToArray(), token);
 
             var parallelOptions = new ParallelOptions {
                 CancellationToken = token,
@@ -43,16 +44,7 @@ namespace VirtualPaper.WpSettingsPanel.Utils {
 
                 if (!data.IsAvailable()) return;
 
-                var entry = new WallpaperIndexEntry {
-                    Uid = data.WallpaperUid,
-                    FolderPath = data.FolderPath,
-                    JsonPath = jsonPath,
-                    CreateTime = data.CreatedTime,
-                    Title = data.Title ?? "",
-                    Author = data.Authors,
-                    Tags = data.Tags.Split(';', StringSplitOptions.RemoveEmptyEntries),
-                };
-                items.Add(entry);
+                items.Add(WallpaperIndexEntry.FromData(data) with { JsonPath = jsonPath });
             });
 
             Items = items.OrderByDescending(i => i.CreateTime).ToList();

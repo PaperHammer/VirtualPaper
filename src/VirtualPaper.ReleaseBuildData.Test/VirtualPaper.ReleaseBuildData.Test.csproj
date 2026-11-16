@@ -1,7 +1,7 @@
 ﻿<Project Sdk="MSTest.Sdk/4.0.2">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -9,8 +9,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\test\LocalizedTestStrings.cs" Link="Support\LocalizedTestStrings.cs" />
+    <EmbeddedResource Include="..\..\localization\LanguageCatalog.json" LogicalName="VirtualPaper.LanguageCatalog.json" />
+    <EmbeddedResource Include="..\..\localization\ResourceMappings.xml" LogicalName="VirtualPaper.ResourceMappings.xml" />
+    <EmbeddedResource Include="..\..\localization\Strings\**\Resources.resw"
+                      LogicalName="VirtualPaper.Localization.Source.%(RecursiveDir)Resources.resw" />
     <EmbeddedResource Include="..\..\resources\BuiltInWallpapers\**\wp_metadata_basic.json"
                       LogicalName="VirtualPaper.BuiltIn.%(RecursiveDir)wp_metadata_basic.json" />
+    <EmbeddedResource Include="..\..\doc\legal\**\*" Exclude="..\..\doc\legal\README.md"
+                      LogicalName="VirtualPaper.Legal.%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\VirtualPaper.UIComponent\Localization\XamlResources.xml"
                       LogicalName="VirtualPaper.XamlResources.xml" />
   </ItemGroup>

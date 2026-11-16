@@ -78,7 +78,7 @@ internal static class EditorExitTests {
         await session.WaitForShutdownAsync();
         session.RecordEvidence(context);
         Check(((string[])context.Evidence["RuntimeErrors"]!).Length == 0, "Editor exit logged a runtime error");
-        Check(hash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Exit modified the original image");
+        Check(Enumerable.SequenceEqual(hash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Exit modified the original image");
         if (web) Check(await File.ReadAllTextAsync(entry!) == original, "Discarding exit saved the unsaved Web edit");
         else {
             var header = await StaticImgDesignFileUtil.GetFileHeaderAsync(design);

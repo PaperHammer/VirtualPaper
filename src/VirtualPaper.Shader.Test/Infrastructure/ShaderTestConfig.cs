@@ -19,7 +19,7 @@ namespace VirtualPaper.Shader.Test.Infrastructure {
         /// </summary>
         public static string ShaderProjDir {
             get {
-                // 从 bin/Debug/net8.0-windows.../  向上找项目根
+                // 从 bin/Debug/net10.0-windows.../  向上找项目根
                 var baseDir = AppContext.BaseDirectory;
                 var projectRoot = Path.GetFullPath(
                     Path.Combine(baseDir, @"..\..\..\..\"));

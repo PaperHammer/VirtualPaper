@@ -30,7 +30,6 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" vie
       <path d="M1300 1260C1390 980 1710 1030 2030 700"/>
       <path d="M1230 1280C1350 940 1730 1000 2060 640"/>
     </g>
-    <rect x="1" y="1" width="1918" height="1198" rx="31" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2"/>
     <!-- Brand artwork and screenshots share one continuous background. -->
     <image x="83" y="65" width="112" height="112" href="data:image/png;base64,{icon}"/>
     <text x="215" y="148" fill="#252846" font-family="Segoe UI,Arial,sans-serif" font-size="78" font-weight="650" letter-spacing="-2.4">VirtualPaper</text>

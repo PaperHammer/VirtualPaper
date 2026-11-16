@@ -50,7 +50,10 @@ internal static class TrayUi {
             SaveDiscovery(name);
             throw new TimeoutException("The session tray icon did not appear in visible or overflow notification areas; see tray-discovery.txt: " + name);
         }
-        ApplicationUi.OpenPointerContextMenu(icon!.Value.Window, icon.Value.Element);
+        return ApplicationUi.OpenPointerContextMenu(icon!.Value.Window, icon.Value.Element, () => WaitForMenu(coreId, name));
+    }
+
+    private static OpenMenu WaitForMenu(int coreId, string name) {
         var wait = Stopwatch.StartNew();
         while (wait.Elapsed < TimeSpan.FromSeconds(5)) {
             foreach (AutomationElement window in AutomationElement.RootElement.FindAll(TreeScope.Children,
@@ -93,7 +96,17 @@ internal static class TrayUi {
                 string accessibleName = element.Current.Name;
                 // Some Shell versions append a notification count to the tooltip.
                 // Require the entire unique session label, never a generic app name.
-                if (accessibleName?.Contains(name, StringComparison.Ordinal) == true) return (element, handle);
+                if (accessibleName?.Contains(name, StringComparison.Ordinal) != true) continue;
+                // Explorer can project overflow buttons under the main taskbar's
+                // automation tree. Focus the popup that physically owns the icon.
+                var bounds = element.Current.BoundingRectangle;
+                nint hit = WindowFromPoint(new NativePoint { X = (int)(bounds.Left + bounds.Width / 2),
+                    Y = (int)(bounds.Top + bounds.Height / 2) });
+                nint owner = GetAncestor(hit, 2);
+                GetWindowThreadProcessId(hit, out int processId);
+                if (processId == element.Current.ProcessId && IsWindowVisible(owner)
+                    && WindowClass(owner) is "Shell_TrayWnd" or "Shell_SecondaryTrayWnd" or "TopLevelWindowForOverflowXamlIsland" or "NotifyIconOverflowWindow")
+                    return (element, owner);
             }
         }
         return null;
@@ -140,5 +153,9 @@ internal static class TrayUi {
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern nint FindWindow(string className, string? title);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [StructLayout(LayoutKind.Sequential)] private struct NativePoint { public int X, Y; }
+    [DllImport("user32.dll")] private static extern nint WindowFromPoint(NativePoint point);
+    [DllImport("user32.dll")] private static extern nint GetAncestor(nint window, uint flags);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(nint window, out int processId);
     [DllImport("user32.dll")] private static extern void keybd_event(byte key, byte scan, uint flags, nuint extraInfo);
 }

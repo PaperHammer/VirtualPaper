@@ -15,7 +15,7 @@ using VirtualPaper.UIComponent.Utils.Extensions;
 using WinUIEx;
 
 namespace VirtualPaper.UIComponent.Templates {
-    public abstract partial class ArcWindow : WindowEx {
+    public abstract partial class ArcWindow : WindowEx, IUiAnimationController {
         public virtual NavigationView? AppNavView { get; }
         public virtual bool IsMainWindow => false;
         protected virtual bool IsNeedTrack => true;
@@ -38,6 +38,8 @@ namespace VirtualPaper.UIComponent.Templates {
                 _isLoaded = false;
                 unchecked { _themeVersion++; }
                 this.Activated -= ArcWindow_Activated;
+                _animationSubscription?.Dispose();
+                _animationSubscription = null;
                 // A Closing event can be cancelled by an editor's save prompt.
                 // Only release shared window/theme state after the window closes.
                 if (IsMainWindow) {
@@ -58,6 +60,7 @@ namespace VirtualPaper.UIComponent.Templates {
         private async void AppRoot_Loaded(object sender, RoutedEventArgs e) {
             _compositor = ElementCompositionPreview.GetElementVisual(this.ContentHost.AppRoot).Compositor;
             _isLoaded = true;
+            _animationSubscription ??= UiAnimation.Policy.Subscribe(this);
             await SetThemeAsync(); // todo 待优化
         }
 
@@ -73,6 +76,15 @@ namespace VirtualPaper.UIComponent.Templates {
         }
 
         #region theme
+        public void SetAnimationsEnabled(bool enabled) {
+            _animationsEnabled = enabled;
+            if (!enabled && !_isClosed && _isLoaded && ContentHost.AppThemeTransitionImage.Visibility == Visibility.Visible)
+                _ = SetThemeAsync();
+        }
+
+        private IDisposable? _animationSubscription;
+        private bool _animationsEnabled = UiAnimation.IsEnabled;
+
         protected void UpdateThemeFromThemeBtnClick(AppTheme theme) {
             if (!IsMainWindow) return;
             ArcThemeUtil.UpdateThemeGlobal(theme);
@@ -95,11 +107,21 @@ namespace VirtualPaper.UIComponent.Templates {
 
             UpdateThemeIcon();
 
+            if (!_animationsEnabled) {
+                var visual = ElementCompositionPreview.GetElementVisual(this.ContentHost.AppThemeTransitionImage);
+                visual.StopAnimation(nameof(visual.Opacity));
+                this.ContentHost.AppThemeTransitionImage.Visibility = Visibility.Collapsed;
+                this.ContentHost.AppThemeTransitionImage.Source = null;
+                UpdateTheme();
+                return;
+            }
+
             // 捕获当前界面图像
             var bitmap = new RenderTargetBitmap();
             try { await bitmap.RenderAsync(this.ContentHost.AppRoot); }
             catch (COMException) when (_isClosed) { return; }
             if (_isClosed || version != _themeVersion) return;
+            if (!_animationsEnabled) { UpdateTheme(); return; }
             this.ContentHost.AppThemeTransitionImage.Source = bitmap;
             this.ContentHost.AppThemeTransitionImage.Visibility = Visibility.Visible;
             this.ContentHost.AppThemeTransitionImage.Opacity = 1.0;

@@ -179,9 +179,11 @@ namespace VirtualPaper.Models.Cores {
             string projectJsonPath = Path.Combine(this.FolderPath, "project.json");
             if (!File.Exists(projectJsonPath)) return;
 
-            var project = await JsonSaver.LoadAsync<WpWebProjectData>(projectJsonPath, WpWebProjectDataContext.Default);
+            var project = await JsonSaver.LoadAsync<WpWebProjectData>(projectJsonPath, WpWebProjectDataContext.Default)
+                ?? throw new InvalidDataException($"Wallpaper project metadata is empty: {projectJsonPath}");
             project.Title = this.Title;
             project.Desc = this.Desc;
+            project.Authors = this.Authors;
             project.Tags = this.Tags;
             await JsonSaver.SaveAsync(projectJsonPath, project, WpWebProjectDataContext.Default);
         }

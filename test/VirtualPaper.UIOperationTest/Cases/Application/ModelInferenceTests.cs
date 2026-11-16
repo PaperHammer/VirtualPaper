@@ -8,6 +8,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.UIOperationTest.Infrastructure;
+using VirtualPaper.TestSupport;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
 namespace VirtualPaper.UIOperationTest.Cases;
@@ -23,7 +24,13 @@ internal static class ModelInferenceTests {
         string output = Path.Combine(context.Root, "enhanced.png");
         byte[] originalHash = SHA256.HashData(await File.ReadAllBytesAsync(inputs[0]));
         await using var session = new AppProcessSession();
-        await session.StartAsync();
+        // Keep queue/cancellation acceptance on CPU; GPU choice has an independent
+        // case and must not make the three-task queue depend on a fast GPU's timing.
+        await session.StartAsync(settings => {
+            settings.UiHardwareAccelerationEnabled = false;
+            settings.AiUseNoticeVersion = 0;
+        });
+        context.Evidence["HardwareAccelerationStartupPreference"] = false;
         context.Evidence["CoreProcessId"] = session.CoreId;
         var ui = await session.OpenUiAsync();
         nint owner = ui.MainWindowHandle;
@@ -41,6 +48,15 @@ internal static class ModelInferenceTests {
                 NativeFileDialog.OpenFile(ui, owner, input);
                 ApplicationUi.Invoke(ApplicationUi.Find(root, "Intelligent.Task.Confirm", visible: true));
             });
+            if (input == inputs[0]) {
+                await Task.Run(() => {
+                    var dialog = ApplicationUi.Find(root, "AiUseNotice.Dialog", visible: true);
+                    ApplicationUi.Invoke(ApplicationUi.Find(dialog, "PrimaryButton", visible: true));
+                    ApplicationUi.WaitUntilGone(root, "AiUseNotice.Dialog");
+                });
+                await AppProcessSession.WaitForJsonAsync(session.SettingsPath,
+                    json => json["AiUseNoticeVersion"]?.GetValue<int>() == 1);
+            }
             // A successful submission clears the form; wait before selecting the next input.
             await AppProcessSession.WaitAsync(() => Task.Run(() => !ApplicationUi.Find(root,
                 "Intelligent.Task.Confirm", visible: true, enabled: false).Current.IsEnabled), "Task accepted and input reset");
@@ -77,7 +93,13 @@ internal static class ModelInferenceTests {
             return state == LanguageUtil.GetI18n(Constants.I18n.Text_Task_Status_Completed);
         }), "Real model result completed", TimeSpan.FromMinutes(6));
         context.Evidence["InferenceMilliseconds"] = timer.ElapsedMilliseconds;
+        context.Evidence["AiNoticeAcknowledgedOnceBeforeRealInference"] = true;
+        await Task.Run(() => Check(!Row(root, inputs[0]).FindAll(TreeScope.Descendants,
+            new PropertyCondition(AutomationElement.AutomationIdProperty, "Intelligent.Task.Backend"))
+            .Cast<AutomationElement>().Any(element => element.Current.BoundingRectangle is { Width: > 0, Height: > 0 }),
+            "Hardware-disabled inference still displays backend information"));
         await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_Temporary);
+        await VerifyLocalizedCloseDialogsAsync(context, ui, root);
         // Ticking the suppression box and returning must neither save the
         // preference nor discard the temporary result. The next close asks again.
         await Task.Run(() => {
@@ -135,7 +157,7 @@ internal static class ModelInferenceTests {
             catch (IOException) { return false; }
             catch (JsonException) { return false; }
         }, "Real result imported into library");
-        Check(SHA256.HashData(await File.ReadAllBytesAsync(output)).SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(imported!.FilePath))), "Imported image differs from the actual exported result");
+        Check(Enumerable.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(output)), SHA256.HashData(await File.ReadAllBytesAsync(imported!.FilePath))), "Imported image differs from the actual exported result");
         await WaitForPreservationAsync(root, inputs[0], Constants.I18n.Intelligent_Result_ExportedAndImported);
         await Task.Run(() => ApplicationUi.Invoke(ApplicationUi.Find(Row(root, inputs[0]), "Intelligent.Task.Remove")));
         // A second real result exercises confirmed suppression and persisted settings.
@@ -179,7 +201,7 @@ internal static class ModelInferenceTests {
             "Reminder re-enabled from settings");
         context.Evidence["ActiveTaskTrayExitCancellationVerified"] = true;
         context.Evidence["PreservationBadgesAndReminderPersistenceVerified"] = true;
-        Check(originalHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(inputs[0]))), "Inference modified the source file");
+        Check(Enumerable.SequenceEqual(originalHash, SHA256.HashData(await File.ReadAllBytesAsync(inputs[0]))), "Inference modified the source file");
         await session.StopAsync();
         session.RecordEvidence(context);
         Check(((string[])context.Evidence["RuntimeErrors"]!).Length == 0, "Model integration logged a runtime error");
@@ -206,5 +228,31 @@ internal static class ModelInferenceTests {
         }
         throw new TimeoutException($"Intelligent task row not found: {path}");
     }
+    private static async Task VerifyLocalizedCloseDialogsAsync(UiTestContext context, Process ui, AutomationElement root) {
+        foreach (string locale in new[] { "de-DE", "fr-FR", "ru-RU" }) {
+            await ApplicationUi.SelectLanguageAsync(root, locale);
+            string expected = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "Intelligent_Close_DontRemind");
+            await Task.Run(() => {
+                Check(ui.CloseMainWindow(), "UI rejected the localized close request");
+                var dialog = ApplicationUi.Find(root, "Intelligent.Close.Dialog", visible: true);
+                var checkbox = ApplicationUi.Find(root, "Intelligent.Close.DontRemind", visible: true);
+                var bounds = dialog.Current.BoundingRectangle;
+                Check(root.Current.BoundingRectangle.Contains(bounds), "Localized close dialog extends beyond the window");
+                Check(bounds.Contains(checkbox.Current.BoundingRectangle), "Localized reminder checkbox is clipped");
+                Check(checkbox.Current.Name == expected || checkbox.FindAll(TreeScope.Descendants,
+                    new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text))
+                    .Cast<AutomationElement>().Any(text => text.Current.Name == expected && !text.Current.IsOffscreen),
+                    "Localized reminder label is missing");
+                foreach (string button in new[] { "PrimaryButton", "SecondaryButton" })
+                    Check(bounds.Contains(ApplicationUi.DialogButton(root, button).Current.BoundingRectangle), "Localized close action is clipped");
+                ApplicationUi.Invoke(ApplicationUi.DialogButton(root, "PrimaryButton"));
+                ApplicationUi.WaitUntilGone(root, "Intelligent.Close.Dialog");
+                Check(!ui.HasExited, "Returning from localized close discarded the task session");
+            });
+        }
+        await ApplicationUi.SelectLanguageAsync(root, "en-US");
+        context.Evidence["LocalizedCloseDialogSamples"] = new[] { "de-DE", "fr-FR", "ru-RU" };
+    }
+
     private static string Status(AutomationElement root, string path) => ApplicationUi.Find(Row(root, path), "Intelligent.Task.Status").Current.Name;
 }

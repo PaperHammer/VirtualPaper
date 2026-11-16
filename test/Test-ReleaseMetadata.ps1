@@ -4,9 +4,12 @@ $ErrorActionPreference = 'Stop'
 function Assert-Equal($Actual, $Expected, [string]$Message) {
     if ($Actual -cne $Expected) { throw "$Message`: expected [$Expected], got [$Actual]." }
 }
-function Assert-Throws([scriptblock]$Action, [string]$Pattern) {
+function Assert-Throws([scriptblock]$Action, [string]$Pattern, [string]$ErrorIdPattern) {
     try { & $Action | Out-Null } catch {
-        if ($_.Exception.Message -notmatch $Pattern) { throw "Unexpected error: $($_.Exception.Message); expected $Pattern" }
+        if ($ErrorIdPattern) {
+            if ($_.FullyQualifiedErrorId -notlike $ErrorIdPattern) { throw "Unexpected error ID: $($_.FullyQualifiedErrorId); expected $ErrorIdPattern" }
+        }
+        elseif ($_.Exception.Message -notmatch $Pattern) { throw "Unexpected error: $($_.Exception.Message); expected $Pattern" }
         return
     }
     throw "Expected failure matching: $Pattern"
@@ -85,7 +88,7 @@ try {
     Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } 'failed \(4\)'
     Assert-Equal $LASTEXITCODE 4 'Download failure not reset to success'
     $script:downloadMode = 'invalid'
-    Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } 'Conversion from JSON failed'
+    Assert-Throws { Get-ReleaseBaseline fixture/repo $history $script:downloadPath } -ErrorIdPattern '*,Microsoft.PowerShell.Commands.ConvertFromJsonCommand'
     $history.Previous.assets = @()
     Assert-Equal (Get-ReleaseBaseline fixture/repo $history $script:downloadPath -WarningAction SilentlyContinue) $null 'Legacy manifest absence is explicit'
     $history.Previous.name = 'Legacy release with unknown build'
@@ -216,7 +219,8 @@ try {
         & ([scriptblock]::Create((Get-StepBody 'Write component manifest')))
         $sourceHash = (Get-FileHash "$env:RELEASE_BIN_DIR/app_comp_manifest.json").Hash
         Assert-Equal (Get-FileHash app_comp_manifest.json).Hash $sourceHash 'Standalone manifest equals installed manifest'
-        $packageStep = [scriptblock]::Create((Get-StepBody 'Build plugin package'))
+        $packageScript = Join-Path $PSScriptRoot '../.github/scripts/New-PluginPackage.ps1'
+        $packageStep = { & $packageScript -PayloadRoot $env:RELEASE_BIN_DIR -BuildNumber $env:BUILD_NUMBER -UpdatePlugins $env:UPDATE_PLUGINS -OutputDirectory $PWD.Path }
         & $packageStep
         # A package-job retry must replace its own zip without rebuilding the application.
         & $packageStep
@@ -233,7 +237,7 @@ try {
         Expand-Archive "extracted-patch/$zipName" extracted-plugin
         Assert-Equal ([IO.File]::ReadAllText((Join-Path $fixture 'extracted-plugin/UI/UI.dll'))) 'fixture UI payload' 'Plugin folder layout preserved'
         $env:UPDATE_PLUGINS = 'Unknown'
-        Assert-Throws { & $packageStep } 'Missing plugin directory'
+        Assert-Throws { & $packageStep } 'Invalid plugin'
         $env:UPDATE_PLUGINS = ''
         Assert-Throws { & $packageStep } 'at least one plugin'
     } finally {

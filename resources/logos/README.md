@@ -3,9 +3,13 @@
 The application icon master is [`../icons/virtualpaper.svg`](../icons/virtualpaper.svg).
 Its smooth curves and gradient folds are shared by the application, installer,
 MSIX and Store presentations. PNG and ICO files are exports, not input sources.
+All ICO exports contain 32, 40, 48, 64, 128 and 256 px frames from the same master;
+16/24 px frames are not retained. Existing ICO filenames are preserved.
 
 应用图标母版为 [`../icons/virtualpaper.svg`](../icons/virtualpaper.svg)。应用、安装器、
 MSIX 和商店使用同一组平滑曲线、渐变和折面。PNG、ICO 为导出结果，不再作为生成源。
+所有 ICO 均从同一母版生成 32、40、48、64、128、256 像素帧，
+不保留 16／24 像素帧，并沿用原有 ICO 文件名。
 
 `source/virtual.svg` and `source/paper.svg` preserve the existing wordmark as
 outlines, without font dependencies. `source/layouts.json` records the existing

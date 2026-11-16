@@ -40,6 +40,7 @@ try {
     Assert-PackageFile 'MsixAssets/StoreLogo.scale-200.png'
     Assert-PackageFile 'MsixAssets/Square150x150Logo.scale-200.png'
     Assert-PackageFile 'MsixAssets/Square44x44Logo.scale-200.png'
+    Assert-PackageFile 'MsixAssets/Square44x44Logo.targetsize-32_altform-unplated.png'
     $associations = @($app.SelectNodes("m:Extensions/uap:Extension[@Category='windows.fileTypeAssociation']/*[local-name()='FileTypeAssociation']", $namespaces))
     if ($associations.Count -ne 2) { throw 'Both project file associations must be packaged.' }
     $extensions = @()

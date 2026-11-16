@@ -1,5 +1,5 @@
 #Requires -Version 7.2
-# Regenerate app, installer, MSIX and logo assets without changing their paths/sizes.
+# Render branding and ICOs with a minimum frame size of 32 px.
 [CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
@@ -77,15 +77,19 @@ Copy-Item -LiteralPath (RepoPath 'resources/logos/splashCol_1400x1400_with_round
 $wide = $logos['virtualpaper-logo-left_4216x2040.png']
 Export-BrandBitmap (Get-BrandBitmap $wide 4216 2040 620 300) (RepoPath 'src/VirtualPaper/Resources/splash.png')
 foreach ($entry in @(
-    @('LockScreenLogo.scale-200.png', 48, $icon),
-    @('StoreLogo.scale-200.png', 100, $icon),
-    @('Square44x44Logo.scale-200.png', 88, $icon),
-    @('Square44x44Logo.targetsize-24_altform-unplated.png', 24, $icon),
-    @('Square71x71Logo.scale-200.png', 142, $tile),
-    @('Square150x150Logo.scale-200.png', 300, $tile),
-    @('Square310x310Logo.scale-200.png', 620, $tile)
+    @('LockScreenLogo.scale-200.png', 48),
+    @('StoreLogo.scale-200.png', 100),
+    @('Square44x44Logo.scale-200.png', 88),
+    @('Square44x44Logo.targetsize-32_altform-unplated.png', 32)
 )) {
-    Export-BrandBitmap (Get-BrandBitmap $entry[2] 640 640 $entry[1] $entry[1]) (RepoPath "src/VirtualPaper.UI/Assets/$($entry[0])")
+    Export-BrandBitmap (Get-BrandSystemIconBitmap $icon $entry[1]) (RepoPath "src/VirtualPaper.UI/Assets/$($entry[0])")
+}
+foreach ($entry in @(
+    @('Square71x71Logo.scale-200.png', 142),
+    @('Square150x150Logo.scale-200.png', 300),
+    @('Square310x310Logo.scale-200.png', 620)
+)) {
+    Export-BrandBitmap (Get-BrandBitmap $tile 640 640 $entry[1] $entry[1]) (RepoPath "src/VirtualPaper.UI/Assets/$($entry[0])")
 }
 Export-BrandBitmap (Get-BrandBitmap $wide 4216 2040 620 300) (RepoPath 'src/VirtualPaper.UI/Assets/Wide310x150Logo.scale-200.png')
 Export-BrandBitmap (Get-BrandBitmap $wide 4216 2040 1240 600) (RepoPath 'src/VirtualPaper.UI/Assets/SplashScreen.scale-200.png')

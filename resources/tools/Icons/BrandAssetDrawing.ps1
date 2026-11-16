@@ -2,6 +2,8 @@
 # Deliberately limited to these self-contained assets, not a general SVG reader.
 Add-Type -AssemblyName PresentationCore, WindowsBase
 
+function Get-BrandRuntimeIconSizes { return @(32, 40, 48, 64, 128, 256) }
+
 function Get-BrandBrush([string] $Fill, [xml] $Svg) {
     if ($Fill -notmatch '^url\(#(.+)\)$') {
         return [Windows.Media.SolidColorBrush]::new([Windows.Media.ColorConverter]::ConvertFromString($Fill))
@@ -87,10 +89,20 @@ function Export-BrandBitmap($Bitmap, [string] $Path) {
     try { $encoder.Save($stream) } finally { $stream.Dispose() }
 }
 
+function Get-BrandSystemIconBitmap($Drawing, [int] $Size) {
+    # Fit both ICO frames and manifest PNG icons to the visible artwork.
+    $padding = if ($Size -le 32) { 0.25 } else { [Math]::Max(0.5, $Size * 0.02) }
+    $artwork = [Windows.Media.DrawingGroup]::new()
+    $context = $artwork.Open()
+    try { Draw-BrandFit $context $Drawing @($padding, $padding, ($Size - 2 * $padding), ($Size - 2 * $padding)) }
+    finally { $context.Close() }
+    return Get-BrandBitmap $artwork $Size $Size $Size $Size
+}
+
 function Export-BrandIco($Drawing, [string] $Path) {
-    $sizes = @(16, 24, 32, 40, 48, 64, 128, 256)
+    $sizes = @(Get-BrandRuntimeIconSizes)
     $frames = foreach ($size in $sizes) {
-        $bitmap = Get-BrandBitmap $Drawing 640 640 $size $size
+        $bitmap = Get-BrandSystemIconBitmap $Drawing $size
         $encoder = [Windows.Media.Imaging.PngBitmapEncoder]::new()
         $encoder.Frames.Add([Windows.Media.Imaging.BitmapFrame]::Create($bitmap))
         $stream = [IO.MemoryStream]::new()

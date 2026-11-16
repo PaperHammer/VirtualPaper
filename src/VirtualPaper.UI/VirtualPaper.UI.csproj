@@ -94,7 +94,7 @@
 		<None Remove="Assets\SplashScreen.scale-200.png" />
 		<None Remove="Assets\Square150x150Logo.scale-200.png" />
 		<None Remove="Assets\Square44x44Logo.scale-200.png" />
-		<None Remove="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+		<None Remove="Assets\Square44x44Logo.targetsize-32_altform-unplated.png" />
 		<None Remove="Assets\staticImg\Dark\project_create_staticimg_dark.png" />
 		<None Remove="Assets\staticImg\ic_fluent_border_24_filled.png" />
 		<None Remove="Assets\staticImg\ic_fluent_resize_small_24_filled.png" />

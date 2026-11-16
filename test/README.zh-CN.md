@@ -12,6 +12,8 @@
 
 首次 AI 使用说明由智能任务、3D 深度选择和高清适配增强共用。用户明确确认且设置保存成功后才允许执行；取消会保留表单。`AiUseNoticeVersion` 在 UI 重开、语言切换和普通升级后保留。Core／逻辑测试覆盖旧配置、旧 RPC 客户端、过期写入、共享待确认操作、取消及保存失败。普通应用用例使用已确认的测试配置；Intelligent 与 ScreenFit 显式设置版本零，验证取消和输入保留；扩展推理／渲染用例则先确认再执行真实处理。高清适配会先关闭当前模态弹窗，显示说明后重新打开同一表单，避免叠加弹窗；完整法律正文在说明弹窗内部展开。
 
+Windows 项目的目标与最低支持版本统一为 Windows 10 Build 19041（`10.0.19041.0`）。`Test-RuntimeDeployment.ps1` 检查目标框架及显式最低版本、两份包清单、MSIX 打包最低版本和 EXE 安装器的系统限制；没有显式最低版本的测试项目按目标框架默认值处理。MSIX 打包 SDK 独立保持为 26100。
+
 不启动应用或 UI 的 FP32/FP16 模型手动评测见 [InferencePrecision](InferencePrecision/README.md)。该独立无界面探针加载实际 Release 原生运行库，不替代项目回归或安装验收。
 
 `VirtualPaper.UIOperationTest` 是独立、非打包的 WinUI 可执行程序，同时充当测试宿主。组件用例通过项目引用加载正式页面；应用用例启动隔离的真实 Core 进程，再由 Core 拉起真实 UI。两者都不使用 Sandbox，也不会连接用户正在运行的 VirtualPaper 实例。

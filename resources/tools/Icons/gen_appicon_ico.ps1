@@ -1,4 +1,5 @@
 Add-Type -AssemblyName System.Drawing
+. (Join-Path $PSScriptRoot 'BrandAssetDrawing.ps1')
 
 $src = Read-Host "Source PNG path"
 $dst = Read-Host "Destination ICO path (default: same name + .ico)"
@@ -19,7 +20,7 @@ Write-Host ""
 
 $srcImg = [System.Drawing.Image]::FromFile($src)
 Write-Host "Input  : $($srcImg.Width)x$($srcImg.Height)"
-$sizes = @(16, 24, 32, 48, 64, 128, 256, 512)
+$sizes = @(Get-BrandRuntimeIconSizes)
 
 $ms = New-Object System.IO.MemoryStream
 $bw = New-Object System.IO.BinaryWriter($ms)
@@ -50,7 +51,7 @@ foreach ($s in $sizes) {
     $bw.Write([byte]$sz)      # height
     $bw.Write([byte]0)        # color palette
     $bw.Write([byte]0)        # reserved
-    $bw.Write([uint16]0)      # planes
+    $bw.Write([uint16]1)      # planes
     $bw.Write([uint16]32)     # bpp
     $bw.Write([uint32]$data.Length)  # size
     $bw.Write([uint32]$offset)       # offset

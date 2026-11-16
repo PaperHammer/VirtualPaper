@@ -12,6 +12,8 @@ The first-use AI notice is shared by intelligent tasks, 3D depth selection and s
 
 Builds use the .NET 10 SDK selected by the root `global.json`. EXE installation and upgrades, including silent updates, require and provision the x64 .NET 10 Desktop Runtime and ASP.NET Core 10 Runtime used by Web previews. MSIX includes a serviced .NET 10 runtime for each process. Artifact tests check all four EXE runtime configurations; package validation rejects MSIX payloads without the matching self-contained runtime. Cross-version acceptance resolves each snapshot's target framework separately, allowing .NET 8 → .NET 10 upgrades.
 
+Windows projects target and support Windows 10 build 19041 (`10.0.19041.0`) or newer. `Test-RuntimeDeployment.ps1` checks their target frameworks and explicit minimums, both package manifests, the MSIX packaging minimum and the EXE installer's OS restriction. Test projects without an explicit minimum inherit the target-framework version. The MSIX packaging SDK remains independently selected at 26100.
+
 For manual FP32/FP16 model measurements without application/UI startup, see [InferencePrecision](InferencePrecision/README.md). This separate headless probe uses actual Release native runtimes and does not replace project tests or installed acceptance.
 
 `VirtualPaper.UIOperationTest` is a standalone, unpackaged WinUI executable that also serves as the test host. Component cases load production pages through project references. Application cases start an isolated, real Core process, which launches the real UI. Neither uses Sandbox or connects to a user's running VirtualPaper instance.

@@ -58,7 +58,8 @@ function Convert-MsixUIResources {
     }
     $assets = Join-Path $PayloadDirectory 'MsixAssets'
     [void](New-Item -ItemType Directory -Path $assets -Force)
-    foreach ($name in @('StoreLogo.scale-200.png', 'Square150x150Logo.scale-200.png', 'Square44x44Logo.scale-200.png')) {
+    foreach ($name in @('StoreLogo.scale-200.png', 'Square150x150Logo.scale-200.png', 'Square44x44Logo.scale-200.png',
+        'Square44x44Logo.targetsize-32_altform-unplated.png')) {
         Copy-Item -LiteralPath (Join-Path $UiDirectory "Assets/$name") -Destination $assets
     }
 }

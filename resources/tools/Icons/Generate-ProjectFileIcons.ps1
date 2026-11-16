@@ -3,7 +3,8 @@
 [CmdletBinding()]
 param()
 $ErrorActionPreference = 'Stop'
-Add-Type -AssemblyName PresentationCore, WindowsBase
+. (Join-Path $PSScriptRoot 'BrandAssetDrawing.ps1')
+$sizes = @(Get-BrandRuntimeIconSizes)
 $iconRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../icons/projects'))
 function New-Brush([string]$value, $document) {
     if (-not $value -or $value -eq 'none') { return $null }
@@ -22,7 +23,7 @@ function New-Brush([string]$value, $document) {
 foreach ($name in @('vpd', 'vpw')) {
     [xml]$svg = Get-Content -LiteralPath (Join-Path $iconRoot "$name.svg") -Raw
     $images = @()
-    foreach ($size in @(16, 24, 32, 48, 64, 128, 256)) {
+    foreach ($size in $sizes) {
         $visual = [Windows.Media.DrawingVisual]::new()
         $context = $visual.RenderOpen()
         $context.PushTransform([Windows.Media.ScaleTransform]::new($size / 128.0, $size / 128.0))
@@ -52,7 +53,6 @@ foreach ($name in @('vpd', 'vpw')) {
     try {
         $writer.Write([uint16]0); $writer.Write([uint16]1); $writer.Write([uint16]$images.Count)
         $offset = 6 + 16 * $images.Count
-        $sizes = @(16, 24, 32, 48, 64, 128, 256)
         for ($i = 0; $i -lt $sizes.Count; $i++) {
             $dimension = if ($sizes[$i] -eq 256) { 0 } else { $sizes[$i] }
             $writer.Write([byte]$dimension); $writer.Write([byte]$dimension)
@@ -65,5 +65,5 @@ foreach ($name in @('vpd', 'vpw')) {
         [IO.File]::WriteAllBytes((Join-Path $iconRoot "$name.ico"), $stream.ToArray())
     }
     finally { $writer.Dispose(); $stream.Dispose() }
-    Write-Output "Generated $name PNG and seven-size ICO."
+    Write-Output "Generated $name PNG and minimum-32px ICO."
 }

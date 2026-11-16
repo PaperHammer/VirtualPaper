@@ -18,16 +18,17 @@ public class WorkSpaceViewModel_ProjectReuseTests {
     private WorkSpaceViewModel _vm = null!;
     private Mock<IRuntimeFactory> _factory = null!;
     private Mock<IProjectFileLoader> _loader = null!;
+    private Mock<IUserSettingsClient> _settings = null!;
 
     [TestInitialize]
     public void Setup() {
         _root = Path.Combine(Path.GetTempPath(), "vp-project-reuse-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_root);
-        var settings = new Mock<IUserSettingsClient>(MockBehavior.Strict);
-        settings.Setup(x => x.UpdateRecetUsedAsync(It.IsAny<string[]>())).Returns(Task.CompletedTask);
+        _settings = new(MockBehavior.Strict);
+        _settings.Setup(x => x.UpdateRecetUsedAsync(It.IsAny<string[]>())).Returns(Task.CompletedTask);
         _factory = new(MockBehavior.Strict);
         _loader = new(MockBehavior.Strict);
-        _vm = new(settings.Object, _factory.Object, Mock.Of<IWorkspaceSaveCoordinator>(),
+        _vm = new(_settings.Object, _factory.Object, Mock.Of<IWorkspaceSaveCoordinator>(),
             new ProjectFileLoaderRegistry([_loader.Object]));
     }
 
@@ -143,6 +144,85 @@ public class WorkSpaceViewModel_ProjectReuseTests {
         runtime.Verify(x => x.SaveAsync(), Times.Once);
         _loader.VerifyNoOtherCalls();
     }
+
+    [TestMethod]
+    [DataRow(".vpd", FileType.FDesign, false)]
+    [DataRow(".vpd", FileType.FDesign, true)]
+    [DataRow(".vpw", FileType.FWebDesign, false)]
+    [DataRow(".vpw", FileType.FWebDesign, true)]
+    public async Task Batch_FailedItemDoesNotPreventLaterReuse_AndRecentItemsExcludeFailures(string extension, FileType type, bool throws) {
+        string failed = Path.Combine(_root, "damaged" + extension);
+        string alias = Path.Combine(_root, "alias" + extension);
+        string project = Path.Combine(_root, "open" + extension);
+        File.WriteAllText(failed, "damaged source");
+        File.WriteAllText(alias, "alias source");
+        var (runtime, tab) = RegisterOpenProject(project);
+        _loader.Setup(x => x.CanLoad(type)).Returns(true);
+        if (throws) _loader.Setup(x => x.LoadAsync(failed, type)).ThrowsAsync(new InvalidDataException("Damaged project"));
+        else _loader.Setup(x => x.LoadAsync(failed, type)).ReturnsAsync((ProjectFileLoadResult?)null);
+        _loader.Setup(x => x.LoadAsync(alias, type)).ReturnsAsync(new ProjectFileLoadResult(project, type));
+        string[]? recent = null;
+        _settings.Setup(x => x.UpdateRecetUsedAsync(It.IsAny<string[]>()))
+            .Callback<string[]>(paths => recent = paths.ToArray()).Returns(Task.CompletedTask);
+
+        bool opened = await _vm.AddNewItemsAsync([Existing(failed), Existing(alias), Existing(project), Existing(project)]);
+
+        Assert.IsTrue(opened);
+        AssertExistingSelected(runtime.Object, tab);
+        Assert.IsNotNull(recent);
+        CollectionAssert.AreEquivalent(new[] { alias, project }, recent);
+        _settings.Verify(x => x.UpdateRecetUsedAsync(It.IsAny<string[]>()), Times.Once);
+        _loader.Verify(x => x.LoadAsync(failed, type), Times.Once);
+        _loader.Verify(x => x.LoadAsync(alias, type), Times.Once);
+        _loader.Verify(x => x.CanLoad(type), Times.Exactly(2));
+        _loader.VerifyNoOtherCalls();
+        runtime.VerifyNoOtherCalls();
+        Assert.AreEqual("damaged source", File.ReadAllText(failed));
+        Assert.AreEqual("alias source", File.ReadAllText(alias));
+    }
+
+    [TestMethod]
+    [DataRow(".vpd", FileType.FDesign)]
+    [DataRow(".vpw", FileType.FWebDesign)]
+    public async Task Batch_AllItemsFail_DoesNotCreateTabsOrWriteRecentItems(string extension, FileType type) {
+        string first = Path.Combine(_root, "damaged" + extension);
+        string second = Path.Combine(_root, "rejected" + extension);
+        _loader.Setup(x => x.CanLoad(type)).Returns(true);
+        _loader.Setup(x => x.LoadAsync(first, type)).ThrowsAsync(new InvalidDataException("Damaged project"));
+        _loader.Setup(x => x.LoadAsync(second, type)).ReturnsAsync((ProjectFileLoadResult?)null);
+
+        Assert.IsFalse(await _vm.AddNewItemsAsync([Existing(first), Existing(second)]));
+
+        Assert.IsEmpty(_vm.TabViewItems);
+        Assert.AreEqual(-1, _vm.SelectedTabIndex);
+        _settings.VerifyNoOtherCalls();
+        _factory.VerifyNoOtherCalls();
+        _loader.Verify(x => x.LoadAsync(first, type), Times.Once);
+        _loader.Verify(x => x.LoadAsync(second, type), Times.Once);
+    }
+
+    [TestMethod]
+    [DataRow(".vpd")]
+    [DataRow(".vpw")]
+    public async Task Batch_RecentSaveFails_PreservesOpenEditorAndCanRetry(string extension) {
+        string project = Path.Combine(_root, "open" + extension);
+        var (runtime, tab) = RegisterOpenProject(project);
+        _settings.SetupSequence(x => x.UpdateRecetUsedAsync(It.IsAny<string[]>()))
+            .ThrowsAsync(new IOException("Recent items are locked"))
+            .Returns(Task.CompletedTask);
+
+        await Assert.ThrowsExactlyAsync<IOException>(() => _vm.AddNewItemsAsync([Existing(project), Existing(project)]));
+        AssertExistingSelected(runtime.Object, tab);
+        Assert.IsTrue(await _vm.AddNewItemsAsync([Existing(project)]));
+
+        AssertExistingSelected(runtime.Object, tab);
+        _settings.Verify(x => x.UpdateRecetUsedAsync(It.Is<string[]>(paths => paths.Length == 1 && paths[0] == project)), Times.Exactly(2));
+        _settings.VerifyNoOtherCalls();
+        _loader.VerifyNoOtherCalls();
+        runtime.VerifyNoOtherCalls();
+    }
+
+    private static PreProjectData Existing(string path) => new(path, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting);
 
     private Task<bool> OpenAsync(string path) => _vm.AddNewItemsAsync([
         new(path, ProjectType.P_StaticImage, ProjectOpenIntent.OpenExisting)

@@ -53,6 +53,15 @@ function Test-ToleratedUIJob([string] $Name, $Job) {
         $Job.outputs.ui_upload_result -ceq 'success'
 }
 Check 'Job results' {
+    $projectIds = @(Get-ProjectTestSpecs | ForEach-Object Id)
+    $projectJobs = $jobs['tests-passed'].outputs.project_results | ConvertFrom-Json -AsHashtable
+    if ($projectJobs -isnot [Collections.IDictionary] -or $projectJobs.Count -ne $projectIds.Count) {
+        throw 'Missing or malformed project results from Tests Passed.'
+    }
+    foreach ($id in $projectIds) {
+        if (-not $projectJobs.ContainsKey($id)) { throw "Missing project result from Tests Passed: $id" }
+        $jobs[$id] = $projectJobs[$id]
+    }
     $required = @('packages-ready', 'tests-passed', 'package-exe', 'test-exe-acceptance') + @(Get-ProjectTestSpecs | ForEach-Object Id)
     if ($MsixEnabled) { $required += 'package-msix', 'test-msix-acceptance' }
     foreach ($name in $required) {

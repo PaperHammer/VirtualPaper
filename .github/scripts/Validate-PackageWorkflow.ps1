@@ -62,16 +62,27 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     $testGate = Get-WorkflowJob 'tests-passed' $text
     $gateRun = [regex]::Match($testGate, '(?ms)^      run: \|\r?\n(.*)\z')
     if (-not $testGate.Contains('if: always() && !cancelled()') -or
-        -not $testGate.Contains('JOB_RESULTS: ${{ toJSON(needs) }}') -or -not $gateRun.Success) {
+        -not $testGate.Contains('JOB_RESULTS: ${{ toJSON(needs) }}') -or
+        -not $testGate.Contains('project_results: ${{ steps.require-tests.outputs.project_results }}') -or
+        -not $testGate.Contains('id: require-tests') -or -not $gateRun.Success) {
         throw 'Tests Passed must aggregate all project outcomes even when a prerequisite failed or skipped.'
     }
     $gateScript = [scriptblock]::Create([regex]::Replace($gateRun.Groups[1].Value, '(?m)^        ', ''))
     $previousJobResults = $env:JOB_RESULTS
+    $previousGateOutput = $env:GITHUB_OUTPUT
+    $gateOutput = [IO.Path]::GetTempFileName()
     $fixtureJobs = @{}
     foreach ($spec in $specs) { $fixtureJobs[$spec.Id] = @{ result = 'success' } }
+    function Assert-ForwardedProjectResults {
+        if ((Get-Content -LiteralPath $gateOutput -Tail 1) -cne "project_results=$env:JOB_RESULTS") {
+            throw 'Tests Passed must forward the original project states before checking them.'
+        }
+    }
     try {
+        $env:GITHUB_OUTPUT = $gateOutput
         $env:JOB_RESULTS = $fixtureJobs | ConvertTo-Json -Depth 4 -Compress
         & $gateScript
+        Assert-ForwardedProjectResults
         foreach ($spec in $specs) {
             foreach ($result in @('failure', 'cancelled', 'skipped', $null)) {
                 $fixtureJobs[$spec.Id].result = $result
@@ -79,15 +90,21 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
                 $rejected = $false
                 try { & $gateScript } catch { $rejected = $true }
                 if (-not $rejected) { throw "Tests Passed accepted a non-passing project: $($spec.Id) / $result" }
+                Assert-ForwardedProjectResults
             }
             $fixtureJobs.Remove($spec.Id)
             $env:JOB_RESULTS = $fixtureJobs | ConvertTo-Json -Depth 4 -Compress
             $rejected = $false
             try { & $gateScript } catch { $rejected = $true }
             if (-not $rejected) { throw "Tests Passed accepted missing project results: $($spec.Id)" }
+            Assert-ForwardedProjectResults
             $fixtureJobs[$spec.Id] = @{ result = 'success' }
         }
-    } finally { $env:JOB_RESULTS = $previousJobResults }
+    } finally {
+        $env:JOB_RESULTS = $previousJobResults
+        $env:GITHUB_OUTPUT = $previousGateOutput
+        [IO.File]::Delete($gateOutput)
+    }
     $tests = @('test-exe-acceptance', 'test-msix-acceptance')
     foreach ($channel in @('exe', 'msix')) {
         $id = "test-$channel-acceptance"
@@ -108,7 +125,7 @@ foreach ($text in @($workflow, $releaseWorkflow)) {
     }
     if ($build -match 'dotnet test |node .github/scripts/test-') { throw 'Application tests must remain independent of the build.' }
     $summary = Get-WorkflowJob 'summarize-tests' $text
-    Assert-JobNeeds 'summarize-tests' ($gates + @('package-exe', 'package-msix', 'packages-ready', 'tests-passed') + $specs.Id + $tests) $text
+    Assert-JobNeeds 'summarize-tests' ($gates + @('package-exe', 'package-msix', 'packages-ready', 'tests-passed') + $tests) $text
     if (-not $summary.Contains('./test/Summarize-PipelineTests.ps1') -or -not $summary.Contains('${{ toJSON(needs) }}') -or
         -not $summary.Contains('pattern: test-results-*') -or -not $summary.Contains('-AllowUIFailure')) {
         throw 'Summary must require raw reports and package identities while allowing reported extended UI failures.'
@@ -235,7 +252,7 @@ if ($releaseWorkflow -match 'force-with-lease|reset --hard') { throw 'Release sy
 if (-not $action.Contains('-RequireCompleteExecution:')) { throw 'Project gates must reject skipped tests.' }
 $summary = Get-WorkflowJob 'summarize-tests'
 $statusExpression = [regex]::Match($summary, '(?s)const passed = (.*?);').Groups[1].Value
-@{ Expression = $statusExpression; Required = @('validate-pr', 'build-solution', 'packages-ready', 'tests-passed', 'package-exe', 'package-msix') + $specs.Id + @('test-exe-acceptance', 'test-msix-acceptance') } |
+@{ Expression = $statusExpression; Required = @('validate-pr', 'build-solution', 'packages-ready', 'tests-passed', 'package-exe', 'package-msix') + @('test-exe-acceptance', 'test-msix-acceptance') } |
     ConvertTo-Json -Compress | & node -e @'
 const fs = require('fs');
 const f = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));

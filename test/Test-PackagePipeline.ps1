@@ -240,7 +240,11 @@ try {
         }
     }
     $jobs = @{}
-    foreach ($id in @('packages-ready','tests-passed','package-exe','package-msix','test-exe-acceptance','test-msix-acceptance') + @(Get-ProjectTestSpecs | ForEach-Object Id)) { $jobs[$id] = @{ result = 'success' } }
+    foreach ($id in @('packages-ready','tests-passed','package-exe','package-msix','test-exe-acceptance','test-msix-acceptance')) { $jobs[$id] = @{ result = 'success' } }
+    $projectJobs = @{}
+    foreach ($spec in Get-ProjectTestSpecs) { $projectJobs[$spec.Id] = @{ result = 'success' } }
+    $projectResultsJson = $projectJobs | ConvertTo-Json -Depth 4 -Compress
+    $jobs['tests-passed'].outputs = @{ project_results = $projectResultsJson }
     foreach ($id in @('test-exe-acceptance', 'test-msix-acceptance')) { $jobs[$id].outputs = @{ ui_run_result = 'success'; ui_upload_result = 'success' } }
     $arguments = @{ Root = $raw; ArtifactsRoot = "$fixture/artifacts"; SourceSha = $sha }
     $ciArguments = $arguments.Clone(); $ciArguments.AllowUIFailure = $true
@@ -261,7 +265,7 @@ try {
     $summary = Get-Content "$raw/pipeline-summary.json" -Raw | ConvertFrom-Json
     Require (@($summary.Details.Coverage).Count -eq 1 -and $summary.Details.Coverage[0].Module -ceq 'VirtualPaper.Fixture' -and
         $summary.Details.Coverage[0].Covered -eq 1 -and $summary.Details.Coverage[0].Valid -eq 2) 'Pipeline coverage must union shared product lines across all project reports.'
-    foreach ($id in @('tests-passed','test-exe-acceptance','test-msix-acceptance','package-msix','test-core')) {
+    foreach ($id in @('tests-passed','test-exe-acceptance','test-msix-acceptance','package-msix')) {
         foreach ($result in @('failure', 'cancelled', 'skipped')) {
             $jobs[$id].result = $result
             Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
@@ -271,8 +275,20 @@ try {
         Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @arguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-fail.log" }
         Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-ci-fail.log" }
         $jobs[$id] = @{ result = 'success' }
+        if ($id -eq 'tests-passed') { $jobs[$id].outputs = @{ project_results = $projectResultsJson } }
         if ($id -like 'test-*-acceptance') { $jobs[$id].outputs = @{ ui_run_result = 'success'; ui_upload_result = 'success' } }
     }
+    foreach ($result in @('failure', 'cancelled', 'skipped')) {
+        $projectJobs['test-core'].result = $result
+        $jobs['tests-passed'].outputs.project_results = $projectJobs | ConvertTo-Json -Depth 4 -Compress
+        Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-project-fail.log" }
+    }
+    $projectJobs.Remove('test-core')
+    foreach ($invalid in @('', '{invalid', '[]', ($projectJobs | ConvertTo-Json -Depth 4 -Compress))) {
+        $jobs['tests-passed'].outputs.project_results = $invalid
+        Reject { & "$PSScriptRoot/Summarize-PipelineTests.ps1" @ciArguments -JobResultsJson ($jobs | ConvertTo-Json -Depth 4) *> "$fixture/summary-project-fail.log" }
+    }
+    $jobs['tests-passed'].outputs.project_results = $projectResultsJson
     # A successful reusable-workflow result alone cannot replace raw lifecycle/UI reports.
     foreach ($path in @('test-results-installer/installer-results.json', 'test-results-ui-operation/installed-acceptance.json',
                          'test-results-ui-operation/ui-operation-results.json', 'test-results-msix-smoke/msix-acceptance.json',

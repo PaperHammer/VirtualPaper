@@ -498,12 +498,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader]
     if: always() && !cancelled()
+    outputs:
+      project_results: ${{ steps.require-tests.outputs.project_results }}
     steps:
     - name: Require all project tests
+      id: require-tests
       env:
         JOB_RESULTS: ${{ toJSON(needs) }}
       run: |
         $jobs = $env:JOB_RESULTS | ConvertFrom-Json -AsHashtable
+        "project_results=$($jobs | ConvertTo-Json -Depth 4 -Compress)" >> $env:GITHUB_OUTPUT
         if ($jobs.Count -ne 8) { throw 'Missing project test job results.' }
         foreach ($entry in $jobs.GetEnumerator()) {
           if ($entry.Value.result -cne 'success') { throw "Required project test did not pass: $($entry.Key) ($($entry.Value.result))" }
@@ -528,7 +532,7 @@ jobs:
   summarize-tests:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [prepare-metadata, build-release, package-exe, package-msix, packages-ready, tests-passed, test-artifacts, test-core, test-ui-logic, test-images, test-web-backdrop, test-ui-components, test-ml, test-shader, test-exe-acceptance, test-msix-acceptance]
+    needs: [prepare-metadata, build-release, package-exe, package-msix, packages-ready, tests-passed, test-exe-acceptance, test-msix-acceptance]
     if: always() && needs.prepare-metadata.result == 'success'
     outputs:
       ui_outcome: ${{ steps.reports.outputs.ui_outcome }}

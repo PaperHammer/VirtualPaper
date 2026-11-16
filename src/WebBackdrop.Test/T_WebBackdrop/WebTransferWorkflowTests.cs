@@ -8,7 +8,7 @@ namespace WebBackdrop.Test.T_WebBackdrop;
 
 [TestClass]
 [DoNotParallelize]
-public class WebTransferWorkflowTests {
+public partial class WebTransferWorkflowTests {
     private string _root = null!, _oldRoot = null!;
     private bool _oldMode;
     private WebDesignFileUtil _design = null!;

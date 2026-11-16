@@ -15,7 +15,7 @@ using VirtualPaper.WpSettingsPanel.ViewModels;
 
 namespace VirtualPaper.UI.Test.T_WpSettings {
     [TestClass]
-    public class LibraryContentsViewModelTests {
+    public partial class LibraryContentsViewModelTests {
         private Mock<IUserSettingsClient> _userSettingsClient = null!;
         private Mock<IWallpaperControlClient> _wpControlClient = null!;
         private Mock<IWallpaperIndexService> _wallpaperIndexService = null!;

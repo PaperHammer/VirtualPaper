@@ -709,8 +709,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public void Delete(WebFileItem item) {
             if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
-            _designFileUtil?.RemoveManifestPath(item.FilePath);
-
             if (item.ExistsOnDisk) {
                 try {
                     DeletePath(item);
@@ -722,6 +720,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 }
             }
 
+            _designFileUtil?.RemoveManifestPath(item.FilePath);
             RemoveItem(item);
 
             if (ReferenceEquals(_clipboardItem, item)) {

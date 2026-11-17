@@ -688,18 +688,15 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public void Delete(WebFileItem item) {
             if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
-            if (item.ExistsOnDisk) {
-                try {
-                    DeletePath(item);
-                }
-                catch (Exception ex) {
-                    ArcLog.GetLogger<WebFileTreeViewModel>()
-                        .Error($"Failed to delete: {item.FilePath}", ex);
-                    return;
-                }
+            try {
+                DeleteItemWithManifest(item);
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<WebFileTreeViewModel>()
+                    .Error($"Failed to delete: {item.FilePath}", ex);
+                return;
             }
 
-            _designFileUtil?.RemoveManifestPath(item.FilePath);
             RemoveItem(item);
 
             if (ReferenceEquals(_clipboardItem, item)) {
@@ -707,6 +704,39 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
 
             RefreshManifestSnapshot();
+        }
+
+        private void DeleteItemWithManifest(WebFileItem item) {
+            var design = _designFileUtil;
+            if (design == null) { DeletePath(item.FilePath, item.Type); return; }
+
+            string? staging = null;
+            lock (design.ManifestSyncRoot) {
+                if (Path.Exists(item.FilePath)) {
+                    staging = Path.Combine(Path.GetDirectoryName(item.FilePath)!, $".vp-delete-{Guid.NewGuid():N}");
+                    MoveOnDisk(item, item.FilePath, staging);
+                }
+                try {
+                    design.RemoveManifestPath(item.FilePath);
+                }
+                catch (Exception failure) {
+                    if (staging != null) {
+                        try { MoveOnDisk(item, staging, item.FilePath); }
+                        catch (Exception rollback) {
+                            throw new AggregateException($"Could not restore {item.FilePath}. The item is retained at: {staging}", failure, rollback);
+                        }
+                    }
+                    throw;
+                }
+            }
+
+            // Only discard staged data after the manifest commits. Cleanup must not undo a committed deletion.
+            if (staging != null) {
+                try { DeletePath(staging, item.Type); }
+                catch (Exception cleanup) {
+                    ArcLog.GetLogger<WebFileTreeViewModel>().Warn($"Deleted item staging retained at {staging}: {cleanup.Message}");
+                }
+            }
         }
 
         public bool CanPasteTo(WebFileItem target) {
@@ -745,8 +775,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             var parent = FindItem(targetFolder);
             if (parent == null || parent.Type != WebFileItemType.Folder) return false;
 
-            var sourceWasInProject = IsPathInsideProject(sourcePath);
-
             // 资源管理器中剪切的项也可能来自当前项目；已加载节点直接走内部移动，保留对象和选中状态。
             var existingItem = move ? FindItem(sourcePath) : null;
             if (existingItem != null) {
@@ -756,71 +784,35 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             EnsureChildrenLoaded(parent);
 
             try {
-                if (Directory.Exists(sourcePath)) {
+                bool folder = Directory.Exists(sourcePath);
+                if (folder) {
                     if (Path.GetFullPath(sourcePath).Equals(Path.GetFullPath(targetFolder), StringComparison.OrdinalIgnoreCase)
                         || FileUtil.IsPathWithinDirectory(sourcePath, targetFolder)) {
                         return false;
                     }
-
-                    var destinationPath = FileUtil.NextAvailablePath(
-                        Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
-                    if (IsPathInManifest(destinationPath)) return false;
-
-                    // 大目录操作放后台线程，避免阻塞 UI。跨磁盘 Directory.Move 失败时回退为复制后删除。
-                    await Task.Run(() => {
-                        if (!move) {
-                            CopyImportedDirectory(sourcePath, destinationPath);
-                            return;
-                        }
-                        try {
-                            Directory.Move(sourcePath, destinationPath);
-                        }
-                        catch (IOException) {
-                            CopyImportedDirectory(sourcePath, destinationPath);
-                            FileUtil.RemoveDirectory(sourcePath);
-                        }
-                    });
-
-                    if (move && sourceWasInProject) {
-                        _designFileUtil?.RenameManifestPath(sourcePath, destinationPath);
-                    }
-                    else {
-                        _designFileUtil?.AddManifestPathRecursive(destinationPath);
-                    }
-                    RefreshManifestSnapshot();
-
-                    AddItem(parent, CreateDirectoryItem(destinationPath, parent));
-                    return true;
                 }
+                else if (!File.Exists(sourcePath)) return false;
 
-                if (!File.Exists(sourcePath)) return false;
-
-                var destinationFilePath = FileUtil.NextAvailablePath(
+                var destinationPath = FileUtil.NextAvailablePath(
                     Path.Combine(targetFolder, Path.GetFileName(sourcePath)));
-                if (IsPathInManifest(destinationFilePath)) return false;
+                if (IsPathInManifest(destinationPath)) return false;
+                var source = new WebFileItem(sourcePath, folder ? WebFileItemType.Folder : WebFileItemType.File);
 
-                if (move) {
-                    try {
-                        File.Move(sourcePath, destinationFilePath);
+                // 同盘优先移动；跨盘或移动受阻时，复制和清单提交完成后才删除源数据。
+                await Task.Run(() => {
+                    if (move && MoveItemWithManifest(source, sourcePath, destinationPath, allowCopyFallback: true)) return;
+                    CopyItemWithManifest(source, destinationPath, move);
+                    if (move) {
+                        try { DeletePath(sourcePath, source.Type); }
+                        catch (Exception cleanup) {
+                            ArcLog.GetLogger<WebFileTreeViewModel>().Warn($"Imported item committed at {destinationPath}; source cleanup failed at {sourcePath}: {cleanup.Message}");
+                        }
                     }
-                    catch (IOException) {
-                        File.Copy(sourcePath, destinationFilePath, overwrite: false);
-                        File.Delete(sourcePath);
-                    }
-                }
-                else {
-                    File.Copy(sourcePath, destinationFilePath, overwrite: false);
-                }
+                });
 
-                if (move && sourceWasInProject) {
-                    _designFileUtil?.RenameManifestPath(sourcePath, destinationFilePath);
-                }
-                else {
-                    _designFileUtil?.AddManifestPath(destinationFilePath);
-                }
                 RefreshManifestSnapshot();
-
-                AddItem(parent, new WebFileItem(destinationFilePath, WebFileItemType.File, parent));
+                AddItem(parent, folder ? CreateDirectoryItem(destinationPath, parent)
+                    : new WebFileItem(destinationPath, WebFileItemType.File, parent));
                 return true;
             }
             catch (Exception ex) {
@@ -938,14 +930,17 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         /// </summary>
         public bool CanDragItem(WebFileItem item) => CanMove(item, null);
 
-        private void MoveItemWithManifest(WebFileItem item, string oldPath, string newPath) {
+        private bool MoveItemWithManifest(WebFileItem item, string oldPath, string newPath, bool allowCopyFallback = false) {
             var design = _designFileUtil;
-            if (design == null) { MoveOnDisk(item, oldPath, newPath); return; }
+            if (design == null) return MoveAndCommit();
             // Watcher callbacks must validate the filesystem after this commit/rollback finishes.
-            lock (design.ManifestSyncRoot) {
-                MoveOnDisk(item, oldPath, newPath);
+            lock (design.ManifestSyncRoot) return MoveAndCommit();
+
+            bool MoveAndCommit() {
+                try { MoveOnDisk(item, oldPath, newPath); }
+                catch (IOException) when (allowCopyFallback) { return false; }
                 try {
-                    design.RenameManifestPath(oldPath, newPath);
+                    if (design != null) CommitTransferredPath(design, oldPath, newPath, move: true);
                 }
                 catch (Exception failure) {
                     // Never overwrite a path another process may have recreated during the move.
@@ -955,6 +950,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     }
                     throw;
                 }
+                return true;
             }
         }
 
@@ -963,14 +959,14 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             else Directory.Move(oldPath, newPath);
         }
 
-        private void CopyItemWithManifest(WebFileItem source, string destinationPath) {
+        private void CopyItemWithManifest(WebFileItem source, string destinationPath, bool move = false) {
             if (source.Type == WebFileItemType.Folder) CopyImportedDirectory(source.FilePath, destinationPath);
             else CopyImportedFile(source.FilePath, destinationPath);
             var design = _designFileUtil;
             if (design == null) return;
             lock (design.ManifestSyncRoot) {
                 try {
-                    design.AddManifestPathRecursive(destinationPath);
+                    CommitTransferredPath(design, source.FilePath, destinationPath, move);
                 }
                 catch (Exception failure) {
                     // The destination was created by this completed copy; source data stays untouched.
@@ -984,6 +980,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     throw;
                 }
             }
+        }
+
+        private void CommitTransferredPath(WebDesignFileUtil design, string source, string destination, bool move) {
+            if (move && IsPathInsideProject(source)) design.RenameManifestPath(source, destination);
+            else design.AddManifestPathRecursive(destination);
         }
 
         private static void CopyImportedFile(string source, string destination) {
@@ -1327,12 +1328,12 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 item => string.Equals(item.Path, relativePath, StringComparison.OrdinalIgnoreCase));
         }
 
-        private static void DeletePath(WebFileItem item) {
-            if (item.Type == WebFileItemType.File) {
-                File.Delete(item.FilePath);
+        private static void DeletePath(string path, WebFileItemType type) {
+            if (type == WebFileItemType.File) {
+                File.Delete(path);
             }
             else {
-                FileUtil.RemoveDirectory(item.FilePath);
+                FileUtil.RemoveDirectory(path);
             }
         }
 

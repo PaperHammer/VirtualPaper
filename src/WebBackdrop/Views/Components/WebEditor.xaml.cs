@@ -512,16 +512,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
         /// 文件永久驻留内存；有未保存内容的文件保留缓冲，防止丢数据。
         /// </summary>
         private void HandleFileDeleted(string filePath) {
-            if (ViewModel == null) return;
-
-            var openFile = ViewModel.GetOpenFile(filePath);
-            if (openFile == null || !openFile.IsSaved) return;
-
-            // 当前正在编辑的模型不主动释放（后续切换文件时由 setValue 覆盖）
-            if (ViewModel.ActiveFile?.Equals(openFile) != true) {
-                _ = editorContentView.DisposeModelAsync(filePath);
-            }
-            ViewModel.CloseOpenFile(filePath);
+            ViewModel?.CloseDeletedFiles(filePath);
         }
 
         private async void HandleFileConflict(string filePath) {

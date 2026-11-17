@@ -158,6 +158,17 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             Session.FileManager.CloseDocument(filePath);
         }
 
+        internal void CloseDeletedFiles(string path) {
+            // 目录移动到删除暂存区时只会通知根路径；未保存的子文档仍保留在内存中。
+            var savedFiles = _cahcedFiles.Where(file => file.IsSaved
+                && (string.Equals(file.FilePath, path, StringComparison.OrdinalIgnoreCase)
+                    || FileUtil.IsPathWithinDirectory(path, file.FilePath))).ToArray();
+            foreach (var file in savedFiles) {
+                if (!ReferenceEquals(ActiveFile, file)) FileCacheEvicted?.Invoke(file.FilePath);
+                CloseOpenFile(file.FilePath);
+            }
+        }
+
         public async Task<bool> SaveAllAsync() {
             using var messages = GlobalMessageUtil.BeginBatch();
             var tasks = _cahcedFiles

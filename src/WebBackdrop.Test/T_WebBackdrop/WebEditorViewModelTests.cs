@@ -196,6 +196,79 @@ public partial class WebEditorViewModelTests {
         _userSettings.Verify(client => client.UpdateRecentUsedAsync(string.Empty), Times.Never);
     }
 
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task CloseDeletedFiles_DirectoryClosesSavedDescendantsAndPreservesDirtyBuffers(bool activeSaved) {
+        _session.FileManager.Stop();
+        string folder = Directory.CreateDirectory(Path.Combine(_testRoot, "assets")).FullName;
+        Directory.CreateDirectory(Path.Combine(folder, "nested"));
+        string saved = Path.Combine(folder, "saved.css");
+        string nested = Path.Combine(folder, "nested/saved.js");
+        string dirty = Path.Combine(folder, "draft.js");
+        string unrelated = Path.Combine(Directory.CreateDirectory(folder + "-backup").FullName, "saved.css");
+        foreach (string path in new[] { saved, nested, dirty, unrelated }) {
+            File.WriteAllText(path, "original");
+            await _viewModel.OpenFileAsync(path);
+        }
+        var draft = _viewModel.GetOpenFile(dirty)!;
+        draft.Content = "unsaved user content";
+        draft.SetSavedState(false);
+        _viewModel.ActiveFile = activeSaved ? _viewModel.GetOpenFile(saved) : draft;
+        var evicted = new List<string>();
+        _viewModel.FileCacheEvicted += evicted.Add;
+        Directory.Delete(folder, recursive: true);
+
+        _viewModel.CloseDeletedFiles(folder.ToUpperInvariant());
+
+        CollectionAssert.AreEquivalent(new[] { dirty, unrelated }, _viewModel.CachedFiles.Select(file => file.FilePath).ToArray());
+        CollectionAssert.AreEquivalent(activeSaved ? new[] { nested } : new[] { saved, nested }, evicted);
+        Assert.AreSame(draft, _viewModel.GetOpenFile(dirty));
+        Assert.AreEqual("unsaved user content", draft.Content);
+        Assert.IsFalse(draft.IsSaved);
+        if (activeSaved) Assert.IsNull(_viewModel.ActiveFile);
+        else Assert.AreSame(draft, _viewModel.ActiveFile);
+        Assert.IsFalse(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(saved));
+        Assert.IsFalse(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(nested));
+        Assert.IsTrue(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(dirty));
+        Assert.IsTrue(_session.FileManager.ProjectSystem.OpenDocuments.IsOpen(unrelated));
+        Assert.AreEqual("original", File.ReadAllText(unrelated));
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task CloseDeletedFiles_FileKeepsDirtyBufferAndDoesNotMatchSimilarNames(bool saved) {
+        _session.FileManager.Stop();
+        string path = Path.Combine(_testRoot, "source.js");
+        string other = path + ".backup";
+        foreach (string filePath in new[] { other, path }) {
+            File.WriteAllText(filePath, "original");
+            await _viewModel.OpenFileAsync(filePath);
+        }
+        var file = _viewModel.ActiveFile!;
+        if (!saved) { file.Content = "unsaved user content"; file.SetSavedState(false); }
+        var evicted = new List<string>();
+        _viewModel.FileCacheEvicted += evicted.Add;
+        File.Delete(path);
+
+        _viewModel.CloseDeletedFiles(path);
+
+        Assert.IsNotNull(_viewModel.GetOpenFile(other));
+        Assert.AreEqual("original", File.ReadAllText(other));
+        Assert.IsEmpty(evicted, "The active Monaco model is replaced by the existing selection flow.");
+        Assert.AreEqual(!saved, _session.FileManager.ProjectSystem.OpenDocuments.IsOpen(path));
+        if (saved) {
+            Assert.IsNull(_viewModel.GetOpenFile(path));
+            Assert.IsNull(_viewModel.ActiveFile);
+        }
+        else {
+            Assert.AreSame(file, _viewModel.GetOpenFile(path));
+            Assert.AreSame(file, _viewModel.ActiveFile);
+            Assert.AreEqual("unsaved user content", file.Content);
+        }
+    }
+
     private string _testRoot = null!;
     private WebProjectSession _session = null!;
     private WebEditorViewModel _viewModel = null!;

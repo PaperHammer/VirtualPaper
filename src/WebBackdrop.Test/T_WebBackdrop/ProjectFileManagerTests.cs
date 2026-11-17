@@ -52,10 +52,12 @@ public class ProjectFileManagerTests {
     }
 
     [TestMethod]
-    [DataRow(false)]
-    [DataRow(true)]
-    public void DirectoryCopyStaging_IgnoresRootChildrenAndPublishRename(bool nested) {
-        string staging = Path.Combine(_testRoot, ".vp-import-" + Guid.NewGuid().ToString("N"));
+    [DataRow(false, ".vp-import-")]
+    [DataRow(true, ".vp-import-")]
+    [DataRow(false, ".vp-delete-")]
+    [DataRow(true, ".vp-delete-")]
+    public void DirectoryStaging_IgnoresRootChildrenAndPublishRename(bool nested, string prefix) {
+        string staging = Path.Combine(_testRoot, prefix + Guid.NewGuid().ToString("N"));
         string path = nested ? Path.Combine(staging, "nested/app.js") : staging;
         string published = Path.Combine(_testRoot, "assets");
         Raise(ProjectChangeType.Created, path);
@@ -83,7 +85,10 @@ public class ProjectFileManagerTests {
     [DataRow(".vp-import-assets")]
     [DataRow(".vp-import-0123456789abcdef0123456789abcde")]
     [DataRow("vp-import-0123456789abcdef0123456789abcdef")]
-    public void DirectoryCopyStaging_DoesNotIgnoreSimilarUserDirectoryNames(string folder) {
+    [DataRow(".vp-delete-assets")]
+    [DataRow(".vp-delete-0123456789abcdef0123456789abcde")]
+    [DataRow("vp-delete-0123456789abcdef0123456789abcdef")]
+    public void DirectoryStaging_DoesNotIgnoreSimilarUserDirectoryNames(string folder) {
         string path = Path.Combine(_testRoot, folder, "app.js");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, "user content");
@@ -93,6 +98,41 @@ public class ProjectFileManagerTests {
         Assert.HasCount(1, _changes);
         Assert.IsTrue(_manager.TryConsumeExternalChange(path, out FileChangeType type));
         Assert.AreEqual(FileChangeType.Created, type);
+    }
+
+    [TestMethod]
+    [DataRow(false, false)]
+    [DataRow(false, true)]
+    [DataRow(true, false)]
+    [DataRow(true, true)]
+    public void StagedDelete_NotifiesOriginalPathOnlyAfterCommit(bool folder, bool restored) {
+        string original = Path.Combine(_testRoot, folder ? "assets" : "app.js");
+        if (folder) Directory.CreateDirectory(original);
+        else File.WriteAllText(original, "user bytes");
+        string staging = Path.Combine(_testRoot, ".vp-delete-" + Guid.NewGuid().ToString("N"));
+        if (!restored) {
+            if (folder) Directory.Move(original, staging);
+            else File.Move(original, staging);
+        }
+
+        _manager.OnProjectChanged(new ProjectChangedEvent { Type = ProjectChangeType.Renamed, Path = staging, OldPath = original });
+
+        Assert.IsEmpty(_added);
+        Assert.IsEmpty(_renamed);
+        if (restored) {
+            Assert.IsEmpty(_removed);
+            Assert.IsEmpty(_changes);
+            Assert.IsFalse(_manager.TryConsumeExternalChange(original, out _));
+        }
+        else {
+            CollectionAssert.AreEqual(new[] { original }, _removed);
+            Assert.HasCount(1, _changes);
+            Assert.AreEqual(ProjectChangeType.Deleted, _changes[0].Type);
+            Assert.AreEqual(original, _changes[0].Path);
+            Assert.IsTrue(_manager.TryConsumeExternalChange(original, out var type));
+            Assert.AreEqual(FileChangeType.Deleted, type);
+        }
+        Assert.IsFalse(_manager.TryConsumeExternalChange(staging, out _));
     }
 
     [TestMethod]

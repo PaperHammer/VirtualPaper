@@ -130,9 +130,17 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         private void ApplyProjectChange(ProjectChangedEvent e) {
+            // 删除暂存是实现细节；提交后仍需按原路径通知编辑器关闭已保存的文档。
+            string? deletionStaging = null;
+            if (e.Type == ProjectChangeType.Renamed && e.OldPath != null
+                && IsStagingDirectory(Path.GetFileName(e.Path), ".vp-delete-")) {
+                deletionStaging = e.Path;
+                e = new ProjectChangedEvent { Type = ProjectChangeType.Deleted, Path = e.OldPath };
+            }
             if (ShouldIgnoreChange(e)) return;
 
             lock (_manifestSyncRoot) {
+                if (deletionStaging != null) ProjectSystem.OpenDocuments.Rename(deletionStaging, e.Path);
                 // “另存为”等写入的新文件不自动登记进 manifest
                 if (e.Type == ProjectChangeType.Created && TryConsumeIgnoredCreated(e.Path)) return;
 
@@ -173,18 +181,21 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             || IsDebugArtifact(e.Path);
 
         /// <summary>
-        /// 原子写入文件及目录复制的暂存内容不纳入工程；完整复制由发起方登记。
+        /// 原子写入文件及复制、删除的暂存内容不纳入工程；清单由发起方提交或回退。
         /// </summary>
         private bool IsTransientFile(string path) {
             var fileName = Path.GetFileName(path);
             if (fileName.StartsWith('.') && fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) return true;
-            const string stagingPrefix = ".vp-import-";
-            if (!path.Contains(stagingPrefix, StringComparison.OrdinalIgnoreCase)) return false;
+            if (!path.Contains(".vp-import-", StringComparison.OrdinalIgnoreCase)
+                && !path.Contains(".vp-delete-", StringComparison.OrdinalIgnoreCase)) return false;
             return Path.GetRelativePath(ProjectSystem.ProjectRoot, path)
                 .Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries)
-                .Any(part => part.StartsWith(stagingPrefix, StringComparison.OrdinalIgnoreCase)
-                    && Guid.TryParseExact(part.AsSpan(stagingPrefix.Length), "N", out _));
+                .Any(part => IsStagingDirectory(part, ".vp-import-") || IsStagingDirectory(part, ".vp-delete-"));
         }
+
+        private static bool IsStagingDirectory(string part, string prefix) =>
+            part.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+            && Guid.TryParseExact(part.AsSpan(prefix.Length), "N", out _);
 
         /// <summary>
         /// 判断是否为调试运行时写入项目目录的临时元数据（不纳入项目管理）

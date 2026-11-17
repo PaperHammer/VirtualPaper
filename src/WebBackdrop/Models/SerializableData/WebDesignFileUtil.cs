@@ -56,9 +56,9 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         public void SaveProjectData(WpWebProjectData data) {
-            _projectData = data;
             var json = JsonSerializer.Serialize(data, WpWebProjectDataContext.Default.WpWebProjectData);
             WriteAllTextAtomic(GetProjectDataFilePath(), json);
+            _projectData = data;
         }
 
         public void EnsureProjectStructure() {
@@ -99,21 +99,25 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public void AddManifestPaths(IEnumerable<string> paths, string? role = null) {
             lock (_manifestLock) {
                 var manifest = LoadOrCreateManifest();
-                var files = GetOrCreateFilesArray(manifest);
+                var files = manifest["files"] as JsonArray;
                 var changed = false;
 
                 foreach (var path in paths) {
                     if (IsProjectFile(path) && role == null) continue;
 
                     var relativePath = ToRelativePath(path);
-                    if (files.OfType<JsonObject>().Any(item => IsSameManifestPath(item["path"]?.GetValue<string>(), relativePath))) continue;
+                    if (files?.OfType<JsonObject>().Any(item => IsSameManifestPath(item["path"]?.GetValue<string>(), relativePath)) == true) continue;
 
-                    files.Add(new JsonObject {
+                    if (!changed) {
+                        manifest = CreateEditableManifest();
+                        files = GetOrCreateFilesArray(manifest);
+                        changed = true;
+                    }
+                    files!.Add(new JsonObject {
                         ["path"] = relativePath,
                         ["type"] = Directory.Exists(path) ? "folder" : GetFileType(relativePath),
                         ["role"] = role ?? GetFileRole(relativePath)
                     });
-                    changed = true;
                 }
 
                 if (changed) SaveManifest(manifest);
@@ -137,7 +141,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
 
             lock (_manifestLock) {
                 var relativePath = ToRelativePath(path);
-                var manifest = LoadOrCreateManifest();
+                var manifest = CreateEditableManifest();
                 if (manifest["files"] is not JsonArray files) return;
 
                 for (var i = files.Count - 1; i >= 0; i--) {
@@ -157,7 +161,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             lock (_manifestLock) {
                 var oldRelativePath = ToRelativePath(oldPath);
                 var newRelativePath = ToRelativePath(newPath);
-                var manifest = LoadOrCreateManifest();
+                var manifest = CreateEditableManifest();
                 if (manifest["files"] is not JsonArray files) return;
 
                 foreach (var item in files.OfType<JsonObject>()) {
@@ -214,7 +218,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             if (!File.Exists(ProjectFilePath)) return;
 
             lock (_manifestLock) {
-                var manifest = LoadOrCreateManifest();
+                var manifest = CreateEditableManifest();
                 manifest["name"] = ProjectName;
                 manifest.Remove("project");
                 manifest.Remove("entry");
@@ -283,16 +287,19 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
             }
         }
 
+        // Only a successful SaveManifest publishes edits; readers keep the previous snapshot on failure.
+        private JsonObject CreateEditableManifest() => (JsonObject)LoadOrCreateManifest().DeepClone();
+
         private JsonObject LoadOrCreateManifest() {
             if (_manifestCache != null) return _manifestCache;
 
             if (File.Exists(ProjectFilePath)) {
                 try {
-                    if (JsonNode.Parse(File.ReadAllText(ProjectFilePath)) is JsonObject node) {
-                        _parseFailed = false;
-                        _manifestCache = node;
-                        return node;
-                    }
+                    var node = JsonNode.Parse(File.ReadAllText(ProjectFilePath)) as JsonObject
+                        ?? throw new InvalidDataException("The Web project manifest must contain a JSON object.");
+                    _parseFailed = false;
+                    _manifestCache = node;
+                    return node;
                 }
                 catch (Exception ex) {
                     _parseFailed = true;

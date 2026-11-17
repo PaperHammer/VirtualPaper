@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common.Utils.ProjectSystem;
@@ -95,6 +96,8 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
 
         // 按文件路径暂存最新修改事件；取消上一轮 150ms 延时并重新计时，连续事件只保留一次
         private void QueueChangedEvent(ProjectChangedEvent e) {
+            if (ShouldIgnoreChange(e)) return;
+
             CancellationToken token;
             lock (_changeLock) {
                 _pendingChangedEvents[e.Path] = e;
@@ -125,11 +128,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         }
 
         private void ApplyProjectChange(ProjectChangedEvent e) {
-            // 原子写入产生的瞬时临时文件（".xxx.tmp"）不进入清单/UI，也不触发外部变更逻辑
-            if (IsTransientFile(e.Path) || (e.OldPath != null && IsTransientFile(e.OldPath))) return;
-
-            // 调试运行时写入的临时元数据不进入清单/UI
-            if (IsDebugArtifact(e.Path)) return;
+            if (ShouldIgnoreChange(e)) return;
 
             // “另存为”等写入的新文件不自动登记进 manifest
             if (e.Type == ProjectChangeType.Created && TryConsumeIgnoredCreated(e.Path)) return;
@@ -167,12 +166,23 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             Changed?.Invoke(e);
         }
 
+        private bool ShouldIgnoreChange(ProjectChangedEvent e) =>
+            IsTransientFile(e.Path)
+            || (e.OldPath != null && IsTransientFile(e.OldPath))
+            || IsDebugArtifact(e.Path);
+
         /// <summary>
-        /// 判断是否为 WebDesignFileUtil 原子写入产生的瞬时临时文件（"." 开头、".tmp" 结尾）
+        /// 原子写入文件及目录复制的暂存内容不纳入工程；完整复制由发起方登记。
         /// </summary>
-        private static bool IsTransientFile(string path) {
+        private bool IsTransientFile(string path) {
             var fileName = Path.GetFileName(path);
-            return fileName.StartsWith('.') && fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase);
+            if (fileName.StartsWith('.') && fileName.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) return true;
+            const string stagingPrefix = ".vp-import-";
+            if (!path.Contains(stagingPrefix, StringComparison.OrdinalIgnoreCase)) return false;
+            return Path.GetRelativePath(ProjectSystem.ProjectRoot, path)
+                .Split([Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar], StringSplitOptions.RemoveEmptyEntries)
+                .Any(part => part.StartsWith(stagingPrefix, StringComparison.OrdinalIgnoreCase)
+                    && Guid.TryParseExact(part.AsSpan(stagingPrefix.Length), "N", out _));
         }
 
         /// <summary>

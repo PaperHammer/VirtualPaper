@@ -51,6 +51,46 @@ public class ProjectFileManagerTests {
     }
 
     [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void DirectoryCopyStaging_IgnoresRootChildrenAndPublishRename(bool nested) {
+        string staging = Path.Combine(_testRoot, ".vp-import-" + Guid.NewGuid().ToString("N"));
+        string path = nested ? Path.Combine(staging, "nested/app.js") : staging;
+        string published = Path.Combine(_testRoot, "assets");
+        Raise(ProjectChangeType.Created, path);
+        Raise(ProjectChangeType.Modified, path);
+        Raise(ProjectChangeType.Deleted, path);
+        _manager.OnProjectChanged(new ProjectChangedEvent { Type = ProjectChangeType.Renamed, Path = published, OldPath = path });
+
+        Assert.IsEmpty(_added);
+        Assert.IsEmpty(_removed);
+        Assert.IsEmpty(_renamed);
+        Assert.IsEmpty(_changes);
+        Assert.IsFalse(_manager.TryConsumeExternalChange(path, out _));
+        Assert.IsFalse(_manager.TryConsumeExternalChange(published, out _));
+
+        // Completed copies are explicitly registered by their owner; ordinary later edits remain visible.
+        string existingFile = Path.Combine(published, "app.js");
+        Raise(ProjectChangeType.Created, existingFile);
+        CollectionAssert.AreEqual(new[] { existingFile }, _added);
+        Assert.HasCount(1, _changes);
+    }
+
+    [TestMethod]
+    [DataRow(".vp-import-assets")]
+    [DataRow(".vp-import-0123456789abcdef0123456789abcde")]
+    [DataRow("vp-import-0123456789abcdef0123456789abcdef")]
+    public void DirectoryCopyStaging_DoesNotIgnoreSimilarUserDirectoryNames(string folder) {
+        string path = Path.Combine(_testRoot, folder, "app.js");
+        Raise(ProjectChangeType.Created, path);
+
+        CollectionAssert.AreEqual(new[] { path }, _added);
+        Assert.HasCount(1, _changes);
+        Assert.IsTrue(_manager.TryConsumeExternalChange(path, out FileChangeType type));
+        Assert.AreEqual(FileChangeType.Created, type);
+    }
+
+    [TestMethod]
     public void IgnoreNextCreated_IsConsumedExactlyOnce() {
         string path = Path.Combine(_testRoot, "save-as.txt");
         _manager.IgnoreNextCreated(path);

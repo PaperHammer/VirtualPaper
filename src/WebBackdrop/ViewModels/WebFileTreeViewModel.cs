@@ -660,6 +660,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             if (_designFileUtil?.IsProjectFile(destinationPath) == true) return false;
 
             try {
+                // Load before changing the manifest so lazy loading cannot replace the moved node.
+                EnsureChildrenLoaded(target);
                 if (source.Type == WebFileItemType.File) {
                     if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
                         File.Move(source.FilePath, destinationPath);
@@ -672,7 +674,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     Directory.Move(source.FilePath, destinationPath);
                 }
                 else {
-                    FileUtil.CopyDirectory(source.FilePath, destinationPath, true);
+                    CopyImportedDirectory(source.FilePath, destinationPath);
                 }
             }
             catch (Exception ex) {
@@ -689,7 +691,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 RebindItemPath(source, destinationPath, target);
                 oldParent?.Children.Remove(source);
 
-                EnsureChildrenLoaded(target);
                 AddItem(target, source);
 
                 ClearClipboard();
@@ -698,7 +699,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 _designFileUtil?.AddManifestPathRecursive(destinationPath);
                 RefreshManifestSnapshot();
 
-                EnsureChildrenLoaded(target);
                 AddItem(target, BuildItem(destinationPath, source.Type, target));
             }
 
@@ -743,16 +743,12 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 return false;
             }
 
-            if (_clipboardOperation == WebFileTreeClipboardOperation.Copy) return true;
-
             if (string.Equals(_clipboardItem.FilePath, target.FilePath, StringComparison.OrdinalIgnoreCase)) {
                 return false;
             }
 
             if (_clipboardItem.Type == WebFileItemType.Folder) {
-                var relativePath = Path.GetRelativePath(_clipboardItem.FilePath, target.FilePath);
-                if (relativePath == "."
-                    || (!relativePath.StartsWith("..") && !Path.IsPathRooted(relativePath))) {
+                if (FileUtil.IsPathWithinDirectory(_clipboardItem.FilePath, target.FilePath)) {
                     return false;
                 }
             }

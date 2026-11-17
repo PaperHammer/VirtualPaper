@@ -804,7 +804,14 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         internal async void LoadMoreAsync() => await LoadMorePageAsync();
 
         internal async Task LoadMorePageAsync() {
-            if (!_hasMore || LibLoadingStatus == LoadingStatus.Changing) return;
+            if (LibLoadingStatus == LoadingStatus.Changing) return;
+            // A failed filter change retains the previous cards and offset. Retry
+            // the new query before paging, even if the previous query was exhausted.
+            if (_loadedFilter != _filter) {
+                await ReloadQueryAsync();
+                return;
+            }
+            if (!_hasMore) return;
             int version = _queryVersion;
             LibLoadingStatus = LoadingStatus.Changing;
             await _queryGate.WaitAsync();

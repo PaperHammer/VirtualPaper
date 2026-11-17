@@ -223,8 +223,8 @@ namespace VirtualPaper.Models.Cores {
         public bool IsAvailable() {
             // 缩略图允许为空（如 Web 壁纸包缺少 preview 时），UI 层用原生占位图兜底显示
             return this.FType != FileType.FUnknown
-                && this.WallpaperUid != string.Empty
-                && this.AppInfo.AppVersion != string.Empty;
+                && !string.IsNullOrWhiteSpace(this.WallpaperUid)
+                && !string.IsNullOrWhiteSpace(this.AppInfo?.AppVersion);
         }
 
         public bool Equals(IWpBasicData? other) {

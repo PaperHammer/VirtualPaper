@@ -139,23 +139,6 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         }
 
         // ============================================================
-        // Pause / Resume / Cancel 传播
-        // ============================================================
-
-        [TestMethod]
-        public void Pause_Resume_Cancel_PropagateToDownloadService() {
-            var service = CreateInstallerService();
-
-            _fakeDownload.Pause();
-            _fakeDownload.Resume();
-            _fakeDownload.CancelAsync();
-
-            Assert.IsTrue(_fakeDownload.PauseCalled);
-            Assert.IsTrue(_fakeDownload.ResumeCalled);
-            Assert.IsTrue(_fakeDownload.CancelCalled);
-        }
-
-        // ============================================================
         // 自动触发 — PluginsUpdateService.CheckAndRecoverAsync
         // ============================================================
 
@@ -374,9 +357,6 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
         public string? Sha256Content { get; set; }
         public bool? OverrideVerifyResult { get; set; }
         public Exception? ShaDownloadError { get; set; }
-        public bool PauseCalled { get; private set; }
-        public bool ResumeCalled { get; private set; }
-        public bool CancelCalled { get; private set; }
 
         public FakeDownloadService(byte[] defaultContent) {
             _defaultContent = defaultContent;
@@ -431,9 +411,9 @@ namespace VirtualPaper.Core.Test.T_AppUpdate {
             return string.Equals(actual, expectedSha256, StringComparison.OrdinalIgnoreCase);
         }
 
-        public void Pause() => PauseCalled = true;
-        public void Resume() => ResumeCalled = true;
-        public Task CancelAsync() { CancelCalled = true; return Task.CompletedTask; }
+        public void Pause() { }
+        public void Resume() { }
+        public Task CancelAsync() => Task.CompletedTask;
         public void Dispose() { }
     }
 

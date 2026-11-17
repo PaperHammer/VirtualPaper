@@ -2,7 +2,7 @@
 
 ## Project map
 
-VirtualPaper is a Windows wallpaper application built with .NET 8, WPF, WinUI 3 and WebView2. It is a multi-process application: the WPF Core owns services and the tray; the WinUI process provides the library, settings and editors; wallpaper players and the screen saver run separately. Processes communicate through gRPC over named pipes.
+VirtualPaper is a Windows wallpaper application built with .NET 10, WPF, WinUI 3 and WebView2. It is a multi-process application: the WPF Core owns services and the tray; the WinUI process provides the library, settings and editors; wallpaper players and the screen saver run separately. Processes communicate through gRPC over named pipes.
 
 | Area | Source entry points |
 | --- | --- |
@@ -13,19 +13,24 @@ VirtualPaper is a Windows wallpaper application built with .NET 8, WPF, WinUI 3 
 | AI tasks and inference | `src/VirtualPaper.IntelligentPanel`, `src/VirtualPaper.ML` |
 | Wallpaper playback and screen saver | `src/VirtualPaper.PlayerWeb`, `src/VirtualPaper.PlayerWeb.Core`, `src/VirtualPaper.ScreenSaver` |
 | Shared models, infrastructure and RPC | `src/VirtualPaper.Common`, `src/VirtualPaper.Models`, `src/VirtualPaper.UIComponent`, `src/VirtualPaper.Grpc.*` |
-| Packaging and automation | `InnoSetup/setup.iss`, `test`, `.github/scripts`, `.github/workflows` |
+| Packaging and automation | `packaging/inno/setup.iss`, `packaging/msix/VirtualPaper.Package.wapproj`, `test`, `.github/scripts`, `.github/workflows` |
+| Repository asset tools | `resources/tools` |
 
 Read [developer documentation](doc/README.md) for architecture and module details. Read source implementations when deciding behavior; generated output is not the source of truth.
 
-Maintain translations only in `src/VirtualPaper.UIComponent/Strings/<locale>/Resources.resw`; add XAML property mappings in `Localization/XamlResources.xml`. Normal builds generate complete resources under `obj`. Do not hand-edit or commit generated `Ui_...` translations. See the [localization guide](src/VirtualPaper.UIComponent/Localization/README.md) for generation and packaged validation.
+Maintain translations only in `localization/Strings/<locale>/Resources.resw` and supported-language metadata in `localization/LanguageCatalog.json`. The shared generator produces UI resources, Core/Common resx, installer messages and MSIX declarations; outputs remain under `obj`. Keep XAML property mappings in `src/VirtualPaper.UIComponent/Localization/XamlResources.xml` and other consumer mappings in `localization/ResourceMappings.xml`. Do not hand-edit generated translations. See the [localization guide](localization/README.md). Language matching preserves the writing system and tries ordered system preferences before English fallback; existing user choices take priority over installer markers. Direct ISS compilation runs generation automatically.
 
 ## Test skill and entry points
 
-For requests to run, select, extend or diagnose tests, read the repository skill at [.agents/skills/virtualpaper-testing/SKILL.md](.agents/skills/virtualpaper-testing/SKILL.md). Follow its linked guides only for the relevant test layer. Agents without skill discovery can read that file directly.
+Store listing copy, versioned release notes, screenshot sources and capture/release standards live in [resources/store](resources/store/README.md) ([中文](resources/store/README.zh-CN.md)). Maintain these reviewed inputs in the repository; Pre-release consumes the fixed source snapshot to update only its owned, uncommitted Store draft.
+
+For requests to run, select, extend or diagnose tests, read the repository skill at [.agents/skills/testing/SKILL.md](.agents/skills/testing/SKILL.md). Follow its linked guides only for the relevant test layer. Agents without skill discovery can read that file directly.
 
 - Complete local acceptance: `pwsh -NoProfile -File test/Run-Tests.ps1` from an elevated PowerShell on a clean Windows test installation.
 - Focused project tests: `test/Run-ProjectTests.ps1` after a complete Release solution build.
 - Real UI tests: `test/Run-UIOperationTests.ps1`; application cases start isolated Core and use its production UI launch path.
+- Complete MSIX acceptance: `test/Run-MsixTests.ps1`; requires elevation and an unlocked desktop, uses a per-run signed package identity, all project jobs and installed extended UI, then reinstalls/uninstalls and removes temporary certificate trust. MSIX UI is strict; Inno acceptance remains separate.
+- Independent cross-version upgrade: `test/Run-UpgradeTests.ps1 -Channel EXE|MSIX`; requires two versioned package artifacts and their matching Release test tools. It preserves the same-package smoke entry points and never dispatches CI.
 - Workflow/script contracts: `pwsh -NoProfile -File .github/scripts/validate-test-workflow.ps1`.
 - Details and prerequisites: [testing guide](test/README.md) / [中文](test/README.zh-CN.md).
 
@@ -37,9 +42,11 @@ Use Visual Studio MSBuild on `src/VirtualPaper.sln` with `Configuration=Release`
 
 [Pre-merge Check](.github/workflows/pre-merge-check.yml) and [Pre-release](.github/workflows/pre-release.yml) are both `workflow_dispatch` only. Local testing does not dispatch them, update PR status, synchronize product versions or create releases.
 
-Pre-merge Check tests a fixed merge snapshot for an open same-repository PR. `dev → main` requires exactly one `version:major`, `version:minor`, `version:build` or `version:revision` label. Pre-release verifies that checked merged PR and retests its versioned build/package. Both workflows require installer smoke and project checks to pass. Extended UI runs in an independent `test-ui-operation` job against Release output, with its own Core/UI sessions; only that job is non-blocking. Summaries retain failed/skipped UI evidence with `-AllowUIFailure -UIJobResult`. Smoke cannot pass with skipped startup/profile checks. Version synchronization/drafts require packaging and validated summary success. Plugin-only releases skip product-version synchronization. See the [workflow guide](.github/workflows/README.md) / [中文](.github/workflows/README.zh-CN.md).
+Pre-merge Check tests a fixed merge snapshot for an open same-repository PR. `dev → main` requires exactly one `version:*` label. It always packages EXE and MSIX in parallel; Pre-release adds MSIX when the checked merged PR has `channel:msstore`. A shared Release build feeds packaging and the eight shared project jobs concurrently; each project suite runs once. `Packages Ready` aggregates selected package results, and `Tests Passed` aggregates all eight project results without downloading artifacts or rerunning tests. Each EXE/MSIX call to `package-acceptance.yml` waits for its own package and `Tests Passed`, then runs independent Smoke and UI Acceptance jobs without waiting for the other package. `Packages Ready` remains a required final-summary check. All four jobs can run in parallel on separate fresh GitHub-hosted Windows VMs, each with its own installation/profile and the same frozen source/build/package. All selected project tests and smoke checks must pass without skips. In CI, only extended UI jobs use job-level `continue-on-error`, so failed UI steps/checks remain visible without failing the workflow. The parent summary requires a successful UI report upload, readable raw reports and actual run outcomes; local acceptance remains strict. A crashed/timed-out host writes a Failed diagnostic report with no invented case results. `Summarize-PipelineTests.ps1` verifies raw reports, job outcomes, source SHA and package hashes before version synchronization and drafts. After acceptance, product releases commit the version only on main, merge that updated main into latest dev, then atomically push both branches; conflicts prefer main while nonconflicting dev changes survive. Git-operation failures abort the pending merge; push rejection leaves remote refs unchanged. GitHub receives the EXE/plugin draft; Partner Center receives an uncommitted MSIX draft. Formal Store configuration is required only for selected Pre-release runs. Plugin-only releases skip product-version synchronization but still ship a full selected MSIX. Local complete runners remain separate and strict. See the [workflow guide](.github/workflows/README.md) / [中文](.github/workflows/README.zh-CN.md).
 
 When changing runners, test registration or CI dependencies, update the test/workflow guides and run the workflow contract validator. Test inventories and job mappings live in `test/TestReportSupport.ps1` and `test/VirtualPaper.UIOperationTest/App.xaml.cs`; do not infer counts from old logs.
+
+Coverage summaries group by authored product module and merge source-path/line hits across all seven regular project reports. Each canonical report remains required; do not sum repeated dependency denominators or label test-suite totals as product-module coverage. Real UI/script/hardware evidence remains separate, and instrumentation exclusions must not be widened to raise the percentage.
 
 ## Local execution boundaries
 
@@ -47,4 +54,4 @@ Installer acceptance changes real installed files, shortcuts and uninstall regis
 
 Real UI acceptance requires the active, unlocked Windows desktop and may occupy the foreground. An unavailable desktop is an explicit **skip**, not a passing UI result. Do not weaken detection to make a run green. Session locking, startup registration and persistent system-setting UI cases remain excluded; real idle testing is opt-in.
 
-Keep `TestResults`, `bin`, `obj`, `Plugins`, installer output and downloaded/generated third-party assets out of commits. Root `scripts/` is ignored local tooling; tracked reusable automation belongs under `test/` or `.github/scripts/`. Describe actual validation, skipped coverage and remaining failures separately.
+Keep `TestResults`, `bin`, `obj`, `Plugins`, installer output and downloaded/generated third-party assets out of commits. Root `scripts/` is ignored local tooling; tracked test/release automation belongs under `test/` or `.github/scripts/`, and asset-generation tools under `resources/tools/`. Describe actual validation, skipped coverage and remaining failures separately.

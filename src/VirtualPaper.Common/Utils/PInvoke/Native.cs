@@ -312,6 +312,10 @@ namespace VirtualPaper.Common.Utils.PInvoke {
         [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
         public static extern System.IntPtr GetCommandLine();
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool AllowSetForegroundWindow(uint processId);
+
         [DllImport("user32")]
         public static extern bool PostMessage(IntPtr hwnd, int msg, IntPtr wparam, IntPtr lparam);
 

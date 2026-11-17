@@ -4,7 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:lang="clr-namespace:VirtualPaper.lang"
-        Title="PluginUpdateWindow"
+        Title="{Binding [AppUpdater_WindowTitle], Source={x:Static lang:LanguageManager.Instance}}"
         Icon="pack://application:,,,/VirtualPaper;component/Resources/appicon_download.ico"
         Width="620"
         Height="300"

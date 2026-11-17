@@ -14,9 +14,48 @@ namespace VirtualPaper.Core.Test.T_Workflows;
 [DoNotParallelize]
 [TestCategory("Workflow")]
 public class SettingsWorkflowTests {
+    public TestContext TestContext { get; set; } = null!;
+
+    [TestMethod]
+    [Timeout(30000, CooperativeCancellation = true)]
+    public async Task UiHardwareAcceleration_LegacyProfileAndClient_PreserveSavedPreferenceAcrossRestart() {
+        using var environment = new WorkflowEnvironment();
+        var token = TestContext.CancellationTokenSource.Token;
+        token.ThrowIfCancellationRequested();
+        File.WriteAllText(Constants.CommonPaths.UserSettingsPath, "{\"WallpaperWaitTime\":73}");
+        environment.StartSettingsServer();
+        using (var client = new UserSettingsClient(environment.CreateChannel())) {
+            Assert.IsTrue(client.Settings.UiHardwareAccelerationEnabled);
+            client.Settings.UiHardwareAccelerationEnabled = false;
+            await client.SaveAsync<ISettings>().WaitAsync(token);
+            Assert.IsFalse(JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!["UiHardwareAccelerationEnabled"]!.GetValue<bool>());
+
+            var legacyClient = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
+            var request = await legacyClient.GetSettingsAsync(new Empty(), cancellationToken: token);
+            request.ClearUiHardwareAccelerationEnabled();
+            request.WallpaperWaitTime = 74;
+            await legacyClient.SetSettingsAsync(request, cancellationToken: token);
+            await client.LoadAsync<ISettings>().WaitAsync(token);
+            Assert.IsFalse(client.Settings.UiHardwareAccelerationEnabled);
+        }
+
+        environment.StartSettingsServer();
+        using var restarted = new UserSettingsClient(environment.CreateChannel());
+        Assert.IsFalse(restarted.Settings.UiHardwareAccelerationEnabled);
+        Assert.AreEqual(74, restarted.Settings.WallpaperWaitTime);
+        restarted.Settings.UiHardwareAccelerationEnabled = true;
+        await restarted.SaveAsync<ISettings>().WaitAsync(token);
+        await restarted.LoadAsync<ISettings>().WaitAsync(token);
+        Assert.IsTrue(restarted.Settings.UiHardwareAccelerationEnabled);
+        Assert.IsTrue(JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!["UiHardwareAccelerationEnabled"]!.GetValue<bool>());
+        environment.UiRunner.Verify(runner => runner.RestartUIAsync(), Times.Never);
+    }
+
     [TestMethod]
     public async Task BuiltInLibrary_LegacyProfileGetsSavedDefault_AndExplicitPathSurvivesRestartAndLegacyClient() {
         using var environment = new WorkflowEnvironment();
+        var token = TestContext.CancellationTokenSource.Token;
+        token.ThrowIfCancellationRequested();
         string userDirectory = Path.Combine(environment.Root, "moved library", "wallpapers");
         var legacy = new JsonObject { ["WallpaperDir"] = userDirectory };
         File.WriteAllText(Constants.CommonPaths.UserSettingsPath, legacy.ToJsonString());
@@ -28,12 +67,12 @@ public class SettingsWorkflowTests {
 
         string explicitDirectory = Path.Combine(environment.Root, "independent built-ins");
         client.Settings.BuiltInWallpapersDir = explicitDirectory;
-        await client.SaveAsync<ISettings>();
+        await client.SaveAsync<ISettings>().WaitAsync(token);
         var legacyClient = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
-        var request = await legacyClient.GetSettingsAsync(new Empty());
+        var request = await legacyClient.GetSettingsAsync(new Empty(), cancellationToken: token);
         request.ClearBuiltInWallpapersDir();
         request.WallpaperWaitTime = 74;
-        await legacyClient.SetSettingsAsync(request);
+        await legacyClient.SetSettingsAsync(request, cancellationToken: token);
 
         environment.StartSettingsServer();
         using var restarted = new UserSettingsClient(environment.CreateChannel());
@@ -45,9 +84,11 @@ public class SettingsWorkflowTests {
     [TestMethod]
     [DataRow(true)]
     [DataRow(false)]
-    [Timeout(30000)]
+    [Timeout(30000, CooperativeCancellation = true)]
     public async Task Client_SaveToDisk_ReloadAndRestart_PreservesPreferences(bool animations) {
         using var environment = new WorkflowEnvironment();
+        var token = TestContext.CancellationTokenSource.Token;
+        token.ThrowIfCancellationRequested();
         environment.StartSettingsServer();
         using (var client = new UserSettingsClient(environment.CreateChannel())) {
             client.Settings.NavigationAnimationsEnabled = animations;
@@ -55,7 +96,7 @@ public class SettingsWorkflowTests {
             client.Settings.WallpaperWaitTime = 137;
             client.Settings.WaitingTime = 9;
             client.Settings.WhiteListScr = [new ProcInfo { ProcName = "workflow.exe", IconPath = "workflow.ico" }];
-            await client.SaveAsync<ISettings>();
+            await client.SaveAsync<ISettings>().WaitAsync(token);
 
             var json = JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!;
             Assert.AreEqual(animations, json["NavigationAnimationsEnabled"]!.GetValue<bool>());
@@ -64,7 +105,7 @@ public class SettingsWorkflowTests {
             var previous = client.Settings;
             client.Settings.NavigationAnimationsEnabled = !animations;
             client.Settings.RemindUnpreservedIntelligentResults = !animations;
-            await client.LoadAsync<ISettings>();
+            await client.LoadAsync<ISettings>().WaitAsync(token);
             Assert.AreNotSame(previous, client.Settings);
             AssertPreferences(client.Settings, animations);
         }
@@ -76,9 +117,11 @@ public class SettingsWorkflowTests {
     }
 
     [TestMethod]
-    [Timeout(30000)]
+    [Timeout(30000, CooperativeCancellation = true)]
     public async Task LegacyConfigAndOmittedField_PreserveDefaultAndSavedPreference() {
         using var environment = new WorkflowEnvironment();
+        var token = TestContext.CancellationTokenSource.Token;
+        token.ThrowIfCancellationRequested();
         File.WriteAllText(Constants.CommonPaths.UserSettingsPath, "{\"WallpaperWaitTime\":73}");
         environment.StartSettingsServer();
         using var client = new UserSettingsClient(environment.CreateChannel());
@@ -87,14 +130,15 @@ public class SettingsWorkflowTests {
         Assert.AreEqual(73, client.Settings.WallpaperWaitTime);
         client.Settings.NavigationAnimationsEnabled = false;
         client.Settings.RemindUnpreservedIntelligentResults = false;
-        await client.SaveAsync<ISettings>();
+        await client.SaveAsync<ISettings>().WaitAsync(token);
 
         var legacyClient = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
-        var request = await legacyClient.GetSettingsAsync(new Empty());
+        var request = await legacyClient.GetSettingsAsync(new Empty(), cancellationToken: token);
         request.ClearNavigationAnimationsEnabled();
         request.ClearRemindUnpreservedIntelligentResults();
         request.WallpaperWaitTime = 74;
-        await legacyClient.SetSettingsAsync(request);
+        await legacyClient.SetSettingsAsync(request, cancellationToken: token);
+        token.ThrowIfCancellationRequested();
         client.Load<ISettings>();
         Assert.IsFalse(client.Settings.NavigationAnimationsEnabled);
         Assert.IsFalse(client.Settings.RemindUnpreservedIntelligentResults);
@@ -108,9 +152,11 @@ public class SettingsWorkflowTests {
     }
 
     [TestMethod]
-    [Timeout(30000)]
+    [Timeout(30000, CooperativeCancellation = true)]
     public async Task CorruptSettings_RecoverToReadableDefaults_ThenPersistThroughClient() {
         using var environment = new WorkflowEnvironment();
+        var token = TestContext.CancellationTokenSource.Token;
+        token.ThrowIfCancellationRequested();
         File.WriteAllText(Constants.CommonPaths.UserSettingsPath, "{broken json");
         environment.StartSettingsServer();
         using var client = new UserSettingsClient(environment.CreateChannel());
@@ -118,10 +164,35 @@ public class SettingsWorkflowTests {
         Assert.IsTrue(client.Settings.RemindUnpreservedIntelligentResults);
         Assert.IsNotNull(JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath)));
         client.Settings.WaitingTime = 12;
-        await client.SaveAsync<ISettings>();
+        await client.SaveAsync<ISettings>().WaitAsync(token);
         environment.StartSettingsServer();
         using var restarted = new UserSettingsClient(environment.CreateChannel());
         Assert.AreEqual(12, restarted.Settings.WaitingTime);
+    }
+
+    [TestMethod]
+    public async Task AiUseNotice_LegacyProfileStartsUnacknowledged_AndClientPersistsAcrossRestart() {
+        using var environment = new WorkflowEnvironment();
+        var token = TestContext.CancellationTokenSource.Token;
+        File.WriteAllText(Constants.CommonPaths.UserSettingsPath, "{\"WallpaperWaitTime\":73}");
+        environment.StartSettingsServer();
+        using (var client = new UserSettingsClient(environment.CreateChannel())) {
+            Assert.AreEqual(0, client.Settings.AiUseNoticeVersion);
+            client.Settings.AiUseNoticeVersion = 1;
+            await client.SaveAsync<ISettings>().WaitAsync(token);
+            Assert.AreEqual(1, JsonNode.Parse(File.ReadAllText(Constants.CommonPaths.UserSettingsPath))!["AiUseNoticeVersion"]!.GetValue<int>());
+        }
+        environment.StartSettingsServer();
+        using var restarted = new UserSettingsClient(environment.CreateChannel());
+        Assert.AreEqual(1, restarted.Settings.AiUseNoticeVersion);
+        var legacy = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(environment.CreateChannel());
+        var request = await legacy.GetSettingsAsync(new Empty(), cancellationToken: token);
+        request.ClearAiUseNoticeVersion();
+        request.WallpaperWaitTime = 74;
+        await legacy.SetSettingsAsync(request, cancellationToken: token);
+        await restarted.LoadAsync<ISettings>().WaitAsync(token);
+        Assert.AreEqual(1, restarted.Settings.AiUseNoticeVersion);
+        Assert.AreEqual(74, restarted.Settings.WallpaperWaitTime);
     }
 
     private static void AssertPreferences(ISettings settings, bool animations) {

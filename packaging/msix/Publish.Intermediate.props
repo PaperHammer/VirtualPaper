@@ -1,0 +1,7 @@
+<Project>
+  <!-- Set this before Common.targets creates IntermediateAssembly/FileList items.
+       WPF's local-type temporary project must share its parent's intermediates. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == '$(MsixPublishProject)' Or ($([System.String]::Copy('$(MSBuildProjectName)').StartsWith('$(MsixPublishProject)_')) And $([System.String]::Copy('$(MSBuildProjectName)').EndsWith('_wpftmp')))">
+    <IntermediateOutputPath>$(MsixPublishOutputRoot)\obj\$(MsixPublishProject)\$(TargetFramework)\</IntermediateOutputPath>
+  </PropertyGroup>
+</Project>

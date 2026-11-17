@@ -12,12 +12,15 @@ internal static class WebEditorTests {
     private const string ProjectName = "ui-web-project";
     private const string Marker = "UI_OPERATION_WEB_EDIT";
 
-    public static async Task CreateFilesSaveReopenAndExportAsync(UiTestContext context) {
+    public static async Task CreateFilesSaveReopenAndExportAsync(UiTestContext context, bool hardwareAccelerationEnabled = true) {
         string folder = Path.Combine(context.Root, ProjectName);
         string manifest = Path.Combine(folder, ProjectName + ".vpw");
         string output = Path.Combine(context.Root, "web-project-full.zip");
         await using var session = new AppProcessSession();
-        await session.StartAsync();
+        await session.StartAsync(settings => settings.UiHardwareAccelerationEnabled = hardwareAccelerationEnabled);
+        await AppProcessSession.WaitForJsonAsync(session.SettingsPath,
+            json => json["UiHardwareAccelerationEnabled"]?.GetValue<bool>() == hardwareAccelerationEnabled);
+        context.Evidence["HardwareAccelerationStartupPreference"] = hardwareAccelerationEnabled;
         context.Evidence["CoreProcessId"] = session.CoreId;
         var ui = await session.OpenUiAsync();
         nint ownerWindow = ui.MainWindowHandle;
@@ -64,6 +67,7 @@ internal static class WebEditorTests {
             ApplicationUi.ClickPointerElement(ownerWindow, FindItem(root, "index.html"));
         });
         await WaitForEditorStatusAsync(root, "Saved");
+        await HardwareAccelerationTests.VerifyWebViewAsync(context, ui, hardwareAccelerationEnabled);
         await Task.Run(() => ApplicationUi.TypeAtEditorSurface(ownerWindow,
             ApplicationUi.Find(root, "WebEditor.CodeSurface", visible: true), "<!-- " + Marker + " -->"));
         await WaitForEditorStatusAsync(root, "Unsaved");
@@ -123,11 +127,102 @@ internal static class WebEditorTests {
             catch (IOException) { return Task.FromResult(false); }
             catch (InvalidDataException) { return Task.FromResult(false); }
         }, "Web project archive exported");
+        await VerifySaveAsAsync(context, session, ui, root, folder, manifest);
         await session.StopAsync();
         session.RecordEvidence(context);
         Check(((string[])context.Evidence["RuntimeErrors"]!).Length == 0, "Web editor logged a runtime error; inspect report evidence");
         context.Evidence["CreateFilesSaveReopenAndExportVerified"] = true;
         context.Evidence["RendererTextOcrVerified"] = false;
+    }
+
+    private static async Task VerifySaveAsAsync(UiTestContext context, AppProcessSession session, Process ui,
+        AutomationElement root, string originalFolder, string originalManifest) {
+        nint owner = ui.MainWindowHandle;
+        string originalEntry = Path.Combine(originalFolder, "index.html");
+        byte[] sourceEntry = await File.ReadAllBytesAsync(originalEntry);
+        byte[] sourceManifest = await File.ReadAllBytesAsync(originalManifest);
+        const string unsaved = "<!-- UI_OPERATION_WEB_SAVE_AS -->";
+        string destination = Directory.CreateDirectory(Path.Combine(context.Root, "ui-web-copy")).FullName;
+        string copyManifest = Path.Combine(destination, "ui-web-copy.vpw");
+        string copyEntry = Path.Combine(destination, "index.html");
+        await Task.Run(() => ApplicationUi.TypeAtEditorSurface(owner,
+            ApplicationUi.Find(root, "WebEditor.CodeSurface", visible: true), unsaved));
+        await WaitForEditorStatusAsync(root, "Unsaved");
+        await Task.Run(() => {
+            ApplicationUi.Expand(ApplicationUi.Find(root, "Project.File"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Project.File.SaveAs", visible: true));
+            NativeFileDialog.Cancel(ui, owner);
+        });
+        await WaitForEditorStatusAsync(root, "Unsaved");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "Cancelling Save As changed the original entry");
+        Check(!File.Exists(copyManifest), "Cancelling Save As created a project");
+
+        await Task.Run(() => {
+            ApplicationUi.Expand(ApplicationUi.Find(root, "Project.File"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Project.File.SaveAs", visible: true));
+            NativeFileDialog.ChooseFolder(ui, owner, destination);
+        });
+        await AppProcessSession.WaitForJsonAsync(copyManifest, json => json["name"]?.GetValue<string>() == "ui-web-copy");
+        await WaitForEditorStatusAsync(root, "Saved");
+        Check((await File.ReadAllTextAsync(copyEntry)).Contains(unsaved), "Save As lost the unsaved editor content");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "Save As saved edits into the original entry");
+        Check(Enumerable.SequenceEqual(sourceManifest, await File.ReadAllBytesAsync(originalManifest)), "Save As changed the original manifest");
+        Check(Directory.Exists(Path.Combine(destination, "assets")), "Save As omitted an empty asset directory");
+        Check(!File.Exists(Path.Combine(destination, ProjectName + ".vpw")), "Save As retained the old project manifest name");
+        await Task.Run(() => {
+            var editor = ApplicationUi.Find(root, "WebEditor.CodeSurface", visible: true);
+            Check(string.Equals(editor.Current.Name, copyEntry, StringComparison.OrdinalIgnoreCase), "Save As did not switch the active editor path");
+            ApplicationUi.TypeAtEditorSurface(owner, editor, "<!-- UI_OPERATION_COPY_ONLY -->");
+        });
+        await WaitForEditorStatusAsync(root, "Unsaved");
+        await Task.Run(() => {
+            ApplicationUi.Expand(ApplicationUi.Find(root, "Project.File"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Project.File.Save", visible: true));
+        });
+        await AppProcessSession.WaitAsync(async () => (await File.ReadAllTextAsync(copyEntry)).Contains("UI_OPERATION_COPY_ONLY"), "Save uses the copied project");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "Saving the copy changed the original project");
+        await WaitForEditorStatusAsync(root, "Saved");
+
+        string archivePath = Path.Combine(context.Root, "web-copy-full.zip");
+        await Task.Run(() => {
+            ApplicationUi.Expand(ApplicationUi.Find(root, "Project.File"));
+            ApplicationUi.Expand(ApplicationUi.Find(root, "Project.File.Export", visible: true));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Project.File.ExportFullZip", visible: true));
+            NativeFileDialog.SaveFile(ui, owner, archivePath);
+        });
+        await AppProcessSession.WaitAsync(() => {
+            try {
+                using var zip = ZipFile.OpenRead(archivePath);
+                return Task.FromResult(zip.GetEntry("ui-web-copy.vpw") != null && zip.GetEntry(ProjectName + ".vpw") == null);
+            }
+            catch (IOException) { return Task.FromResult(false); }
+            catch (InvalidDataException) { return Task.FromResult(false); }
+        }, "Copied Web project exported");
+        await session.CloseUiAsync();
+        ui = await session.OpenUiAsync();
+        owner = ui.MainWindowHandle;
+        await Task.Run(() => {
+            root = AutomationElement.FromHandle(owner);
+            ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Projects"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Projects.Open"));
+            NativeFileDialog.OpenFile(ui, owner, copyManifest);
+            ApplicationUi.ClickPointerElement(owner, FindItem(root, "index.html"));
+        });
+        await WaitForEditorStatusAsync(root, "Saved");
+        await Task.Run(() => {
+            Check(string.Equals(ApplicationUi.Find(root, "WebEditor.CodeSurface", visible: true).Current.Name, copyEntry, StringComparison.OrdinalIgnoreCase),
+                "Reopening the copy used the original project");
+            ApplicationUi.Expand(ApplicationUi.Find(root, "Project.File"));
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Project.File.Open", visible: true));
+            NativeFileDialog.OpenFile(ui, owner, originalManifest);
+            ApplicationUi.ClickPointerElement(owner, FindItem(root, "index.html"));
+        });
+        await WaitForEditorStatusAsync(root, "Saved");
+        Check(Enumerable.SequenceEqual(sourceEntry, await File.ReadAllBytesAsync(originalEntry)), "The original project changed after reopen");
+        context.Evidence["SaveAsCancelledWithoutSavingSource"] = true;
+        context.Evidence["SaveAsIncludesUnsavedContent"] = true;
+        context.Evidence["SaveAsSwitchesSessionAndPreservesSource"] = true;
+        context.Evidence["SaveAsBothProjectsReopenAndCopyExports"] = true;
     }
 
     private static bool HasPath(JsonNode json, string path) => json["files"]!.AsArray().Any(item =>

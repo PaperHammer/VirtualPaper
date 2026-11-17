@@ -11,7 +11,11 @@ The detailed guides linked below are currently in Chinese.
 - [Project overview](project-overview.md): product scope, technology stack, main processes, and source modules.
 - [Architecture](architecture.md): Core, dependency direction, wallpaper runtimes, and data flows.
 - [Development and builds](development-guide.md): prerequisites, builds, tests, and a suggested reading order.
+- [Packaging](../packaging/README.md): EXE/MSIX build entry points, outputs and acceptance.
+- [Microsoft Store MSIX](../packaging/msix/README.md): Core-first packaging, local preview and Store identity parameters.
 - [WebBackdrop](webbackdrop.md): Web wallpaper project formats, the editor, file tree, preview, and saving.
+- [Asset tools](../resources/tools/README.md): bundled wallpaper and application icon generation.
+- [Privacy, AI processing and copyright](legal/README.md): offline notices in every supported language and original license texts.
 
 ## Source entry points
 
@@ -26,8 +30,9 @@ The detailed guides linked below are currently in Chinese.
 | Shared project system and file watching | [ProjectSystem](../src/VirtualPaper.Common/Utils/ProjectSystem/) |
 | Source translations and generated XAML resources | [Localization resources](../src/VirtualPaper.UIComponent/Localization/README.md) |
 | CI, versioning, and releases | [Workflow guide](../.github/workflows/README.md) |
+| Localized Store listings, release notes and screenshots | [Store materials](../resources/store/README.md) |
 | Complete local acceptance and focused tests | [Testing guide](../test/README.md) |
-| AI project orientation and testing instructions | [AGENTS.md](../AGENTS.md), [testing skill](../.agents/skills/virtualpaper-testing/SKILL.md) |
+| AI project orientation and testing instructions | [AGENTS.md](../AGENTS.md), [testing skill](../.agents/skills/testing/SKILL.md) |
 
 ## Keeping these guides up to date
 

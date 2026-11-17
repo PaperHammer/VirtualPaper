@@ -14,7 +14,7 @@ $root = Join-Path (Split-Path -Parent $PSScriptRoot) "TestResults/installer-wiza
 New-Item -ItemType Directory -Path $root | Out-Null
 @'
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net8.0-windows</TargetFramework><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0-windows</TargetFramework><UseWPF>true</UseWPF><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
 </Project>
 '@ | Set-Content -LiteralPath (Join-Path $root 'Fixture.csproj')
 @'
@@ -80,8 +80,8 @@ dotnet build $probeProject -c $Configuration --no-restore --verbosity quiet
 if ($LASTEXITCODE -ne 0) { throw 'Wizard controller build failed.' }
 dotnet build (Join-Path $root 'Fixture.csproj') -c Release --ignore-failed-sources -p:NuGetAudit=false --verbosity quiet
 if ($LASTEXITCODE -ne 0) { throw 'Wizard fixture build failed.' }
-$probe = Join-Path $PSScriptRoot "VirtualPaper.InstallerTest/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
-$fixtureRoot = Join-Path $root 'bin/Release/net8.0-windows'
+$probe = Join-Path $PSScriptRoot "VirtualPaper.InstallerTest/bin/$Configuration/net10.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
+$fixtureRoot = Join-Path $root 'bin/Release/net10.0-windows'
 foreach ($case in @('install', 'uninstall', 'timeout')) {
     $name = switch ($case) { install { 'setupFixture.exe' } uninstall { 'uninsFixture.exe' } timeout { 'stuckFixture.exe' } }
     $executable = Join-Path $fixtureRoot $name

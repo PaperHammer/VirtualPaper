@@ -1,0 +1,170 @@
+[
+  {
+    "file": "splash_1920x720.png",
+    "width": 1920,
+    "height": 720,
+    "transparent": false,
+    "icon": [
+      61,
+      207,
+      240,
+      270
+    ],
+    "virtual": [
+      310,
+      287,
+      815,
+      140
+    ],
+    "paper": [
+      1155,
+      300,
+      696,
+      174
+    ]
+  },
+  {
+    "file": "splash_4224x1584.png",
+    "width": 4224,
+    "height": 1584,
+    "transparent": false,
+    "icon": [
+      134,
+      456,
+      528,
+      593
+    ],
+    "virtual": [
+      683,
+      632,
+      1792,
+      308
+    ],
+    "paper": [
+      2540,
+      660,
+      1532,
+      383
+    ]
+  },
+  {
+    "file": "splashCol_1400x1400.png",
+    "width": 1400,
+    "height": 1400,
+    "transparent": false,
+    "icon": [
+      477,
+      249,
+      495,
+      555
+    ],
+    "virtual": [
+      91,
+      851,
+      656,
+      112
+    ],
+    "paper": [
+      775,
+      867,
+      529,
+      133
+    ]
+  },
+  {
+    "file": "virtualpaper-logo-left_4216x2040.png",
+    "width": 4216,
+    "height": 2040,
+    "transparent": false,
+    "icon": [
+      130,
+      684,
+      528,
+      593
+    ],
+    "virtual": [
+      679,
+      860,
+      1792,
+      308
+    ],
+    "paper": [
+      2536,
+      888,
+      1532,
+      383
+    ]
+  },
+  {
+    "file": "virtualpaper-logo_4216x2040.png",
+    "width": 4216,
+    "height": 2040,
+    "transparent": false,
+    "icon": [
+      1957,
+      684,
+      528,
+      593
+    ],
+    "virtual": [
+      124,
+      860,
+      1792,
+      308
+    ],
+    "paper": [
+      2536,
+      888,
+      1532,
+      383
+    ]
+  },
+  {
+    "file": "virtualpaper-logo_4380x712_with_bg.png",
+    "width": 4208,
+    "height": 712,
+    "transparent": false,
+    "icon": [
+      1953,
+      20,
+      528,
+      593
+    ],
+    "virtual": [
+      120,
+      196,
+      1792,
+      308
+    ],
+    "paper": [
+      2532,
+      224,
+      1532,
+      383
+    ]
+  },
+  {
+    "file": "virtualpaper-logo_4K.png",
+    "width": 4208,
+    "height": 712,
+    "transparent": true,
+    "icon": [
+      1956,
+      44,
+      528,
+      593
+    ],
+    "virtual": [
+      120,
+      196,
+      1792,
+      308
+    ],
+    "paper": [
+      2532,
+      224,
+      1532,
+      383
+    ]
+  }
+]

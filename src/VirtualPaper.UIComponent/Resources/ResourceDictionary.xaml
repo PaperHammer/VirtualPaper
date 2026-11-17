@@ -3,6 +3,40 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:cvs="using:VirtualPaper.UIComponent.Converters">
+
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Default">
+            <SolidColorBrush x:Key="InfoTokenBackground" Color="#1B3551"/>
+            <SolidColorBrush x:Key="InfoTokenBorder" Color="#325A80"/>
+            <SolidColorBrush x:Key="InfoTokenForeground" Color="#D6E9FF"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="InfoTokenBackground" Color="#E7F2FF"/>
+            <SolidColorBrush x:Key="InfoTokenBorder" Color="#C6DEF7"/>
+            <SolidColorBrush x:Key="InfoTokenForeground" Color="#194C7D"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+            <SolidColorBrush x:Key="InfoTokenBackground" Color="{ThemeResource SystemColorWindowColor}"/>
+            <SolidColorBrush x:Key="InfoTokenBorder" Color="{ThemeResource SystemColorWindowTextColor}"/>
+            <SolidColorBrush x:Key="InfoTokenForeground" Color="{ThemeResource SystemColorWindowTextColor}"/>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+
+    <Style x:Key="InfoTokenBorderStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="Padding" Value="10 1"/>
+        <Setter Property="Background" Value="{ThemeResource InfoTokenBackground}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource InfoTokenBorder}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+    </Style>
+    <Style x:Key="InfoTokenTextStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="MaxWidth" Value="200"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{ThemeResource InfoTokenForeground}"/>
+    </Style>
     
     <cvs:BoolByValueConverter x:Key="BoolByValueConverter"/>
     <cvs:IsStringConverter x:Key="IsStringConverter"/>

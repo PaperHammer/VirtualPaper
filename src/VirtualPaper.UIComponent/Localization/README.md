@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Maintain each translation once in `../Strings/<locale>/Resources.resw`. Those files contain the source keys used by `LanguageUtil.GetI18n`. Do not add `Ui_...` entries to them.
+Maintain each translation once in [`localization/Strings`](../../../localization/Strings). The [shared localization guide](../../../localization/README.md) covers the language catalog, Core/Common resources, installer messages and MSIX declarations. Do not add `Ui_...` entries to source files.
 
 `XamlResources.xml` maps each XAML property resource to a source key, independently of language:
 
@@ -32,6 +32,6 @@ The script supports Windows PowerShell 5.1 and PowerShell 7. `-Check` verifies e
 
 ## Packaged validation
 
-The `test-artifacts` job checks packaged resources against the mapping snapshot embedded in the test assembly. Every mapping must exist, every generated value must match its source, and the generated property count must match the mapping count. Runtime packages need only the generated resource files. Generated `Source:` comments aid inspection; tests do not depend on comments.
+The `test-artifacts` job checks every catalog locale against embedded source and mapping snapshots. Every source key and mapping must exist, every generated value must match its source, and the generated property count must match the mapping count. Runtime packages need only the generated resource files.
 
 These checks cover resource generation and packaging. Live language switching remains covered by the real WinUI localization case; resource validation alone does not prove UI interaction.

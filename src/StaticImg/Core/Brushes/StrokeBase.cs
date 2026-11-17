@@ -30,8 +30,6 @@ namespace Workloads.Creation.StaticImg.Core.Brushes {
             BrushArgs = brushArgs;
         }
 
-        public virtual void InitInkBrush(CanvasDevice device) { }
-
         public virtual void InitPixelsEffect(ShaderType type) {
             Type = type;
         }

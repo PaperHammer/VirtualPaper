@@ -5,9 +5,10 @@ using VirtualPaper.ML.DepthEstimate.Interfaces;
 
 namespace VirtualPaper.ML.DepthEstimate;
 
-/// <summary>Serializes CPU inference and publishes complete, content-addressed depth maps.</summary>
+/// <summary>Serializes depth generation and publishes complete, content-addressed depth maps.</summary>
 public static class DepthMapCache {
     private static readonly SemaphoreSlim Gate = new(1, 1);
+    private static readonly ModelContentHashCache ModelHashes = new();
 
     public static string DefaultModelPath => Path.Combine(
         Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..")),
@@ -33,7 +34,7 @@ public static class DepthMapCache {
         using var source = File.Open(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read);
         using var model = File.Open(modelPath, FileMode.Open, FileAccess.Read, FileShare.Read);
         string key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
-            "dav2-fit518-v1:" + Hash(source, ct) + ":" + Hash(model, ct))));
+            "dav2-fit518-v1:" + ModelContentHashCache.ComputeHash(source, ct) + ":" + ModelHashes.GetHash(model, ct))));
         Directory.CreateDirectory(outputFolder);
         string destination = Path.Combine(outputFolder, $"depth-{key}.png");
         if (File.Exists(destination)) {
@@ -58,15 +59,4 @@ public static class DepthMapCache {
         finally { Directory.Delete(staging, recursive: true); }
     }
 
-    private static string Hash(Stream stream, CancellationToken ct) {
-        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        byte[] buffer = new byte[81920];
-        int count;
-        while ((count = stream.Read(buffer)) > 0) {
-            ct.ThrowIfCancellationRequested();
-            hash.AppendData(buffer, 0, count);
-        }
-        ct.ThrowIfCancellationRequested();
-        return Convert.ToHexString(hash.GetHashAndReset());
-    }
 }

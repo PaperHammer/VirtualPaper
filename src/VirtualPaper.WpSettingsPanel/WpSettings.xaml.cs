@@ -11,6 +11,7 @@ using VirtualPaper.UIComponent.Navigation;
 using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Utils;
 using VirtualPaper.WpSettingsPanel.Utils;
+using VirtualPaper.WpSettingsPanel.Utils.Interfaces;
 using VirtualPaper.WpSettingsPanel.ViewModels;
 using VirtualPaper.WpSettingsPanel.Views;
 
@@ -67,9 +68,19 @@ namespace VirtualPaper.WpSettingsPanel {
             _viewModel.InitFlyoutData();
         }
 
+        private async void ManageEffectPresets_Click(object sender, RoutedEventArgs e) {
+            try {
+                var dialog = new EffectPresetManagerDialog(AppServiceLocator.Services.GetRequiredService<Utils.Interfaces.IWallpaperIndexService>()) {
+                    XamlRoot = XamlRoot, RequestedTheme = ActualTheme
+                };
+                await dialog.ShowAsync();
+            }
+            catch (Exception ex) { ArcLog.GetLogger<WpSettings>().Error(ex); GlobalMessageUtil.ShowException(ex); }
+        }
+
         private async void ScreenFit_Click(object sender, RoutedEventArgs e) {
-            if (sender is not Button button || !button.IsEnabled) return;
-            button.IsEnabled = false;
+            if (sender is not Control control || !control.IsEnabled) return;
+            control.IsEnabled = false;
             try {
                 var viewModel = ActivatorUtilities.CreateInstance<ScreenFitViewModel>(AppServiceLocator.Services);
                 if (_viewModel.SelectedMonitorIndex >= 0 && _viewModel.SelectedMonitorIndex < _viewModel.Monitors.Count) {
@@ -77,8 +88,14 @@ namespace VirtualPaper.WpSettingsPanel {
                     viewModel.SelectedMonitor = viewModel.Monitors.FirstOrDefault(m => m.DeviceId == deviceId) ?? viewModel.SelectedMonitor;
                 }
                 viewModel.Imported += data => AppServiceLocator.Services.GetRequiredService<LibraryContentsViewModel>().UpdateLib(data);
-                var dialog = new ScreenFitDialog(viewModel) { XamlRoot = XamlRoot, RequestedTheme = ActualTheme };
-                await dialog.ShowAsync();
+                var aiNotice = AppServiceLocator.Services.GetRequiredService<IAiUseNoticeService>();
+                var dialog = new ScreenFitDialog(viewModel, aiNotice,
+                    AppServiceLocator.Services.GetRequiredService<IWallpaperIndexService>()) { XamlRoot = XamlRoot, RequestedTheme = ActualTheme };
+                do {
+                    await dialog.ShowAsync();
+                    if (!dialog.AiNoticeRequested) break;
+                    dialog.ResumeAfterNotice = await aiNotice.EnsureAcknowledgedAsync();
+                } while (true);
                 if (dialog.Applied) {
                     int index = _viewModel.Monitors.ToList().FindIndex(m => m.DeviceId == viewModel.SelectedMonitor?.DeviceId);
                     if (index >= 0) _viewModel.SelectedMonitorIndex = index;
@@ -86,7 +103,7 @@ namespace VirtualPaper.WpSettingsPanel {
                 }
             }
             catch (Exception ex) { ArcLog.GetLogger<WpSettings>().Error(ex); GlobalMessageUtil.ShowException(ex); }
-            finally { button.IsEnabled = true; }
+            finally { control.IsEnabled = true; }
         }
 
         private void OnFilterChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {
@@ -95,19 +112,47 @@ namespace VirtualPaper.WpSettingsPanel {
             }
         }
 
-        private void FilterBar_SizeChanged(object sender, SizeChangedEventArgs e) {
-            tbSearchName.Width = Math.Clamp(
-                e.NewSize.Width - LibraryTypeFilter.ActualWidth - LibraryBrowseTools.Spacing, 120, 260);
+        private void TagFilter_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) {
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+                _viewModel.TagKeyword = sender.Text;
+        }
+
+        private void TagFilter_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args) {
+            if (args.SelectedItem is string tag) {
+                sender.Text = tag;
+                _viewModel.TagKeyword = tag;
+            }
+        }
+
+        private void SortLibrary_Click(object sender, RoutedEventArgs e) {
+            if (sender is RadioMenuFlyoutItem { Tag: string sort }) _viewModel.SortOrder = Enum.Parse<WallpaperSortOrder>(sort);
+        }
+
+        private void SortFlyout_Opening(object sender, object e) {
+            foreach (var item in ((MenuFlyout)sender).Items.OfType<RadioMenuFlyoutItem>()) {
+                item.IsChecked = item.Tag is string sort && Enum.Parse<WallpaperSortOrder>(sort) == _viewModel.SortOrder;
+            }
+        }
+
+        private void ClearLibraryFilters_Click(object sender, RoutedEventArgs e) {
+            tbSearchName.Text = "";
+            _viewModel.ClearLibraryFilters();
+        }
+
+        private async void OrganizeSelectedLibraryItems_Click(object sender, RoutedEventArgs e) {
+            if (ContentFrame.Content is LibraryContents library && sender is MenuFlyoutItem { Tag: string action }) {
+                await library.OrganizeSelectedAsync(action);
+            }
+        }
+
+        private void OrganizationMenu_Opening(object sender, object e) {
+            if (ContentFrame.Content is LibraryContents library && sender is MenuFlyout flyout)
+                library.UpdateOrganizationMenu(flyout);
         }
 
         private void SelectLibraryItems_Click(object sender, RoutedEventArgs e) {
             if (ContentFrame.Content is LibraryContents library) {
-                if (SelectLibraryItems.IsChecked == true) {
-                    library.EnterSelectionMode();
-                }
-                else {
-                    library.ExitSelectionMode();
-                }
+                library.EnterSelectionMode();
             }
         }
 
@@ -136,15 +181,14 @@ namespace VirtualPaper.WpSettingsPanel {
         }
 
         internal void UpdateLibrarySelectionState(bool isSelecting, int selectedCount) {
-            SelectLibraryItems.IsChecked = isSelecting;
-            AddToLib.IsEnabled = !isSelecting;
-            ScreenFitButton.IsEnabled = !isSelecting;
+            LibraryActionButtons.Visibility = isSelecting ? Visibility.Collapsed : Visibility.Visible;
             LibraryBrowseTools.Visibility = isSelecting ? Visibility.Collapsed : Visibility.Visible;
             LibrarySelectionTools.Visibility = isSelecting ? Visibility.Visible : Visibility.Collapsed;
             LibrarySelectionCount.Text = string.Format(
                 LanguageUtil.GetI18n(Constants.I18n.WpLib_SelectedCount),
                 selectedCount);
             DeleteSelectedLibraryItems.IsEnabled = selectedCount > 0;
+            OrganizeSelectedLibraryItems.IsEnabled = selectedCount > 0;
         }
 
         private readonly WpSettingsViewModel _viewModel;

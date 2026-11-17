@@ -8,7 +8,7 @@ using VirtualPaper.Services.Interfaces;
 using IDownloadService = VirtualPaper.Services.Interfaces.IDownloadService;
 
 namespace VirtualPaper.Services.Download {
-    public partial class MultiDownloadService : IDownloadService {
+    public partial class MultiDownloadService : IDownloadService, IDisposable {
         public MultiDownloadService() {
             _parallelDownloaders = new List<DownloadService>();
         }

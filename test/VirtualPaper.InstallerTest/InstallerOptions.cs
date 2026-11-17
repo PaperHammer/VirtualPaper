@@ -28,7 +28,7 @@ internal sealed record InstallerOptions(string InstallDir, string? ResultsFile, 
                 case "--profile-mode" when args[i] is "first-run" or "prepare" or "preserve":
                     options = options with { ProfileMode = args[i] };
                     break;
-                case "--language" when args[i] is "english" or "chinese":
+                case "--language" when args[i] is "english" or "chinese" or "french":
                     options = options with { Language = args[i] };
                     break;
                 case "--timeout-seconds" when int.TryParse(args[i], out int seconds) && seconds is >= 1 and <= 600:
@@ -53,6 +53,6 @@ internal sealed record InstallerOptions(string InstallDir, string? ResultsFile, 
 
     public static void PrintUsage(TextWriter writer) => writer.WriteLine(
         "Usage: dotnet run -- --install-dir <path> [--timeout-seconds 60] [--results-file <path>] [--data-root <path>] [--profile-mode first-run|prepare|preserve]\n" +
-        "Wizard: --wizard-install <setup.exe> | --wizard-uninstall <unins.exe>, plus --install-dir, --results-file and optional --language english|chinese.\n" +
+        "Wizard: --wizard-install <setup.exe> | --wizard-uninstall <unins.exe>, plus --install-dir, --results-file and optional --language english|chinese|french.\n" +
         "For install -> open -> uninstall, use test/Run-InstallerTests.ps1.");
 }

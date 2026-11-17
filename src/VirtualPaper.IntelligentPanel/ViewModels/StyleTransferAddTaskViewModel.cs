@@ -14,6 +14,17 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class StyleTransferAddTaskViewModel : ObservableObject {
         internal ResettableCompletionSource<IIntelliData?>? IntelligentCTS { get; set; }
 
+        public bool ShowGpuOptions { get; }
+        public bool UseGpu {
+            get => _useGpu;
+            set {
+                value &= ShowGpuOptions;
+                if (_useGpu == value) return;
+                _useGpu = value;
+                OnPropertyChanged();
+            }
+        }
+
         #region card_component
         public Action? CardUIStateChanged { get; set; }
         public string PreviousStepBtnText { get; private set; } = string.Empty;
@@ -41,7 +52,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             var input = new StyleTransferData(
                 SourceFilePath, SourceFileSize!, SourceFileExt!, _sourceFileWidth, _sourceFileHeight,
                 imgFilePath, SelectedStyle.Name, SelectedStyle.FileSize ?? string.Empty, SelectedStyle.FileExt ?? string.Empty,
-                SelectedStyle.NameKey);
+                SelectedStyle.NameKey, UseGpu);
             IntelligentCTS?.TrySetResult(input);
         }
 
@@ -84,7 +95,9 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
         }
 
-        public StyleTransferAddTaskViewModel() {
+        public StyleTransferAddTaskViewModel(UiHardwareAccelerationPolicy? acceleration = null) {
+            ShowGpuOptions = acceleration?.IsEnabled == true;
+            _useGpu = ShowGpuOptions;
             InitCollectoins();
             RefreshLanguage();
         }
@@ -217,9 +230,11 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             SourceFileExt = null;
             SourceFileResolution = null;      
             IsNextEnable = false;
+            UseGpu = ShowGpuOptions;
         }
 
         internal StyleOptionItem[] StyleOptions = null!;
         private uint _sourceFileWidth, _sourceFileHeight;
+        private bool _useGpu;
     }
 }

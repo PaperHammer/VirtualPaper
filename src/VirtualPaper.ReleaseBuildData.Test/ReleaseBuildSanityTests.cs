@@ -6,7 +6,7 @@ namespace VirtualPaper.ReleaseBuildData.Test {
     ///
     /// 运行前提：
     ///   环境变量 RELEASE_BIN_DIR 指向 Release 产物根目录，
-    ///   例如：src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0
+    ///   例如：src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0
     /// </summary>
     [TestClass]
     public class ReleaseBuildSanityTests {
@@ -20,11 +20,11 @@ namespace VirtualPaper.ReleaseBuildData.Test {
                     return env;
 
                 // 本地回退：从测试程序集位置向上推算
-                // 测试 dll 在 src/VirtualPaper.ReleaseBuildData.Test/bin/{config}/net8.0/
-                // 目标在  src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0/
+                // 测试 dll 在 src/VirtualPaper.ReleaseBuildData.Test/bin/{config}/net10.0/
+                // 目标在  src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0/
                 var testBin = AppContext.BaseDirectory;
                 var srcDir = Path.GetFullPath(Path.Combine(testBin, "..", "..", "..", ".."));
-                return Path.Combine(srcDir, "VirtualPaper", "bin", "Release", "net8.0-windows10.0.19041.0");
+                return Path.Combine(srcDir, "VirtualPaper", "bin", "Release", "net10.0-windows10.0.19041.0");
             }
         }
 

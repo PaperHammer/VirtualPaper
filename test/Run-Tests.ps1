@@ -13,7 +13,7 @@ if (Test-Path -LiteralPath $ResultsRoot) { throw "Results must use a new directo
 . "$PSScriptRoot/InstallerTestSupport.ps1"
 . "$PSScriptRoot/TestReportSupport.ps1"
 # Refuse a daily installation before building or changing any installed files.
-Assert-CleanInstallerEnvironment (Join-Path $repositoryRoot 'InnoSetup/setup.iss')
+Assert-CleanInstallerEnvironment (Join-Path $repositoryRoot 'packaging/inno/setup.iss')
 $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     throw 'Run PowerShell as administrator for the production installer and uninstaller.'
@@ -65,7 +65,7 @@ try {
     Get-ProjectTestReports -Root $ResultsRoot | Format-Table Total, Executed, Passed
     Write-Host 'Compiling the production ISS installer...'
     $packageDir = Join-Path $ResultsRoot 'installer-package'
-    & $InnoSetupCompiler "InnoSetup/setup.iss" "/O$packageDir" *> "$ResultsRoot/installer-build.log"
+    & $InnoSetupCompiler "packaging/inno/setup.iss" "/O$packageDir" *> "$ResultsRoot/installer-build.log"
     if ($LASTEXITCODE -ne 0) { throw "ISS packaging failed. See $ResultsRoot/installer-build.log" }
     $installers = @(Get-ChildItem -LiteralPath $packageDir -Filter '*.exe' -File)
     if ($installers.Count -ne 1) { throw 'Expected exactly one freshly built installer.' }
@@ -74,7 +74,7 @@ try {
         -ReportPath "$ResultsRoot/test-results-installer/installer-results.json" *> "$ResultsRoot/installer-smoke.log"
     Write-Host 'Running independent extended UI acceptance against the Release build...'
     & ./test/Run-UIOperationTests.ps1 -Configuration Release -NoBuild -Suite Extended `
-        -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net8.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
+        -HostExe test/VirtualPaper.UIOperationTest/bin/x64/Release/net10.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe `
         -ReportPath "$ResultsRoot/test-results-ui-operation/ui-operation-results.json" *> "$ResultsRoot/ui-acceptance.log"
     & ./test/Summarize-TestResults.ps1 -Root $ResultsRoot
 } finally {

@@ -3,6 +3,7 @@
     x:Class="Workloads.Creation.StaticImg.Views.Tools.CanvasSetControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:layout="using:VirtualPaper.UIComponent.Layout"
     xmlns:l="using:WinUI3Localizer"
     xmlns:local="using:Workloads.Creation.StaticImg.Views.Tools"
     xmlns:root="using:Workloads.Creation.StaticImg"
@@ -12,11 +13,11 @@
     xmlns:arc="using:VirtualPaper.UIComponent.Templates"
     mc:Ignorable="d">
 
-    <Expander AutomationProperties.AutomationId="StaticEditor.Canvas" Style="{StaticResource RightExpanderStyle}">
-        <Expander.Header>
+    <layout:ArcExpander AutomationProperties.AutomationId="StaticEditor.Canvas" Style="{StaticResource RightExpanderStyle}">
+        <layout:ArcExpander.Header>
             <TextBlock l:Uids.Uid="Ui_SIG_CanvasSet_Header_Text"/>
-        </Expander.Header>
-        <Expander.Content>
+        </layout:ArcExpander.Header>
+        <layout:ArcExpander.Content>
             <StackPanel Spacing="10">
                 <TextBlock l:Uids.Uid="Ui_SIG_CanvasSet_AdjustSize_Text" FontSize="12"/>
 
@@ -132,6 +133,6 @@
                     </StackPanel>
                 </StackPanel>
             </StackPanel>
-        </Expander.Content>
-    </Expander>
+        </layout:ArcExpander.Content>
+    </layout:ArcExpander>
 </arc:ArcUserControl>

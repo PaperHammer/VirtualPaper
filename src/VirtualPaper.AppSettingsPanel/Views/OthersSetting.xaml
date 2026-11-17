@@ -49,6 +49,24 @@
                         </StackPanel>
                     </Grid>
                 </Border>
+                <Border Padding="16 8" CornerRadius="12"
+                    Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                    <StackPanel Spacing="2">
+                        <HyperlinkButton Click="LegalDocument_Click" Tag="privacy-policy"
+                            AutomationProperties.AutomationId="Settings.Others.PrivacyPolicy">
+                            <TextBlock l:Uids.Uid="Ui_Settings_Others_Legal_Privacy" TextWrapping="Wrap"/>
+                        </HyperlinkButton>
+                        <HyperlinkButton Click="LegalDocument_Click" Tag="ai-processing-and-rights"
+                            AutomationProperties.AutomationId="Settings.Others.AiRights">
+                            <TextBlock l:Uids.Uid="Ui_Settings_Others_Legal_Ai" TextWrapping="Wrap"/>
+                        </HyperlinkButton>
+                        <HyperlinkButton Click="LegalDocument_Click" Tag="copyright-and-licenses"
+                            AutomationProperties.AutomationId="Settings.Others.Copyright">
+                            <TextBlock l:Uids.Uid="Ui_Settings_Others_Legal_Copyright" TextWrapping="Wrap"/>
+                        </HyperlinkButton>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
             <StackPanel x:Name="More" Spacing="8">

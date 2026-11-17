@@ -2,6 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.ThreadContext;
+using VirtualPaper.IntelligentPanel.Services;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent.Utils;
 
@@ -22,6 +25,40 @@ namespace VirtualPaper.IntelligentPanel.Models {
         public abstract bool IsProcessing { get; }
         public abstract bool IsCompleted { get; }
         protected abstract void NotifyCommandsCanExecuteChanged();
+
+        public string FailureReason => _failureReason;
+
+        internal void SetFailureReason(Exception error) {
+            // Keep the message with its task, without retaining the exception and its stack.
+            _failureReason = string.IsNullOrWhiteSpace(error.Message) ? error.GetType().Name : error.Message;
+            OnPropertyChanged(nameof(FailureReason));
+        }
+
+        // 关闭硬件加速时隐藏设备状态；多阶段任务累计设备，并保留故障回退记录。
+        public bool HasBackendInfo => _hasBackendInfo;
+        public string BackendText => !_hasBackendInfo ? string.Empty : LanguageUtil.GetI18n(
+            _usedCpu && _usedGpu ? (_usedCpuFallback ? Constants.I18n.Intelligent_Backend_MixedCpuFallback : Constants.I18n.Intelligent_Backend_Mixed) :
+            _usedCpuFallback ? Constants.I18n.Intelligent_Backend_CpuFallback :
+            _usedCpu ? Constants.I18n.Intelligent_Backend_Cpu : Constants.I18n.Intelligent_Backend_Gpu);
+
+        internal IDisposable? ObserveInference(object model) => model is IInferenceStatusSource source
+            ? new InferenceStatusSubscription(source, UpdateBackend, action => CrossThreadInvoker.InvokeOnUIThread(action)) : null;
+
+        private void UpdateBackend(InferenceState state) {
+            if (!state.HardwareAccelerationEnabled || state.Device == InferenceDevice.Uninitialized) return;
+            bool cpu = _usedCpu || state.Device == InferenceDevice.Cpu;
+            bool gpu = _usedGpu || state.Device == InferenceDevice.DirectML;
+            bool fallback = _usedCpuFallback || state.IsCpuFallback;
+            if (_hasBackendInfo && cpu == _usedCpu && gpu == _usedGpu && fallback == _usedCpuFallback) return;
+            _hasBackendInfo = true;
+            _usedCpu = cpu;
+            _usedGpu = gpu;
+            _usedCpuFallback = fallback;
+            OnPropertyChanged(nameof(HasBackendInfo));
+            RefreshBackend();
+        }
+
+        internal void RefreshBackend() => OnPropertyChanged(nameof(BackendText));
 
         // 记录本次任务是否成功导出或入库过；后续操作取消、失败时保留已有成功标记。
         public bool IsExported { get; private set; }
@@ -71,5 +108,11 @@ namespace VirtualPaper.IntelligentPanel.Models {
             OnPropertyChanged(nameof(IsTemporaryResult));
             OnPropertyChanged(nameof(PreservationText));
         }
+
+        private string _failureReason = string.Empty;
+        private bool _hasBackendInfo;
+        private bool _usedCpu;
+        private bool _usedGpu;
+        private bool _usedCpuFallback;
     }
 }

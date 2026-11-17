@@ -21,7 +21,7 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public virtual bool IsCanvasReady {
             get {
                 try {
-                    if (RenderTarget == null) return false;
+                    if (ViewModel.Session.IsDrawingUnavailable || RenderTarget == null) return false;
                     var testDevice = RenderTarget.Device; // 探测是否被 Dispose
                     return true;
                 }
@@ -83,15 +83,13 @@ namespace Workloads.Creation.StaticImg.Core.Rendering {
         public virtual void Dispose() {
             SystemCursorChangeRequested = null;
             RenderRequest = null;
-            BrushManager.ClearCache();
             GC.SuppressFinalize(this);
         }
 
         protected virtual void HandleDeviceLost() {
+            ViewModel.Session.ReportDeviceLost();
         }
 
-        protected static bool IsDeviceLost(Exception ex) {
-            return ex.HResult == unchecked((int)0x8899000C); // DXGI_ERROR_DEVICE_REMOVED
-        }
+        protected bool IsDeviceLost(Exception ex) => ViewModel.Session.IsDeviceLostException(ex);
     }
 }

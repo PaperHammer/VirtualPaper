@@ -1,0 +1,25 @@
+<Project>
+  <!-- Redirect only the process being published. Referenced libraries continue
+       to use the complete solution's Release outputs and platform mappings. -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == '$(MsixPublishProject)'">
+    <OutputPath>$(MsixPublishOutputRoot)\$(MSBuildProjectName)\</OutputPath>
+    <OutDir>$(OutputPath)</OutDir>
+    <TargetDir>$(OutDir)</TargetDir>
+    <TargetPath>$(TargetDir)$(TargetFileName)</TargetPath>
+  </PropertyGroup>
+  <!-- A global RuntimeFrameworkVersion also overrides the unrelated Windows SDK
+       projection pack. Pin only the .NET runtime framework references instead. -->
+  <Target Name="SetMsixRuntimeVersion" BeforeTargets="ProcessFrameworkReferences"
+          Condition="'$(SelfContained)' == 'true' and '$(MsixRuntimeVersion)' != ''">
+    <ItemGroup>
+      <!-- Include frameworks discovered transitively (WinUI also consumes WPF
+           and ASP.NET through shared services). Leave Windows SDK packs alone. -->
+      <KnownFrameworkReference Update="@(KnownFrameworkReference)"
+          Condition="'%(KnownFrameworkReference.TargetFramework)' == 'net10.0' and
+                     ('%(KnownFrameworkReference.RuntimeFrameworkName)' == 'Microsoft.NETCore.App' or
+                      '%(KnownFrameworkReference.RuntimeFrameworkName)' == 'Microsoft.WindowsDesktop.App' or
+                      '%(KnownFrameworkReference.RuntimeFrameworkName)' == 'Microsoft.AspNetCore.App')"
+          LatestRuntimeFrameworkVersion="$(MsixRuntimeVersion)" />
+    </ItemGroup>
+  </Target>
+</Project>

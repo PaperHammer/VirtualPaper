@@ -1,4 +1,5 @@
 using Moq;
+using System.Collections.Specialized;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.EditPanel.Model;
 using VirtualPaper.EditPanel.ViewModels;
@@ -127,6 +128,109 @@ namespace VirtualPaper.UI.Test.T_Draft {
         }
 
         // ── ApplyFilter ───────────────────────────────────────────────
+
+        [TestMethod]
+        public void FilteringAndClearing_RestoreOriginalOrderAndKeepItemInstances() {
+            var first = MakeRecentUsed("Forest.vpd", @"C:\projects\Forest.vpd");
+            var second = MakeRecentUsed("Lake.vpw", @"C:\projects\Lake.vpw");
+            var third = MakeRecentUsed("City.vpd", @"C:\projects\City.vpd");
+            PopulateCollection(first, second, third);
+            var collection = _vm.RecentUseds;
+
+            foreach (string keyword in new[] { "City", "vpd", "missing", "LAKE", "" }) {
+                _vm.ApplyFilter(keyword);
+                var expected = new[] { first, second, third }.Where(item => item.FileName?.Contains(keyword, StringComparison.InvariantCultureIgnoreCase) == true).ToArray();
+                CollectionAssert.AreEqual(expected, _vm.RecentUseds.ToArray());
+            }
+            Assert.AreSame(collection, _vm.RecentUseds);
+            Assert.AreSame(first, _vm.RecentUseds[0]);
+            Assert.AreSame(second, _vm.RecentUseds[1]);
+            Assert.AreSame(third, _vm.RecentUseds[2]);
+            _userSettingsClient.Verify(client => client.DeleteRecetUsedAsync(It.IsAny<IRecentUsed>()), Times.Never);
+        }
+
+        [TestMethod]
+        public async Task ClearingSearch_DoesNotRestoreAnExplicitlyRemovedRecord() {
+            var first = MakeRecentUsed("Forest.vpd", @"C:\projects\Forest.vpd");
+            var second = MakeRecentUsed("Lake.vpw", @"C:\projects\Lake.vpw");
+            PopulateCollection(first, second);
+            _userSettingsClient.Setup(client => client.DeleteRecetUsedAsync(second)).Returns(Task.CompletedTask);
+            _vm.ApplyFilter("Lake");
+            await InvokeRemoveCommandAsync(second);
+            _vm.ApplyFilter("");
+            CollectionAssert.AreEqual(new[] { first }, _vm.RecentUseds.ToArray());
+        }
+
+        [TestMethod]
+        public void LargeHistory_FilteringOnlyNotifiesChangedItems_AndRepeatedSearchDoesNotResetTheList() {
+            var items = Enumerable.Range(0, 1000).Select(index => MakeRecentUsed(
+                (index % 2 == 0 ? "Forest" : "Lake") + index + ".vpd", @"C:\projects\" + index + ".vpd")).ToArray();
+            PopulateCollection(items);
+            var changes = new List<NotifyCollectionChangedAction>();
+            _vm.RecentUseds.CollectionChanged += (_, args) => changes.Add(args.Action);
+
+            _vm.ApplyFilter("Forest");
+            CollectionAssert.AreEqual(items.Where((_, index) => index % 2 == 0).ToArray(), _vm.RecentUseds.ToArray());
+            Assert.HasCount(500, changes);
+            Assert.IsTrue(changes.All(action => action == NotifyCollectionChangedAction.Remove));
+
+            changes.Clear();
+            _vm.ApplyFilter("FOREST");
+            Assert.IsEmpty(changes);
+
+            _vm.ApplyFilter("");
+            CollectionAssert.AreEqual(items, _vm.RecentUseds.ToArray());
+            Assert.HasCount(500, changes);
+            Assert.IsTrue(changes.All(action => action == NotifyCollectionChangedAction.Add));
+            changes.Clear();
+            _vm.ApplyFilter("");
+            Assert.IsEmpty(changes);
+        }
+
+        [TestMethod]
+        public void RepeatedFilter_DoesNotReadSourceNamesAgain_WhenOnlyKeywordCaseChanges() {
+            int reads = 0;
+            var item = new Mock<IRecentUsed>();
+            item.SetupGet(value => value.FileName).Returns(() => { reads++; return "Forest.vpd"; });
+            PopulateCollection(item.Object);
+            _vm.ApplyFilter("forest");
+            int firstReads = reads;
+            Assert.IsGreaterThan(0, firstReads);
+
+            _vm.ApplyFilter("FOREST");
+            _vm.ApplyFilter("forest");
+            Assert.AreEqual(firstReads, reads);
+            Assert.AreSame(item.Object, _vm.RecentUseds.Single());
+        }
+
+        [TestMethod]
+        public void ReloadingHistory_InvalidatesSameKeyword_AndUsesNewItemsAndOrder() {
+            var forest = MakeRecentUsed("Forest.vpd", @"C:\projects\Forest.vpd");
+            var city = MakeRecentUsed("City.vpw", @"C:\projects\City.vpw");
+            PopulateCollection(forest, city);
+            _vm.ApplyFilter("forest");
+            var added = MakeRecentUsed("Forest lake.vpw", @"C:\projects\Forest lake.vpw");
+            PopulateCollection(city, added, forest);
+            _vm.ApplyFilter("forest");
+            CollectionAssert.AreEqual(new[] { added, forest }, _vm.RecentUseds.ToArray());
+        }
+
+        [TestMethod]
+        public async Task RemovingHistory_InvalidatesSameKeywordWithoutRestoringTheRemovedItem() {
+            int reads = 0;
+            var removed = MakeRecentUsed("Forest.vpd", @"C:\projects\Forest.vpd");
+            var retained = new Mock<IRecentUsed>();
+            retained.SetupGet(value => value.FileName).Returns(() => { reads++; return "Forest lake.vpw"; });
+            PopulateCollection(removed, retained.Object);
+            _vm.ApplyFilter("forest");
+            _userSettingsClient.Setup(client => client.DeleteRecetUsedAsync(removed)).Returns(Task.CompletedTask);
+            await InvokeRemoveCommandAsync(removed);
+            reads = 0;
+
+            _vm.ApplyFilter("forest");
+            Assert.IsGreaterThan(0, reads);
+            Assert.AreSame(retained.Object, _vm.RecentUseds.Single());
+        }
 
         [TestMethod]
         public void ApplyFilter_DelegatesToFilterByTitle() {

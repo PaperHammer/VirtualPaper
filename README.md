@@ -164,7 +164,7 @@ The detail crops show the same region at the same display size, without addition
 
 See the [user guide](https://github.com/PaperHammer/VirtualPaper/wiki) for more help getting started.
 
-The installer checks for the **.NET 8 Desktop Runtime** and can download it when needed. The **Microsoft Edge WebView2 Runtime** is also required.
+The installer checks for the **.NET 10 Desktop Runtime** and **ASP.NET Core 10 Runtime** (used by Web previews), and downloads them when needed. The **Microsoft Edge WebView2 Runtime** is also required. The Microsoft Store package includes its .NET dependencies.
 
 > [!NOTE]
 > See the [release notes](https://github.com/PaperHammer/VirtualPaper/releases) for the features available in each version.
@@ -185,7 +185,7 @@ See the [developer documentation](doc/README.md) for source setup and builds, an
 
 For complete local acceptance, run `pwsh -NoProfile -File test/Run-Tests.ps1` from elevated PowerShell 7.2+ on a clean Windows test installation. See the testing guide for required tools, models and the install/UI/uninstall stages.
 
-AI contributors can start with [AGENTS.md](AGENTS.md) and the [repository testing skill](.agents/skills/virtualpaper-testing/SKILL.md). CI and release behavior is documented in the [workflow guide](.github/workflows/README.md).
+AI contributors can start with [AGENTS.md](AGENTS.md) and the [repository testing skill](.agents/skills/testing/SKILL.md). CI and release behavior is documented in the [workflow guide](.github/workflows/README.md).
 
 Open pull requests against `dev`. Please discuss larger changes in an issue first.
 
@@ -194,3 +194,5 @@ Open pull requests against `dev`. Please discuss larger changes in an issue firs
 With thanks to [Lively Wallpaper](https://github.com/lively-community/lively), [XamlNexus](https://github.com/PaperHammer/XamlNexus), [WinUI 3](https://github.com/microsoft/microsoft-ui-xaml), and [Monaco Editor](https://github.com/microsoft/monaco-editor).
 
 VirtualPaper is free and open source under the [GNU General Public License v3.0](LICENSE). Third-party components and models retain their respective licenses.
+
+[Privacy policy](doc/legal/en-US/README.md#privacy-policy) · [AI processing and rights](doc/legal/en-US/README.md#ai-processing-and-rights) · [Copyright and licenses](doc/legal/en-US/README.md#copyright-and-licenses) · [Other languages](doc/legal/README.md)

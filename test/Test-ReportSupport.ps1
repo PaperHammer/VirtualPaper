@@ -51,7 +51,8 @@ try {
         $directory = Join-Path $rawRoot $spec.Artifact
         Write-Trx (Join-Path $directory $spec.Report)
         if ($spec.Coverage) {
-            [IO.File]::WriteAllText((Join-Path $directory 'coverage.cobertura.xml'), '<coverage lines-covered="5" lines-valid="10"/>')
+            $sourceLines = (1..10 | ForEach-Object { '<line number="{0}" hits="{1}"/>' -f $_, [int]($_ -le 5) }) -join ''
+            [IO.File]::WriteAllText((Join-Path $directory 'coverage.cobertura.xml'), "<coverage lines-covered=`"5`" lines-valid=`"10`"><packages><package name=`"VirtualPaper.Fixture`"><classes><class filename=`"src/VirtualPaper.Fixture/Logic.cs`"><lines>$sourceLines</lines></class></classes></package></packages></coverage>")
             $staging = Join-Path $directory 'In/staging'
             New-Item -ItemType Directory -Path $staging -Force | Out-Null
             [IO.File]::WriteAllText((Join-Path $staging 'duplicate.cobertura.xml'), '<ignored/>')
@@ -60,7 +61,9 @@ try {
     # Even if a previous bundle is present, readers only consume the named raw reports.
     Write-Trx (Join-Path $rawRoot 'test-results-combined-previous/core-tests.trx')
     Assert-ReviewCondition (@(Get-ProjectTestReports $rawRoot).Count -eq 8) 'A previous summary must not duplicate project reports.'
-    Assert-ReviewCondition (@(Get-TestCoverageRows $rawRoot).Count -eq 7) 'Count one canonical coverage report per project.'
+    $coverage = @(Get-TestCoverageRows $rawRoot)
+    Assert-ReviewCondition ($coverage.Count -eq 1 -and $coverage[0].Module -eq 'VirtualPaper.Fixture' -and
+        $coverage[0].Covered -eq 5 -and $coverage[0].Valid -eq 10) 'Merge shared source lines across the seven canonical reports.'
 
     $installer = Invoke-InstallerLifecycle -Install {} -Open {} -Reinstall {} -VerifyPreserved {} -OpenFresh {} -Uninstall {}
     $ui = @{ Passed = $true; ExpectedCount = 1; Results = @(@{
@@ -77,6 +80,9 @@ try {
     $env:GITHUB_STEP_SUMMARY = Join-Path $fixture 'summary.md'
     & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot
     Assert-ReviewCondition ((Get-Content $env:GITHUB_OUTPUT -Raw).Contains('ui_outcome=Passed')) 'Summary must validate independent UI results.'
+    $summaryText = Get-Content $env:GITHUB_STEP_SUMMARY -Raw
+    Assert-ReviewCondition ($summaryText.Contains('| VirtualPaper.Fixture | 5 / 10 | 50% |') -and
+        $summaryText.Contains('**Merged source lines:** 5 / 10')) 'Local summary must display product modules and merged totals rather than repeated suite denominators.'
     [IO.File]::WriteAllText($env:GITHUB_OUTPUT, '')
     Assert-ReportThrows { & (Join-Path $PSScriptRoot 'Summarize-TestResults.ps1') -Root $rawRoot -RequireFullAcceptance } 'Release must reject skipped project tests'
     Assert-ReviewCondition ([IO.File]::ReadAllText($env:GITHUB_OUTPUT) -eq '') 'Skipped release tests must not emit success outputs.'
@@ -144,8 +150,10 @@ try {
     $runnerDirectory = Join-Path $runnerRoot 'test'
     New-Item -ItemType Directory -Path $runnerDirectory -Force | Out-Null
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Run-ProjectTests.ps1'), (Join-Path $PSScriptRoot 'TestReportSupport.ps1') -Destination $runnerDirectory
+    $global:ReportDotnetCalls = 0
     $global:ReportTestMode = 'pass'
     function dotnet {
+        $global:ReportDotnetCalls++
         $global:ReportTestArguments = @($args)
         $global:ReportTestBin = $env:RELEASE_BIN_DIR
         $global:LASTEXITCODE = if ($global:ReportTestMode -eq 'exit-failure') { 9 } else { 0 }
@@ -167,17 +175,25 @@ try {
     Remove-Item -LiteralPath (Join-Path $runnerRoot 'TestResults/ML/ml-tests.trx')
     & $runner -JobId test-ml -IncludeMLIntegration
     Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--filter') 'Explicit ML integration must not be filtered out.'
+    # Match the downloaded artifact: no localization sources or source-only helpers.
+    $releaseBinBeforeArtifacts = $env:RELEASE_BIN_DIR
     & $runner -JobId test-artifacts
-    Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--settings' -and $global:ReportTestBin -eq (Join-Path $runnerRoot 'src/VirtualPaper/bin/Release/net8.0-windows10.0.19041.0')) 'Artifact checks need the build directory and no coverage collector.'
+    Assert-ReviewCondition ($env:RELEASE_BIN_DIR -eq $releaseBinBeforeArtifacts) 'Artifact tests must restore the caller environment.'
+    Assert-ReviewCondition ($global:ReportTestArguments -notcontains '--settings' -and $global:ReportTestBin -eq (Join-Path $runnerRoot 'src/VirtualPaper/bin/Release/net10.0-windows10.0.19041.0')) 'Artifact checks need the build directory and no coverage collector.'
+    $dotnetCalls = $global:ReportDotnetCalls
+    $global:ReportTestMode = 'failed-report'
+    Assert-ReportThrows { & $runner -JobId test-artifacts -ResultsDirectory 'TestResults/BadLocalization' } 'Incomplete localization must block artifact tests.'
+    Assert-ReviewCondition ($global:ReportDotnetCalls -eq $dotnetCalls + 1 -and (Test-Path (Join-Path $runnerRoot 'TestResults/BadLocalization/release-build-tests.trx'))) 'Failed artifact assertions must be retained in the TRX and block success.'
+    Assert-ReviewCondition ($env:RELEASE_BIN_DIR -eq $releaseBinBeforeArtifacts) 'Failed artifact tests must also restore the caller environment.'
     foreach ($case in @(@('exit-failure', 'test-shader'), @('missing-report', 'test-images'), @('failed-report', 'test-web-backdrop'))) {
         $global:ReportTestMode = $case[0]
         Assert-ReportThrows { & $runner -JobId $case[1] } $case[0]
     }
     Assert-ReportThrows { & $runner -JobId unknown } 'Unknown project'
-    Write-Host '[OK] TRX validity, report isolation on retry, per-project coverage, explicit UI skips and shared runner failure propagation.'
+    Write-Host '[OK] TRX validity, report isolation on retry, merged product-module coverage, explicit UI skips and shared runner failure propagation.'
 } finally {
     Remove-Item Function:\dotnet -ErrorAction SilentlyContinue
-    Remove-Variable ReportTestArguments, ReportTestMode, ReportTestBin -Scope Global -ErrorAction SilentlyContinue
+    Remove-Variable ReportTestArguments, ReportTestMode, ReportTestBin, ReportDotnetCalls -Scope Global -ErrorAction SilentlyContinue
     $env:GITHUB_OUTPUT = $oldOutput; $env:GITHUB_STEP_SUMMARY = $oldSummary
     $resolved = [IO.Path]::GetFullPath($fixture)
     if ([IO.Path]::GetDirectoryName($resolved) -ne $resultsRoot) { throw 'Unsafe report test cleanup path.' }

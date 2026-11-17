@@ -54,6 +54,8 @@ function Get-ProjectTestReports {
 
 function Get-TestCoverageRows {
     param([Parameter(Mandatory)][string]$Root)
+    $modules = [Collections.Generic.Dictionary[string, object]]::new([StringComparer]::OrdinalIgnoreCase)
+    $owners = [Collections.Generic.Dictionary[string, string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($spec in Get-ProjectTestSpecs | Where-Object Coverage) {
         $files = @(Get-ChildItem -LiteralPath (Join-Path $Root $spec.Artifact) -Filter '*.cobertura.xml' -Recurse |
             Where-Object { $_.FullName -notmatch '[\\/]In[\\/]' })
@@ -65,6 +67,57 @@ function Get-TestCoverageRows {
             $covered -lt 0 -or $valid -lt 0 -or $covered -gt $valid) {
             throw "Invalid coverage counters: $($files[0].FullName)"
         }
-        [pscustomobject]@{ Project = $spec.Project; Covered = $covered; Valid = $valid }
+        $lineCount = 0; $hasHit = $false
+        foreach ($package in $document.SelectNodes('/coverage/packages/package')) {
+            $packageName = $package.GetAttribute('name')
+            if ([string]::IsNullOrWhiteSpace($packageName)) { throw "Coverage module name is missing: $($files[0].FullName)" }
+            foreach ($class in $package.SelectNodes('classes/class')) {
+                $source = $class.GetAttribute('filename').Replace('\', '/') -replace '^(\./)+', ''
+                if ([string]::IsNullOrWhiteSpace($source)) { throw "Coverage source path is missing: $packageName" }
+                if ($source -notmatch '^(/|[a-zA-Z]:/|(?i:src|test)/)') {
+                    $sourceRoot = $document.SelectSingleNode('/coverage/sources/source')
+                    if ($sourceRoot -and $sourceRoot.InnerText) { $source = $sourceRoot.InnerText.Replace('\', '/') + '/' + $source }
+                }
+                # Report roots differ between local/CI checkouts. Keep the authored
+                # source path, then normalize separators and dot segments before merging.
+                $source = $source -replace '(?i)^.*?/(src|test)/', '$1/'
+                $segments = [Collections.Generic.List[string]]::new()
+                foreach ($part in $source.Split('/')) {
+                    if ($part -eq '.' -or $part -eq '') { continue }
+                    if ($part -eq '..' -and $segments.Count -gt 0 -and $segments[-1] -ne '..') { $segments.RemoveAt($segments.Count - 1) }
+                    else { $segments.Add($part) }
+                }
+                $source = $segments -join '/'
+                $module = if ($source -match '(?i)^src/([^/]+)/') { $Matches[1] } else { $packageName }
+                if ($owners.ContainsKey($source) -and $owners[$source] -ine $module) {
+                    throw "Coverage source has conflicting module ownership: $source"
+                }
+                $owners[$source] = $module
+                if (-not $modules.ContainsKey($module)) {
+                    $modules[$module] = @{
+                        Valid = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+                        Covered = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+                    }
+                }
+                # Method nodes repeat class lines; only canonical class lines are inputs.
+                foreach ($line in $class.SelectNodes('lines/line')) {
+                    $number = 0L; $hits = 0L
+                    if (-not [long]::TryParse($line.GetAttribute('number'), [ref]$number) -or $number -lt 1 -or
+                        -not [long]::TryParse($line.GetAttribute('hits'), [ref]$hits) -or $hits -lt 0) {
+                        throw "Invalid coverage line or hit count: $source"
+                    }
+                    $key = "$source`:$number"
+                    [void]$modules[$module].Valid.Add($key)
+                    if ($hits -gt 0) { [void]$modules[$module].Covered.Add($key); $hasHit = $true }
+                    $lineCount++
+                }
+            }
+        }
+        if (($valid -gt 0) -ne ($lineCount -gt 0) -or ($covered -gt 0) -ne $hasHit) {
+            throw "Coverage counters have no matching source-line evidence: $($files[0].FullName)"
+        }
+    }
+    foreach ($module in $modules.Keys | Sort-Object) {
+        [pscustomobject]@{ Module = $module; Covered = $modules[$module].Covered.Count; Valid = $modules[$module].Valid.Count }
     }
 }

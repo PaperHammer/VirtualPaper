@@ -1,4 +1,5 @@
 using VirtualPaper.Common.Utils.IPC;
+using VirtualPaper.Common.Utils.Files;
 
 namespace VirtualPaper.Services.Interfaces {
     /// <summary>
@@ -10,6 +11,9 @@ namespace VirtualPaper.Services.Interfaces {
         bool IsVisibleUI { get; }
         
         Task ShowUIAsync();
+        Task OpenProjectsAsync(IEnumerable<string> paths);
+        ProjectOpenRequest? GetPendingProjectOpen();
+        void CompleteProjectOpen(string requestId);
         void CloseUI();
         void NotifyUIClosing(int processId);
         void SendCloseCmd();

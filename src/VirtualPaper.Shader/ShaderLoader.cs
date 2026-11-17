@@ -155,7 +155,7 @@ namespace VirtualPaper.Shader {
             string fileName = ShaderTypeManager.GetShaderName(type);
 
             try {
-                var uri = new Uri($"ms-appx:///{DefaultShaderFolderName}/{fileName}");
+                var uri = new Uri($"ms-appx:///{Constants.WorkingDir.Shader.Replace('\\', '/')}/{fileName}");
                 StorageFile file = await StorageFile.GetFileFromApplicationUriAsync(uri);
                 return file.Path;
             }

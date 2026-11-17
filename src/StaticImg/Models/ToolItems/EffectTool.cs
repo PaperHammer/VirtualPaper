@@ -1,5 +1,6 @@
+using System;
 using Microsoft.Graphics.Canvas;
-using Microsoft.UI;
+using Windows.UI;
 using VirtualPaper.Common.Extensions;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.Shader;
@@ -8,6 +9,7 @@ using VirtualPaper.Shader.Models;
 using Workloads.Creation.StaticImg.Core.Rendering;
 using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
 using Workloads.Creation.StaticImg.Events;
+using Workloads.Creation.StaticImg.Extensions;
 
 namespace Workloads.Creation.StaticImg.Models.ToolItems {
     /// <summary>
@@ -25,67 +27,60 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         public ShaderType CurrentShaderType => _shaderType;
 
         /// <summary>开始预览：缓存当前图层。不立即应用效果，等滑块驱动</summary>
-        public void StartPreview(ShaderType type, EffectParams? param = null) {
-            if (!IsCanvasReady) return;
-
-            LayerId = ViewModel.Data.SelectedLayer.Tag;
-            _shaderType = type;
-            _params = param ?? new EffectParams { Value = 0f, Value2 = 0f, Value3 = 0f, Value4 = 0f, Dpi = 96f };
-
-            var rt = RenderTarget;
-            _effectTarget = rt;
-            _previewSource?.Dispose();
-            _previewSource = null;
-            _originalCache?.Dispose();
-            _originalCache = new CanvasRenderTarget(rt, rt.SizeInPixels.Width, rt.SizeInPixels.Height, rt.Dpi, rt.Format, rt.AlphaMode);
-            using (var ds = _originalCache.CreateDrawingSession())
-                ds.DrawImage(rt);
-            CreatePreviewSource();
-
-            _isPreviewing = true;
+        public bool StartPreview(ShaderType type, EffectParams? param = null) {
+            if (!IsCanvasReady) return false;
+            try {
+                ReleasePreviewResources();
+                LayerId = ViewModel.Data.SelectedLayer.Tag;
+                _shaderType = type;
+                _params = param ?? new EffectParams { Value = 0f, Value2 = 0f, Value3 = 0f, Value4 = 0f, Dpi = 96f };
+                _effectTarget = RenderTarget;
+                _originalCache = _effectTarget.Clone();
+                CreatePreviewSource();
+                _isPreviewing = true;
+                return true;
+            }
+            catch (Exception ex) {
+                HandleEffectError(ex, "Start effect preview failed");
+                ReleasePreviewResources();
+                return false;
+            }
         }
 
         /// <summary>更新参数并刷新预览</summary>
         public void UpdateParams(EffectParams param) {
             if (!_isPreviewing) return;
+            if (ViewModel.Session.IsDrawingUnavailable) { ReleasePreviewResources(); return; }
             _params = param;
             ApplyEffect(fullQuality: false);
         }
 
         /// <summary>确认效果：效果已写入 RenderTarget，记录撤销命令，通知缩略图更新</summary>
-        public void Commit(EffectParams? finalParams = null) {
-            if (!_isPreviewing || _originalCache == null) return;
-
-            if (finalParams.HasValue)
-                _params = finalParams.Value;
-
-            // 拖动期间可能使用了低分辨率预览源，提交前必须生成一次全质量结果。
-            ApplyEffect(fullQuality: true);
-
-            // 捕获压缩后的原始像素数据
-            var originalPixels = _originalCache.GetPixelBytes().CompressPixels();
-
-            // 创建效果命令并记录到撤销栈
-            var command = new EffectCommand(
-                layerId: LayerId,
-                canvasData: ViewModel.Data,
-                shaderType: _shaderType,
-                effectParams: _params,
-                compressedOriginalPixels: originalPixels,
-                description: $"Apply {_shaderType} effect",
-                requestRenderAction: () => HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion))
-            );
-            ViewModel.Session.UnReUtil.RecordCommand(command);
-
-            _isPreviewing = false;
-            _shaderType = ShaderType.None;
-            _originalCache?.Dispose();
-            _originalCache = null;
-            _previewSource?.Dispose();
-            _previewSource = null;
-            _effectTarget = null;
-            // 通知 LayerInfo 内容已变化，驱动缩略图刷新
-            RequestOnceRender();
+        public bool Commit(EffectParams? finalParams = null) {
+            if (!_isPreviewing || _originalCache == null) return false;
+            if (ViewModel.Session.IsDrawingUnavailable) { ReleasePreviewResources(); return false; }
+            try {
+                if (finalParams.HasValue) _params = finalParams.Value;
+                // 应用失败时保留取消入口，不记录一条实际未成功的撤销命令。
+                if (!ApplyEffect(fullQuality: true)) return false;
+                var originalPixels = _originalCache.GetPixelBytes().CompressPixels();
+                var command = new EffectCommand(
+                    layerId: LayerId,
+                    canvasData: ViewModel.Data,
+                    shaderType: _shaderType,
+                    effectParams: _params,
+                    compressedOriginalPixels: originalPixels,
+                    description: $"Apply {_shaderType} effect",
+                    requestRenderAction: () => HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion)));
+                ViewModel.Session.UnReUtil.RecordCommand(command);
+                ReleasePreviewResources();
+                RequestOnceRender();
+                return true;
+            }
+            catch (Exception ex) {
+                HandleEffectError(ex, "Commit effect failed");
+                return false;
+            }
         }
 
         /// <summary>取消效果，还原原始图层</summary>
@@ -95,30 +90,21 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
             try {
                 // 特效会话必须始终还原开始预览时的图层。
                 // 切换图层后 RenderBase.RenderTarget 已经指向新图层，不能在这里动态读取。
-                if (_originalCache != null && _effectTarget != null) {
-                    using (var ds = _effectTarget.CreateDrawingSession()) {
-                        ds.Clear(Colors.Transparent);
-                        ds.DrawImage(_originalCache);
-                    }
+                if (!ViewModel.Session.IsDrawingUnavailable && _originalCache != null && _effectTarget != null) {
+                    _effectTarget.CopyPixelsFromBitmap(_originalCache);
                     HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
                 }
             }
-            catch (System.Exception ex) {
-                ArcLog.GetLogger<EffectTool>().Error($"Restore effect preview failed: {_shaderType}, {ex.Message}");
+            catch (Exception ex) {
+                HandleEffectError(ex, "Restore effect preview failed");
             }
             finally {
-                _isPreviewing = false;
-                _shaderType = ShaderType.None;
-                _originalCache?.Dispose();
-                _originalCache = null;
-                _previewSource?.Dispose();
-                _previewSource = null;
-                _effectTarget = null;
+                ReleasePreviewResources();
             }
         }
 
-        private void ApplyEffect(bool fullQuality) {
-            if (_originalCache == null || _effectTarget == null) return;
+        private bool ApplyEffect(bool fullQuality) {
+            if (_originalCache == null || _effectTarget == null) return false;
 
             try {
                 CanvasRenderTarget target = _effectTarget;
@@ -130,7 +116,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 var result = EffectApplier.Apply(_shaderType, _params, source);
                 try {
                     using (var ds = target.CreateDrawingSession()) {
-                        ds.Clear(Colors.Transparent);
+                        ds.Clear(Color.FromArgb(0, 0, 0, 0));
                         if (ReferenceEquals(source, _originalCache))
                             ds.DrawImage(result);
                         else
@@ -145,10 +131,22 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 }
 
                 HandleRender(new RenderTargetChangedEventArgs(RenderMode.FullRegion));
+                if (ViewModel.Session.IsDrawingUnavailable) { ReleasePreviewResources(); return false; }
+                return true;
             }
-            catch (System.Exception ex) {
-                ArcLog.GetLogger<EffectTool>().Error($"Apply effect failed: {_shaderType}, {ex.Message}");
+            catch (Exception ex) {
+                HandleEffectError(ex, "Apply effect failed");
+                return false;
             }
+        }
+
+        private void HandleEffectError(Exception error, string operation) {
+            if (ViewModel.Session.IsDrawingUnavailable || IsDeviceLost(error)) {
+                ReleasePreviewResources();
+                if (!ViewModel.Session.IsDrawingUnavailable) HandleDeviceLost();
+                return;
+            }
+            ArcLog.GetLogger<EffectTool>().Error($"{operation}: {_shaderType}", error);
         }
 
         private void CreatePreviewSource() {
@@ -170,7 +168,7 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
                 _originalCache.Format,
                 _originalCache.AlphaMode);
             using var ds = _previewSource.CreateDrawingSession();
-            ds.Clear(Colors.Transparent);
+            ds.Clear(Color.FromArgb(0, 0, 0, 0));
             ds.DrawImage(
                 _originalCache,
                 _previewSource.Bounds,
@@ -180,12 +178,18 @@ namespace Workloads.Creation.StaticImg.Models.ToolItems {
         }
 
         public override void Dispose() {
+            ReleasePreviewResources();
+            base.Dispose();
+        }
+
+        private void ReleasePreviewResources() {
+            _isPreviewing = false;
+            _shaderType = ShaderType.None;
             _originalCache?.Dispose();
             _originalCache = null;
             _previewSource?.Dispose();
             _previewSource = null;
             _effectTarget = null;
-            base.Dispose();
         }
 
         private const double MaxPreviewDimension = 1280;

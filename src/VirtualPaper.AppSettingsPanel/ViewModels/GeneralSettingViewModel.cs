@@ -27,6 +27,31 @@ using Windows.System;
 
 namespace VirtualPaper.AppSettingsPanel.ViewModels {
     public partial class GeneralSettingViewModel : ObservableObject, IDisposable {
+        public bool InterfaceAnimationsEnabled {
+            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
+            set {
+                if (InterfaceAnimationsEnabled == value) return;
+                // 沿用已有持久化字段，升级后保留用户原先的动画偏好。
+                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
+                UiAnimation.Policy.SetRequested(value);
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+            }
+        }
+
+        public bool UiHardwareAccelerationEnabled {
+            get => _userSettingsClient.Settings.UiHardwareAccelerationEnabled;
+            set {
+                if (UiHardwareAccelerationEnabled == value) return;
+                _userSettingsClient.Settings.UiHardwareAccelerationEnabled = value;
+                UpdateSettingsConfigFile();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsUiRestartRequired));
+            }
+        }
+
+        public bool IsUiRestartRequired => UiHardwareAccelerationEnabled != _startupPolicy.IsEnabled;
+
         public event EventHandler? WallpaperInstallDirChanged;
 
         public bool IsWinStore => Constants.ApplicationType.IsMSIX;
@@ -178,20 +203,6 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
-        public string NavigationAnimationsStatus => LanguageUtil.GetI18n(
-            NavigationAnimationsEnabled ? Constants.I18n.Text_On : Constants.I18n.Text_Off);
-
-        public bool NavigationAnimationsEnabled {
-            get => _userSettingsClient.Settings.NavigationAnimationsEnabled;
-            set {
-                if (_userSettingsClient.Settings.NavigationAnimationsEnabled == value) return;
-                _userSettingsClient.Settings.NavigationAnimationsEnabled = value;
-                UpdateSettingsConfigFile();
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(NavigationAnimationsStatus));
-            }
-        }
-
         private int _seletedSystemBackdropIndx;
         public int SeletedSystemBackdropIndx {
             get => _seletedSystemBackdropIndx;
@@ -268,6 +279,15 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
         }
 
+        public string WallpaperDirectoryChangeStatus => string.IsNullOrEmpty(_wallpaperMigrationStatusKey)
+            ? string.Empty : LanguageUtil.GetI18n(_wallpaperMigrationStatusKey);
+
+        private void SetWallpaperMigrationStatus(string resourceKey) {
+            if (_wallpaperMigrationStatusKey == resourceKey) return;
+            _wallpaperMigrationStatusKey = resourceKey;
+            OnPropertyChanged(nameof(WallpaperDirectoryChangeStatus));
+        }
+
         private bool _isWallpaperDirectoryChangeEnable = true;
         public bool IsWallpaperDirectoryChangeEnable {
             get { return _isWallpaperDirectoryChangeEnable; }
@@ -290,11 +310,12 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             IAppUpdaterClient appUpdater,
             IUserSettingsClient userSettingsClient,
             IWallpaperControlClient wallpaperControlClient,
-            ICommandsClient commandsClient) {
+            ICommandsClient commandsClient, UiHardwareAccelerationPolicy startupPolicy) {
             _appUpdater = appUpdater;
             _userSettingsClient = userSettingsClient;
             _wpControlClient = wallpaperControlClient;
             _commandsClient = commandsClient;
+            _startupPolicy = startupPolicy;
 
             InitText();
             InitCollections();
@@ -315,8 +336,8 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
                 OnPropertyChanged(nameof(SystemBackdrops));
                 OnPropertyChanged(nameof(SeletedSystemBackdropIndx));
                 ChangeAutoShartStatu(_isAutoStart);
-                OnPropertyChanged(nameof(NavigationAnimationsStatus));
                 OnPropertyChanged(nameof(IntelligentResultReminderStatus));
+                OnPropertyChanged(nameof(WallpaperDirectoryChangeStatus));
                 OnPropertyChanged(nameof(AppVersionText));
                 MenuUpdate(_lastUpdateStatus, _lastUpdateRelease);
             }
@@ -464,12 +485,13 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             if (WallpaperDirectoryChangeOngoing) return;
             var settings = _userSettingsClient.Settings;
             (WallpaperDirectoryDefinition Directory, string Source, string Target)[] moves = [];
-            var changedLayouts = new List<(string Source, string Target)>();
+            var layoutMoves = new List<(string Source, string Target)>();
             var sourceSnapshots = new Dictionary<string, WallpaperDirectorySnapshot>(StringComparer.OrdinalIgnoreCase);
             bool settingsChanged = false;
             WallpaperDirectoryChangeOngoing = true;
 
             try {
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationScanning");
                 string destination = Path.TrimEndingDirectorySeparator(Path.GetFullPath(destRootFolderPath));
                 moves = WallpaperLibraryDirectories.All
                     .Select(directory => (Directory: directory, Source: directory.GetPath(settings),
@@ -490,22 +512,27 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
 
                 // Copy and verify every library before switching paths. Source data
                 // is removed only after settings are saved and playback is restored.
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationCopying");
                 foreach (var move in moves) {
                     if (sourceSnapshots.TryGetValue(move.Source, out var snapshot))
                         await WallpaperDirectoryUpdateAsync(move.Source, move.Target, snapshot);
                 }
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationUpdating");
                 foreach (var move in moves) {
+                    // A failed RPC may already have applied its paths before saving or replying.
+                    layoutMoves.Add((move.Source, move.Target));
                     await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Source, move.Target);
-                    changedLayouts.Add((move.Source, move.Target));
                     settingsChanged = true;
                     move.Directory.SetPath(settings, move.Target);
                 }
                 await _userSettingsClient.SaveAsync<ISettings>();
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationRestoring");
                 var response = await _wpControlClient.RestartAllWallpapersAsync();
                 if (!response.IsFinished) throw new IOException("Restart all wallpapers failed.");
 
                 // The new location is committed. Cleanup failures must not restore paths
                 // to source folders that may already have been removed.
+                SetWallpaperMigrationStatus("Settings_General_Storage_MigrationCleaning");
                 try { WallpaperInstallDirChanged?.Invoke(this, EventArgs.Empty); }
                 catch (Exception notification) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(notification); }
                 foreach (var move in moves) {
@@ -519,17 +546,22 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
             catch (Exception ex) {
                 // Keep both the originals and any copied files if migration fails.
-                try {
-                    if (settingsChanged) {
-                        foreach (var move in moves) move.Directory.SetPath(settings, move.Source);
-                        await _userSettingsClient.SaveAsync<ISettings>();
-                    }
-                    foreach (var move in changedLayouts.AsEnumerable().Reverse()) {
-                        await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Target, move.Source);
-                    }
-                    if (changedLayouts.Count > 0) await _wpControlClient.RestartAllWallpapersAsync();
+                if (settingsChanged || layoutMoves.Count > 0)
+                    SetWallpaperMigrationStatus("Settings_General_Storage_MigrationRollingBack");
+                if (settingsChanged) {
+                    foreach (var move in moves) move.Directory.SetPath(settings, move.Source);
+                    try { await _userSettingsClient.SaveAsync<ISettings>(); }
+                    catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
                 }
-                catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
+                // Each recovery step is independent: one failure must not block the rest.
+                foreach (var move in layoutMoves.AsEnumerable().Reverse()) {
+                    try { await _wpControlClient.ChangeWallpaperLayoutFolderPathAsync(move.Target, move.Source); }
+                    catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
+                }
+                if (layoutMoves.Count > 0) {
+                    try { await _wpControlClient.RestartAllWallpapersAsync(); }
+                    catch (Exception rollback) { ArcLog.GetLogger<GeneralSettingViewModel>().Error(rollback); }
+                }
                 if (ex is OperationCanceledException || ex is RpcException { StatusCode: StatusCode.Cancelled })
                     GlobalMessageUtil.ShowCanceled();
                 else GlobalMessageUtil.ShowException(ex);
@@ -537,6 +569,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
             }
             finally {
                 WallpaperDir = _userSettingsClient.Settings.WallpaperDir;
+                SetWallpaperMigrationStatus(string.Empty);
                 WallpaperDirectoryChangeOngoing = false;
             }
         }
@@ -642,6 +675,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         }
         #endregion
 
+        private string _wallpaperMigrationStatusKey = string.Empty;
         private string _sysbdDefault = string.Empty;
         private string _sysbdMica = string.Empty;
         private string _sysbdAcrylic = string.Empty;
@@ -649,6 +683,7 @@ namespace VirtualPaper.AppSettingsPanel.ViewModels {
         private readonly IUserSettingsClient _userSettingsClient;
         private readonly IWallpaperControlClient _wpControlClient;
         private readonly ICommandsClient _commandsClient;
+        private readonly UiHardwareAccelerationPolicy _startupPolicy;
         private AppBuildInfo? _buildInfo;
     }
 

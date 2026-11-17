@@ -2,6 +2,9 @@ using System.IO;
 using System.Text.Json;
 using VirtualPaper.InstallerTest;
 
+if (args.FirstOrDefault() == "--resume-package-activation")
+    return PackageActivationResume.Run(args.Skip(1).ToArray());
+
 if (!InstallerOptions.TryParse(args, out var options, out var error)) {
     Console.Error.WriteLine(error);
     InstallerOptions.PrintUsage(Console.Error);

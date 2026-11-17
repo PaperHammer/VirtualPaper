@@ -1,0 +1,29 @@
+<Project>
+  <PropertyGroup>
+    <_LocalizationRoot>$(MSBuildThisFileDirectory)</_LocalizationRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="$(_LocalizationRoot)Strings\**\Resources.resw;$(_LocalizationRoot)LanguageCatalog.json;$(_LocalizationRoot)ResourceMappings.xml;$(_LocalizationRoot)*.ps1" />
+  </ItemGroup>
+  <Target Name="GenerateSharedLocalizedResources" BeforeTargets="AssignTargetPaths" Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <_SharedLocalizationOutput>$(IntermediateOutputPath)Localization</_SharedLocalizationOutput>
+    </PropertyGroup>
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(_LocalizationRoot)Generate-Resources.ps1&quot; -Target $(LocalizationResourceKind) -OutputRoot &quot;$(_SharedLocalizationOutput)&quot;" />
+    <XmlPeek XmlInputPath="$(_SharedLocalizationOutput)\Languages.props" Query="/Project/PropertyGroup/DefaultLanguage/text()">
+      <Output TaskParameter="Result" PropertyName="NeutralLanguage" />
+      <Output TaskParameter="Result" PropertyName="DefaultLanguage" />
+    </XmlPeek>
+    <ItemGroup Condition="'$(LocalizationResourceKind)' != 'Metadata'">
+      <_SharedLocalizedResource Include="$(_SharedLocalizationOutput)\*.resx" />
+      <EmbeddedResource Include="@(_SharedLocalizedResource)">
+        <Link>$(LocalizationResourceFolder)\%(Filename)%(Extension)</Link>
+        <ManifestResourceName>$(RootNamespace).$(LocalizationResourceFolder).%(Filename)</ManifestResourceName>
+      </EmbeddedResource>
+      <FileWrites Include="@(_SharedLocalizedResource)" />
+    </ItemGroup>
+    <ItemGroup>
+      <FileWrites Include="$(_SharedLocalizationOutput)\Languages.props" />
+    </ItemGroup>
+  </Target>
+</Project>

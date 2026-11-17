@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.UI.Xaml;
+using Microsoft.Extensions.DependencyInjection;
+using VirtualPaper.Common.Utils.DI;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Utils.ThreadContext;
 using VirtualPaper.UIComponent.Utils;
@@ -26,42 +28,69 @@ public partial class App : Application {
 
         var cases = new[] {
             new UiTestCase("Localization.LiveText.RefreshAndPreserveState", LocalizationTests.RefreshAndPreserveStateAsync),
+            new UiTestCase("Localization.LongText.IntelligentLayouts", LocalizationLayoutTests.RunAsync),
+            new UiTestCase("Localization.RegionalFormats.EffectsSaveAndReopen",
+                commandLine.Length == 5 && commandLine[3] == "--module" &&
+                    (commandLine[4] == "Localization.RegionalFormats" || commandLine[4] == RegionalFormatTests.CaseName)
+                    ? RegionalFormatTests.RunAsync : RegionalFormatTests.RunIsolatedAsync),
+            new UiTestCase("Localization.FontFallback.MixedScripts", FontFallbackTests.RunAsync),
+            new UiTestCase("Feedback.Library.ImportCountCancelAndSummary", ImportFeedbackTests.RunAsync),
+            new UiTestCase("Feedback.Intelligent.FailureDetails", IntelligentFeedbackTests.RunAsync),
             new UiTestCase("GeneralEffect.RImage.EditRestoreSaveAndReopen",
                 context => GeneralEffectTests.EditRestoreSaveAndReopenAsync(context, RuntimeType.RImage)),
             new UiTestCase("GeneralEffect.RImage3D.EditRestoreSaveAndReopen",
                 context => GeneralEffectTests.EditRestoreSaveAndReopenAsync(context, RuntimeType.RImage3D)),
             new UiTestCase("Application.NavigationSettings.SaveAndReopen", NavigationSettingsTests.SaveAndReopenAsync),
             new UiTestCase("Application.PerformanceSettings.SaveAndReopen", PerformanceSettingsTests.SaveAndReopenAsync),
+            new UiTestCase("Application.HardwareAcceleration.StartupPolicyAndOptions", HardwareAccelerationTests.StartupPolicyAndOptionsAsync),
+            new UiTestCase("Application.HardwareAcceleration.SoftwareDrawingSaveReopenAndExport",
+                context => StaticEditorTests.RotateCancelSaveReopenAndExportAsync(context, false)),
+            new UiTestCase("Application.HardwareAcceleration.SoftwareWebEditSaveReopenAndExport",
+                context => WebEditorTests.CreateFilesSaveReopenAndExportAsync(context, false)),
             new UiTestCase("Application.WallpaperLibrary.ImportApplyCloseDelete", WallpaperLibraryTests.ImportApplyCloseDeleteAsync),
             new UiTestCase("Application.WallpaperLibrary.ImportMultipleFormatsAndReopen", BuiltInWallpaperTests.ImportMultipleAsync),
             new UiTestCase("Application.WallpaperLibrary.BuiltInsApplyRenderAndClose", BuiltInWallpaperTests.ApplyBuiltInsAsync),
+            new UiTestCase("Application.WallpaperLibrary.OrganizeAndReopen", LibraryOrganizationTests.RunAsync),
+            new UiTestCase("Application.EffectPresetManager.CreateCopyDeleteAndReopen", EffectPresetManagerTests.RunAsync),
             new UiTestCase("Application.ScreenSaver.SettingsAndWhitelist", ScreenSaverTests.SettingsAndWhitelistAsync),
             new UiTestCase("Application.ScreenFit.PreviewCancelApplyAndReopen", ScreenFitTests.PreviewCancelApplyAndReopenAsync),
             new UiTestCase("Application.WallpaperEffects.EditRestoreSaveAndReopen", WallpaperEffectsTests.EditRestoreSaveAndReopenAsync),
             new UiTestCase("Application.GeneralSettings.SaveLanguageThemeAndReopen", GeneralSettingsTests.SaveLanguageThemeAndReopenAsync),
             new UiTestCase("Application.ThemeSync.MainWindowAndTray", ThemeSyncTests.MainWindowAndTrayAsync),
             new UiTestCase("Application.SystemSettings.ExportLogsAndCancel", SystemSettingsTests.ExportLogsAndCancelAsync),
-            new UiTestCase("Application.StaticEditor.RotateCancelSaveReopenAndExport", StaticEditorTests.RotateCancelSaveReopenAndExportAsync),
-            new UiTestCase("Application.WebEditor.CreateFilesSaveReopenAndExport", WebEditorTests.CreateFilesSaveReopenAndExportAsync),
+            new UiTestCase("Application.StaticEditor.RotateCancelSaveReopenAndExport", context => StaticEditorTests.RotateCancelSaveReopenAndExportAsync(context)),
+            new UiTestCase("Application.WebEditor.CreateFilesSaveReopenAndExport", context => WebEditorTests.CreateFilesSaveReopenAndExportAsync(context)),
+            new UiTestCase("Application.ProjectActivation.StartForwardReuseAndReopen", ProjectActivationTests.RunAsync),
             new UiTestCase("Application.EditorExit.ImageCancelSaveAndExit", EditorExitTests.ImageAsync),
             new UiTestCase("Application.EditorExit.WebCancelSaveAndDiscard", EditorExitTests.WebAsync),
             new UiTestCase("Application.Intelligent.ConfigureCancelAndReopen", IntelligentTests.ConfigureCancelAndReopenAsync),
             new UiTestCase("Application.ModelInference.SuperResolutionQueueCancelSaveAndImport", ModelInferenceTests.RunAsync, true),
+            new UiTestCase("Application.HardwareAcceleration.DeviceChoiceAndEnhancement", HardwareAccelerationTests.DeviceChoiceAndEnhancementAsync, true),
             new UiTestCase("Application.ScreenSaverLifecycle.NavigateNotifyCloseAndReopen", ScreenSaverLifecycleTests.RunAsync, true),
             new UiTestCase("Application.Rendering.DepthInferenceDrawPauseAndResume", RenderingTests.RunAsync, true),
             new UiTestCase("Application.ScreenSaverIdle.RealIdleInputWakeAndRepeat", ScreenSaverIdleTests.RunAsync, true,
                 RequiresIdleEnvironment: true)
         };
+        // Installed-package lifecycle stages are invoked explicitly around a real
+        // reinstall; they must not overwrite the regular suite's isolated profile.
+        if (PackageActivation.ExpectedFullName != null && commandLine.Length == 5 && commandLine[3] == "--module")
+            cases = [.. cases,
+                new UiTestCase("Application.MsixProfile.Prepare", MsixProfileTests.PrepareAsync),
+                new UiTestCase("Application.MsixProfile.Verify", MsixProfileTests.VerifyAsync)];
         if (commandLine.Length == 5 && commandLine[3] == "--module")
-            cases = cases.Where(test => test.Name == "Application." + commandLine[4] ||
+            cases = cases.Where(test => test.Name == commandLine[4] || test.Name.StartsWith(commandLine[4] + ".", StringComparison.Ordinal) ||
+                test.Name == "Application." + commandLine[4] ||
                 test.Name.StartsWith("Application." + commandLine[4] + ".", StringComparison.Ordinal)).ToArray();
         else if (commandLine.Length == 5)
             cases = cases.Where(test => !test.RequiresIdleEnvironment).ToArray();
         else
             cases = cases.Where(test => !test.RequiresIntegrationEnvironment).ToArray();
         var results = new List<UiTestResult>();
+        using var hostServices = new ServiceCollection().BuildServiceProvider();
+        AppServiceLocator.Services = hostServices;
         try {
             CrossThreadInvoker.Initialize(new UiSynchronizationContext());
+            UiAnimation.Initialize(true);
             await LanguageUtil.InitializeLocalizerForUnpackaged("en-US");
             _window = new Window { Title = "VirtualPaper UI operation tests" };
             // Keep the same UI thread and window alive; each case owns its page and files.
@@ -96,6 +125,7 @@ public partial class App : Application {
             }
             finally {
                 _window?.Close();
+                UiAnimation.Shutdown();
                 Exit();
             }
         }

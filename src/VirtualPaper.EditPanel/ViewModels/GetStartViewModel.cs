@@ -39,6 +39,7 @@ namespace VirtualPaper.EditPanel.ViewModels {
                 if (item != null) {
                     RecentUseds.Remove(item);
                     _recentUseds?.Remove(item);
+                    _lastFilterKeyword = null;
                     await _userSettingsClient.DeleteRecetUsedAsync(item);
                 }
             });
@@ -62,6 +63,7 @@ namespace VirtualPaper.EditPanel.ViewModels {
             RecentUseds.Clear();
             RecentUseds.AddRange(_userSettingsClient.RecentUseds);
             _recentUseds = [.. RecentUseds];
+            _lastFilterKeyword = null;
         }
 
         internal void UpdateCardComponentUI() {
@@ -86,33 +88,28 @@ namespace VirtualPaper.EditPanel.ViewModels {
         }
 
         public void FilterByTitle(string keyword) {
-            var filtered = _recentUseds?.Where(recentUsed =>
-                recentUsed.FileName != null && recentUsed.FileName.Contains(keyword, StringComparison.InvariantCultureIgnoreCase)
-            ).ToList();
-            if (filtered == null) return;
-            Remove_NonMatching(filtered);
-            AddBack_Procs(filtered);
-        }
-
-        private void Remove_NonMatching(IEnumerable<IRecentUsed> recentuseds) {
-            for (int i = RecentUseds.Count - 1; i >= 0; i--) {
-                var item = RecentUseds[i];
-                if (!recentuseds.Contains(item)) {
-                    RecentUseds.Remove(item);
+            if (_recentUseds == null) return;
+            if (_lastFilterKeyword != null && string.Equals(_lastFilterKeyword, keyword, StringComparison.InvariantCultureIgnoreCase)) return;
+            _lastFilterKeyword = null;
+            int index = 0;
+            // Filtering keeps visible items in source order; only changed items need collection notifications.
+            foreach (var item in _recentUseds) {
+                bool visible = index < RecentUseds.Count && ReferenceEquals(RecentUseds[index], item);
+                if (item.FileName?.Contains(keyword, StringComparison.InvariantCultureIgnoreCase) == true) {
+                    if (!visible) RecentUseds.Insert(index, item);
+                    index++;
+                }
+                else if (visible) {
+                    RecentUseds.RemoveAt(index);
                 }
             }
-        }
-
-        private void AddBack_Procs(IEnumerable<IRecentUsed> recentuseds) {
-            foreach (var item in recentuseds) {
-                if (!RecentUseds.Contains(item)) {
-                    RecentUseds.Add(item);
-                }
-            }
+            while (RecentUseds.Count > index) RecentUseds.RemoveAt(RecentUseds.Count - 1);
+            _lastFilterKeyword = keyword;
         }
         #endregion
 
         private List<IRecentUsed>? _recentUseds;
+        private string? _lastFilterKeyword;
         private readonly IUserSettingsClient _userSettingsClient;
     }
 }

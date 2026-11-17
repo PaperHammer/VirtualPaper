@@ -7,6 +7,7 @@ using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.Grpc.Service.Commands;
 using VirtualPaper.Grpc.Service.UserSettings;
+using VirtualPaper.TestSupport;
 
 namespace VirtualPaper.InstallerTest;
 
@@ -32,11 +33,8 @@ internal static class ApplicationLifecycle {
                 throw new InvalidOperationException("First-run acceptance requires a new isolated profile.");
             }
             string marker = File.ReadAllText(Path.Combine(installDir, Constants.CoreField.InstallerLanguageFileName)).Trim();
-            result.ExpectedLanguage = profile?.Language ?? (marker switch {
-                "english" => "en-US",
-                "chinese" => "zh-CN",
-                _ => throw new InvalidDataException($"Unsupported installer language: {marker}")
-            });
+            result.ExpectedLanguage = profile?.Language ?? SupportedLanguages.MatchLanguage(marker)?.Codes[0]
+                ?? throw new InvalidDataException($"Unsupported installer language: {marker}");
             commands = new(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
             var settings = new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
             core = Process.Start(new ProcessStartInfo(corePath) { WorkingDirectory = installDir, UseShellExecute = false })
@@ -82,7 +80,8 @@ internal static class ApplicationLifecycle {
                 new PropertyCondition(AutomationElement.AutomationIdProperty, "App.Navigation.Settings"))
                 ?? throw new InvalidOperationException("The installed UI has no Settings navigation item.");
             ((SelectionItemPattern)navigation.GetCurrentPattern(SelectionItemPattern.Pattern)).Select();
-            string expectedTab = result.ExpectedLanguage == "zh-CN" ? "通用" : "General";
+            string expectedTab = LocalizedTestStrings.Read(Path.GetDirectoryName(uiPath)!,
+                result.ExpectedLanguage, "AppSettings_SelBarItem1_General");
             bool localized = false;
             while (clock.Elapsed < timeout) {
                 var tab = window.FindFirst(TreeScope.Descendants,

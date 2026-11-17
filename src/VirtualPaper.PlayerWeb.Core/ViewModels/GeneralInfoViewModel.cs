@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Mvvm;
 
@@ -212,7 +213,7 @@ namespace VirtualPaper.PlayerWeb.Core.ViewModels {
             //Rating = wpBasicData.Rating;
 
             Resolution = wpBasicData.Resolution;
-            AspectRatio = wpBasicData.AspectRatio;
+            AspectRatio = AspectRatioUtil.Format(wpBasicData.AspectRatio, wpBasicData.Resolution);
             FileExtension = wpBasicData.FileExtension;
             FileSize = wpBasicData.FileSize;
             VersionInfo = $"App {wpBasicData.AppInfo.AppVersion} - Feature {wpBasicData.AppInfo.FileVersion}";

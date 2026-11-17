@@ -6,6 +6,7 @@ using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
 using VirtualPaper.ML.DepthEstimate.Models;
+using VirtualPaper.ML.Inference;
 
 namespace VirtualPaper.ML.DepthEstimate {
     /// <summary>
@@ -13,7 +14,7 @@ namespace VirtualPaper.ML.DepthEstimate {
     /// ONNX model. Larger normalized values represent image regions estimated
     /// to be closer to the camera.
     /// </summary>
-    public sealed class DepthAnythingV2 : IDepthEstimate {
+    public sealed class DepthAnythingV2 : InferenceModel, IDepthEstimate {
         private const string PreferredInputName = "image";
         private const string PreferredOutputName = "depth";
         private const int ModelStride = 14;
@@ -22,14 +23,16 @@ namespace VirtualPaper.ML.DepthEstimate {
         private static readonly float[] Std = [0.229f, 0.224f, 0.225f];
 
         private readonly SemaphoreSlim _runGate = new(1, 1);
-        private InferenceSession? _session;
+        private OnnxInferenceSession? _session;
         private string _inputName = string.Empty;
         private string _outputName = string.Empty;
         private bool _isLoaded;
         private bool _isDisposed;
         private readonly int _cpuThreads;
 
-        public DepthAnythingV2(int? cpuThreads = null) {
+        public DepthAnythingV2(int? cpuThreads = null) : this(new InferenceDevicePolicy(), cpuThreads) { }
+
+        public DepthAnythingV2(InferenceDevicePolicy policy, int? cpuThreads = null) : base(policy) {
             _cpuThreads = cpuThreads ?? Math.Max(1, Environment.ProcessorCount);
             if (_cpuThreads < 1) throw new ArgumentOutOfRangeException(nameof(cpuThreads));
         }
@@ -58,24 +61,22 @@ namespace VirtualPaper.ML.DepthEstimate {
                         $"Depth Anything V2 model file not found: {ModelPath}",
                         ModelPath);
 
-                using var sessionOptions = new SessionOptions {
-                    GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
-                    EnableCpuMemArena = false,
-                    EnableMemoryPattern = false,
-                    IntraOpNumThreads = _cpuThreads,
-                    InterOpNumThreads = 1
-                };
-
-                InferenceSession? session = null;
+                OnnxInferenceSession? session = null;
                 try {
-                    session = new InferenceSession(ModelPath, sessionOptions);
+                    session = new OnnxInferenceSession(ModelPath, () => new SessionOptions {
+                        GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL,
+                        EnableCpuMemArena = false,
+                        EnableMemoryPattern = false,
+                        IntraOpNumThreads = _cpuThreads,
+                        InterOpNumThreads = 1
+                    }, DevicePolicy, ReportInferenceState);
                     _inputName = session.InputMetadata.ContainsKey(PreferredInputName)
                         ? PreferredInputName
                         : session.InputMetadata.Keys.Single();
                     _outputName = session.OutputMetadata.ContainsKey(PreferredOutputName)
                         ? PreferredOutputName
                         : session.OutputMetadata.Keys.Single();
-                    ValidateMetadata(session, _inputName, _outputName);
+                    ValidateMetadata(session.Native, _inputName, _outputName);
                 }
                 catch {
                     session?.Dispose();
@@ -115,53 +116,57 @@ namespace VirtualPaper.ML.DepthEstimate {
                     throw new InvalidOperationException(
                         "ONNX Session is not initialized. Call LoadModel first.");
 
-                using var image = Cv2.ImRead(imagePath, ImreadModes.Color);
-                if (image.Empty())
-                    throw new ArgumentException($"Failed to load image: {imagePath}", nameof(imagePath));
-
-                (int inputWidth, int inputHeight) = CalculateInputSize(
-                    image.Width,
-                    image.Height,
-                    options);
-                DenseTensor<float> inputTensor = CreateInputTensor(image, inputWidth, inputHeight);
-
-                var inputs = new List<NamedOnnxValue>(1) {
-                    NamedOnnxValue.CreateFromTensor(_inputName, inputTensor)
-                };
-
-                using var runOptions = new RunOptions();
-                using var cancellationRegistration = ct.Register(() => runOptions.Terminate = true);
-
-                IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results;
-                try {
-                    results = _session.Run(inputs, [_outputName], runOptions);
-                }
-                catch (OnnxRuntimeException) when (ct.IsCancellationRequested) {
-                    throw new OperationCanceledException(ct);
-                }
-
-                using (results) {
-                    Tensor<float> depthTensor = results.Single().AsTensor<float>();
-                    ValidateOutputShape(depthTensor, inputWidth, inputHeight);
-
-                    float[] normalized = NormalizeOutput(depthTensor.ToArray());
-                    float[] originalSizeDepth = ResizeDepth(
-                        normalized,
-                        inputWidth,
-                        inputHeight,
-                        image.Width,
-                        image.Height);
-
-                    return new DepthEstimateModelOutput(
-                        originalSizeDepth,
-                        image.Width,
-                        image.Height,
-                        image.Width,
-                        image.Height);
-                }
+                return _session.Execute(() => RunCore(imagePath, options, ct), ct);
             }
             finally {
                 _runGate.Release();
+            }
+        }
+
+        private DepthEstimateModelOutput RunCore(string imagePath, DepthAnythingOptions options, CancellationToken ct) {
+            using var image = Cv2.ImRead(imagePath, ImreadModes.Color);
+            if (image.Empty())
+                throw new ArgumentException($"Failed to load image: {imagePath}", nameof(imagePath));
+
+            (int inputWidth, int inputHeight) = CalculateInputSize(
+                image.Width,
+                image.Height,
+                options);
+            DenseTensor<float> inputTensor = CreateInputTensor(image, inputWidth, inputHeight);
+
+            var inputs = new List<NamedOnnxValue>(1) {
+                NamedOnnxValue.CreateFromTensor(_inputName, inputTensor)
+            };
+
+            using var runOptions = new RunOptions();
+            using var cancellationRegistration = ct.Register(() => runOptions.Terminate = true);
+
+            IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results;
+            try {
+                results = _session!.Run(inputs, [_outputName], runOptions);
+            }
+            catch (OnnxRuntimeException) when (ct.IsCancellationRequested) {
+                throw new OperationCanceledException(ct);
+            }
+
+            using (results) {
+                Tensor<float> depthTensor = results.Single().AsTensor<float>();
+                ValidateOutputShape(depthTensor, inputWidth, inputHeight);
+
+                float[] normalized = NormalizeOutput(depthTensor.ToArray());
+                float[] originalSizeDepth = ResizeDepth(
+                    normalized,
+                    inputWidth,
+                    inputHeight,
+                    image.Width,
+                    image.Height);
+
+                return new DepthEstimateModelOutput(
+                    originalSizeDepth,
+                    image.Width,
+                    image.Height,
+                    image.Width,
+                    image.Height);
             }
         }
 

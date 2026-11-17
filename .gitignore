@@ -10,6 +10,9 @@
 *.userosscache
 *.sln.docstates
 
+# Local VS Code workspace settings
+/.vscode/
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -222,6 +225,9 @@ _pkginfo.txt
 *.appx
 *.appxbundle
 *.appxupload
+*.msix
+*.msixbundle
+*.msixupload
 
 # Visual Studio cache files
 # files ending in .cache can be ignored
@@ -381,7 +387,7 @@ Bundle/
 Plugins/
 Build/
 Shaders/*.bin
-InnoSetup/Output/
+packaging/inno/Output/
 
 # Monaco editor bundled assets
 src/WebBackdrop/Assets/monaco-editor-*/package/dev/
@@ -397,3 +403,7 @@ resources/tools/monaco-editor-*.tgz
 # Local development scripts and verification artifacts
 /scripts/
 /.artifacts/
+
+# Reviewed Store release notes are source inputs, not build output.
+!/resources/store/releases/
+!/resources/store/releases/*.json

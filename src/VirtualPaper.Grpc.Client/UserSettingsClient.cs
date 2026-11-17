@@ -203,7 +203,7 @@ namespace VirtualPaper.Grpc.Client {
 
         public async Task UpdateRecentUsedAsync(string filePath) {
             var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-            var targetItem = RecentUseds.FirstOrDefault(r => r.FilePath == filePath);
+            var targetItem = RecentUseds.FirstOrDefault(r => string.Equals(r.FilePath, filePath, StringComparison.OrdinalIgnoreCase));
             if (targetItem != null) {
                 RecentUseds.Remove(targetItem);
                 targetItem.DateTime = now;

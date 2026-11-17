@@ -15,6 +15,7 @@ using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
@@ -78,7 +79,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             catch (OperationCanceledException) {
                 // 还没拿到信号量就被取消了（排队中删除），无需 Release
                 taskItem.Status = TaskStatus.Canceled;
-                CleanupAfterCancel(taskItem, tempDir);
+                CleanupTaskFiles(taskItem, tempDir);
                 return;
             }
 
@@ -95,38 +96,45 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 string tmpOutPath_style = Path.Combine(tempDir, $"styled{ext}");
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
-                await Task.Run(() => {
-                    ct.ThrowIfCancellationRequested();
+                var adain = AppServiceLocator.Services.GetRequiredService<IStyleTransfer>();
+                using (taskItem.ObserveInference(adain)) {
+                    await Task.Run(() => {
+                        ct.ThrowIfCancellationRequested();
 
-                    var adain = AppServiceLocator.Services.GetRequiredService<IStyleTransfer>();
-                    adain.LoadModel();
+                        adain.LoadModel();
 
-                    ct.ThrowIfCancellationRequested();
+                        ct.ThrowIfCancellationRequested();
 
-                    adain.RunAndSave(
-                        data.SourceFilePath,
-                        data.StyleFilePath,
-                        tmpOutPath_style,
-                        ct: ct);
+                        adain.RunAndSave(
+                            data.SourceFilePath,
+                            data.StyleFilePath,
+                            tmpOutPath_style,
+                            ct: ct);
+                    }, ct);
+                }
 
-                    ct.ThrowIfCancellationRequested();
+                using var model = await AppServiceLocator.Services.GetRequiredService<IInferenceModelProvider<ISuperResolution>>()
+                    .AcquireAsync(data.UseGpu, ct);
+                var superResolution = model.Model;
+                using (taskItem.ObserveInference(superResolution)) {
+                    await Task.Run(() => {
+                        ct.ThrowIfCancellationRequested();
+                        superResolution.LoadModel();
 
-                    var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
-                    superResolution.LoadModel();
+                        ct.ThrowIfCancellationRequested();
 
-                    ct.ThrowIfCancellationRequested();
+                        superResolution.RunAndSave(
+                            tmpOutPath_style,
+                            tmpOutPath_realesrgan,
+                            (uint)data.Width,
+                            (uint)data.Height,
+                            ct);
 
-                    superResolution.RunAndSave(
-                        tmpOutPath_style,
-                        tmpOutPath_realesrgan,
-                        (uint)data.Width,
-                        (uint)data.Height,
-                        ct);
+                        ct.ThrowIfCancellationRequested();
 
-                    ct.ThrowIfCancellationRequested();
-
-                    data.SetResultAsync(tmpOutPath_realesrgan).Wait();
-                }, ct);
+                        data.SetResultAsync(tmpOutPath_realesrgan).Wait();
+                    }, ct);
+                }
 
                 ct.ThrowIfCancellationRequested();
 
@@ -137,10 +145,12 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
             catch (OperationCanceledException) {
                 taskItem.Status = TaskStatus.Canceled;
-                CleanupAfterCancel(taskItem, tempDir);
+                CleanupTaskFiles(taskItem, tempDir);
                 GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
+                CleanupTaskFiles(taskItem, tempDir);
+                taskItem.SetFailureReason(ex);
                 ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
                 taskItem.Status = TaskStatus.Faulted;
@@ -153,7 +163,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         /// <summary>
         /// 任务被取消后的清理工作
         /// </summary>
-        private static void CleanupAfterCancel(StyleTransferTaskItem taskItem, string? tempDir) {
+        private static void CleanupTaskFiles(StyleTransferTaskItem taskItem, string? tempDir) {
             if (tempDir != null) {
                 try {
                     if (Directory.Exists(tempDir)) {

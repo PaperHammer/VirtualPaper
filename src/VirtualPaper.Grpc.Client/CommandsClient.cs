@@ -3,6 +3,7 @@ using Grpc.Core;
 using GrpcDotNetNamedPipes;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils.Files;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.Commands;
 
@@ -10,8 +11,10 @@ namespace VirtualPaper.Grpc.Client {
     public class CommandsClient : ICommandsClient {
         public event EventHandler<int>? UIRecieveCmd;
 
-        public CommandsClient() {
-            _client = new Grpc_CommandsService.Grpc_CommandsServiceClient(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName));
+        public CommandsClient() : this(new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName)) { }
+
+        internal CommandsClient(NamedPipeChannel channel) {
+            _client = new Grpc_CommandsService.Grpc_CommandsServiceClient(channel);
 
             _ctsUIRecievedCmd = new CancellationTokenSource();
             _uiRecievedCmdTask = Task.Run(() => SubscribeUIRecievedCmdTaskStream(_ctsUIRecievedCmd.Token));
@@ -19,6 +22,19 @@ namespace VirtualPaper.Grpc.Client {
 
         public async Task ShowUIAsync() {
             await _client.ShowUIAsync(new Empty());
+        }
+
+        public async Task<ProjectOpenRequest?> GetPendingProjectOpenAsync() {
+            try {
+                var response = await _client.GetPendingProjectOpenAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(5));
+                return response.Id.Length == 0 ? null : new(response.Id, response.Paths.ToArray());
+            }
+            // An independently updated UI plugin may still connect to an older Core.
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.Unimplemented) { return null; }
+        }
+
+        public async Task CompleteProjectOpenAsync(string requestId) {
+            await _client.CompleteProjectOpenAsync(new Grpc_ProjectOpenId { Id = requestId }, deadline: DateTime.UtcNow.AddSeconds(5));
         }
 
         public async Task CloseUIAsync() {

@@ -1,11 +1,31 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Automation;
+using VirtualPaper.Common;
+using VirtualPaper.TestSupport;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
 
 namespace VirtualPaper.UIOperationTest.Infrastructure;
 
 internal static class ApplicationUi {
+    public static async Task SelectLanguageAsync(AutomationElement root, string locale) {
+        var language = SupportedLanguages.Languages.Single(item => item.Codes[0] == locale);
+        string expected = LocalizedTestStrings.Read(AppContext.BaseDirectory, locale, "AppSettings_SelBarItem1_General");
+        await Task.Run(() => {
+            Select(Find(root, "App.Navigation.Settings"));
+            SelectComboIndex(Find(root, "Settings.General.Language"), SupportedLanguages.Languages.IndexOf(language), SupportedLanguages.Languages.Count);
+        });
+        await AppProcessSession.WaitAsync(() => Task.Run(() => Find(root, "Settings.Tab.General").Current.Name == expected
+            && Find(root, "Settings.General.Language").Current.IsEnabled), "Live language " + locale);
+    }
+
+    public static void ResizeOwnedWindow(nint window, int width, int height, bool physicalPixels = false) {
+        double scale = physicalPixels ? 1 : GetDpiForWindow(window) / 96d;
+        Check(scale > 0 && SetWindowPos(window, 0, 0, 0, (int)Math.Ceiling(width * scale), (int)Math.Ceiling(height * scale), 6),
+            "Could not resize the owned application window");
+    }
+
+    [DllImport("user32.dll")] private static extern uint GetDpiForWindow(nint window);
     public static IDisposable Foreground(nint window) => new ForegroundLease(window);
 
     public static async Task ActivateOwnedWindowAsync(nint window) {
@@ -50,6 +70,104 @@ internal static class ApplicationUi {
         ((ExpandCollapsePattern)element.GetCurrentPattern(ExpandCollapsePattern.Pattern)).Expand();
     }
 
+    public static async Task WithHoveredElementAsync(nint ownerWindow, AutomationElement element, Func<Task> action) {
+        using var foreground = Foreground(ownerWindow);
+        ClickPointer(ownerWindow, AutomationElement.FromHandle(ownerWindow), 0x0002, 0x0004);
+        BringIntoView(element);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate hover owner");
+        var bounds = element.Current.BoundingRectangle;
+        var point = new NativePoint { X = (int)(bounds.Left + bounds.Width / 2), Y = (int)(bounds.Top + bounds.Height / 2) };
+        Check(GetAncestor(WindowFromPoint(point), 2) == ownerWindow, "Hover target is covered by another window");
+        Check(GetCursorPos(out var previous), "Could not read the pointer position");
+        try {
+            var windowBounds = AutomationElement.FromHandle(ownerWindow).Current.BoundingRectangle;
+            var outside = new NativePoint { X = (int)(windowBounds.Left + 80), Y = (int)(windowBounds.Top + 12) };
+            Check(GetAncestor(WindowFromPoint(outside), 2) == ownerWindow, "The hover reset point is covered by another window");
+            HoverAt(outside);
+            await Task.Delay(150);
+            HoverAt(point);
+            await action();
+        }
+        catch {
+            WindowSnapshot.Save(ownerWindow, Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "hover-target.png"));
+            throw;
+        }
+        finally { SetCursorPos(previous.X, previous.Y); }
+    }
+
+    public static async Task VerifyToolTipAsync(nint ownerWindow, AutomationElement element, string expected) {
+        using var foreground = Foreground(ownerWindow);
+        ClickPointer(ownerWindow, AutomationElement.FromHandle(ownerWindow), 0x0002, 0x0004);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate tooltip owner");
+        // A navigation item's center can fall in the gap between its icon and label.
+        var label = element.FindFirst(TreeScope.Descendants, new AndCondition(
+            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text),
+            new PropertyCondition(AutomationElement.IsOffscreenProperty, false)));
+        var bounds = (label ?? element).Current.BoundingRectangle;
+        var point = new NativePoint { X = (int)(bounds.Left + bounds.Width / 2), Y = (int)(bounds.Top + bounds.Height / 2) };
+        Check(GetAncestor(WindowFromPoint(point), 2) == ownerWindow, "The tooltip target is covered by another window");
+        Check(GetCursorPos(out var previous), "Could not read the pointer position");
+        var windowBounds = AutomationElement.FromHandle(ownerWindow).Current.BoundingRectangle;
+        var outside = new NativePoint { X = (int)(windowBounds.Left + 80), Y = (int)(windowBounds.Top + 12) };
+        Check(GetAncestor(WindowFromPoint(outside), 2) == ownerWindow, "The tooltip reset point is covered by another window");
+        try {
+            HoverAt(outside);
+            await Task.Delay(150);
+            HoverAt(point);
+            int processId = element.Current.ProcessId;
+            await AppProcessSession.WaitAsync(() => Task.Run(() => {
+                try {
+                    var windows = AutomationElement.RootElement.FindAll(TreeScope.Children,
+                        new PropertyCondition(AutomationElement.ProcessIdProperty, processId)).Cast<AutomationElement>();
+                    foreach (var window in windows) {
+                        IEnumerable<AutomationElement> tips = window.Current.ControlType == ControlType.ToolTip ? [window] : window.FindAll(TreeScope.Descendants,
+                            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ToolTip)).Cast<AutomationElement>();
+                        foreach (var tip in tips.Where(tip => !tip.Current.IsOffscreen)) {
+                            if (tip.Current.Name == expected || tip.FindAll(TreeScope.Descendants,
+                                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Text)).Cast<AutomationElement>()
+                                .Any(text => text.Current.Name == expected)) return true;
+                        }
+                    }
+                }
+                catch (ElementNotAvailableException) { } // A previous language's tooltip may close during enumeration.
+                return false;
+            }), "Localized navigation tooltip: " + expected);
+        }
+        catch (TimeoutException) {
+            string snapshot = Path.Combine(Constants.CommonPaths.LogDir, "UIOperation", "navigation-tooltip.png");
+            Directory.CreateDirectory(Path.GetDirectoryName(snapshot)!);
+            WindowSnapshot.Save(ownerWindow, snapshot);
+            GetCursorPos(out var actual);
+            File.WriteAllText(Path.ChangeExtension(snapshot, ".txt"),
+                $"Target={point.X},{point.Y}; actual={actual.X},{actual.Y}; hit={AutomationElement.FromPoint(new System.Windows.Point(actual.X, actual.Y)).Current.Name}");
+            var nodes = AutomationElement.RootElement.FindAll(TreeScope.Children,
+                new PropertyCondition(AutomationElement.ProcessIdProperty, element.Current.ProcessId))
+                .Cast<AutomationElement>().SelectMany(window => new[] { window }.Concat(window.FindAll(TreeScope.Descendants,
+                    Condition.TrueCondition).Cast<AutomationElement>()))
+                .Where(node => !node.Current.IsOffscreen).Select(node => new {
+                    node.Current.AutomationId, node.Current.Name,
+                    Type = node.Current.ControlType.ProgrammaticName, Bounds = node.Current.BoundingRectangle.ToString()
+                }).ToArray();
+            File.WriteAllText(Path.ChangeExtension(snapshot, ".json"), System.Text.Json.JsonSerializer.Serialize(nodes));
+            throw;
+        }
+        finally { SetCursorPos(previous.X, previous.Y); }
+    }
+
+    private static void HoverAt(NativePoint point) {
+        // Send one real absolute move in virtual-desktop coordinates. Mixing
+        // SetCursorPos with an accelerated relative move can miss XAML hit tests.
+        int left = GetSystemMetrics(76), top = GetSystemMetrics(77);
+        int width = GetSystemMetrics(78), height = GetSystemMetrics(79);
+        var move = new NativeInput { Type = 0, Data = new() { Mouse = new() {
+            X = (int)(((long)point.X - left) * 65536 / width),
+            Y = (int)(((long)point.Y - top) * 65536 / height), Flags = 0x0001 | 0x4000 | 0x8000
+        } } };
+        Check(SendInput(1, [move], Marshal.SizeOf<NativeInput>()) == 1, "Could not send the hover movement");
+    }
+
+    [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
+
     public static void SetText(AutomationElement element, string value) {
         BringIntoView(element);
         if (element.Current.ControlType != ControlType.Edit)
@@ -79,7 +197,26 @@ internal static class ApplicationUi {
             "Could not send the complete context-menu key sequence.");
     }
 
+    public static void CommitToken(nint ownerWindow, AutomationElement input, string value) {
+        using var foreground = Foreground(ownerWindow);
+        Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the token editor");
+        SetText(input, value);
+        input.SetFocus();
+        Check(GetForegroundWindow() == ownerWindow, "The token editor lost focus before Enter");
+        var keys = new NativeInput[] {
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x0D } } },
+            new() { Type = 1, Data = new() { Keyboard = new() { Key = 0x0D, Flags = 2 } } }
+        };
+        Check(SendInput((uint)keys.Length, keys, Marshal.SizeOf<NativeInput>()) == keys.Length, "Could not commit the token with Enter");
+    }
+
     public static void OpenPointerContextMenu(nint ownerWindow, AutomationElement element) => ClickPointer(ownerWindow, element, 0x0008, 0x0010);
+
+    public static T OpenPointerContextMenu<T>(nint ownerWindow, AutomationElement element, Func<T> waitForMenu) {
+        T result = default!;
+        ClickPointer(ownerWindow, element, 0x0008, 0x0010, () => result = waitForMenu());
+        return result;
+    }
 
     public static void ClickPointerElement(nint ownerWindow, AutomationElement element) {
         using var foreground = Foreground(ownerWindow);
@@ -97,7 +234,7 @@ internal static class ApplicationUi {
         finally { SetCursorPos(previous.X, previous.Y); }
     }
 
-    private static void ClickPointer(nint ownerWindow, AutomationElement element, uint down, uint up) {
+    private static void ClickPointer(nint ownerWindow, AutomationElement element, uint down, uint up, Action? afterInput = null) {
         BringIntoView(element);
         Check(SetForegroundWindow(ownerWindow) || GetForegroundWindow() == ownerWindow, "Could not activate the test UI");
         var bounds = element.Current.BoundingRectangle;
@@ -111,6 +248,9 @@ internal static class ApplicationUi {
         try {
             mouse_event(down, 0, 0, 0, 0);
             mouse_event(up, 0, 0, 0, 0);
+            // Explorer handles notification clicks asynchronously. Keep the
+            // pointer on the icon until the expected menu has actually opened.
+            afterInput?.Invoke();
         }
         finally { SetCursorPos(previous.X, previous.Y); }
     }

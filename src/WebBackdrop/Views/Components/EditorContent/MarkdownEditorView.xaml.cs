@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -10,6 +11,8 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using Microsoft.Web.WebView2.Core;
 using VirtualPaper.Common;
+using VirtualPaper.Common.Utils.DI;
+using VirtualPaper.UIComponent.Utils;
 using Workloads.Creation.WebBackdrop.Core.Preview;
 using Workloads.Creation.WebBackdrop.Core.Theme;
 using Workloads.Creation.WebBackdrop.Core.Utils;
@@ -139,9 +142,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components.EditorContent {
         private Task PreparePreviewWebViewAsync() => _previewInitialization ??= InitializePreviewWebViewAsync();
 
         private async Task InitializePreviewWebViewAsync() {
-            string dataFolder = System.IO.Path.Combine(Constants.CommonPaths.TempWebView2Dir, "MarkdownPreview");
-            Directory.CreateDirectory(dataFolder);
-            var environment = await CoreWebView2Environment.CreateWithOptionsAsync(null, dataFolder, new CoreWebView2EnvironmentOptions());
+            var environment = await AppServiceLocator.Services.GetRequiredService<UiWebViewEnvironment>().CreateAsync("MarkdownPreview");
             await previewWebView.EnsureCoreWebView2Async(environment);
             UpdatePreviewWebViewBackground();
         }

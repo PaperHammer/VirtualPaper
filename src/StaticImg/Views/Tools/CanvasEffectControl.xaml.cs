@@ -13,7 +13,7 @@ using Workloads.Creation.StaticImg.Models;
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace Workloads.Creation.StaticImg.Views.Tools {
-    public sealed partial class CanvasEffectControl : UserControl {
+    public sealed partial class CanvasEffectControl : UserControl, IUiAnimationController {
         public event EventHandler<RoutedEventArgs>? CanvasEffectCancel;
         public event EventHandler<RoutedEventArgs>? CanvasEffectCommit;
         public event EventHandler<string>? EffectPreviewRequested;
@@ -33,9 +33,14 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         // 内容区展开目标高度：文本列表模式
         private const double ExpandedMaxHeight = 260.0;
         private static readonly Duration AnimDuration = new(TimeSpan.FromMilliseconds(180));
+        private bool _animationsEnabled = UiAnimation.IsEnabled;
 
         public CanvasEffectControl() {
             InitializeComponent();
+            UiAnimation.Attach(this);
+            Unloaded += (_, _) => {
+                foreach (var (_, content) in AllGroups) (content.Tag as Storyboard)?.Stop();
+            };
             InitEffectGroups();
             // 清空初始选中（ArcListView 的 TrySelectFirstItem 会自动选中首项）
             ClearAllSelections();
@@ -100,18 +105,33 @@ namespace Workloads.Creation.StaticImg.Views.Tools {
         }
 
         // MaxHeight 动画
-        private static void AnimateMaxHeight(Grid target, double to) {
+        public void SetAnimationsEnabled(bool enabled) {
+            _animationsEnabled = enabled;
+            if (!enabled)
+                foreach (var (_, content) in AllGroups) (content.Tag as Storyboard)?.SkipToFill();
+        }
+
+        private void AnimateMaxHeight(Grid target, double to) {
+            double from = double.IsFinite(target.MaxHeight) ? target.MaxHeight : target.ActualHeight;
+            (target.Tag as Storyboard)?.Stop();
+            target.Tag = null;
+            // 最终状态写入基础值，卸载或关闭动画后也不会重新折叠已展开的组。
+            target.MaxHeight = to;
+            if (!_animationsEnabled) return;
             var anim = new DoubleAnimation {
+                From = from,
                 To = to,
                 Duration = AnimDuration,
                 EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut },
                 EnableDependentAnimation = true,
+                FillBehavior = FillBehavior.Stop,
             };
             Storyboard.SetTarget(anim, target);
             Storyboard.SetTargetProperty(anim, "MaxHeight");
 
             var sb = new Storyboard();
             sb.Children.Add(anim);
+            target.Tag = sb;
             sb.Begin();
         }
 

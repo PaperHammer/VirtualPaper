@@ -54,8 +54,11 @@
                 Tapped="MaskGrid_Tapped">
 
                 <Frame x:Name="overlayFrame" 
-                    Width="970" 
-                    Height="680"
+                    MaxWidth="1040"
+                    MaxHeight="760"
+                    Margin="24"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
                     CornerRadius="12"
                     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
                     Tapped="OverlayFrame_Tapped"/>

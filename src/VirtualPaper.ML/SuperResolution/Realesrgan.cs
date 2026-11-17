@@ -4,15 +4,22 @@ using Microsoft.ML.OnnxRuntime.Tensors;
 using OpenCvSharp;
 using VirtualPaper.Common;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.ML.SuperResolution.Interfaces;
 
 namespace VirtualPaper.ML.SuperResolution {
-    public class Realesrgan : ISuperResolution {
+    public class Realesrgan : InferenceModel, ISuperResolution {
         public string ModelPath { get; private set; } = null!;
 
-        public Realesrgan() { }
+        public Realesrgan() : this(new InferenceDevicePolicy()) { }
+        public Realesrgan(InferenceDevicePolicy policy) : base(policy) { }
 
         public void LoadModel(string? path = null) {
+            lock (_loadLock) LoadModelCore(path);
+        }
+
+        private void LoadModelCore(string? path) {
+            ObjectDisposedException.ThrowIf(_isDisposed, this);
             if (_isLoaded) {
                 ArcLog.GetLogger<Realesrgan>().Info("Model already loaded, skipping.");
                 return;
@@ -27,25 +34,28 @@ namespace VirtualPaper.ML.SuperResolution {
                 throw new FileNotFoundException($"Model file not found: {ModelPath}");
 
             _session?.Dispose();
-            using var options = new SessionOptions();
-            options.EnableCpuMemArena = false;
-            options.EnableMemoryPattern = false;
             // 将每个 Run() 的 intra-op 线程数按并行 Tile 数等比分配：
             // MaxParallelTiles 个 Tile 同时推理时，合计仍恰好占满全部 CPU 核心，不互相争抢。
-            options.IntraOpNumThreads = Math.Max(1, Environment.ProcessorCount / MaxParallelTiles);
-            _session = new InferenceSession(ModelPath, options);
-            ArcLog.GetLogger<Realesrgan>().Info($"Real-ESRGAN Model version: {_session.ModelMetadata.Version}");
-
-            _inputName = _session.InputMetadata.Keys.First();
-            _outputNames = _session.OutputMetadata.Keys.ToList();
-            _isLoaded = true;
+            var session = new OnnxInferenceSession(ModelPath, () => new SessionOptions {
+                EnableCpuMemArena = false,
+                EnableMemoryPattern = false,
+                IntraOpNumThreads = Math.Max(1, Environment.ProcessorCount / MaxParallelTiles)
+            }, DevicePolicy, ReportInferenceState);
+            try {
+                _inputName = session.InputMetadata.Keys.First();
+                _outputNames = session.OutputMetadata.Keys.ToList();
+                ArcLog.GetLogger<Realesrgan>().Info($"Real-ESRGAN Model version: {session.ModelMetadata.Version}");
+                _session = session;
+                _isLoaded = true;
+            }
+            catch { session.Dispose(); throw; }
         }
 
         /// <summary>
         /// 对输入图像进行超分辨率放大并保存到指定路径。
         /// <list type="bullet">
         ///   <item>Tile 分块：固定 <see cref="TileSize"/>×<see cref="TileSize"/> 输入，内存恒定，ONNX 执行计划复用。</item>
-        ///   <item>并行推理：最多 <see cref="MaxParallelTiles"/> 块同时调用 <c>Session.Run()</c>（线程安全）。</item>
+        ///   <item>CPU 最多并行 <see cref="MaxParallelTiles"/> 块；DirectML 会话串行执行。</item>
         ///   <item>立即取消：通过 <see cref="RunOptions.Terminate"/> 在下一个算子边界中止正在推理的 Tile。</item>
         /// </list>
         /// </summary>
@@ -55,6 +65,14 @@ namespace VirtualPaper.ML.SuperResolution {
             uint targetWidth,
             uint targetHeight,
             CancellationToken ct = default) {
+
+            ct.ThrowIfCancellationRequested();
+            var session = _session ?? throw new InvalidOperationException("ONNX Session is not initialized.");
+            return session.Execute(() => RunAndSaveCore(inputImagePath, outputFilePath, targetWidth, targetHeight, ct), ct);
+        }
+
+        private string RunAndSaveCore(string inputImagePath, string outputFilePath,
+            uint targetWidth, uint targetHeight, CancellationToken ct) {
 
             ct.ThrowIfCancellationRequested();
 
@@ -71,24 +89,8 @@ namespace VirtualPaper.ML.SuperResolution {
             int imgWidth = image.Width;
             int imgHeight = image.Height;
 
-            int step = TileSize - 2 * TileOverlap;
-            int numTilesX = (imgWidth + step - 1) / step;
-            int numTilesY = (imgHeight + step - 1) / step;
-
             // 预计算全部 Tile 坐标，避免在并行 lambda 中重复推导
-            var tileInfos = new TileInfo[numTilesX * numTilesY];
-            for (int ty = 0; ty < numTilesY; ty++) {
-                for (int tx = 0; tx < numTilesX; tx++) {
-                    int sx = tx * step - TileOverlap;
-                    int sy = ty * step - TileOverlap;
-                    tileInfos[ty * numTilesX + tx] = new TileInfo(
-                        sx, sy,
-                        Math.Max(0, sx),
-                        Math.Max(0, sy),
-                        Math.Min(imgWidth, sx + TileSize),
-                        Math.Min(imgHeight, sy + TileSize));
-                }
-            }
+            var tileInfos = BuildTiles(imgWidth, imgHeight);
 
             int fixedTilePixels = TileSize * TileSize * 3;
             int fixedChannelSize = TileSize * TileSize;
@@ -110,168 +112,165 @@ namespace VirtualPaper.ML.SuperResolution {
             // 各 Tile 静默 return 即可——CT 取消后框架不再调度新 Tile，所有 Tile 退出后
             // Parallel.ForEach 统一以 OperationCanceledException 通知外层。
             // ─────────────────────────────────────────────────────────────────
-            Parallel.ForEach(
-                tileInfos,
-                new ParallelOptions {
-                    MaxDegreeOfParallelism = MaxParallelTiles,
-                    CancellationToken = ct   // CT 取消后阻止新 Tile 启动，并统一抛 OCE
-                },
-                // 每个工作线程独享一块 ArrayPool 缓冲，避免并发写入同一 buffer
-                () => ArrayPool<float>.Shared.Rent(fixedTilePixels),
-                (tile, _, localBuffer) => {
-                    int tileW = tile.ExClamped - tile.SxClamped;
-                    int tileH = tile.EyClamped - tile.SyClamped;
+            try {
+                Parallel.ForEach(
+                    tileInfos,
+                    new ParallelOptions {
+                        MaxDegreeOfParallelism = _session.IsGpu ? 1 : MaxParallelTiles,
+                        CancellationToken = ct   // CT 取消后阻止新 Tile 启动，并统一抛 OCE
+                    },
+                    // 每个工作线程独享一块 ArrayPool 缓冲，避免并发写入同一 buffer
+                    () => ArrayPool<float>.Shared.Rent(fixedTilePixels),
+                    (tile, _, localBuffer) => {
+                        int tileW = tile.ExClamped - tile.SxClamped;
+                        int tileH = tile.EyClamped - tile.SyClamped;
 
-                    // 提取 Tile 并填充 TileSize×TileSize 的 float 张量缓冲
-                    var roi = new Rect(tile.SxClamped, tile.SyClamped, tileW, tileH);
-                    using var tileMat = new Mat(image, roi);
+                        // 提取 Tile 并填充 TileSize×TileSize 的 float 张量缓冲
+                        var roi = new Rect(tile.SxClamped, tile.SyClamped, tileW, tileH);
+                        using var tileMat = new Mat(image, roi);
 
-                    unsafe {
-                        byte* ptr = (byte*)tileMat.Data;
-                        int stride = (int)tileMat.Step();
-
-                        if (tileW == TileSize && tileH == TileSize) {
-                            // 内部 Tile：尺寸恰好 TileSize×TileSize，无需边缘填充，走快速路径
-                            for (int y = 0; y < TileSize; y++) {
-                                byte* row = ptr + y * stride;
-                                for (int x = 0; x < TileSize; x++) {
-                                    int pixIdx = y * TileSize + x;
-                                    localBuffer[pixIdx] = row[x * 3] / 255f; // R
-                                    localBuffer[fixedChannelSize + pixIdx] = row[x * 3 + 1] / 255f; // G
-                                    localBuffer[2 * fixedChannelSize + pixIdx] = row[x * 3 + 2] / 255f; // B
-                                }
-                            }
-                        }
-                        else {
-                            // 边缘 Tile：不足 TileSize 的部分用边缘像素填充（edge replication），
-                            // 避免零填充在超分输出中产生黑色伪影
-                            for (int y = 0; y < TileSize; y++) {
-                                int srcY = Math.Min(y, tileH - 1);
-                                byte* row = ptr + srcY * stride;
-                                for (int x = 0; x < TileSize; x++) {
-                                    int srcX = Math.Min(x, tileW - 1);
-                                    int pixIdx = y * TileSize + x;
-                                    localBuffer[pixIdx] = row[srcX * 3] / 255f; // R
-                                    localBuffer[fixedChannelSize + pixIdx] = row[srcX * 3 + 1] / 255f; // G
-                                    localBuffer[2 * fixedChannelSize + pixIdx] = row[srcX * 3 + 2] / 255f; // B
-                                }
-                            }
-                        }
-                    }
-
-                    // 推理（InferenceSession.Run 线程安全，可并发调用）
-                    // 传入本次调用独享的 runOptions：CT 触发时 Terminate=true 会中止 Run()
-                    var memory = new Memory<float>(localBuffer, 0, fixedTilePixels);
-                    var inputTensor = new DenseTensor<float>(memory, [1, 3, TileSize, TileSize]);
-                    var inputs = new List<NamedOnnxValue>(1) {
-                        NamedOnnxValue.CreateFromTensor(_inputName, inputTensor)
-                    };
-
-                    try {
-                        using var results = _session.Run(inputs, _outputNames, runOptions);
-
-                        var outTensor = (DenseTensor<float>)results[0].AsTensor<float>();
-                        ReadOnlySpan<float> outSpan = outTensor.Buffer.Span;
-
-                        int upW = outTensor.Dimensions[3]; // = TileSize * scaleX
-                        int upH = outTensor.Dimensions[2]; // = TileSize * scaleY
-                        int upChannelSize = upW * upH;
-                        int scaleX = upW / TileSize;
-                        int scaleY = upH / TileSize;
-
-                        // outputImage 懒分配（任意一块推理完成后即可确定整图尺寸）
-                        if (outputImage == null) {
-                            var candidate = new Mat(imgHeight * scaleY, imgWidth * scaleX, MatType.CV_8UC3);
-                            if (Interlocked.CompareExchange(ref outputImage, candidate, null) != null)
-                                candidate.Dispose(); // 其他线程已抢先分配，放弃本候选
-                        }
-
-                        // 计算有效区域（剥离 overlap 边缘，以实际内容宽高为上界排除填充区）
-                        int contentW = tileW * scaleX;
-                        int contentH = tileH * scaleY;
-
-                        int leftStrip = (tile.Sx < 0 ? 0 : TileOverlap) * scaleX;
-                        int topStrip = (tile.Sy < 0 ? 0 : TileOverlap) * scaleY;
-                        int rightStrip = (tile.ExClamped == imgWidth ? 0 : TileOverlap) * scaleX;
-                        int bottomStrip = (tile.EyClamped == imgHeight ? 0 : TileOverlap) * scaleY;
-
-                        int validX = leftStrip;
-                        int validY = topStrip;
-                        int validW = contentW - leftStrip - rightStrip;
-                        int validH = contentH - topStrip - bottomStrip;
-
-                        // 有效区域在完整输出图中的起始坐标
-                        int dstX = (tile.SxClamped + (tile.Sx < 0 ? 0 : TileOverlap)) * scaleX;
-                        int dstY = (tile.SyClamped + (tile.Sy < 0 ? 0 : TileOverlap)) * scaleY;
-
-                        // 将有效区域写入 outputImage
-                        // 各 Tile 的 [dstX, dstX+validW) * [dstY, dstY+validH) 互不重叠，无需加锁
                         unsafe {
-                            byte* dstPtr = (byte*)outputImage!.Data;
-                            int dstStride = (int)outputImage.Step();
+                            byte* ptr = (byte*)tileMat.Data;
+                            int stride = (int)tileMat.Step();
 
-                            for (int y = 0; y < validH; y++) {
-                                byte* dstRow = dstPtr + (dstY + y) * dstStride;
-                                int srcY = validY + y;
-
-                                for (int x = 0; x < validW; x++) {
-                                    int idx = srcY * upW + (validX + x);
-
-                                    byte r = (byte)(Math.Clamp(outSpan[idx], 0f, 1f) * 255f);
-                                    byte g = (byte)(Math.Clamp(outSpan[upChannelSize + idx], 0f, 1f) * 255f);
-                                    byte b = (byte)(Math.Clamp(outSpan[2 * upChannelSize + idx], 0f, 1f) * 255f);
-
-                                    // OpenCV Mat 存储为 BGR
-                                    dstRow[(dstX + x) * 3] = b;
-                                    dstRow[(dstX + x) * 3 + 1] = g;
-                                    dstRow[(dstX + x) * 3 + 2] = r;
+                            if (tileW == TileSize && tileH == TileSize) {
+                                // 内部 Tile：尺寸恰好 TileSize×TileSize，无需边缘填充，走快速路径
+                                for (int y = 0; y < TileSize; y++) {
+                                    byte* row = ptr + y * stride;
+                                    for (int x = 0; x < TileSize; x++) {
+                                        int pixIdx = y * TileSize + x;
+                                        localBuffer[pixIdx] = row[x * 3] / 255f; // R
+                                        localBuffer[fixedChannelSize + pixIdx] = row[x * 3 + 1] / 255f; // G
+                                        localBuffer[2 * fixedChannelSize + pixIdx] = row[x * 3 + 2] / 255f; // B
+                                    }
+                                }
+                            }
+                            else {
+                                // 边缘 Tile：不足 TileSize 的部分用边缘像素填充（edge replication），
+                                // 避免零填充在超分输出中产生黑色伪影
+                                for (int y = 0; y < TileSize; y++) {
+                                    int srcY = Math.Min(y, tileH - 1);
+                                    byte* row = ptr + srcY * stride;
+                                    for (int x = 0; x < TileSize; x++) {
+                                        int srcX = Math.Min(x, tileW - 1);
+                                        int pixIdx = y * TileSize + x;
+                                        localBuffer[pixIdx] = row[srcX * 3] / 255f; // R
+                                        localBuffer[fixedChannelSize + pixIdx] = row[srcX * 3 + 1] / 255f; // G
+                                        localBuffer[2 * fixedChannelSize + pixIdx] = row[srcX * 3 + 2] / 255f; // B
+                                    }
                                 }
                             }
                         }
+
+                        // CPU 可并发推理；DirectML 的同一会话只允许一个 Run。
+                        // 传入本次调用独享的 runOptions：CT 触发时 Terminate=true 会中止 Run()
+                        var memory = new Memory<float>(localBuffer, 0, fixedTilePixels);
+                        var inputTensor = new DenseTensor<float>(memory, [1, 3, TileSize, TileSize]);
+                        var inputs = new List<NamedOnnxValue>(1) {
+                            NamedOnnxValue.CreateFromTensor(_inputName, inputTensor)
+                        };
+
+                        try {
+                            using var results = _session.Run(inputs, _outputNames, runOptions);
+
+                            var outTensor = (DenseTensor<float>)results[0].AsTensor<float>();
+                            ReadOnlySpan<float> outSpan = outTensor.Buffer.Span;
+
+                            int upW = outTensor.Dimensions[3]; // = TileSize * scaleX
+                            int upH = outTensor.Dimensions[2]; // = TileSize * scaleY
+                            int upChannelSize = upW * upH;
+                            int scaleX = upW / TileSize;
+                            int scaleY = upH / TileSize;
+
+                            // outputImage 懒分配（任意一块推理完成后即可确定整图尺寸）
+                            if (outputImage == null) {
+                                var candidate = new Mat(imgHeight * scaleY, imgWidth * scaleX, MatType.CV_8UC3);
+                                if (Interlocked.CompareExchange(ref outputImage, candidate, null) != null)
+                                    candidate.Dispose(); // 其他线程已抢先分配，放弃本候选
+                            }
+
+                            int leftStrip = (tile.Sx < 0 ? 0 : TileOverlap) * scaleX;
+                            int topStrip = (tile.Sy < 0 ? 0 : TileOverlap) * scaleY;
+
+                            int validX = leftStrip;
+                            int validY = topStrip;
+                            int validW = tile.OutputWidth * scaleX;
+                            int validH = tile.OutputHeight * scaleY;
+
+                            // 有效区域在完整输出图中的起始坐标
+                            int dstX = tile.OutputX * scaleX;
+                            int dstY = tile.OutputY * scaleY;
+
+                            // 将有效区域写入 outputImage
+                            // 各 Tile 的 [dstX, dstX+validW) * [dstY, dstY+validH) 互不重叠，无需加锁
+                            unsafe {
+                                byte* dstPtr = (byte*)outputImage!.Data;
+                                int dstStride = (int)outputImage.Step();
+
+                                for (int y = 0; y < validH; y++) {
+                                    byte* dstRow = dstPtr + (dstY + y) * dstStride;
+                                    int srcY = validY + y;
+
+                                    for (int x = 0; x < validW; x++) {
+                                        int idx = srcY * upW + (validX + x);
+
+                                        byte r = (byte)(Math.Clamp(outSpan[idx], 0f, 1f) * 255f);
+                                        byte g = (byte)(Math.Clamp(outSpan[upChannelSize + idx], 0f, 1f) * 255f);
+                                        byte b = (byte)(Math.Clamp(outSpan[2 * upChannelSize + idx], 0f, 1f) * 255f);
+
+                                        // OpenCV Mat 存储为 BGR
+                                        dstRow[(dstX + x) * 3] = b;
+                                        dstRow[(dstX + x) * 3 + 1] = g;
+                                        dstRow[(dstX + x) * 3 + 2] = r;
+                                    }
+                                }
+                            }
+                        }
+                        catch (OnnxRuntimeException) when (ct.IsCancellationRequested) {
+                            // runOptions.Terminate 触发了 ONNX 中断；静默返回，
+                            // 由 ParallelOptions.CancellationToken 机制统一发出一次 OperationCanceledException，
+                            // 避免手动 throw 与框架内部 throw 叠加产生多次 OCE。
+                        }
+
+                        return localBuffer;
+                    },
+                    // 线程结束时归还独享 buffer 到 ArrayPool
+                    localBuffer => ArrayPool<float>.Shared.Return(localBuffer, clearArray: false)
+                );
+
+                ct.ThrowIfCancellationRequested();
+
+                if (outputImage == null)
+                    throw new InvalidOperationException("No tiles were processed; output image was never initialized.");
+
+                string? dir = Path.GetDirectoryName(outputFilePath);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+
+                string extension = Path.GetExtension(outputFilePath).ToLowerInvariant();
+
+                {
+                    using var finalImage = new Mat();
+                    Cv2.Resize(outputImage, finalImage,
+                        new Size((int)targetWidth, (int)targetHeight),
+                        0, 0, InterpolationFlags.Linear);
+
+                    switch (extension) {
+                        case ".jpg":
+                        case ".jpeg":
+                            finalImage.ImWrite(outputFilePath, new ImageEncodingParam(ImwriteFlags.JpegQuality, 95));
+                            break;
+                        case ".webp":
+                            finalImage.ImWrite(outputFilePath, new ImageEncodingParam(ImwriteFlags.WebPQuality, 95));
+                            break;
+                        default:
+                            finalImage.ImWrite(outputFilePath);
+                            break;
                     }
-                    catch (OnnxRuntimeException) when (ct.IsCancellationRequested) {
-                        // runOptions.Terminate 触发了 ONNX 中断；静默返回，
-                        // 由 ParallelOptions.CancellationToken 机制统一发出一次 OperationCanceledException，
-                        // 避免手动 throw 与框架内部 throw 叠加产生多次 OCE。
-                    }
-
-                    return localBuffer;
-                },
-                // 线程结束时归还独享 buffer 到 ArrayPool
-                localBuffer => ArrayPool<float>.Shared.Return(localBuffer, clearArray: false)
-            );
-
-            ct.ThrowIfCancellationRequested();
-
-            if (outputImage == null)
-                throw new InvalidOperationException("No tiles were processed; output image was never initialized.");
-
-            string? dir = Path.GetDirectoryName(outputFilePath);
-            if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-
-            string extension = Path.GetExtension(outputFilePath).ToLowerInvariant();
-
-            using (outputImage) {
-                using var finalImage = new Mat();
-                Cv2.Resize(outputImage, finalImage,
-                    new Size((int)targetWidth, (int)targetHeight),
-                    0, 0, InterpolationFlags.Linear);
-
-                switch (extension) {
-                    case ".jpg":
-                    case ".jpeg":
-                        finalImage.ImWrite(outputFilePath, new ImageEncodingParam(ImwriteFlags.JpegQuality, 95));
-                        break;
-                    case ".webp":
-                        finalImage.ImWrite(outputFilePath, new ImageEncodingParam(ImwriteFlags.WebPQuality, 95));
-                        break;
-                    default:
-                        finalImage.ImWrite(outputFilePath);
-                        break;
                 }
-            }
 
-            return outputFilePath;
+                return outputFilePath;
+            }
+            finally { outputImage?.Dispose(); }
         }
 
         #region IDisposable
@@ -279,13 +278,15 @@ namespace VirtualPaper.ML.SuperResolution {
         private bool _isDisposed;
 
         protected virtual void Dispose(bool disposing) {
-            if (!_isDisposed) {
-                if (disposing) {
-                    _session?.Dispose();
-                    _session = null;
-                    _isLoaded = false;
+            lock (_loadLock) {
+                if (!_isDisposed) {
+                    if (disposing) {
+                        _session?.Dispose();
+                        _session = null;
+                        _isLoaded = false;
+                    }
+                    _isDisposed = true;
                 }
-                _isDisposed = true;
             }
         }
 
@@ -308,23 +309,48 @@ namespace VirtualPaper.ML.SuperResolution {
         /// </summary>
         private const int MaxParallelTiles = 2;
 
+        internal static TileInfo[] BuildTiles(int width, int height) {
+            int step = TileSize - 2 * TileOverlap;
+            int columns = (width + step - 1) / step;
+            int rows = (height + step - 1) / step;
+            var tiles = new TileInfo[columns * rows];
+            for (int y = 0; y < rows; y++) {
+                for (int x = 0; x < columns; x++) {
+                    int sx = x * step - TileOverlap;
+                    int sy = y * step - TileOverlap;
+                    int left = Math.Max(0, sx), top = Math.Max(0, sy);
+                    int right = Math.Min(width, sx + TileSize), bottom = Math.Min(height, sy + TileSize);
+                    // Input context may reach the image edge before the last tile.
+                    // Output ownership always follows the fixed step, with only the last tile shortened.
+                    tiles[y * columns + x] = new(sx, sy, left, top, right, bottom,
+                        Math.Min(step, width - x * step), Math.Min(step, height - y * step));
+                }
+            }
+            return tiles;
+        }
+
         // ── 辅助结构（值类型，无状态）────────────────────────────────────────
-        private readonly struct TileInfo(
+        internal readonly struct TileInfo(
             int sx, int sy,
             int sxClamped, int syClamped,
-            int exClamped, int eyClamped) {
+            int exClamped, int eyClamped, int outputWidth, int outputHeight) {
             public readonly int Sx = sx;
             public readonly int Sy = sy;
             public readonly int SxClamped = sxClamped;
             public readonly int SyClamped = syClamped;
             public readonly int ExClamped = exClamped;
             public readonly int EyClamped = eyClamped;
+            public int OutputX => Sx + TileOverlap;
+            public int OutputY => Sy + TileOverlap;
+            public readonly int OutputWidth = outputWidth;
+            public readonly int OutputHeight = outputHeight;
         }
 
         // ── 单例实例字段（仅 LoadModel 写入，之后只读）──────────────────────
         // 所有 RunAndSave 调用的可变状态（outputImage、runOptions 等）均为方法内局部变量，
         // 确保并发或串行的多次调用之间完全隔离，不存在数据污染风险。
-        private InferenceSession? _session;
+        private readonly object _loadLock = new();
+        private OnnxInferenceSession? _session;
         private string _inputName = string.Empty;
         private IReadOnlyList<string> _outputNames = [];
         private volatile bool _isLoaded;

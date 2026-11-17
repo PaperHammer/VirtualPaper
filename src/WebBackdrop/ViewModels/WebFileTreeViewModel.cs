@@ -709,8 +709,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         public void Delete(WebFileItem item) {
             if (_designFileUtil?.IsProjectFile(item.FilePath) == true) return;
 
-            _designFileUtil?.RemoveManifestPath(item.FilePath);
-
             if (item.ExistsOnDisk) {
                 try {
                     DeletePath(item);
@@ -722,6 +720,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 }
             }
 
+            _designFileUtil?.RemoveManifestPath(item.FilePath);
             RemoveItem(item);
 
             if (ReferenceEquals(_clipboardItem, item)) {
@@ -783,8 +782,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
 
             try {
                 if (Directory.Exists(sourcePath)) {
-                    var relativeTarget = Path.GetRelativePath(sourcePath, targetFolder);
-                    if (move && (relativeTarget == "." || (!relativeTarget.StartsWith("..") && !Path.IsPathRooted(relativeTarget)))) {
+                    if (Path.GetFullPath(sourcePath).Equals(Path.GetFullPath(targetFolder), StringComparison.OrdinalIgnoreCase)
+                        || FileUtil.IsPathWithinDirectory(sourcePath, targetFolder)) {
                         return false;
                     }
 
@@ -795,14 +794,14 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     // 大目录操作放后台线程，避免阻塞 UI。跨磁盘 Directory.Move 失败时回退为复制后删除。
                     await Task.Run(() => {
                         if (!move) {
-                            FileUtil.CopyDirectory(sourcePath, destinationPath, true);
+                            CopyImportedDirectory(sourcePath, destinationPath);
                             return;
                         }
                         try {
                             Directory.Move(sourcePath, destinationPath);
                         }
                         catch (IOException) {
-                            FileUtil.CopyDirectory(sourcePath, destinationPath, true);
+                            CopyImportedDirectory(sourcePath, destinationPath);
                             FileUtil.RemoveDirectory(sourcePath);
                         }
                     });
@@ -853,6 +852,19 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 ArcLog.GetLogger<WebFileTreeViewModel>()
                     .Error($"Failed to transfer external item: {sourcePath} -> {targetFolder}", ex);
                 return false;
+            }
+        }
+
+        private static void CopyImportedDirectory(string source, string destination) {
+            string staging = Path.Combine(Path.GetDirectoryName(destination)!, ".vp-import-" + Guid.NewGuid().ToString("N"));
+            try {
+                FileUtil.CopyDirectory(source, staging, copySubDirs: true, overwrite: false,
+                    cancellationToken: default, rejectLinks: true, clearReadOnly: true);
+                // Publish only complete imports; a failed copy must not appear on refresh.
+                Directory.Move(staging, destination);
+            }
+            finally {
+                if (Directory.Exists(staging)) FileUtil.TryDeleteDirectory(staging);
             }
         }
 

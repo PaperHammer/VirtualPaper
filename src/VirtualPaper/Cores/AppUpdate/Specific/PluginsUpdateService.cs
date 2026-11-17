@@ -30,8 +30,22 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         IJobService jobService,
         IAppBuildService appBuildService,
         IWindowService windowService) : UpdateServiceBase<PluginsUpdateService>(downloadService), IPluginsUpdateService, IPluginsUpdateServiceInit {
+        internal PluginsUpdateService(IDownloadService downloadService, IJobService jobService,
+            IAppBuildService appBuildService, IWindowService windowService, string applicationDirectory)
+            : this(downloadService, jobService, appBuildService, windowService) {
+            _applicationDirectory = Path.GetFullPath(applicationDirectory);
+        }
+
         public async Task InitAsync() {
             UpdateLock.RegisterAll();
+
+            // Store packages are serviced as a whole. Never recover an EXE
+            // channel's pending patch into the read-only package directory.
+            if (Constants.ApplicationType.IsMSIX) {
+                UpdateLock.ReleaseAll();
+                _appBuildService.Refresh();
+                return;
+            }
 
             var hasPending = await CheckAndRecoverAsync();
             if (hasPending) {
@@ -44,6 +58,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task<bool> DownloadUpdateAsync(ReleaseInfo info, IProgress<DownloadProgress> progress, CancellationToken token) {
+            if (Constants.ApplicationType.IsMSIX) return false;
             if (info.PluginPatchUri == null)
                 return false;
 
@@ -54,6 +69,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task<bool> VerifyUpdateAsync(ReleaseInfo info, CancellationToken token) {
+            if (Constants.ApplicationType.IsMSIX) return false;
             if (info.PluginPatchSha256Uri == null)
                 return false;
 
@@ -148,6 +164,8 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         /// Can be called immediately after download, or later on UI close / core start.
         /// </summary>
         public async Task<PluginsUpdateResult> ExecutePendingUpdateAsync(IProgress<PluginsUpdateProgress>? progress = null, CancellationToken token = default) {
+            if (Constants.ApplicationType.IsMSIX)
+                return new PluginsUpdateResult { Success = false, ErrorMessage = "MSIX packages are updated by the Store." };
             var result = new PluginsUpdateResult();
             var pendingDir = Constants.CommonPaths.PendingPluginsUpdateDir;
             var flagPath = Constants.CommonPaths.UpdateFlagPath;
@@ -165,6 +183,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 return result;
             }
 
+            bool installationStarted = false;
             try {
                 var extractDir = Constants.CommonPaths.PluginPatchExtractDir;
 
@@ -193,16 +212,20 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 FileUtil.RemoveDirectory(backupDir);
                 Directory.CreateDirectory(backupDir);
 
-                foreach (var (pluginName, pluginInfo) in flag.Plugins) {
-                    var sourceDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
+                foreach (string pluginName in flag.Plugins.Keys.Concat(flag.RemovedPlugins).Distinct(StringComparer.OrdinalIgnoreCase)) {
+                    var sourceDir = GetPluginDirectory(flag, pluginName);
+                    var backupPath = Path.Combine(backupDir, pluginName);
                     if (Directory.Exists(sourceDir)) {
-                        var backupPath = Path.Combine(backupDir, pluginName);
                         FileUtil.CopyDirectory(sourceDir, backupPath, true);
+                    }
+                    else {
+                        // An empty backup also lets rollback remove a newly installed payload.
+                        Directory.CreateDirectory(backupPath);
                     }
                 }
 
                 // Backup app_comp_manifest.json from WorkSpace root
-                var appCompManifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
+                var appCompManifestPath = Path.Combine(_applicationDirectory, "app_comp_manifest.json");
                 if (File.Exists(appCompManifestPath)) {
                     var appManifestBackup = Path.Combine(backupDir, "app_comp_manifest.json");
                     File.Copy(appCompManifestPath, appManifestBackup, true);
@@ -211,6 +234,8 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 // Step: Update flag to in_progress
                 flag.Status = UpdateStatus.InProgress;
                 await SaveUpdateFlagAsync(flag, token);
+                // Every backup is complete before any installed file can be changed.
+                installationStarted = true;
 
                 // Step: Replace plugins sequentially (avoid IO contention on Windows)
                 progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Replacing, 0, LanguageManager.Instance[Constants.I18n.PluginsUpdate_Stage_Replacing]));
@@ -220,7 +245,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 foreach (var (pluginName, pluginInfo) in flag.Plugins) {
                     token.ThrowIfCancellationRequested();
 
-                    var targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
+                    var targetDir = Path.GetFullPath(Path.Combine(_applicationDirectory, pluginInfo.Target));
                     var zipPath = Path.Combine(extractDir, pluginInfo.Files[0].Name);
 
                     // Clear target directory
@@ -265,7 +290,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 // Step: Copy app_comp_manifest.json from extracted patch to both BaseDirectory and AppDataDir
                 var extractedAppCompManifest = Path.Combine(extractDir, "app_comp_manifest.json");
                 if (File.Exists(extractedAppCompManifest)) {
-                    var baseManifest = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
+                    var baseManifest = Path.Combine(_applicationDirectory, "app_comp_manifest.json");
                     var appDataManifest = Path.Combine(Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
                     File.Copy(extractedAppCompManifest, baseManifest, true);
                     File.Copy(extractedAppCompManifest, appDataManifest, true);
@@ -273,7 +298,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
 
                 // Step: Process removed plugins
                 foreach (var pluginName in flag.RemovedPlugins) {
-                    var pluginDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", pluginName));
+                    var pluginDir = Path.GetFullPath(Path.Combine(_applicationDirectory, "Plugins", pluginName));
                     if (Directory.Exists(pluginDir)) {
                         Directory.Delete(pluginDir, true);
                     }
@@ -285,8 +310,11 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 // Step: Update flag to completed, then cleanup
                 flag.Status = UpdateStatus.Completed;
                 await SaveUpdateFlagAsync(flag, token);
-                FileUtil.RemoveDirectory(pendingDir);
-                FileUtil.RemoveDirectory(backupDir);
+                // Installation is committed. A locked backup must not undo the new files.
+                try { FileUtil.RemoveDirectory(pendingDir); }
+                catch (Exception cleanup) when (cleanup is IOException or UnauthorizedAccessException) {
+                    ArcLog.GetLogger<PluginsUpdateService>().Warn($"Plugin update completed; cleanup will be retried: {cleanup.Message}");
+                }
 
                 result.Success = true;
                 progress?.Report(new PluginsUpdateProgress(PluginsUpdateStage.Completed, 100, LanguageManager.Instance[Constants.I18n.PluginsUpdate_Stage_Completed]));
@@ -297,16 +325,14 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 result.Success = false;
                 result.ErrorMessage = ex.Message;
 
-                // Only rollback if backup exists (i.e. installation had started)
-                var backupDir = Constants.CommonPaths.UpdateBackupDir;
-                if (Directory.Exists(backupDir)) {
+                if (installationStarted) {
                     await RollbackAsync(flag);
                 }
                 else {
-                    // No backup = verification failed before installation, just clean up
+                    // A partial backup must never replace untouched installed files.
                     FileUtil.RemoveDirectory(Constants.CommonPaths.PendingPluginsUpdateDir);
                 }
-                await WriteUpdateFailedNoticeAsync(ex.Message, token);
+                await WriteUpdateFailedNoticeAsync(ex.Message, CancellationToken.None);
             }
             finally {
                 UpdateLock.ReleaseAll();
@@ -369,6 +395,10 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 .Select(p => p!.Value)
                 .ToList();
 
+        private string GetPluginDirectory(PluginsUpdateFlag? flag, string pluginName) =>
+            Path.GetFullPath(Path.Combine(_applicationDirectory, flag != null && flag.Plugins.TryGetValue(pluginName, out var plugin)
+                ? plugin.Target : Path.Combine("Plugins", pluginName)));
+
         private async Task RollbackAsync(PluginsUpdateFlag? flag) {
             ArcLog.GetLogger<PluginsUpdateService>().Warn("Start plugins rolling back");
             var backupDir = Constants.CommonPaths.UpdateBackupDir;
@@ -383,14 +413,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 // Restore each backed up plugin using target path from flag if available
                 foreach (var backupPluginDir in Directory.GetDirectories(backupDir)) {
                     var pluginName = Path.GetFileName(backupPluginDir);
-                    string targetDir;
-
-                    if (flag != null && flag.Plugins.TryGetValue(pluginName, out var pluginInfo)) {
-                        targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, pluginInfo.Target));
-                    }
-                    else {
-                        targetDir = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins", pluginName));
-                    }
+                    string targetDir = GetPluginDirectory(flag, pluginName);
 
                     // Clear current
                     if (Directory.Exists(targetDir)) {
@@ -406,7 +429,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 // Restore app_comp_manifest.json from backup to both BaseDirectory and AppDataDir
                 var appCompManifestBackup = Path.Combine(backupDir, "app_comp_manifest.json");
                 if (File.Exists(appCompManifestBackup)) {
-                    var baseManifest = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_comp_manifest.json");
+                    var baseManifest = Path.Combine(_applicationDirectory, "app_comp_manifest.json");
                     var appDataManifest = Path.Combine(Constants.CommonPaths.AppDataDir, "app_comp_manifest.json");
                     File.Copy(appCompManifestBackup, baseManifest, true);
                     File.Copy(appCompManifestBackup, appDataManifest, true);
@@ -416,13 +439,11 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 _appBuildService.Refresh();
 
                 ArcLog.GetLogger<PluginsUpdateService>().Info("Rollback completed");
+                FileUtil.RemoveDirectory(pendingDir);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<PluginsUpdateService>().Error("Rollback failed", ex);
-            }
-            finally {
-                FileUtil.RemoveDirectory(pendingDir);
-                FileUtil.RemoveDirectory(backupDir);
+                // Preserve the InProgress flag and complete backup for the next recovery.
             }
         }
 
@@ -451,6 +472,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         public async Task ExecutePendingPluginUpdateWithWindowAsync() {
+            if (Constants.ApplicationType.IsMSIX) return;
             // Prevent concurrent execution
             lock (_pendingLock) {
                 if (_pendingUpdateTask != null && !_pendingUpdateTask.IsCompleted) return;
@@ -501,6 +523,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
         }
 
         private Task? _pendingUpdateTask;
+        private readonly string _applicationDirectory = AppDomain.CurrentDomain.BaseDirectory;
         private readonly object _pendingLock = new();
         private readonly IDownloadService _downloadService = downloadService;
         private readonly IJobService _jobService = jobService;

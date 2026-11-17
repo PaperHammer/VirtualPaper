@@ -5,6 +5,7 @@ using VirtualPaper.Cores.Monitor;
 using VirtualPaper.Cores.WpControl;
 using VirtualPaper.Factories.Interfaces;
 using VirtualPaper.Models.Cores.Interfaces;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Services.Interfaces;
 using MockFactory = VirtualPaper.Core.Test.Infrastructure.MockFactory;
 
@@ -73,6 +74,28 @@ namespace VirtualPaper.Core.Test.T_WallpaperControl {
 
             // Assert
             Assert.HasCount(0, _capturedLayouts, "Layout should be empty after closing all wallpapers");
+        }
+
+        [TestMethod]
+        public void GetRunMonitor_SavedLayoutWithoutPlayer_ReturnsEmptyResponse() {
+            _capturedLayouts.Add(new WallpaperLayout(@"C:\Wallpapers\saved", "saved-display", "1", "RImage"));
+
+            Assert.AreEqual("", _sut.GetRunMonitorByWallpaper("saved-wallpaper").DeviceId);
+        }
+
+        [TestMethod]
+        public async Task GetRunMonitor_UsesLivePlayerAndIgnoresExitedInstances() {
+            var monitor = _monitorMgr.Object.PrimaryMonitor;
+            var data = TestDataBuilder.CreateValidPlayerData(_tempFiles).Object;
+            var player = TestDataBuilder.CreateWpPlayer(data, monitor);
+            _factory.Setup(f => f.CreatePlayer(data, monitor, false)).Returns(player.Object);
+            await _sut.SetWallpaperAsync(data, monitor);
+            _capturedLayouts.Clear();
+
+            Assert.AreEqual(monitor.DeviceId, _sut.GetRunMonitorByWallpaper(data.WallpaperUid).DeviceId);
+            player.Setup(p => p.IsExited).Returns(true);
+            Assert.AreEqual("", _sut.GetRunMonitorByWallpaper(data.WallpaperUid).DeviceId);
+            Assert.AreEqual("", _sut.GetRunMonitorByWallpaper("different-wallpaper").DeviceId);
         }
 
         [TestMethod]

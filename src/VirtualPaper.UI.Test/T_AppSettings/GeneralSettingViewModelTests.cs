@@ -1,4 +1,5 @@
 using Grpc.Core;
+using System.Globalization;
 using Moq;
 using VirtualPaper.AppSettingsPanel.ViewModels;
 using VirtualPaper.AppSettingsPanel.Utils;
@@ -13,6 +14,7 @@ using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.Models.Events;
 using VirtualPaper.UI.Test.Utils;
+using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UI.Test.T_AppSettings {
     [TestClass]
@@ -35,8 +37,9 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _commandsClient = new Mock<ICommandsClient>();
 
             _settings.SetupProperty(s => s.IsAutoStart, false);
-            _settings.SetupProperty(s => s.SystemBackdrop, AppSystemBackdrop.Default);
+            _settings.SetupProperty(s => s.UiHardwareAccelerationEnabled, true);
             _settings.SetupProperty(s => s.NavigationAnimationsEnabled, true);
+            _settings.SetupProperty(s => s.SystemBackdrop, AppSystemBackdrop.Default);
             _settings.SetupProperty(s => s.Language, "en-US");
             _settings.SetupProperty(s => s.WallpaperDir, @"C:\Wallpapers");
             _settings.SetupProperty(s => s.BuiltInWallpapersDir, @"C:\BuiltInWallpapers");
@@ -50,7 +53,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 _appUpdater.Object,
                 _userSettingsClient.Object,
                 _wpControlClient.Object,
-                _commandsClient.Object);
+                _commandsClient.Object, new UiHardwareAccelerationPolicy(true));
         }
 
         [TestCleanup]
@@ -58,7 +61,104 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _vm.Dispose();
         }
 
+        [TestMethod]
+        public void InterfaceAnimations_WhenChanged_PreservesLegacyFieldAndUpdatesPolicyImmediately() {
+            int notifications = 0;
+            _vm.PropertyChanged += (_, args) => {
+                if (args.PropertyName == nameof(_vm.InterfaceAnimationsEnabled)) notifications++;
+            };
+            UiAnimation.Policy.SetSystemEnabled(true);
+            UiAnimation.Policy.SetRequested(true);
+            try {
+                Assert.IsTrue(_vm.InterfaceAnimationsEnabled);
+                _vm.InterfaceAnimationsEnabled = false;
+                _vm.InterfaceAnimationsEnabled = false;
+                Assert.IsFalse(_settings.Object.NavigationAnimationsEnabled);
+                Assert.IsFalse(UiAnimation.IsEnabled);
+                Assert.AreEqual(1, notifications);
+                Assert.IsFalse(_vm.IsUiRestartRequired);
+                _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
+
+                // GPU 开关变化不会覆盖动画偏好，反之亦然。
+                _vm.UiHardwareAccelerationEnabled = false;
+                _vm.InterfaceAnimationsEnabled = true;
+                Assert.IsTrue(UiAnimation.IsEnabled);
+                Assert.IsFalse(_settings.Object.UiHardwareAccelerationEnabled);
+                Assert.IsTrue(_vm.IsUiRestartRequired);
+            }
+            finally { UiAnimation.Policy.SetRequested(true); }
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_ChangesPreferenceWithoutChangingStartupPolicy_AndCanRevert() {
+            var policy = new UiHardwareAccelerationPolicy(true);
+            using var viewModel = new GeneralSettingViewModel(_appUpdater.Object, _userSettingsClient.Object, _wpControlClient.Object, _commandsClient.Object, policy);
+            var notifications = new List<string?>();
+            viewModel.PropertyChanged += (_, args) => notifications.Add(args.PropertyName);
+            Assert.IsFalse(viewModel.IsUiRestartRequired);
+
+            viewModel.UiHardwareAccelerationEnabled = false;
+            Assert.IsFalse(_settings.Object.UiHardwareAccelerationEnabled);
+            Assert.IsTrue(viewModel.IsUiRestartRequired);
+            Assert.IsTrue(policy.IsEnabled);
+            Assert.DoesNotContain("--disable-gpu", policy.WebView2BrowserArguments.Split(' '));
+            Assert.Contains(nameof(viewModel.IsUiRestartRequired), notifications);
+
+            viewModel.UiHardwareAccelerationEnabled = true;
+            Assert.IsFalse(viewModel.IsUiRestartRequired);
+            _userSettingsClient.Verify(client => client.SaveAsync<ISettings>(), Times.Exactly(2));
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_SameValue_DoesNotSaveOrRequireRestart() {
+            _vm.UiHardwareAccelerationEnabled = true;
+            Assert.IsFalse(_vm.IsUiRestartRequired);
+            _userSettingsClient.Verify(client => client.SaveAsync<ISettings>(), Times.Never);
+        }
+
+        [TestMethod]
+        public void HardwareAcceleration_NewStartupUsesSavedChoice_AndReturningToEnabledRequiresRestart() {
+            _vm.UiHardwareAccelerationEnabled = false;
+            var policy = new UiHardwareAccelerationPolicy(_settings.Object.UiHardwareAccelerationEnabled);
+            using var reopened = new GeneralSettingViewModel(_appUpdater.Object, _userSettingsClient.Object, _wpControlClient.Object, _commandsClient.Object, policy);
+            Assert.IsFalse(reopened.IsUiRestartRequired);
+            Assert.Contains("--disable-gpu", policy.WebView2BrowserArguments.Split(' '));
+
+            reopened.UiHardwareAccelerationEnabled = true;
+            Assert.IsTrue(reopened.IsUiRestartRequired);
+            Assert.IsFalse(policy.IsEnabled);
+        }
+
         // ── MenuUpdate ───────────────────────────────────────────────
+
+        [TestMethod]
+        [DataRow("zh-CN")]
+        [DataRow("en-US")]
+        [DataRow("de-DE")]
+        [DataRow("fr-FR")]
+        public void MenuUpdate_DateUsesRegionalCultureAndCustomOverrides(string region) {
+            var original = CultureInfo.CurrentCulture;
+            var originalUi = CultureInfo.CurrentUICulture;
+            try {
+                var culture = (CultureInfo)new CultureInfo(region).Clone();
+                culture.DateTimeFormat.ShortDatePattern = "dd'~'MM'~'yyyy";
+                culture.DateTimeFormat.LongTimePattern = "HH'_'mm'_'ss";
+                CultureInfo.CurrentCulture = culture;
+                CultureInfo.CurrentUICulture = new CultureInfo("ja-JP");
+                var time = new DateTime(2026, 11, 14, 16, 27, 38);
+                _appUpdater.Raise(a => a.UpdateChecked += null,
+                    new AppUpdaterEventArgs(AppUpdateStatus.Uptodate, new ReleaseInfo { CheckedTime = time }));
+                StringAssert.EndsWith(_vm.Version_LastCheckDate, "14~11~2026 16_27_38");
+                Assert.AreSame(culture, CultureInfo.CurrentCulture);
+                _appUpdater.Raise(a => a.UpdateChecked += null,
+                    new AppUpdaterEventArgs(AppUpdateStatus.Notchecked, null));
+                Assert.DoesNotContain("14~11~2026", _vm.Version_LastCheckDate);
+            }
+            finally {
+                CultureInfo.CurrentCulture = original;
+                CultureInfo.CurrentUICulture = originalUi;
+            }
+        }
 
         [TestMethod]
         public void MenuUpdate_WhenUptodate_SetsUptoNewest() {
@@ -128,22 +228,6 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _settings.Object.IsAutoStart = false;
             _vm.IsAutoStart = true;
 
-            _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
-        }
-
-        [TestMethod]
-        public void NavigationAnimations_WhenChanged_SavesAndNotifiesOnlyOnce() {
-            int notifications = 0;
-            _vm.PropertyChanged += (_, args) => {
-                if (args.PropertyName == nameof(_vm.NavigationAnimationsEnabled)) notifications++;
-            };
-
-            Assert.IsTrue(_vm.NavigationAnimationsEnabled);
-            _vm.NavigationAnimationsEnabled = false;
-            _vm.NavigationAnimationsEnabled = false;
-
-            Assert.IsFalse(_settings.Object.NavigationAnimationsEnabled);
-            Assert.AreEqual(1, notifications);
             _userSettingsClient.Verify(u => u.SaveAsync<ISettings>(), Times.Once);
         }
 
@@ -276,6 +360,8 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
         // ── GetWpBasicDataByInstallFoldersAsync ───────────────────────
 
         [TestMethod]
+        // Other settings tests publish the process-wide language event, which also refreshes the stage text.
+        [DoNotParallelize]
         [DataRow(false)]
         [DataRow(true)]
         public async Task WallpaperDirectoryChange_MovesBothLibraries_AndKeepsSourcesOnFailure(bool failRestart) {
@@ -285,6 +371,11 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             string destination = Path.Combine(root, "destination");
             string targetUser = Path.Combine(destination, "wallpapers");
             string targetBuiltIn = Constants.CommonPaths.GetBuiltInWallpapersDir(targetUser);
+            var stages = new List<string>();
+            var restartStages = new List<string>();
+            _vm.PropertyChanged += (_, args) => {
+                if (args.PropertyName == nameof(_vm.WallpaperDirectoryChangeStatus)) stages.Add(_vm.WallpaperDirectoryChangeStatus);
+            };
             try {
                 CreateMovableWallpaper(sourceUser, "user");
                 CreateMovableWallpaper(sourceBuiltIn, "built-in");
@@ -293,10 +384,18 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 _wpControlClient.Setup(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()))
                     .Returns(Task.CompletedTask);
                 _wpControlClient.Setup(w => w.RestartAllWallpapersAsync())
+                    .Callback(() => restartStages.Add(_vm.WallpaperDirectoryChangeStatus))
                     .ReturnsAsync(new Grpc_RestartWallpaperResponse { IsFinished = !failRestart });
 
                 await _vm.WallpaperDirectoryChangeAsync(destination);
 
+                string[] expectedStages = ["Scanning", "Copying", "Updating", "Restoring", failRestart ? "RollingBack" : "Cleaning"];
+                CollectionAssert.AreEqual(expectedStages.Select(stage => LanguageUtil.GetI18n("Settings_General_Storage_Migration" + stage))
+                    .Append(string.Empty).ToArray(), stages);
+                CollectionAssert.AreEqual((failRestart ? new[] { "Restoring", "RollingBack" } : new[] { "Restoring" })
+                    .Select(stage => LanguageUtil.GetI18n("Settings_General_Storage_Migration" + stage)).ToArray(), restartStages);
+                Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
+                Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
                 Assert.AreEqual(failRestart ? sourceUser : targetUser, _settings.Object.WallpaperDir);
                 Assert.AreEqual(failRestart ? sourceBuiltIn : targetBuiltIn, _settings.Object.BuiltInWallpapersDir);
                 Assert.AreEqual(failRestart, Directory.Exists(sourceUser));
@@ -518,7 +617,104 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 Assert.IsTrue(File.Exists(Path.Combine(sourceBuiltIn, "built-in", "media.png")));
                 _userSettingsClient.Verify(s => s.SaveAsync<ISettings>(), Times.Once);
                 _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetUser, sourceUser), Times.Once);
-                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetBuiltIn, sourceBuiltIn), Times.Never);
+                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetBuiltIn, sourceBuiltIn), Times.Once);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+        }
+
+        [TestMethod]
+        [DataRow(false, false)]
+        [DataRow(true, false)]
+        [DataRow(false, true)]
+        [DataRow(true, true)]
+        public async Task WallpaperDirectoryChange_SaveFailure_DoesNotPreventIndependentRollback(bool rollbackSaveFails, bool rollbackLayoutFails) {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.LibraryMove", Guid.NewGuid().ToString("N"));
+            string sourceUser = Path.Combine(root, "source", "wallpapers");
+            string sourceBuiltIn = Path.Combine(root, "source", "BuiltInWallpapers");
+            string destination = Path.Combine(root, "destination");
+            string targetUser = Path.Combine(destination, "wallpapers");
+            string targetBuiltIn = Path.Combine(destination, "BuiltInWallpapers");
+            var layouts = new[] { Path.Combine(sourceUser, "user"), Path.Combine(sourceBuiltIn, "built-in") };
+            var rollbacks = new List<string>();
+            int saves = 0;
+            try {
+                CreateMovableWallpaper(sourceUser, "user");
+                CreateMovableWallpaper(sourceBuiltIn, "built-in");
+                _settings.Object.WallpaperDir = sourceUser;
+                _settings.Object.BuiltInWallpapersDir = sourceBuiltIn;
+                _wpControlClient.Setup(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()))
+                    .Returns((string source, string target) => {
+                        if (source == targetUser || source == targetBuiltIn) {
+                            rollbacks.Add(source);
+                            if (source == targetBuiltIn && rollbackLayoutFails)
+                                return Task.FromException(new IOException("One layout rollback failed."));
+                        }
+                        for (int i = 0; i < layouts.Length; i++)
+                            layouts[i] = VirtualPaper.Common.Utils.Files.FileUtil.RelocatePath(layouts[i], source, target);
+                        return Task.CompletedTask;
+                    });
+                _userSettingsClient.Setup(s => s.SaveAsync<ISettings>()).Returns(() =>
+                    ++saves == 1 || rollbackSaveFails ? Task.FromException(new IOException("Settings are locked.")) : Task.CompletedTask);
+                _wpControlClient.Setup(w => w.RestartAllWallpapersAsync())
+                    .ReturnsAsync(new Grpc_RestartWallpaperResponse { IsFinished = true });
+
+                await _vm.WallpaperDirectoryChangeAsync(destination);
+
+                CollectionAssert.AreEqual(new[] { targetBuiltIn, targetUser }, rollbacks);
+                Assert.AreEqual(Path.Combine(sourceUser, "user"), layouts[0]);
+                Assert.AreEqual(Path.Combine(rollbackLayoutFails ? targetBuiltIn : sourceBuiltIn, "built-in"), layouts[1]);
+                Assert.AreEqual(sourceUser, _settings.Object.WallpaperDir);
+                Assert.AreEqual(sourceBuiltIn, _settings.Object.BuiltInWallpapersDir);
+                Assert.AreEqual(2, saves);
+                _wpControlClient.Verify(w => w.RestartAllWallpapersAsync(), Times.Once);
+                foreach (string library in new[] { sourceUser, sourceBuiltIn, targetUser, targetBuiltIn })
+                    Assert.IsTrue(Directory.Exists(library), "Failed migration must retain originals and copies.");
+                Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
+                Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
+        }
+
+        [TestMethod]
+        [DataRow(1)]
+        [DataRow(2)]
+        public async Task WallpaperDirectoryChange_RpcFailsAfterApplyingPaths_RollsBackTheAttemptedCall(int failedCall) {
+            string root = Path.Combine(Path.GetTempPath(), "VirtualPaper.LibraryMove", Guid.NewGuid().ToString("N"));
+            string sourceUser = Path.Combine(root, "source", "wallpapers");
+            string sourceBuiltIn = Path.Combine(root, "source", "BuiltInWallpapers");
+            string destination = Path.Combine(root, "destination");
+            string targetUser = Path.Combine(destination, "wallpapers");
+            string targetBuiltIn = Path.Combine(destination, "BuiltInWallpapers");
+            var originals = new[] { Path.Combine(sourceUser, "user"), Path.Combine(sourceBuiltIn, "built-in") };
+            var layouts = originals.ToArray();
+            int forwardCalls = 0;
+            try {
+                CreateMovableWallpaper(sourceUser, "user");
+                CreateMovableWallpaper(sourceBuiltIn, "built-in");
+                _settings.Object.WallpaperDir = sourceUser;
+                _settings.Object.BuiltInWallpapersDir = sourceBuiltIn;
+                _wpControlClient.Setup(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()))
+                    .Returns((string source, string target) => {
+                        for (int i = 0; i < layouts.Length; i++)
+                            layouts[i] = VirtualPaper.Common.Utils.Files.FileUtil.RelocatePath(layouts[i], source, target);
+                        // The server may have changed its in-memory layouts before persistence or the reply fails.
+                        return (source == sourceUser || source == sourceBuiltIn) && ++forwardCalls == failedCall
+                            ? Task.FromException(new IOException("RPC failed after applying paths.")) : Task.CompletedTask;
+                    });
+                _wpControlClient.Setup(w => w.RestartAllWallpapersAsync())
+                    .ReturnsAsync(new Grpc_RestartWallpaperResponse { IsFinished = true });
+
+                await _vm.WallpaperDirectoryChangeAsync(destination);
+
+                CollectionAssert.AreEqual(originals, layouts);
+                Assert.AreEqual(sourceUser, _settings.Object.WallpaperDir);
+                Assert.AreEqual(sourceBuiltIn, _settings.Object.BuiltInWallpapersDir);
+                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetUser, sourceUser), Times.Once);
+                _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(targetBuiltIn, sourceBuiltIn),
+                    failedCall == 2 ? Times.Once() : Times.Never());
+                _wpControlClient.Verify(w => w.RestartAllWallpapersAsync(), Times.Once);
+                Assert.IsTrue(File.Exists(Path.Combine(sourceUser, "user", "media.png")));
+                Assert.IsTrue(File.Exists(Path.Combine(sourceBuiltIn, "built-in", "media.png")));
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, recursive: true); }
         }
@@ -550,6 +746,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             await _vm.WallpaperDirectoryChangeAsync("invalid\0path");
             Assert.AreEqual(previous, _settings.Object.WallpaperDir);
             Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
+            Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
             _userSettingsClient.Verify(s => s.SaveAsync<ISettings>(), Times.Never);
             _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
@@ -602,6 +799,7 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
                 Assert.IsTrue(File.Exists(Path.Combine(user, "user", "media.png")));
                 Assert.IsTrue(File.Exists(Path.Combine(builtIn, "built-in", "media.png")));
                 Assert.IsFalse(_vm.WallpaperDirectoryChangeOngoing);
+                Assert.AreEqual(string.Empty, _vm.WallpaperDirectoryChangeStatus);
                 _userSettingsClient.Verify(s => s.SaveAsync<ISettings>(), Times.Never);
                 _wpControlClient.Verify(w => w.ChangeWallpaperLayoutFolderPathAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
             }

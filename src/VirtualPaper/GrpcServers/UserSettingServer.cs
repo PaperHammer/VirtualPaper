@@ -115,7 +115,9 @@ namespace VirtualPaper.GrpcServers {
                 AppVersion = _userSetting.Settings.AppVersion,
                 IsFirstRun = _userSetting.Settings.IsFirstRun,
                 NavigationAnimationsEnabled = settings.NavigationAnimationsEnabled,
+                UiHardwareAccelerationEnabled = settings.UiHardwareAccelerationEnabled,
                 RemindUnpreservedIntelligentResults = settings.RemindUnpreservedIntelligentResults,
+                AiUseNoticeVersion = settings.AiUseNoticeVersion,
                 AppFocusPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFocus,
                 AppFullscreenPause = (Grpc_AppRulesEnum)_userSetting.Settings.AppFullscreen,
                 BatteryPause = (Grpc_AppRulesEnum)_userSetting.Settings.BatteryPoweredn,
@@ -185,6 +187,13 @@ namespace VirtualPaper.GrpcServers {
             }
             if (request.HasNavigationAnimationsEnabled) {
                 _userSetting.Settings.NavigationAnimationsEnabled = request.NavigationAnimationsEnabled;
+            }
+            if (request.HasUiHardwareAccelerationEnabled) {
+                _userSetting.Settings.UiHardwareAccelerationEnabled = request.UiHardwareAccelerationEnabled;
+            }
+            if (request.HasAiUseNoticeVersion) {
+                // An older or stale client must not discard an acknowledged notice version.
+                _userSetting.Settings.AiUseNoticeVersion = Math.Max(_userSetting.Settings.AiUseNoticeVersion, request.AiUseNoticeVersion);
             }
             _userSetting.Settings.AppFocus = (Common.AppWpRunRulesEnum)((int)request.AppFocusPause);
             _userSetting.Settings.AppFullscreen = (Common.AppWpRunRulesEnum)((int)request.AppFullscreenPause);

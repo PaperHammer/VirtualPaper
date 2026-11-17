@@ -90,8 +90,8 @@ namespace Workloads.Creation.StaticImg.Utils {
                 => new EffectSliderConfig { Min = 1, Max = 20, Default = 3, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Width"),
                     Min2 = 1, Max2 = 20, Default2 = 3, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_Height") },
             ShaderType.Posterize
-                => new EffectSliderConfig { Min = 2, Max = 256, Default = 4, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Levels"),
-                    Min2 = 2, Max2 = 256, Default2 = 4, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_LevelsGreen") },
+                => new EffectSliderConfig { Min = 2, Max = 16, Default = 16, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Levels"),
+                    Min2 = 2, Max2 = 16, Default2 = 16, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_LevelsGreen") },
             ShaderType.Shadow
                 => new EffectSliderConfig { Min = 0, Max = 100, Default = 10, Label = LanguageUtil.GetI18n("StaticImg_EffectParam_Blur"),
                     Min2 = -200, Max2 = 200, Default2 = 5, Label2 = LanguageUtil.GetI18n("StaticImg_EffectParam_OffsetX") },

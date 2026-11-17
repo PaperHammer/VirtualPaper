@@ -33,25 +33,18 @@
                 <Grid Visibility="{x:Bind _viewModel.IsTagListVisible, Mode=OneWay, Converter={StaticResource VisibilityByValueConverter}}">
                     <ItemsRepeater ItemsSource="{x:Bind _viewModel.TagList, Mode=OneWay}">
                         <ItemsRepeater.Layout>
-                            <LinedFlowLayout 
-                                ItemsStretch="Fill" 
-                                LineSpacing="5"
-                                MinItemSpacing="10"/>
+                            <LinedFlowLayout
+                                LineHeight="36"
+                                ItemsStretch="None"
+                                LineSpacing="8"
+                                MinItemSpacing="8"/>
                         </ItemsRepeater.Layout>
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
-                                <ItemContainer>
-                                    <StackPanel
-                                        CornerRadius="5"
-                                        Background="{StaticResource SystemControlBackgroundAccentBrush}"                                               
-                                        Padding="8 5"
-                                        Orientation="Horizontal"
-                                        HorizontalAlignment="Stretch">
-                                        <TextBlock                                             
-                                            Text="{x:Bind}"
-                                            HorizontalTextAlignment="Center"/>
-                                    </StackPanel>
-                                </ItemContainer>
+                                <Border Style="{StaticResource InfoTokenBorderStyle}">
+                                    <TextBlock Text="{x:Bind}" Style="{StaticResource InfoTokenTextStyle}"
+                                        ToolTipService.ToolTip="{x:Bind}"/>
+                                </Border>
                             </DataTemplate>
                         </ItemsRepeater.ItemTemplate>
                     </ItemsRepeater>

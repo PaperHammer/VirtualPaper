@@ -122,6 +122,7 @@ namespace VirtualPaper.ML.Test.T_SuperResolution {
         /// <summary>ClassInitialize 中预跑一次 RunAndSave(256×256 jpg) 的输出路径，
         /// 供多个只读断言测试方法直接复用，避免重复推理。</summary>
         private static string _sharedJpegOutput = null!;
+        private static string _sharedJpegResult = null!;
 
         // ── 实例级临时目录（用于需要独立输出的测试方法）─────────────────
         private string _instanceTempDir = null!;
@@ -148,7 +149,7 @@ namespace VirtualPaper.ML.Test.T_SuperResolution {
 
             // 预跑一次推理，结果供多个只读测试方法共享
             _sharedJpegOutput = Path.Combine(_sharedTempDir, "shared_output.jpg");
-            _sharedRealesrgan.RunAndSave(_sharedTestImagePath, _sharedJpegOutput, 256, 256);
+            _sharedJpegResult = _sharedRealesrgan.RunAndSave(_sharedTestImagePath, _sharedJpegOutput, 256, 256);
         }
 
         [ClassCleanup]
@@ -185,8 +186,8 @@ namespace VirtualPaper.ML.Test.T_SuperResolution {
             Assert.IsGreaterThan(0, new FileInfo(_sharedJpegOutput).Length,
                 "Output file should not be empty");
 
-            // 返回值与传入路径一致（在 ClassInitialize 中由 RunAndSave 返回并赋给 _sharedJpegOutput）
-            Assert.AreEqual(_sharedJpegOutput, _sharedJpegOutput,
+            // 比较实际返回值与调用方指定的输出路径。
+            Assert.AreEqual(_sharedJpegOutput, _sharedJpegResult,
                 "Return value should match the given outputFilePath");
 
             // 可被 OpenCvSharp 读取，且尺寸为 256×256

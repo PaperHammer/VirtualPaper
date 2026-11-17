@@ -17,7 +17,7 @@ internal static class ScreenFitTests {
         WallpaperLibraryTests.WriteImage(source, 256, 384);
         byte[] sourceHash = SHA256.HashData(await File.ReadAllBytesAsync(source));
         await using var session = new AppProcessSession();
-        await session.StartAsync();
+        await session.StartAsync(settings => settings.AiUseNoticeVersion = 0);
         context.Evidence["CoreProcessId"] = session.CoreId;
         string library = (await session.Settings.GetSettingsAsync(new Empty(), deadline: DateTime.UtcNow.AddSeconds(1))).WallpaperDir;
         var ui = await session.OpenUiAsync();
@@ -29,7 +29,7 @@ internal static class ScreenFitTests {
         });
         string selectedMonitor = string.Empty, containPlan = string.Empty, coverPlan = string.Empty;
         await Task.Run(() => {
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit"));
+            OpenScreenFit(root);
             ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true);
             Check(!Primary(root).Current.IsEnabled, "Screen fit allowed applying without a selected image");
             SelectImage(ui, ownerWindow, root, source);
@@ -40,6 +40,17 @@ internal static class ScreenFitTests {
             ApplicationUi.SelectComboIndex(ApplicationUi.Find(root, "ScreenFit.Mode"), 1, 2);
             coverPlan = ApplicationUi.Find(root, "ScreenFit.Plan", visible: true).Current.Name;
             Check(containPlan != coverPlan, "Contain and cover did not update the visible image area");
+            var enhancement = ApplicationUi.Find(root, "ScreenFit.Enhance");
+            ((TogglePattern)enhancement.GetCurrentPattern(TogglePattern.Pattern)).Toggle();
+            ApplicationUi.Invoke(Primary(root));
+            var notice = ApplicationUi.Find(root, "AiUseNotice.Dialog", visible: true);
+            ApplicationUi.Invoke(ApplicationUi.Find(notice, "CloseButton", visible: true));
+            ApplicationUi.WaitUntilGone(root, "AiUseNotice.Dialog");
+            enhancement = ApplicationUi.Find(root, "ScreenFit.Enhance", visible: true);
+            Check(((TogglePattern)enhancement.GetCurrentPattern(TogglePattern.Pattern)).Current.ToggleState == ToggleState.On,
+                "AI notice cancellation lost the selected enhancement option");
+            Check(ApplicationUi.Find(root, "ScreenFit.Plan", visible: true).Current.Name == coverPlan,
+                "AI notice cancellation lost the screen-fit plan");
             ApplicationUi.Invoke(ApplicationUi.Find(root, "CloseButton", visible: true));
             ApplicationUi.WaitUntilGone(root, "ScreenFit.SelectImage");
         });
@@ -49,7 +60,7 @@ internal static class ScreenFitTests {
         await AppProcessSession.WaitForJsonAsync(Constants.CommonPaths.WallpaperLayoutPath, json => json.AsArray().Count == 0);
 
         await Task.Run(() => {
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit"));
+            OpenScreenFit(root);
             ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true);
             Check(!Primary(root).Current.IsEnabled, "Reopened screen fit retained a cancelled source");
             SelectImage(ui, ownerWindow, root, source);
@@ -68,7 +79,7 @@ internal static class ScreenFitTests {
         var data = JsonSerializer.Deserialize(await File.ReadAllTextAsync(Path.Combine(folder, Constants.Field.WpBasicDataFileName)),
             WpBasicDataContext.Default.WpBasicData)!;
         data.ResolvePaths(Path.Combine(folder, Constants.Field.WpBasicDataFileName));
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))),
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))),
             "Screen fit changed the source pixels despite enhancement being disabled");
         var runtimePath = Directory.GetFiles(library, Constants.Field.WpRuntimeDataFileName, SearchOption.AllDirectories)
             .Single(path => Path.GetDirectoryName(path)!.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
@@ -97,13 +108,31 @@ internal static class ScreenFitTests {
             root = AutomationElement.FromHandle(ownerWindow);
             ApplicationUi.Select(ApplicationUi.Find(root, "App.Navigation.Library"));
             WallpaperLibraryTests.FindItem(root, data.WallpaperUid);
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit"));
+            OpenScreenFit(root);
             ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true);
             Check(!Primary(root).Current.IsEnabled, "Current wallpaper preview incorrectly enabled applying without a source");
             ApplicationUi.Find(root, "ScreenFit.Preview", visible: true);
             ApplicationUi.WaitUntilGone(root, "ScreenFit.Sample");
-            ApplicationUi.Invoke(ApplicationUi.Find(root, "CloseButton", visible: true));
+            ApplicationUi.Expand(ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true));
+            var search = ApplicationUi.Find(root, "ScreenFit.Source.Search", visible: true);
+            ApplicationUi.SetText(search, Path.GetFileName(data.FilePath));
+            var list = ApplicationUi.Find(root, "ScreenFit.Source.List", visible: true);
+            var item = ApplicationUi.Find(list, data.WallpaperUid, visible: true);
+            Check(item.Current.Name == (string.IsNullOrWhiteSpace(data.Title) ? Path.GetFileName(data.FilePath) : data.Title),
+                "Screen fit library picker did not show the wallpaper name");
+            ApplicationUi.ClickPointerElement(ownerWindow, item);
+            ApplicationUi.WaitUntilGone(root, "ScreenFit.Source.List");
+            ApplicationUi.Find(root, "ScreenFit.Plan", visible: true);
+            ApplicationUi.SelectComboIndex(ApplicationUi.Find(root, "ScreenFit.Mode"), 0, 2);
+            ApplicationUi.Invoke(Primary(root));
             ApplicationUi.WaitUntilGone(root, "ScreenFit.SelectImage");
+        });
+        layout = await AppProcessSession.WaitForJsonAsync(Constants.CommonPaths.WallpaperLayoutPath,
+            json => json.AsArray().Count == 1 && json[0]!["FolderPath"]!.GetValue<string>() == folder);
+        Check(Directory.GetFiles(library, Constants.Field.WpBasicDataFileName, SearchOption.AllDirectories).Length == 1,
+            "Applying a library image created a duplicate wallpaper");
+        context.Evidence["LibraryPickerAndIdentityReuseVerified"] = true;
+        await Task.Run(() => {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.DisplayControls"));
             var close = ApplicationUi.Find(root, "Library.CloseWallpaper", visible: true);
             close.SetFocus();
@@ -119,7 +148,7 @@ internal static class ScreenFitTests {
             ApplicationUi.Invoke(ApplicationUi.Find(root, "PrimaryButton", visible: true));
         });
         await AppProcessSession.WaitAsync(() => Task.FromResult(!Directory.Exists(folder)), "Screen fit fixture deleted");
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Screen fit modified the input file");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Screen fit modified the input file");
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["SelectedMonitor"] = selectedMonitor;
@@ -127,15 +156,22 @@ internal static class ScreenFitTests {
         context.Evidence["CoverPlan"] = coverPlan;
         context.Evidence["DesktopWindowHandle"] = desktopWindow.ToInt64();
         context.Evidence["PreviewCancelApplyAndReopenVerified"] = true;
+        await AppProcessSession.WaitForJsonAsync(session.SettingsPath, json => json["AiUseNoticeVersion"]?.GetValue<int>() == 0);
+        context.Evidence["AiNoticeCancellationPreservesFormAndOrdinaryApplyDoesNotAcknowledge"] = true;
         context.Evidence["SuperResolutionInferenceTested"] = false;
     }
 
-    private static AutomationElement Primary(AutomationElement root) => root.FindFirst(TreeScope.Descendants,
-        new PropertyCondition(AutomationElement.AutomationIdProperty, "PrimaryButton"))
-        ?? throw new InvalidOperationException("Screen fit primary action not found");
+    private static void OpenScreenFit(AutomationElement root) {
+        ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.More", visible: true));
+        ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.ScreenFit", visible: true));
+    }
+
+    private static AutomationElement Primary(AutomationElement root) =>
+        ApplicationUi.Find(root, "PrimaryButton", visible: true, enabled: false);
 
     private static void SelectImage(Process ui, nint ownerWindow, AutomationElement root, string source) {
-        ApplicationUi.Invoke(ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true));
+        ApplicationUi.Expand(ApplicationUi.Find(root, "ScreenFit.SelectImage", visible: true));
+        ApplicationUi.Invoke(ApplicationUi.Find(root, "ScreenFit.BrowseFile", visible: true));
         NativeFileDialog.OpenFile(ui, ownerWindow, source);
         var enhancement = ApplicationUi.Find(root, "ScreenFit.Enhance");
         Check(((TogglePattern)enhancement.GetCurrentPattern(TogglePattern.Pattern)).Current.ToggleState == ToggleState.Off,

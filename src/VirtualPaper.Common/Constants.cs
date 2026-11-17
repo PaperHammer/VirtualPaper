@@ -275,6 +275,7 @@ namespace VirtualPaper.Common {
             public const string Project_Unsave_Intercept_Title = nameof(Project_Unsave_Intercept_Title);
             public const string Project_Export_Success = nameof(Project_Export_Success);
             public const string Project_Export_Failed = nameof(Project_Export_Failed);
+            public const string StaticImg_DrawingDeviceLost = nameof(StaticImg_DrawingDeviceLost);
             public const string Project_Export_PathNotBeNone = nameof(Project_Export_PathNotBeNone);
             public const string Project_Export_InternalError = nameof(Project_Export_InternalError);
             public const string Project_SI_FileTypeMismatch = nameof(Project_SI_FileTypeMismatch);
@@ -291,6 +292,11 @@ namespace VirtualPaper.Common {
             public const string Intelligent_Style_Type_ColoredPencil = nameof(Intelligent_Style_Type_ColoredPencil);
             public const string Intelligent_Style_Type_OutlineDrawing = nameof(Intelligent_Style_Type_OutlineDrawing);
             public const string Intelligent_Style_Type_Ukiyoe = nameof(Intelligent_Style_Type_Ukiyoe);
+            public const string Intelligent_Backend_Gpu = nameof(Intelligent_Backend_Gpu);
+            public const string Intelligent_Backend_Cpu = nameof(Intelligent_Backend_Cpu);
+            public const string Intelligent_Backend_Mixed = nameof(Intelligent_Backend_Mixed);
+            public const string Intelligent_Backend_MixedCpuFallback = nameof(Intelligent_Backend_MixedCpuFallback);
+            public const string Intelligent_Backend_CpuFallback = nameof(Intelligent_Backend_CpuFallback);
             public const string Intelligent_Result_Temporary = nameof(Intelligent_Result_Temporary);
             public const string Intelligent_Result_Exported = nameof(Intelligent_Result_Exported);
             public const string Intelligent_Result_Imported = nameof(Intelligent_Result_Imported);

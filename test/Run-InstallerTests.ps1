@@ -3,16 +3,19 @@
 param(
     [Parameter(Mandatory)][string] $InstallerPath,
     [string] $ReportPath = 'TestResults/Installer/installer-results.json',
-    [ValidateSet('english', 'chinese')][string] $InstallerLanguage = 'english',
+    [string] $ExtendedUIReportPath,
+    [ValidateSet('english', 'chinese', 'french')][string] $InstallerLanguage = 'english',
     [ValidateSet('Debug', 'Release')][string] $Configuration = 'Release',
     [ValidateRange(10, 600)][int] $TimeoutSeconds = 240,
     [switch] $NoBuild
 )
 $ErrorActionPreference = 'Stop'
 $InstallerLanguage = $InstallerLanguage.ToLowerInvariant()
-$reinstallLanguage = if ($InstallerLanguage -eq 'english') { 'chinese' } else { 'english' }
 . "$PSScriptRoot/InstallerTestSupport.ps1"
+$languageSequence = Get-InstallerLanguageSequence $InstallerLanguage
+$reinstallLanguage = $languageSequence.Second
 . "$PSScriptRoot/BuiltInWallpaperTestSupport.ps1"
+. "$PSScriptRoot/LocalizationResourceSupport.ps1"
 if (-not $IsWindows) { throw 'Installer lifecycle tests require Windows.' }
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $InstallerPath = (Resolve-Path -LiteralPath $InstallerPath).Path
@@ -24,7 +27,7 @@ New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
 # Spaces exercise installer/application path handling; never reuse a daily install.
 $installDir = Join-Path ([IO.Path]::GetTempPath()) "Virtual Paper install-acceptance-$([guid]::NewGuid().ToString('N'))"
 $project = Join-Path $repositoryRoot 'test/VirtualPaper.InstallerTest/VirtualPaper.InstallerTest.csproj'
-$probe = Join-Path $repositoryRoot "test/VirtualPaper.InstallerTest/bin/$Configuration/net8.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
+$probe = Join-Path $repositoryRoot "test/VirtualPaper.InstallerTest/bin/$Configuration/net10.0-windows10.0.19041.0/VirtualPaper.InstallerTest.dll"
 if (-not $NoBuild) {
     dotnet build $project -c $Configuration
     if ($LASTEXITCODE -ne 0) { throw 'Installer lifecycle probe build failed; installation was not attempted.' }
@@ -32,7 +35,7 @@ if (-not $NoBuild) {
 if (-not (Test-Path -LiteralPath $probe)) { throw "Installer lifecycle probe not found: $probe" }
 # The production AppId is shared with a user's existing installation. Read all registry
 # views before installing, so this acceptance run cannot overwrite a daily installation.
-$setupScriptPath = Join-Path $repositoryRoot 'InnoSetup/setup.iss'
+$setupScriptPath = Join-Path $repositoryRoot 'packaging/inno/setup.iss'
 Assert-CleanInstallerEnvironment $setupScriptPath
 $appId = Get-InstallerAppId $setupScriptPath
 $shortcutPaths = @(Get-InstallerShortcutPaths)
@@ -45,7 +48,7 @@ $profilesRoot = Join-Path ([IO.Path]::GetTempPath()) ('VPInstaller-' + [guid]::N
 $preservedRoot = Join-Path $profilesRoot 'p'
 $freshRoot = Join-Path $profilesRoot 'f'
 $payloadRoot = if ($env:RELEASE_BIN_DIR) { $env:RELEASE_BIN_DIR } else {
-    Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net8.0-windows10.0.19041.0"
+    Join-Path $repositoryRoot "src/VirtualPaper/bin/$Configuration/net10.0-windows10.0.19041.0"
 }
 $builtIns = New-BuiltInWallpaperAcceptance (Join-Path $payloadRoot 'BuiltInWallpapers') $preservedRoot
 $installedVersion = $null
@@ -82,9 +85,10 @@ function Invoke-InstallerWizard([string] $Executable, [switch] $Uninstall,
 }
 
 function Assert-InstalledApplication([string] $Language) {
+    Assert-PackageLocalization { param($path) [IO.File]::OpenRead((Join-Path $installDir $path)) }
     $languageMarker = Join-Path $installDir 'installer-language.txt'
     if (-not (Test-Path -LiteralPath $languageMarker) -or
-        [IO.File]::ReadAllText($languageMarker).Trim() -cne $Language) {
+        (Get-InstallerApplicationLanguage ([IO.File]::ReadAllText($languageMarker).Trim())) -cne (Get-InstallerApplicationLanguage $Language)) {
         throw 'The installed language marker does not match the selected installer language.'
     }
     if (@(Get-ChildItem -LiteralPath $installDir -Directory -Recurse -Filter '*.WebView2').Count) {
@@ -164,14 +168,25 @@ function Invoke-ApplicationProbe([string] $Stage, [string] $DataRoot, [string] $
     }
 }
 
-$firstAppLanguage = if ($InstallerLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
-$secondAppLanguage = if ($reinstallLanguage -eq 'english') { 'en-US' } else { 'zh-CN' }
+$firstAppLanguage = $languageSequence.FirstApplication
+$secondAppLanguage = $languageSequence.SecondApplication
 try {
     $report = Invoke-InstallerLifecycle -Install {
         Invoke-InstallPackage $InstallerLanguage 'install'
         Assert-InitialBuiltInWallpapers $builtIns
     } -Open {
         Invoke-ApplicationProbe 'first' $preservedRoot 'prepare' $firstAppLanguage
+        if ($ExtendedUIReportPath) {
+            # This job owns its installation; the ordinary smoke job runs independently.
+            & "$PSScriptRoot/Run-UIOperationTests.ps1" -Configuration $Configuration -NoBuild -Suite Extended `
+                -CoreExe (Join-Path $installDir 'VirtualPaper.exe') -InstalledExe `
+                -HostExe (Join-Path $repositoryRoot 'test/VirtualPaper.UIOperationTest/bin/x64/Release/net10.0-windows10.0.19041.0/VirtualPaper.UIOperationTest.exe') `
+                -BuiltInPayload $builtIns.Destination `
+                -ReportPath $ExtendedUIReportPath
+            $ui = Get-Content -LiteralPath $ExtendedUIReportPath -Raw | ConvertFrom-Json
+            if ((Get-UIOperationReportOutcome $ui) -ne 'Passed') { throw 'Installed EXE extended UI must pass without skips.' }
+            Assert-ExtendedUIModules $ui
+        }
     } -Reinstall {
         # Only overwrite this run's registered installation, never relax the initial clean-install guard.
         $registrations = @(Get-InstallRegistrations $appId)

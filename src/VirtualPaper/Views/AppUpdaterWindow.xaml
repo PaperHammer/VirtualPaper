@@ -17,7 +17,7 @@
         WindowStyle="None"
         Height="600" Width="800"
         ResizeMode="CanMinimize"
-        Title="Virtual Paper Updater"
+        Title="{Binding [AppUpdater_WindowTitle], Source={x:Static lang:LanguageManager.Instance}}"
         Icon="pack://application:,,,/VirtualPaper;component/Resources/appicon_download.ico"
         ExtendsContentIntoTitleBar="True"
         Closing="FluentWindow_Closing"
@@ -38,7 +38,7 @@
         <!-- 顶部标题栏 -->
         <ui:TitleBar
             x:Name="TitleBar"
-            Title="Virtual Paper Updater"
+            Title="{Binding [AppUpdater_WindowTitle], Source={x:Static lang:LanguageManager.Instance}}"
             CloseWindowByDoubleClickOnIcon="True"
             Background="{DynamicResource ApplicationBackgroundBrush}"
             ShowMaximize="False"

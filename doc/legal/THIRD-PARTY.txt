@@ -1,0 +1,122 @@
+VirtualPaper — selected third-party information
+Updated: 2026-11-15
+
+Original license and notice texts are kept in the adjacent licenses directory.
+Those texts, not this summary or its translations, specify the applicable terms.
+Components, model weights, source images and application code have separate rights.
+The project maintainer has manually confirmed the third-party sources and
+redistribution permissions for the current release. Confirmation recorded:
+2026-11-15. Each component and asset remains subject to its own license terms.
+
+APPLICATION
+
+VirtualPaper — PaperHammer and contributors
+Source: https://github.com/PaperHammer/VirtualPaper
+Application code: GNU General Public License version 3.
+Original: licenses/GPL-3.0.txt
+The GPL for the application does not automatically apply to user inputs/outputs
+or change the independent licenses of separately distributed media or components.
+
+SELECTED COMPONENTS
+
+Microsoft ONNX Runtime / DirectML — Microsoft and contributors
+Package: Microsoft.ML.OnnxRuntime.DirectML 1.20.0
+Source: https://github.com/microsoft/onnxruntime
+Originals: licenses/ONNX-Runtime.LICENSE.txt,
+licenses/ONNX-Runtime.ThirdPartyNotices.txt
+
+OpenCvSharp / OpenCV — shimat and the respective OpenCV contributors
+OpenCvSharp package series: 4.10.0.20241108
+Source: https://github.com/shimat/opencvsharp
+OpenCvSharp original: licenses/OpenCvSharp.LICENSE.txt
+Native OpenCV binaries and their embedded dependencies must also retain their
+own required notices; the wrapper's license is not a substitute for those terms.
+
+Monaco Editor — Microsoft and contributors
+Version: 0.55.1
+Source: https://github.com/microsoft/monaco-editor
+Original: licenses/Monaco-Editor.LICENSE.txt
+
+DOMPurify — Cure53 and contributors
+Source: https://github.com/cure53/DOMPurify
+Original: licenses/DOMPurify.LICENSE.txt
+
+Microsoft Edge WebView2 — Microsoft
+Source and runtime information: https://developer.microsoft.com/microsoft-edge/webview2/
+SDK original: licenses/WebView2.LICENSE.txt
+Privacy: https://privacy.microsoft.com/privacystatement
+SDK and separately installed Evergreen Runtime terms are distinct.
+
+Windows App SDK — Microsoft and contributors
+Package series: 1.8.251106002
+Source: https://github.com/microsoft/WindowsAppSDK
+Original: licenses/WindowsAppSDK.LICENSE.txt
+.NET, Windows and other Microsoft runtimes retain their accompanying terms.
+
+Other application dependencies include gRPC, Protocol Buffers, NLog, Octokit,
+Downloader, MessagePack, SharpCompress, SharpZipLib, WinUI3Localizer, WinUIEx,
+WPF UI and other libraries. They retain their own copyright and license terms.
+Keep the original notices distributed with those components. Update the versions,
+source records and accompanying notices when dependencies or native contents change.
+
+MODELS
+
+Depth Anything V2 Small / ViT-S
+Authors: Lihe Yang, Bingyi Kang, Zilong Huang, Zhen Zhao, Xiaogang Xu,
+Jiashi Feng, Hengshuang Zhao and contributors.
+Upstream: https://github.com/DepthAnything/Depth-Anything-V2
+The upstream Small model is Apache-2.0. Its Base/Large/Giant variants have
+different, noncommercial terms; this notice does not cover substituting them.
+ONNX conversion: Fabio Milentiansen Sim and contributors.
+Source: https://github.com/fabio-sim/Depth-Anything-ONNX/releases/tag/v2.0.0
+Originals: licenses/Depth-Anything-V2.LICENSE.txt,
+licenses/Depth-Anything-ONNX.LICENSE.txt
+Bundled artifact: depth_anything_v2_vits_dynamic.onnx
+
+AdaIN / pytorch-AdaIN
+PyTorch implementation: Naoto Inoue and contributors.
+Source: https://github.com/naoto0804/pytorch-AdaIN
+Implementation license: licenses/pytorch-AdaIN.LICENSE.txt (MIT).
+Upstream pretrained-model release:
+https://github.com/naoto0804/pytorch-AdaIN/releases/tag/v0.0.0
+Original AdaIN work: https://github.com/xunhuang1995/AdaIN-style
+The local export combines vgg_normalised.pth (encoder truncated to its first
+31 layers), decoder.pth, adaptive instance normalization and the alpha blend.
+Both adain_style_transfer.onnx and its .onnx.data match the supplied local export
+byte-for-byte.
+
+Real-ESRGAN x4plus
+Upstream: Xintao Wang and contributors.
+Source: https://github.com/xinntao/Real-ESRGAN
+Upstream license: licenses/Real-ESRGAN.LICENSE.txt (BSD-3-Clause).
+The supplied export script loads RealESRGAN_x4plus.pth into BasicSR's RRDBNet
+(23 blocks, scale 4) and exports dynamic input/output shapes.
+BasicSR source: https://github.com/XPixelGroup/BasicSR
+Bundled artifact: realesrgan_x4plus_dynamic.onnx
+
+BUILT-IN WALLPAPERS
+
+vp-santa-rosa-waves — original creator: Blervis.
+Source: https://commons.wikimedia.org/wiki/File:Santa_Rosa_Island_Waves.webm
+Original and VirtualPaper's supplied media adaptation: CC0-1.0.
+
+vp-bigora-cascade — original creator: Termininja.
+Source: https://commons.wikimedia.org/wiki/File:Bigora_waterfall.webm
+Original and VirtualPaper's supplied media adaptation: CC0-1.0.
+
+CC0 does not require attribution; creator/source records are retained for
+provenance, not as an additional attribution or redistribution condition.
+It does not clear unrelated personality, trademark or other third-party rights.
+The individual notices and full CC0 text are under licenses/wallpapers/<folder>/
+and are also retained with the wallpapers themselves.
+
+vp-alpine-stillness / vp-emerald-morning — publisher: VirtualPaper.
+Landscape imagery was generated with OpenAI during preparation of the collection;
+depth maps were generated locally. Their notices permit use, modification and
+redistribution to the extent VirtualPaper holds rights, with the notice retained.
+No exclusive copyright is claimed in the generated imagery.
+
+vp-luminous-flow — original Canvas animation code by VirtualPaper, GPLv3.
+Its individual notice distinguishes animation code from separately licensed media.
+
+See licenses/wallpapers/<folder>/NOTICE.txt for each item's original statements.

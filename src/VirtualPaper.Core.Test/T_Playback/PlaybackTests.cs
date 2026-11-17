@@ -12,7 +12,7 @@ using VirtualPaper.Utils.Interfcaes;
 
 namespace VirtualPaper.Core.Test.T_Playback {
     [TestClass]
-    public class PlaybackTests {
+    public partial class PlaybackTests {
         private Mock<IUserSettingsService> _mockUserSettings = null!;
         private Mock<IWallpaperControl> _mockWpControl = null!;
         private Mock<IScrControl> _mockScrControl = null!;

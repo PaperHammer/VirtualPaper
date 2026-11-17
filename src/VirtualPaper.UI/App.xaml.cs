@@ -23,6 +23,7 @@ using VirtualPaper.IntelligentPanel.ViewModels;
 using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.DepthEstimate;
 using VirtualPaper.ML.DepthEstimate.Interfaces;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.ML.StyleTransfer;
 using VirtualPaper.ML.StyleTransfer.Interfaces;
 using VirtualPaper.ML.SuperResolution;
@@ -42,6 +43,7 @@ using Workloads.Entry.FileLoaders;
 using Workloads.Entry.FileLoaders.Specific;
 using Workloads.Entry.Interfaces;
 using Workloads.Creation.WebBackdrop.ViewModels;
+using Workloads.Creation.StaticImg.Core.Utils;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -99,6 +101,9 @@ namespace VirtualPaper.UI {
             SetupUnhandledExceptionLogging();
 
             _userSettings = AppServiceLocator.Services.GetRequiredService<IUserSettingsClient>();
+            UiAnimation.Initialize(_userSettings.Settings.NavigationAnimationsEnabled);
+            DrawingDeviceManager.Current.Initialize(
+                AppServiceLocator.Services.GetRequiredService<UiHardwareAccelerationPolicy>().IsEnabled);
         }
 
         private ServiceProvider ConfigureServices() {
@@ -115,6 +120,7 @@ namespace VirtualPaper.UI {
                 .AddSingleton<StyleTranferViewModel>()
                 .AddSingleton<SuperResolutionViewModel>()
                 .AddSingleton<IIntelligentTaskDialogs, IntelligentTaskDialogs>()
+                .AddSingleton<IAiUseNoticeService, AppSettingsPanel.Utils.AiUseNoticeService>()
                 .AddSingleton<IntelligentTaskCloseCoordinator>()
                 .AddTransient<EditPanel.ViewModels.ConfigSpaceViewModel>()
                 .AddTransient<IntelligentPanel.ViewModels.ConfigSpaceViewModel>()
@@ -129,6 +135,11 @@ namespace VirtualPaper.UI {
 
                 .AddSingleton<IWallpaperIndexService, WallpaperIndexService>()
                 .AddSingleton<IUserSettingsClient, UserSettingsClient>()
+                .AddSingleton(services => new UiHardwareAccelerationPolicy(
+                    services.GetRequiredService<IUserSettingsClient>().Settings.UiHardwareAccelerationEnabled))
+                .AddSingleton(services => new InferenceDevicePolicies(
+                    services.GetRequiredService<UiHardwareAccelerationPolicy>().IsEnabled))
+                .AddSingleton<UiWebViewEnvironment>()
                 .AddSingleton<IWallpaperControlClient, WallpaperControlClient>()
                 .AddSingleton<IMonitorManagerClient, MonitorManagerClient>()
                 .AddSingleton<IAppUpdaterClient, AppUpdaterClient>()
@@ -145,9 +156,12 @@ namespace VirtualPaper.UI {
                 .AddSingleton<IJsonSaver, JsonSaverWrapper>()
                 .AddSingleton<IPipeServerFactory, NamedPipeServerFactory>()
 
-                .AddTransient<IDepthEstimate, DepthAnythingV2>()
-                .AddSingleton<IStyleTransfer, AdaIn>()
-                .AddSingleton<ISuperResolution, Realesrgan>()
+                .AddSingleton<IDepthEstimateFactory>(services => new DepthEstimateFactory(
+                    services.GetRequiredService<InferenceDevicePolicies>().DepthEstimate))
+                .AddSingleton<IStyleTransfer>(services => new AdaIn(
+                    services.GetRequiredService<InferenceDevicePolicies>().StyleTransfer))
+                .AddSingleton<IInferenceModelProvider<ISuperResolution>>(services => new InferenceModelPool<ISuperResolution>(
+                    services.GetRequiredService<InferenceDevicePolicies>().SuperResolution, policy => new Realesrgan(policy)))
 
                 .AddTransient<Workloads.Creation.StaticImg.MainPage>()
                 .AddTransient<Workloads.Creation.WebBackdrop.MainPage>()
@@ -244,6 +258,7 @@ namespace VirtualPaper.UI {
         }
 
         public static void ShutDown() {
+            UiAnimation.Shutdown();
             // The last window can end the WinUI application lifetime before an
             // async Closed handler resumes. TwoWayClient's synchronous Dispose
             // drains its stream without capturing the UI synchronization context.

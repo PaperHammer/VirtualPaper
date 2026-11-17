@@ -4,8 +4,10 @@ using System.Text.Json;
 using System.Windows.Automation;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using GrpcDotNetNamedPipes;
 using Empty = Google.Protobuf.WellKnownTypes.Empty;
 using VirtualPaper.Common;
+using VirtualPaper.Grpc.Service.UserSettings;
 using VirtualPaper.Models.Cores;
 using VirtualPaper.UIOperationTest.Infrastructure;
 using static VirtualPaper.UIOperationTest.Infrastructure.UiTestContext;
@@ -44,7 +46,7 @@ internal static class WallpaperLibraryTests {
             catch (JsonException) { return false; }
         }, "UI import metadata and thumbnail");
         var data = imported!;
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Imported image differs from the source");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Imported image differs from the source");
 
         // Exercise a real pre-existing format-18 folder, not just a format-19 import.
         await session.CloseUiAsync();
@@ -66,7 +68,7 @@ internal static class WallpaperLibraryTests {
             Check(!Path.IsPathRooted(upgradedJson[field]!.GetValue<string>()), "Upgrade kept an absolute " + field);
         Check(upgradedJson["WallpaperUid"]!.GetValue<string>() == data.WallpaperUid, "Upgrade changed the wallpaper UID");
         data = WpBasicData.Load(metadataPath);
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Upgrade changed source pixels");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(data.FilePath))), "Upgrade changed source pixels");
         context.Evidence["Format18AbsoluteLoadedAndUpgradedThroughContextMenu"] = true;
 
         await Task.Run(() => {
@@ -74,8 +76,15 @@ internal static class WallpaperLibraryTests {
             ApplicationUi.SetText(ApplicationUi.Find(root, "Library.Search"), "no-such-wallpaper");
         });
         await WaitForItemsAsync(root, 0);
-        await Task.Run(() => ApplicationUi.SetText(ApplicationUi.Find(root, "Library.Search"), data.Title));
+        await Task.Run(() => {
+            ApplicationUi.Invoke(ApplicationUi.Find(root, "Library.Empty.ClearFilters", visible: true));
+            var search = ApplicationUi.Find(root, "Library.Search");
+            var input = search.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit)) ?? search;
+            Check(((ValuePattern)input.GetCurrentPattern(ValuePattern.Pattern)).Current.Value == "",
+                "Clearing the empty-state filters did not clear the visible search box");
+        });
         await WaitForItemsAsync(root, 1);
+        context.Evidence["NoResultsActionClearsVisibleSearchAndRestoresWallpapers"] = true;
 
         // Cancellation must leave both the actual library item and files intact.
         await Task.Run(() => {
@@ -133,7 +142,7 @@ internal static class WallpaperLibraryTests {
         await Task.Run(() => ApplicationUi.Select(ApplicationUi.Find(AutomationElement.FromHandle(ui.MainWindowHandle), "App.Navigation.Library")));
         var reopenedRoot = await Task.Run(() => AutomationElement.FromHandle(ui.MainWindowHandle));
         await WaitForItemsAsync(reopenedRoot, 0);
-        Check(sourceHash.SequenceEqual(SHA256.HashData(await File.ReadAllBytesAsync(source))), "Library deletion modified the input file");
+        Check(Enumerable.SequenceEqual(sourceHash, SHA256.HashData(await File.ReadAllBytesAsync(source))), "Library deletion modified the input file");
         await session.StopAsync();
         session.RecordEvidence(context);
         context.Evidence["PlayerProcessId"] = playerId;
@@ -168,9 +177,27 @@ internal static class WallpaperLibraryTests {
         }
     }
 
-    internal static Task WaitForItemsAsync(AutomationElement root, int count) => AppProcessSession.WaitAsync(() => Task.Run(() =>
-        ApplicationUi.Find(root, "Library.Items").FindAll(TreeScope.Descendants,
-            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem)).Count == count), $"Library displays {count} items");
+    internal static async Task WaitForItemsAsync(AutomationElement root, int count, bool includeBuiltIns = false) {
+        // MSIX seeds the real bundled collection on every new profile. User
+        // import/delete cases count their own cards; built-in playback checks
+        // explicitly include the bundled cards. Keep the production seeding path.
+        var builtInIds = new HashSet<string>();
+        if (!includeBuiltIns) {
+            var settings = await new Grpc_UserSettingsService.Grpc_UserSettingsServiceClient(
+                new NamedPipeChannel(".", Constants.CoreField.GrpcPipeServerName)).GetSettingsAsync(new Empty(),
+                    deadline: DateTime.UtcNow.AddSeconds(1));
+            if (Directory.Exists(settings.BuiltInWallpapersDir)) {
+                foreach (string path in Directory.GetFiles(settings.BuiltInWallpapersDir,
+                    Constants.Field.WpBasicDataFileName, SearchOption.AllDirectories))
+                    builtInIds.Add("Library.Item." + WpBasicData.Load(path).WallpaperUid);
+            }
+        }
+        await AppProcessSession.WaitAsync(() => Task.Run(() =>
+            ApplicationUi.Find(root, "Library.Items").FindAll(TreeScope.Descendants,
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.ListItem))
+                .Cast<AutomationElement>().Count(item => !builtInIds.Contains(item.Current.AutomationId)) == count),
+            $"Library displays {count} {(includeBuiltIns ? "total" : "user")} items");
+    }
 
     internal static void WriteImage(string path, int width = 256, int height = 144) {
         byte[] pixels = new byte[width * height * 4];

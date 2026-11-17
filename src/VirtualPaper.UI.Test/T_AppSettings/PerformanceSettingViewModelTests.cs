@@ -24,6 +24,8 @@ namespace VirtualPaper.UI.Test.T_AppSettings {
             _settings.SetupProperty(s => s.RemoteDesktop, AppWpRunRulesEnum.Silence);
             _settings.SetupProperty(s => s.StatuMechanism, StatuMechanismEnum.Per);
             _settings.SetupProperty(s => s.IsAudioOnlyOnDesktop, false);
+            _settings.SetupProperty(s => s.UiHardwareAccelerationEnabled, true);
+            _settings.SetupProperty(s => s.NavigationAnimationsEnabled, true);
 
             _userSettingsClient.Setup(u => u.Settings).Returns(_settings.Object);
 

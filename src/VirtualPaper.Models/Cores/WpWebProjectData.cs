@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace VirtualPaper.Models.Cores {
@@ -31,5 +32,9 @@ namespace VirtualPaper.Models.Cores {
         /// <summary>预览图文件（相对路径），默认 preview.jpg</summary>
         [JsonPropertyName("preview")]
         public string Preview { get; set; } = "preview.jpg";
+
+        // 保留第三方项目扩展字段，避免编辑壁纸信息时丢失原有配置。
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     }
 }

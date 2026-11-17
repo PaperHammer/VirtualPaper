@@ -46,12 +46,12 @@ if ($uiOutcome -eq 'Skipped') {
 } else {
     $summary += "- WinUI: passed ($($ui.Results.Count) cases)"
 }
-$summary += @('', '### Code coverage', '', '| Project | Lines | Coverage |', '| --- | ---: | ---: |')
+$summary += @('', '### Product module coverage', '', 'Source lines are merged across project reports; a line counts as covered if any report hits it.', '', '| Product module | Lines | Coverage |', '| --- | ---: | ---: |')
 foreach ($row in $coverage) {
-    $projectRate = if ($row.Valid -eq 0) { 0 } else { [math]::Round(100 * $row.Covered / $row.Valid, 2) }
-    $summary += "| $($row.Project) | $($row.Covered) / $($row.Valid) | $projectRate% |"
+    $projectRate = if ($row.Valid -eq 0) { 'N/A' } else { "$([math]::Round(100 * $row.Covered / $row.Valid, 2))%" }
+    $summary += "| $($row.Module) | $($row.Covered) / $($row.Valid) | $projectRate |"
 }
-$summary += @('', "**Combined:** $covered / $valid lines covered (**$rate%**).")
+$summary += @('', "**Merged source lines:** $covered / $valid lines covered (**$rate%**).", 'Scope: instrumented product modules only; real UI acceptance, scripts and uncollected modules are reported separately.')
 if ($env:GITHUB_STEP_SUMMARY) { $summary -join "`n" >> $env:GITHUB_STEP_SUMMARY }
 # Emit success only after every required report and coverage record has been validated.
 if ($env:GITHUB_OUTPUT) {

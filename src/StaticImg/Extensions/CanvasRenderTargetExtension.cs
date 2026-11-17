@@ -17,17 +17,21 @@ namespace Workloads.Creation.StaticImg.Extensions {
         public static CanvasRenderTarget Clone(this CanvasRenderTarget source) {
             var clone = new CanvasRenderTarget(
                 source.Device,
-                source.SizeInPixels.Width,
-                source.SizeInPixels.Height,
+                (float)source.Size.Width,
+                (float)source.Size.Height,
                 source.Dpi,
                 source.Format,
                 source.AlphaMode);
 
-            // 运行在 GPU 上
-            // GetPixelBytes 运行在 CPU 上
-            clone.CopyPixelsFromBitmap(source);
-
-            return clone;
+            try {
+                // 同设备直接复制像素，避免 GetPixelBytes 的 CPU 回读。
+                clone.CopyPixelsFromBitmap(source);
+                return clone;
+            }
+            catch {
+                clone.Dispose();
+                throw;
+            }
         }
 
         /// <summary>
@@ -51,6 +55,7 @@ namespace Workloads.Creation.StaticImg.Extensions {
                 return null;
             }
 
+            string? temporaryPath = null;
             try {
                 cancellationToken.ThrowIfCancellationRequested();
 
@@ -96,17 +101,17 @@ namespace Workloads.Creation.StaticImg.Extensions {
                     ds.DrawImage(renderTarget, destRect, sourceRect);
                 }
 
-                using var fileStream = new FileStream(
-                    data.Path,
-                    FileMode.Create,
-                    FileAccess.Write,
-                    FileShare.None,
-                    bufferSize: 4096,
-                    options: FileOptions.Asynchronous);
-
-                using var randomAccessStream = fileStream.AsRandomAccessStream();
-                await exportRenderTarget.SaveAsync(randomAccessStream, bitmapFormat).AsTask(cancellationToken);
-                await randomAccessStream.FlushAsync().AsTask(cancellationToken);
+                // Complete encoding before replacing an existing export. Device loss
+                // or cancellation must not truncate the user's previous file.
+                temporaryPath = Path.Combine(directory, $".vp-export-{Guid.NewGuid():N}.tmp");
+                using (var fileStream = new FileStream(temporaryPath, FileMode.CreateNew,
+                    FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.Asynchronous)) {
+                    using var randomAccessStream = fileStream.AsRandomAccessStream();
+                    await exportRenderTarget.SaveAsync(randomAccessStream, bitmapFormat).AsTask(cancellationToken);
+                    await randomAccessStream.FlushAsync().AsTask(cancellationToken);
+                }
+                cancellationToken.ThrowIfCancellationRequested();
+                File.Move(temporaryPath, data.Path, overwrite: true);
 
                 GlobalMessageUtil.ShowSuccess(
                     $"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Success)} {data.Path}",
@@ -117,9 +122,18 @@ namespace Workloads.Creation.StaticImg.Extensions {
 
                 return data.Path;
             }
+            catch (Exception ex) when (renderTarget.Device.IsDeviceLost(ex.HResult)) {
+                renderTarget.Device.RaiseDeviceLost();
+            }
             catch (Exception ex) {
                 GlobalMessageUtil.ShowError($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Failed)}");
                 ArcLog.GetLogger<CanvasRenderTarget>().Error($"{LanguageUtil.GetI18n(Constants.I18n.Project_Export_Failed)}", ex);
+            }
+            finally {
+                if (temporaryPath != null) {
+                    try { File.Delete(temporaryPath); }
+                    catch (Exception cleanup) { ArcLog.GetLogger<CanvasRenderTarget>().Error(cleanup); }
+                }
             }
 
             return null;

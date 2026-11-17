@@ -14,6 +14,22 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
     public partial class SuperResolutionAddTaskViewModel : ObservableObject {
         internal ResettableCompletionSource<IIntelliData?>? IntelligentCTS { get; set; }
 
+        public SuperResolutionAddTaskViewModel(UiHardwareAccelerationPolicy? acceleration = null) {
+            ShowGpuOptions = acceleration?.IsEnabled == true;
+            _useGpu = ShowGpuOptions;
+        }
+
+        public bool ShowGpuOptions { get; }
+        public bool UseGpu {
+            get => _useGpu;
+            set {
+                value &= ShowGpuOptions;
+                if (_useGpu == value) return;
+                _useGpu = value;
+                OnPropertyChanged();
+            }
+        }
+
         #region card_component
         public Action? CardUIStateChanged { get; set; }
         public string PreviousStepBtnText { get; private set; } = string.Empty;
@@ -63,7 +79,8 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 mode,
                 magnification,
                 targetWidth,
-                targetHeight);
+                targetHeight,
+                UseGpu);
 
             IntelligentCTS?.TrySetResult(input);
         }
@@ -268,7 +285,10 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             OutputResolutionText = null;
             IsNextEnable = false;
+            UseGpu = ShowGpuOptions;
         }
         #endregion
+
+        private bool _useGpu;
     }
 }

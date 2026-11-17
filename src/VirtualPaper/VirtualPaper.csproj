@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UseWPF>true</UseWPF>
@@ -14,6 +14,11 @@
 		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
 		<AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
 	</PropertyGroup>
+	<PropertyGroup>
+		<LocalizationResourceKind>Core</LocalizationResourceKind>
+		<LocalizationResourceFolder>Properties</LocalizationResourceFolder>
+	</PropertyGroup>
+	<Import Project="..\..\localization\Localization.targets" />
 
 	<ItemGroup>
 		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
@@ -86,6 +91,11 @@
 		<Content Include="Nlog.config">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+		<Content Include="..\..\resources\icons\projects\*.ico;..\..\resources\icons\projects\*.png">
+			<Link>FileIcons\%(Filename)%(Extension)</Link>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
 		<Content Include="..\..\resources\BuiltInWallpapers\**\*"
 		         Exclude="..\..\resources\BuiltInWallpapers\README.md;..\..\resources\BuiltInWallpapers\README.zh-CN.md">
 			<Link>BuiltInWallpapers\%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -108,8 +118,6 @@
 		<PackageReference Include="RawInput.Sharp" Version="0.1.3" />
 		<PackageReference Include="Sentinel.NLogViewer" Version="2.0.1" />
 		<PackageReference Include="SharpCompress" Version="0.50.0" />
-		<PackageReference Include="System.Private.Uri" Version="4.3.2" />
-		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
 		<PackageReference Include="WinEventHook" Version="0.3.6" />
 		<PackageReference Include="WPF-UI" Version="4.3.0" />
 		<PackageReference Include="WPF-UI.Tray" Version="4.0.0" />
@@ -134,13 +142,6 @@
 			<AutoGen>True</AutoGen>
 			<DependentUpon>lang.resx</DependentUpon>
 		</Compile>
-	</ItemGroup>
-
-	<ItemGroup>
-		<EmbeddedResource Update="Properties\lang.resx">
-			<Generator>PublicResXFileCodeGenerator</Generator>
-			<LastGenOutput>lang.Designer.cs</LastGenOutput>
-		</EmbeddedResource>
 	</ItemGroup>
 
 </Project>

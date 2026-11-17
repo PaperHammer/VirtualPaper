@@ -14,6 +14,7 @@ using VirtualPaper.Common.Utils.Storage;
 using VirtualPaper.IntelligentPanel.Models;
 using VirtualPaper.IntelligentPanel.Services;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.ML.Inference;
 using VirtualPaper.Models.Mvvm;
 using VirtualPaper.UIComponent;
 using VirtualPaper.UIComponent.Utils;
@@ -77,41 +78,45 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             catch (OperationCanceledException) {
                 // 还没拿到信号量就被取消了（排队中删除），无需 Release
                 taskItem.Status = TaskStatus.Canceled;
-                CleanupAfterCancel(taskItem, tempDir);
+                CleanupTaskFiles(taskItem, tempDir);
                 return;
             }
 
             try {
                 ct.ThrowIfCancellationRequested();
 
-                taskItem.Status = TaskStatus.Running;
-
                 var data = taskItem.Data;
+                using var model = await AppServiceLocator.Services.GetRequiredService<IInferenceModelProvider<ISuperResolution>>()
+                    .AcquireAsync(data.UseGpu, ct);
+                ct.ThrowIfCancellationRequested();
+                taskItem.Status = TaskStatus.Running;
                 tempDir = Path.Combine(Constants.CommonPaths.TempDir, Path.GetRandomFileName());
                 Directory.CreateDirectory(tempDir);
 
                 string ext = Path.GetExtension(data.SourceFilePath);
                 string tmpOutPath_realesrgan = Path.Combine(tempDir, $"upscaled{ext}");
 
-                await Task.Run(() => {
-                    ct.ThrowIfCancellationRequested();
+                var superResolution = model.Model;
+                using (taskItem.ObserveInference(superResolution)) {
+                    await Task.Run(() => {
+                        ct.ThrowIfCancellationRequested();
 
-                    var superResolution = AppServiceLocator.Services.GetRequiredService<ISuperResolution>();
-                    superResolution.LoadModel();
+                        superResolution.LoadModel();
 
-                    ct.ThrowIfCancellationRequested();
+                        ct.ThrowIfCancellationRequested();
 
-                    superResolution.RunAndSave(
-                        data.SourceFilePath,
-                        tmpOutPath_realesrgan,
-                        (uint)data.TargetWidth,
-                        (uint)data.TargetHeight,
-                        ct);
+                        superResolution.RunAndSave(
+                            data.SourceFilePath,
+                            tmpOutPath_realesrgan,
+                            (uint)data.TargetWidth,
+                            (uint)data.TargetHeight,
+                            ct);
 
-                    ct.ThrowIfCancellationRequested();
+                        ct.ThrowIfCancellationRequested();
 
-                    data.SetResult(tmpOutPath_realesrgan);
-                }, ct);
+                        data.SetResult(tmpOutPath_realesrgan);
+                    }, ct);
+                }
 
                 ct.ThrowIfCancellationRequested();
 
@@ -120,11 +125,13 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
             }
             catch (OperationCanceledException) {
                 taskItem.Status = TaskStatus.Canceled;
-                CleanupAfterCancel(taskItem, tempDir);
+                CleanupTaskFiles(taskItem, tempDir);
                 GlobalMessageUtil.ShowCanceled();
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                CleanupTaskFiles(taskItem, tempDir);
+                taskItem.SetFailureReason(ex);
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
                 taskItem.Status = TaskStatus.Faulted;
             }
@@ -136,7 +143,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
         /// <summary>
         /// 任务被取消后的清理工作
         /// </summary>
-        private static void CleanupAfterCancel(SuperResolutionTaskItem taskItem, string? tempDir) {
+        private static void CleanupTaskFiles(SuperResolutionTaskItem taskItem, string? tempDir) {
             if (tempDir != null) {
                 try {
                     if (Directory.Exists(tempDir)) {
@@ -192,7 +199,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             if (!found) {
                 GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
-                ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error("WpSettings panel is not available for previewing file.");
             }
         }
 
@@ -228,7 +235,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
                 return true;
             }
             catch (Exception ex) {
-                ArcLog.GetLogger<StyleTranferViewModel>().Error(ex);
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
                 return false;
             }
@@ -255,7 +262,7 @@ namespace VirtualPaper.IntelligentPanel.ViewModels {
 
             if (!found) {
                 GlobalMessageUtil.ShowError("Text_PanelUnavailable", isNeedLocalizer: true);
-                ArcLog.GetLogger<StyleTranferViewModel>().Error("WpSettings panel is not available for previewing file.");
+                ArcLog.GetLogger<SuperResolutionViewModel>().Error("WpSettings panel is not available for previewing file.");
                 return false;
             }
 

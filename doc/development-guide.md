@@ -3,13 +3,15 @@
 ## 环境要求
 
 - Windows 10 2004（Build 19041）或更高版本；建议使用当前受支持的 Windows 11。
-- Visual Studio 2022，安装“.NET 桌面开发”和“Windows 应用 SDK / WinUI”相关工作负载。
-- .NET 8 SDK。
+- 支持 .NET 10 的 Visual Studio 2026，安装“.NET 桌面开发”和“Windows 应用 SDK / WinUI”相关工作负载。
+- .NET 10 SDK。
 - 与项目引用匹配的 Windows SDK；当前项目引用 Windows SDK Build Tools `10.0.26100.7175` 和 Windows App SDK `1.8.251106002`。
 - 调试 Web 播放相关功能时，需要 WebView2 Runtime。
 - 完整安装验收还需要 PowerShell 7.2+、Node.js、Inno Setup 6.7.1；扩展真实 UI 需要对应推理模型及可用桌面，详见[测试说明](../test/README.zh-CN.md)。
 
 首次拉取后应使用 Visual Studio 打开 `src/VirtualPaper.sln` 并还原 NuGet 包。仓库包含 WPF、WinUI、原生 Windows API 和多进程项目，不适合在非 Windows 环境完整构建。
+
+根目录 `global.json` 将构建固定在 .NET 10 正式版 SDK，允许使用已安装的最新 10.0 feature band。EXE 依赖系统的 x64 Desktop Runtime 10 和 Web 预览使用的 ASP.NET Core 10，安装器在首次安装及交互/静默升级时均检测并补装；MSIX 为每个进程自包含发布 .NET 10。安装包命名和应用标识保持不变，升级保留用户数据；已有 .NET 8 不由安装器卸载。
 
 ## 构建
 
@@ -45,7 +47,7 @@ pwsh -NoProfile -File test/Run-Tests.ps1 -IncludeMLIntegration
 
 单项开发可在完整 Release 构建后运行 `test/Run-ProjectTests.ps1 -JobId test-core`，或通过 `test/Run-UIOperationTests.ps1 -Configuration Release -Module GeneralSettings` 测试一个真实 UI 模块。真实 WinUI 宿主位于独立的 `test` 目录，不使用 `dotnet test` 启动。无可用桌面时真实 UI 明确跳过，不视为 UI 验收通过。
 
-准确的项目清单、模块范围、模型要求、结果判定和报告路径见[测试说明](../test/README.zh-CN.md)。AI 请阅读 [AGENTS.md](../AGENTS.md) 和[仓库测试 skill](../.agents/skills/virtualpaper-testing/SKILL.md)。两条 CI 流程均为手动触发，详细规则见[工作流说明](../.github/workflows/README.zh-CN.md)。
+准确的项目清单、模块范围、模型要求、结果判定和报告路径见[测试说明](../test/README.zh-CN.md)。AI 请阅读 [AGENTS.md](../AGENTS.md) 和[仓库测试 skill](../.agents/skills/testing/SKILL.md)。两条 CI 流程均为手动触发，详细规则见[工作流说明](../.github/workflows/README.zh-CN.md)。
 
 ## 推荐阅读顺序
 

@@ -30,9 +30,70 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         /// <summary>类型过滤选项列表，绑定到下拉多选 UI。</summary>
         public ObservableCollection<WpTypeFilterItem> TypeFilters { get; } = [];
+        private string[] _libraryTags = [];
+        public string[] TagSuggestions { get; private set; } = [];
+        private bool? _favoritesOnly = false;
+        public bool? FavoritesOnly {
+            get => _favoritesOnly;
+            set {
+                if (_favoritesOnly == value) return;
+                _favoritesOnly = value;
+                OnPropertyChanged();
+                UpdateTypeFilterLabel();
+                BroadcastFilter();
+            }
+        }
+        private string _tagKeyword = "";
+        public string TagKeyword {
+            get => _tagKeyword;
+            set {
+                if (_tagKeyword == (value ?? "")) return;
+                _tagKeyword = value ?? "";
+                OnPropertyChanged();
+                UpdateTagSuggestions();
+                UpdateTypeFilterLabel();
+                BroadcastFilter();
+            }
+        }
+        private WallpaperSortOrder _sortOrder;
+        public WallpaperSortOrder SortOrder {
+            get => _sortOrder;
+            set { if (_sortOrder == value) return; _sortOrder = value; OnPropertyChanged(); BroadcastFilter(); }
+        }
+
+        internal void UpdateTags(IEnumerable<string> tags) {
+            var normalized = WallpaperOrganization.NormalizeTags(tags);
+            if (_libraryTags.SequenceEqual(normalized)) return;
+            _libraryTags = normalized;
+            // Inventory refreshes must not replace the user's input or invent a tag for it.
+            UpdateTagSuggestions();
+        }
+
+        private void UpdateTagSuggestions() {
+            string keyword = TagKeyword.Trim();
+            var suggestions = _libraryTags.Where(tag => tag.Contains(keyword, StringComparison.OrdinalIgnoreCase)).ToArray();
+            if (TagSuggestions.SequenceEqual(suggestions)) return;
+            TagSuggestions = suggestions;
+            OnPropertyChanged(nameof(TagSuggestions));
+        }
+
+        public string SearchKeyword => _currentTitleKeyword;
+
+        public void ClearLibraryFilters() {
+            _currentTitleKeyword = "";
+            OnPropertyChanged(nameof(SearchKeyword));
+            _tagKeyword = "";
+            _favoritesOnly = false;
+            foreach (var item in TypeFilters) item.IsSelected = false;
+            OnPropertyChanged(nameof(TagKeyword));
+            UpdateTagSuggestions();
+            OnPropertyChanged(nameof(FavoritesOnly));
+            UpdateTypeFilterLabel();
+            BroadcastFilter();
+        }
 
         private string _typeFilterLabel = string.Empty;
-        /// <summary>类型过滤按钮显示文本，如"类型"或"类型 (2)"。</summary>
+        /// <summary>筛选按钮显示文本，包含已启用的类型、标签和收藏条件数量。</summary>
         public string TypeFilterLabel {
             get => _typeFilterLabel;
             private set { _typeFilterLabel = value; OnPropertyChanged(); }
@@ -199,7 +260,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
 
         public void OnFilterChanged(FilterKey fk, string text) {
             if (fk == FilterKey.LibraryTitle) {
+                if (_currentTitleKeyword == text) return;
                 _currentTitleKeyword = text;
+                OnPropertyChanged(nameof(SearchKeyword));
             }
             BroadcastFilter();
         }
@@ -210,7 +273,8 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
         }
 
         private void UpdateTypeFilterLabel() {
-            int count = TypeFilters.Count(f => f.IsSelected == true);
+            int count = TypeFilters.Count(f => f.IsSelected == true)
+                + (string.IsNullOrWhiteSpace(TagKeyword) ? 0 : 1) + (FavoritesOnly == true ? 1 : 0);
             string baseLabel = LanguageUtil.GetI18n(Constants.I18n.WpLib_TypeFilter_All);
             TypeFilterLabel = count == 0 ? baseLabel : $"{baseLabel} ({count})";
         }
@@ -225,6 +289,9 @@ namespace VirtualPaper.WpSettingsPanel.ViewModels {
             var context = new FilterContext {
                 TitleKeyword = _currentTitleKeyword,
                 ActiveTypes = activeTypes.Count > 0 ? activeTypes : null,
+                Tag = TagKeyword,
+                FavoritesOnly = FavoritesOnly == true,
+                SortOrder = SortOrder,
             };
 
             for (int i = _filterables.Count - 1; i >= 0; i--) {

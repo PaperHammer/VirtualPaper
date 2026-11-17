@@ -29,12 +29,14 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
             _windowKey = new ArcWindowManagerKey(ArcWindowKey.PlayerWebCore, _startArgs.FilePath + _startArgs.RuntimeType);
             _previewUrl = previewUrl;
             this.InitializeComponent();
+            Closed += (_, _) => _closed = true;
             InitializeWindow();
 
             AfterFeReady();
         }
 
         private async void NaviContent_Loaded(object sender, RoutedEventArgs e) {
+            if (_closed) return;
             try {
                 var payload = new FrameworkPayload() {
                     [NaviPayloadKey.StartArgs.ToString()] = _startArgs,
@@ -52,6 +54,7 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         
         private async void AfterFeReady() {
             _wpBasicData ??= await WpBasicData.LoadAsync(_startArgs.WpBasicDataFilePath);
+            if (_closed) return;
             string windowTitle = !string.IsNullOrEmpty(_wpBasicData.Title) ? $"{_wpBasicData.Title} (Preview)" :
                 (!string.IsNullOrEmpty(_startArgs.FilePath) ? $"{Path.GetFileName(_startArgs.FilePath)} (Preview)" : "Virtual Paper PlayerWeb (Preview)");
             this.Title = this.MainHost.Title = windowTitle;
@@ -65,5 +68,6 @@ namespace VirtualPaper.PlayerWeb.Core.WebView.Windows {
         private readonly ArcWindowManagerKey _windowKey;
         private readonly string? _previewUrl;
         private WpBasicData _wpBasicData;
+        private bool _closed;
     }
 }

@@ -2,5 +2,5 @@
     x:Class="VirtualPaper.UIOperationTest.Cases.LocalizationTestPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Border x:Name="Surface" />
+    <Border x:Name="Surface" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" />
 </Page>

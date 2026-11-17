@@ -9,6 +9,7 @@ using VirtualPaper.Common.Utils.Storage.Adapter;
 using VirtualPaper.Grpc.Client.Interfaces;
 using VirtualPaper.Grpc.Service.CommonModels;
 using VirtualPaper.ML.SuperResolution.Interfaces;
+using VirtualPaper.Models.Cores;
 using VirtualPaper.Models.Cores.Interfaces;
 using VirtualPaper.WpSettingsPanel.Utils;
 using VirtualPaper.WpSettingsPanel.ViewModels;
@@ -48,6 +49,7 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         private Mock<IWallpaperControlClient> _wallpapers = null!;
         private Mock<ISettings> _settings = null!;
         private Mock<ISuperResolution> _model = null!;
+        private Mock<IStoragePicker> _picker = null!;
         private ScreenFitViewModel _vm = null!;
         private IMonitor _monitor = null!;
         private StartArgsWeb _args = null!;
@@ -65,7 +67,8 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
             _wallpapers = new(); _model = new(); _settings = new();
             _settings.SetupProperty(s => s.WallpaperArrangement, WallpaperArrangement.Per);
             var user = new Mock<IUserSettingsClient>(); user.SetupGet(s => s.Settings).Returns(_settings.Object);
-            _vm = new ScreenFitViewModel(_monitors.Object, _wallpapers.Object, user.Object, Mock.Of<IStoragePicker>(), () => _model.Object);
+            _picker = new();
+            _vm = new ScreenFitViewModel(_monitors.Object, _wallpapers.Object, user.Object, _picker.Object, () => _model.Object);
             _vm.SetSource(_source, 1000, 1000);
             _args = new StartArgsWeb {
                 WpEffectFilePathUsing = Path.Combine(_root, "using.json"),
@@ -84,6 +87,122 @@ namespace VirtualPaper.UI.Test.T_WpSettings {
         }
         [TestCleanup]
         public void Cleanup() => Directory.Delete(_root, true);
+
+        private async Task<WallpaperIndexEntry> CreateLibraryImageAsync() {
+            string folder = Directory.CreateDirectory(Path.Combine(_root, "library-item")).FullName;
+            string path = Path.Combine(folder, "portrait.png");
+            using (var bitmap = new Bitmap(256, 384)) bitmap.Save(path, System.Drawing.Imaging.ImageFormat.Png);
+            var data = new WpBasicData {
+                WallpaperUid = "existing-image", Title = "Portrait", Authors = "Artist", FType = FileType.FImage,
+                FolderPath = folder, FolderName = "library-item", FilePath = path,
+                AppInfo = new() { AppVersion = "0.6.1.0" }
+            };
+            await data.SaveMetadataAsync();
+            return WallpaperIndexEntry.FromData(data);
+        }
+
+        [TestMethod]
+        public async Task LibraryImage_ResolvesRelativePaths_AndReusesIdentityWithoutImporting() {
+            var entry = await CreateLibraryImageAsync();
+            byte[] metadata = await File.ReadAllBytesAsync(entry.JsonPath);
+            await _vm.SelectLibraryImageAsync(entry);
+            Assert.AreEqual(Path.Combine(entry.FolderPath, "portrait.png"), _vm.SourcePath);
+            Assert.AreEqual(entry.Uid, _vm.LibrarySourceUid);
+            Assert.AreEqual(_vm.SourcePath, _vm.PreviewPath);
+            Assert.AreEqual(ScreenFitPlan.Calculate(256, 384, 1920, 1080, true), _vm.Plan);
+            Assert.IsFalse(_vm.UseEnhancement);
+            byte[] source = await File.ReadAllBytesAsync(_vm.SourcePath);
+            IWpBasicData? applied = null;
+            _vm.Imported += data => applied = data;
+
+            Assert.IsTrue(await _vm.ApplyAsync(CancellationToken.None));
+            Assert.IsNotNull(applied);
+            Assert.AreEqual(entry.Uid, applied.WallpaperUid);
+            _wallpapers.Verify(w => w.CreateBasicDataAsync(It.IsAny<string>(), It.IsAny<FileType>(), It.IsAny<CancellationToken>(), false), Times.Never);
+            _wallpapers.Verify(w => w.SetWallpaperAsync(_monitor, It.Is<IWpBasicData>(data => data.WallpaperUid == entry.Uid),
+                RuntimeType.RImage, true, null, _args.WpEffectFilePathUsing, _args.WpEffectFilePathTemplate,
+                _args.WpEffectFilePathTemporary, It.IsAny<CancellationToken>()), Times.Once);
+            CollectionAssert.AreEqual(metadata, await File.ReadAllBytesAsync(entry.JsonPath));
+            CollectionAssert.AreEqual(source, await File.ReadAllBytesAsync(_vm.SourcePath));
+        }
+
+        [TestMethod]
+        public async Task LibraryImage_EnhancementImportsACopy_AndPreservesOriginal() {
+            var entry = await CreateLibraryImageAsync();
+            await _vm.SelectLibraryImageAsync(entry);
+            byte[] metadata = await File.ReadAllBytesAsync(entry.JsonPath);
+            byte[] source = await File.ReadAllBytesAsync(_vm.SourcePath);
+            string? generated = null;
+            _model.Setup(m => m.RunAndSave(_vm.SourcePath, It.IsAny<string>(), It.IsAny<uint>(), It.IsAny<uint>(), It.IsAny<CancellationToken>()))
+                .Returns((string input, string output, uint width, uint height, CancellationToken ct) => {
+                    generated = output; File.WriteAllText(output, "enhanced"); return output;
+                });
+            _vm.UseEnhancement = true;
+
+            Assert.IsTrue(await _vm.ApplyAsync(CancellationToken.None));
+            Assert.IsNotNull(generated);
+            Assert.IsFalse(File.Exists(generated));
+            _wallpapers.Verify(w => w.CreateBasicDataAsync(generated, FileType.FImage, It.IsAny<CancellationToken>(), false), Times.Once);
+            CollectionAssert.AreEqual(metadata, await File.ReadAllBytesAsync(entry.JsonPath));
+            CollectionAssert.AreEqual(source, await File.ReadAllBytesAsync(_vm.SourcePath));
+        }
+
+        [TestMethod]
+        [DataRow(false)]
+        [DataRow(true)]
+        public async Task UnreadableLibrarySelection_KeepsPreviousSelection_AndAllowsRetry(bool invalidImage) {
+            var entry = await CreateLibraryImageAsync();
+            await _vm.SelectLibraryImageAsync(entry);
+            string selected = _vm.SourcePath;
+            var failed = entry with { Uid = "broken", JsonPath = Path.Combine(_root, "missing.json") };
+            if (invalidImage) {
+                var data = new WpBasicData {
+                    WallpaperUid = "broken", FType = FileType.FImage, FolderPath = _root, FilePath = _source,
+                    AppInfo = new() { AppVersion = "0.6.1.0" }
+                };
+                await data.SaveMetadataAsync();
+                failed.JsonPath = Path.Combine(_root, Constants.Field.WpBasicDataFileName);
+            }
+            await _vm.SelectLibraryImageAsync(failed);
+            Assert.IsFalse(_vm.IsBusy);
+            Assert.AreEqual(selected, _vm.SourcePath);
+            Assert.AreEqual(entry.Uid, _vm.LibrarySourceUid);
+            Assert.IsFalse(string.IsNullOrEmpty(_vm.ErrorMessage));
+            Assert.IsTrue(_vm.CanApply);
+            await _vm.SelectLibraryImageAsync(entry);
+            Assert.AreEqual(string.Empty, _vm.ErrorMessage);
+        }
+
+        [TestMethod]
+        public async Task CancelledFilePickerAndUnsupportedLibraryType_KeepExistingChoice() {
+            var entry = await CreateLibraryImageAsync();
+            await _vm.SelectLibraryImageAsync(entry);
+            string selected = _vm.SourcePath;
+            await _vm.SelectImageAsync(); // A cancelled picker returns no storage items.
+            await _vm.SelectLibraryImageAsync(entry with { FType = FileType.FVideo, JsonPath = "not-read" });
+            Assert.AreEqual(selected, _vm.SourcePath);
+            Assert.AreEqual(entry.Uid, _vm.LibrarySourceUid);
+            Assert.IsTrue(_vm.CanApply);
+            Assert.AreEqual(string.Empty, _vm.ErrorMessage);
+        }
+
+        [TestMethod]
+        public async Task SelectingAFileAfterLibraryImage_DoesNotReuseThePreviousLibraryIdentity() {
+            var entry = await CreateLibraryImageAsync();
+            await _vm.SelectLibraryImageAsync(entry);
+            string source = Path.Combine(_root, "selected.png");
+            File.Copy(_vm.SourcePath, source);
+            var item = new Mock<Windows.Storage.IStorageItem>();
+            item.SetupGet(file => file.Path).Returns(source);
+            _picker.Setup(picker => picker.PickFilesAsync(It.IsAny<nint>(), It.IsAny<string[]>(), false))
+                .ReturnsAsync([item.Object]);
+
+            await _vm.SelectImageAsync();
+            Assert.AreEqual(source, _vm.SourcePath);
+            Assert.IsNull(_vm.LibrarySourceUid);
+            Assert.IsTrue(await _vm.ApplyAsync(CancellationToken.None));
+            _wallpapers.Verify(w => w.CreateBasicDataAsync(source, FileType.FImage, It.IsAny<CancellationToken>(), false), Times.Once);
+        }
 
         [TestMethod]
         public void SelectedDisplay_TwoWayBindingFeedback_DoesNotReenterNotifications() {

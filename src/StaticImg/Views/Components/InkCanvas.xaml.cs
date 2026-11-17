@@ -61,6 +61,12 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void InkCanvas_Unloaded(object sender, RoutedEventArgs e) {
             CancelPendingEffectPreview();
             _tool?.CancelPendingOperations();
+            if (_tool != null) {
+                foreach (var tool in _tool.GetAllTools()) tool.Dispose();
+            }
+            UnsubscribeCurrentEffectPanel();
+            CanvasEffect.EffectPreviewRequested -= OnEffectPreviewRequested;
+            ReleaseDrawingControls();
             _cropOverlayRenderer?.Dispose();
             _cropOverlayRenderer = null;
         }
@@ -76,7 +82,9 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             if (Payload != null) {
                 Payload.TryGet(NaviPayloadKey.InkProjectSession, out _session);
                 Payload.TryGet(NaviPayloadKey.ArcPageContext, out context);
-                Consts.InitData();
+                Consts.InitData(_session.Device);
+                renderCanvas.CustomDevice = _session.Device;
+                backgroundGrid.CustomDevice = _session.Device;
             }
             _viewModel = new InkCanvasViewModel(_session, context!);
             _tool = new ToolManager(_viewModel);
@@ -116,12 +124,18 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private async void OnFatalErrorOccurred(object? s, Exception e) {
+            if (_session.IsDeviceLostException(e)) {
+                _session.ReportDeviceLost();
+                return;
+            }
+            if (_session.IsDrawingUnavailable) return;
             ArcLog.GetLogger<InkCanvas>().Fatal(e.Message);
             GlobalMessageUtil.ShowError(message: e.Message);
             await _viewModel.SaveAsync(true);
         }
 
         internal async Task<bool> SaveAsync() {
+            _session.EnsureDrawingAvailable();
             return await _viewModel.SaveAsync();
         }
 
@@ -130,8 +144,30 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         internal async Task<string?> ExportAsync(ExportDataStaticImg data, CancellationToken token = default) {
+            _session.EnsureDrawingAvailable();
             var size = _viewModel.Data.CanvasSize.ToSize();
             return await _compositeTarget.ExportAsync(size, data, token);
+        }
+
+        internal void StopDrawing() {
+            CancelPendingEffectPreview();
+            _tool?.CancelPendingOperations();
+            ReleaseDrawingControls();
+            drawingDeviceError.IsOpen = true;
+            IsInited.TrySetResult(false);
+        }
+
+        private void ReleaseDrawingControls() {
+            if (_drawingControlsReleased) return;
+            _drawingControlsReleased = true;
+            renderCanvas.Visibility = Visibility.Collapsed;
+            backgroundGrid.Visibility = Visibility.Collapsed;
+            renderCanvas.RemoveFromVisualTree();
+            backgroundGrid.RemoveFromVisualTree();
+            _compositeTarget?.Dispose();
+            _compositeTarget = null;
+            _gridBrush?.Dispose();
+            _gridBrush = null;
         }
 
         #region children event
@@ -241,7 +277,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
 
                 _compositeTarget?.Dispose();
                 _compositeTarget = new CanvasRenderTarget(
-                    InkProjectSession.SharedDevice,
+                    _session.Device,
                     newWidth,
                     newHeight,
                     _viewModel.Data.CanvasSize.Dpi,
@@ -257,20 +293,31 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private async void RenderCanvas_Loaded(object sender, RoutedEventArgs e) {
             try {
                 if (IsInited.Task.IsCompleted) return;
-                await _viewModel.LoadAsync();
+                _session.EnsureDrawingAvailable();
+                if (!await _viewModel.LoadAsync()) {
+                    GlobalMessageUtil.ShowError(Constants.I18n.Project_FileLoad_Failed,
+                        key: Constants.I18n.Project_FileLoad_Failed, isNeedLocalizer: true);
+                    IsInited.TrySetResult(false);
+                    return;
+                }
+                _session.EnsureDrawingAvailable();
                 FitView();
                 RenderToCompositeTarget(RenderMode.FullRegion);
                 SetupHandlers();
                 IsInited.TrySetResult(true);
             }
+            catch (Exception ex) when (_session.IsDeviceLostException(ex)) {
+                _session.ReportDeviceLost();
+            }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
+                IsInited.TrySetResult(false);
             }
         }
 
         private void RenderCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args) {
-            if (_compositeTarget == null) return;
+            if (_compositeTarget == null || _session.IsDrawingUnavailable) return;
 
             var destRect = new Rect(0, 0, _viewModel.Data.CanvasSize.Width, _viewModel.Data.CanvasSize.Height);
             // 只从 _compositeTarget 的左上角，截取逻辑大小的画面画到屏幕上
@@ -332,6 +379,16 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void RenderToCompositeTarget(RenderMode mode, Rect region = default) {
+            if (_drawingControlsReleased || _session.IsDrawingUnavailable) return;
+            try {
+                RenderComposite(mode, region);
+            }
+            catch (Exception ex) when (_session.IsDeviceLostException(ex)) {
+                _session.ReportDeviceLost();
+            }
+        }
+
+        private void RenderComposite(RenderMode mode, Rect region) {
             RebuildCompositeIfNeeded();
             if (_compositeTarget == null) return;
 
@@ -395,6 +452,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void BackgroundGrid_RegionsInvalidated(CanvasVirtualControl sender, CanvasRegionsInvalidatedEventArgs args) {
+            if (_session == null || _session.IsDrawingUnavailable) return;
             if (_gridBrush?.Device != sender.Device) InitializeGridPattern(sender);
 
             foreach (var region in args.InvalidatedRegions) {
@@ -623,7 +681,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private void CanvasEffect_Commit(object sender, RoutedEventArgs e) {
             if (_selectedTool is not EffectTool et) return;
 
-            et.Commit(TakePendingEffectParams());
+            if (!et.Commit(TakePendingEffectParams())) return;
             UnsubscribeCurrentEffectPanel();
             effectPanelHost.Visibility = Visibility.Collapsed;
             CanvasEffect.ClickedEffectId = null;
@@ -653,7 +711,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             var panel = GetEffectPanel(shaderType);
             var initialParams = panel?.Params ?? new EffectParams { Value = 0f, Value2 = 255f, Dpi = 96f };
 
-            et.StartPreview(shaderType, initialParams);
+            if (!et.StartPreview(shaderType, initialParams)) return;
             ShowEffectPanel(shaderType);
         }
 
@@ -700,6 +758,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void ApplyPendingEffectPreview() {
+            if (_session.IsDrawingUnavailable) { CancelPendingEffectPreview(); return; }
             EffectParams? pendingParams = _pendingEffectParams;
             _pendingEffectParams = null;
             if (pendingParams.HasValue && _selectedTool is EffectTool { IsPreviewing: true } et)
@@ -869,6 +928,7 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         }
 
         private void HandleToolEvent(Action<RenderBase> action) {
+            if (_drawingControlsReleased || _session.IsDrawingUnavailable) return;
             if (_viewModel.Data.SelectedToolItem == null ||
                 _viewModel.Data.SelectedLayer == null ||
                 _viewModel.Data.SelectedLayer.RenderData == null ||
@@ -899,7 +959,10 @@ namespace Workloads.Creation.StaticImg.Views.Components {
             if (_selectedTool is not CanvasPathDrawer)
                 UpdateStrokeCacheDebugPanel(null);
 
-            action(nextTool);
+            try { action(nextTool); }
+            catch (Exception ex) when (_session.IsDeviceLostException(ex)) {
+                _session.ReportDeviceLost();
+            }
         }
 
         private void Container_PointerWheelChanged(object sender, PointerRoutedEventArgs e) {
@@ -945,5 +1008,6 @@ namespace Workloads.Creation.StaticImg.Views.Components {
         private CropOverlayRenderer? _cropOverlayRenderer;
         private bool _isReplacingCropAspect;
         private bool _isSynchronizingCropAspectSelection;
+        private bool _drawingControlsReleased;
     }
 }

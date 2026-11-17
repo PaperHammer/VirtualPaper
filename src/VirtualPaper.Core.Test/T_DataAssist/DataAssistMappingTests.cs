@@ -1,3 +1,4 @@
+using Google.Protobuf;
 using VirtualPaper.Common;
 using VirtualPaper.DataAssistor;
 using VirtualPaper.Grpc.Service.CommonModels;
@@ -52,6 +53,29 @@ public class DataAssistMappingTests {
         Assert.AreEqual(src.Rating, restored.Rating);
         Assert.AreEqual(src.FileSize, restored.FileSize);
         Assert.AreEqual(src.IsSingleRType, restored.IsSingleRType);
+        Assert.AreEqual(src.IsSubscribed, restored.IsSubscribed);
+    }
+
+    [TestMethod]
+    [DataRow(DateTimeKind.Utc)]
+    [DataRow(DateTimeKind.Local)]
+    [DataRow(DateTimeKind.Unspecified)]
+    public void BasicData_WireRoundtrip_PreservesCreationTime(DateTimeKind kind) {
+        var source = MakeBasicData();
+        source.CreatedTime = new DateTime(2026, 5, 18, 2, 32, 17, kind).AddTicks(1234);
+        var message = Grpc_WpBasicData.Parser.ParseFrom(DataAssist.BasicDataToGrpcData(source).ToByteArray());
+        var restored = DataAssist.GrpcToBasicData(message);
+
+        Assert.AreEqual(kind == DateTimeKind.Local ? source.CreatedTime.ToUniversalTime() : source.CreatedTime,
+            restored.CreatedTime);
+        Assert.AreEqual(DateTimeKind.Utc, restored.CreatedTime.Kind);
+    }
+
+    [TestMethod]
+    public void BasicData_LegacyMessageWithoutCreationTime_RemainsReadable() {
+        var message = DataAssist.BasicDataToGrpcData(MakeBasicData());
+        message.CreatedTime = null;
+        Assert.AreEqual(default(DateTime), DataAssist.GrpcToBasicData(message).CreatedTime);
     }
 
     [TestMethod]
@@ -302,6 +326,33 @@ public class DataAssistMappingTests {
     [TestMethod]
     [DataRow(true)]
     [DataRow(false)]
+    public void UiHardwareAcceleration_JsonAndWireRoundtrip_PreserveExplicitValue(bool enabled) {
+        var settings = MakeSettings();
+        settings.UiHardwareAccelerationEnabled = enabled;
+        string json = System.Text.Json.JsonSerializer.Serialize(settings, SettingsContext.Default.Settings);
+        var loaded = System.Text.Json.JsonSerializer.Deserialize(json, SettingsContext.Default.Settings)!;
+        var request = DataAssist.SettingsToGrpc(loaded);
+        var wire = Grpc_SettingsData.Parser.ParseFrom(Google.Protobuf.MessageExtensions.ToByteArray(request));
+
+        Assert.IsTrue(wire.HasUiHardwareAccelerationEnabled);
+        Assert.AreEqual(enabled, DataAssist.GrpcToSettings(wire).UiHardwareAccelerationEnabled);
+    }
+
+    [TestMethod]
+    public void UiHardwareAcceleration_OlderJsonAndWire_DefaultToEnabled() {
+        var settings = System.Text.Json.JsonSerializer.Deserialize("{}", SettingsContext.Default.Settings)!;
+        var request = DataAssist.SettingsToGrpc(MakeSettings());
+        request.ClearUiHardwareAccelerationEnabled();
+        var wire = Grpc_SettingsData.Parser.ParseFrom(Google.Protobuf.MessageExtensions.ToByteArray(request));
+
+        Assert.IsTrue(settings.UiHardwareAccelerationEnabled);
+        Assert.IsFalse(wire.HasUiHardwareAccelerationEnabled);
+        Assert.IsTrue(DataAssist.GrpcToSettings(wire).UiHardwareAccelerationEnabled);
+    }
+
+    [TestMethod]
+    [DataRow(true)]
+    [DataRow(false)]
     public void IntelligentReminder_JsonAndGrpc_PreservePreferenceAndLegacyDefault(bool enabled) {
         var settings = MakeSettings();
         settings.RemindUnpreservedIntelligentResults = enabled;
@@ -502,6 +553,7 @@ public class DataAssistMappingTests {
         Rating = 4,
         FType = ftype,
         IsSingleRType = true,
+        IsSubscribed = true,
         Partition = "nature",
         Tags = "tag1,tag2",
         FolderName = "uid-test-001",

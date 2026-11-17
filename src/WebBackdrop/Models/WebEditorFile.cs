@@ -54,7 +54,7 @@ namespace Workloads.Creation.WebBackdrop.Models {
             IsSavedChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private static Encoding GetEncodingFromText(string encoding) {
+        internal static Encoding GetEncodingFromText(string encoding) {
             return encoding switch {
                 "UTF-8 BOM" => new UTF8Encoding(true),
                 "UTF-16 LE" => Encoding.Unicode,

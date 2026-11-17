@@ -49,11 +49,44 @@ namespace Workloads.Creation.StaticImg {
         public void Initialize(string filePath, FileType fileType) {
             RuntimeFileType = fileType;
             Session = new InkProjectSession(filePath, fileType);
-            Payload = new FrameworkPayload() {
-                [NaviPayloadKey.ArcPageContext] = this.ArcContext,
-                [NaviPayloadKey.InkProjectSession] = this.Session
-            };
-            Session.IsSavedChanged += Session_IsSavedChanged;
+            try {
+                Payload = new FrameworkPayload() {
+                    [NaviPayloadKey.ArcPageContext] = this.ArcContext,
+                    [NaviPayloadKey.InkProjectSession] = this.Session
+                };
+                Session.IsSavedChanged += Session_IsSavedChanged;
+                Session.DrawingDeviceLost += Session_DrawingDeviceLost;
+                if (Session.IsDrawingUnavailable) Session_DrawingDeviceLost(Session, EventArgs.Empty);
+            }
+            catch (Exception ex) {
+                if (Session.IsDeviceLostException(ex)) Session.ReportDeviceLost();
+                // A page that never attaches to XAML will not receive Unloaded.
+                Session.Dispose();
+                throw;
+            }
+        }
+
+        private void Session_DrawingDeviceLost(object? sender, EventArgs e) {
+            // Win2D can report loss off the UI thread. Do not tear down controls
+            // inside the native callback or automatically save inaccessible pixels.
+            DispatcherQueue.TryEnqueue(() => {
+                if (_unloaded) return;
+                IsEnabled = false;
+                inkCanvas.StopDrawing();
+                ShowDrawingDeviceError();
+            });
+        }
+
+        private static void ShowDrawingDeviceError() => GlobalMessageUtil.ShowError(
+            Constants.I18n.StaticImg_DrawingDeviceLost, key: Constants.I18n.StaticImg_DrawingDeviceLost, isNeedLocalizer: true);
+
+        private bool CheckDrawingReady() {
+            if (_unloaded) return false;
+            if (Session.IsDrawingUnavailable) { ShowDrawingDeviceError(); return false; }
+            if (_initialized) return true;
+            GlobalMessageUtil.ShowError(Constants.I18n.Project_FileLoad_Failed,
+                key: Constants.I18n.Project_FileLoad_Failed, isNeedLocalizer: true);
+            return false;
         }
 
         private void Session_IsSavedChanged(object? sender, IsSavedChangedEventArgs e) {
@@ -62,37 +95,41 @@ namespace Workloads.Creation.StaticImg {
 
         private async void Page_Loaded(object sender, RoutedEventArgs e) {
             this.IsEnabled = false;
+            _initialized = false;
             try {
                 // ArcContext belongs to this page instance. Do not resolve it again
                 // from the manager: opened projects share the same page type.
                 var loadingCtx = ArcContext.LoadingContext;
-                if (loadingCtx == null) return;
-
-                await loadingCtx.RunAsync(
-                    operation: async token => {
-                        await Task.WhenAll(
-                            ShaderLoader.LoadAllShadersAsync(),
-                            inkCanvas.IsInited.Task
-                        );
-                    });
+                var initialization = Task.WhenAll(ShaderLoader.LoadAllShadersAsync(), inkCanvas.IsInited.Task);
+                if (loadingCtx == null) await initialization;
+                else await loadingCtx.RunAsync(_ => initialization);
+                _initialized = await inkCanvas.IsInited.Task;
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MainPage>().Error(ex);
+                GlobalMessageUtil.ShowException(ex);
             }
             finally {
-                this.IsEnabled = true;
+                this.IsEnabled = _initialized && !_unloaded && !Session.IsDrawingUnavailable;
             }
         }
 
         private void Page_Unloaded(object sender, RoutedEventArgs e) {
+            _unloaded = true;
+            Session.DrawingDeviceLost -= Session_DrawingDeviceLost;
             Session.Dispose();
             ShaderLoader.ClearCache();
         }
 
         #region workSpace events
         public async Task<bool> SaveAsync() {
+            if (!CheckDrawingReady()) return false;
             try {
                 var res = await inkCanvas.SaveAsync();
                 return res;
             }
             catch (Exception ex) {
+                if (Session.IsDeviceLostException(ex)) Session.ReportDeviceLost();
                 ArcLog.GetLogger<MainPage>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
@@ -118,26 +155,31 @@ namespace Workloads.Creation.StaticImg {
         }
 
         public async Task UndoAsync() {
+            if (!CheckDrawingReady()) return;
             try {
                 await Session.UnReUtil.UndoAsync();
             }
             catch (Exception ex) {
+                if (Session.IsDeviceLostException(ex)) Session.ReportDeviceLost();
                 ArcLog.GetLogger<MainPage>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
         }
 
         public async Task RedoAsync() {
+            if (!CheckDrawingReady()) return;
             try {
                 await Session.UnReUtil.RedoAsync();
             }
             catch (Exception ex) {
+                if (Session.IsDeviceLostException(ex)) Session.ReportDeviceLost();
                 ArcLog.GetLogger<MainPage>().Error(ex);
                 GlobalMessageUtil.ShowException(ex);
             }
         }
 
         public async Task<string?> ExportAsync(ExportImageFormat format) {
+            if (!CheckDrawingReady()) return null;
             Dictionary<string, string[]> fileTypeChoices = format switch {
                 ExportImageFormat.Png => new() { ["PNG (*.png)"] = [".png"] },
                 ExportImageFormat.Bmp => new() { ["Bitmap (*.bmp)"] = [".bmp"] },
@@ -177,6 +219,7 @@ namespace Workloads.Creation.StaticImg {
         /// 与导出交互一致，由 EditPanel 的“文件 → 入库”菜单触发。
         /// </summary>
         public async Task<bool> AddToLibraryAsync() {
+            if (!CheckDrawingReady()) return false;
             var tempPngPath = string.Empty;
             try {
                 tempPngPath = Path.Combine(
@@ -222,5 +265,7 @@ namespace Workloads.Creation.StaticImg {
         }
         #endregion
 
+        private bool _unloaded;
+        private bool _initialized;
     }
 }

@@ -1,16 +1,21 @@
 <Project Sdk="MSTest.Sdk/4.0.2">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<UseVSTest>true</UseVSTest>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<!-- This headless test host loads shader files directly and has no application PRI resources. -->
+		<AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\StaticImg\StaticImg.csproj" />
+		<None Include="..\VirtualPaper.Shader\Shaders\*.bin"
+				 Link="Shaders\%(Filename)%(Extension)"
+				 CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 </Project>

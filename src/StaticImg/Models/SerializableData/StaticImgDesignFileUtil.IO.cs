@@ -70,6 +70,7 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
             await _ioLock.WaitAsync();
 
             try {
+                session.EnsureDrawingAvailable();
                 using var fs = CreateFileStream(FilePath, FileMode.Open, autoCheckHeaderOnOpenMode: true);
 
                 // Read and validate header
@@ -94,12 +95,15 @@ namespace Workloads.Creation.StaticImg.Models.SerializableData {
                     header.Version);
 
                 UpdateCache(header, businessData, layers);
-                _loadFailed = false;
+                // Recovered layers remain available for Save As, but must never
+                // silently replace the original project after a partial read.
+                _loadFailed = layers.Count != header.LayerCount;
                 return (header, businessData, layers);
 
             }
             catch (Exception ex) {
                 _loadFailed = true;
+                if (session.IsDeviceLostException(ex)) session.ReportDeviceLost();
                 ArcLog.GetLogger<StaticImgDesignFileUtil>().Error(ex);
                 return (null, null, null);
             }

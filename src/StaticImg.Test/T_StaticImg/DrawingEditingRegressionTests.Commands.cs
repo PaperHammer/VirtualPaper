@@ -4,6 +4,7 @@ using Microsoft.Graphics.Canvas;
 using Windows.Foundation;
 using Workloads.Creation.StaticImg;
 using Workloads.Creation.StaticImg.Core.UndoRedoCommand;
+using Workloads.Creation.StaticImg.InkSystem.Utils;
 using Workloads.Creation.StaticImg.Models;
 
 namespace StaticImg.Test.T_StaticImg;
@@ -88,6 +89,59 @@ public partial class DrawingEditingRegressionTests {
         await Assert.ThrowsAsync<IOException>(() => command.UndoAsync());
         CollectionAssert.AreEqual(original, layer.RenderData.RenderTarget.GetPixelBytes());
         Assert.AreEqual(0, renders);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task RegionSnapshot_MissingPayloadThroughHistory_PreservesStateAndCanRetry(bool redo) {
+        var vm = Editable(96);
+        var layer = vm.Data.SelectedLayer;
+        var target = layer.RenderData.RenderTarget;
+        byte[] before = target.GetPixelBytes(0, 0, 1, 1);
+        byte[] after = [71, 31, 11, 255];
+        int renders = 0;
+        using var command = new RegionPixelSnapshotCommand(layer.Tag, vm.Data, new Rect(0, 0, 1, 1),
+            before, after, false, "recoverable payload", _ => renders++);
+        await command.ExecuteAsync();
+        using var store = new UndoDiskStore("recoverable-region", _root);
+        await AssertCommandSpills(command, store);
+        using var history = new StaticImgUndoRedoUtil(isSaved: true, sessionId: "history-retry", diskRootDirectory: _root);
+        history.RecordCommand(command);
+        if (redo) await history.UndoAsync();
+        history.MarkAsSaved();
+        var savedChanges = new List<bool>();
+        history.IsSavedChanged += (_, e) => savedChanges.Add(e.IsSaved);
+        byte[] original = target.GetPixelBytes();
+        long undoMemory = history.UndoMemoryBytes, redoMemory = history.RedoMemoryBytes;
+        long undoDisk = history.UndoDiskBytes, redoDisk = history.RedoDiskBytes;
+        int rendersBefore = renders;
+        var payloads = Directory.GetFiles(store.SessionDirectory, "*.undo")
+            .ToDictionary(path => path, File.ReadAllBytes);
+        Assert.HasCount(2, payloads);
+        foreach (string path in payloads.Keys) File.Delete(path);
+
+        await Assert.ThrowsAsync<IOException>(() => redo ? history.RedoAsync() : history.UndoAsync());
+
+        Assert.AreEqual(!redo, history.CanUndo);
+        Assert.AreEqual(redo, history.CanRedo);
+        Assert.IsFalse(history.IsUndoingOrRedoing);
+        Assert.AreEqual(undoMemory, history.UndoMemoryBytes);
+        Assert.AreEqual(redoMemory, history.RedoMemoryBytes);
+        Assert.AreEqual(undoDisk, history.UndoDiskBytes);
+        Assert.AreEqual(redoDisk, history.RedoDiskBytes);
+        Assert.IsEmpty(savedChanges);
+        CollectionAssert.AreEqual(original, target.GetPixelBytes());
+        Assert.AreEqual(rendersBefore, renders);
+
+        foreach (var (path, bytes) in payloads) File.WriteAllBytes(path, bytes);
+        if (redo) await history.RedoAsync();
+        else await history.UndoAsync();
+        Assert.AreEqual(redo, history.CanUndo);
+        Assert.AreEqual(!redo, history.CanRedo);
+        CollectionAssert.AreEqual(redo ? after : before, target.GetPixelBytes(0, 0, 1, 1));
+        CollectionAssert.AreEqual(new[] { false }, savedChanges);
+        Assert.AreEqual(rendersBefore + 1, renders);
     }
 
     [TestMethod]

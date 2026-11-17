@@ -213,7 +213,9 @@ namespace VirtualPaper.EditPanel.ViewModels {
 
         #region project
         private async Task InternalSaveAsync(IRuntime runtime) {
-            if (await runtime.SaveAsync() && !string.IsNullOrWhiteSpace(runtime.ProjectFilePath)) {
+            // Saving can yield while the tab closes; never retain a removed runtime again.
+            if (await runtime.SaveAsync() && _runtimeProjectPaths.ContainsKey(runtime)
+                && !string.IsNullOrWhiteSpace(runtime.ProjectFilePath)) {
                 _runtimeProjectPaths[runtime] = runtime.ProjectFilePath;
             }
             RefreshHeaderAsync(runtime);
@@ -221,7 +223,7 @@ namespace VirtualPaper.EditPanel.ViewModels {
 
         private async Task InternalSaveAsAsync(IRuntime runtime) {
             var savedPath = await runtime.SaveAsAsync();
-            if (!string.IsNullOrWhiteSpace(savedPath)) {
+            if (_runtimeProjectPaths.ContainsKey(runtime) && !string.IsNullOrWhiteSpace(savedPath)) {
                 _runtimeProjectPaths[runtime] = savedPath;
             }
             RefreshHeaderAsync(runtime);

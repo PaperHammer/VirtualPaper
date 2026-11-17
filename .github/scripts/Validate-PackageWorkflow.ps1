@@ -278,10 +278,78 @@ check(false,jobs,'');
 check(false,jobs,'Passed','failure');
 '@
 if ($LASTEXITCODE -ne 0) { throw 'PR status gate contract failed.' }
-if (-not $workflow.Contains('msstore:${{ needs.validate-pr.outputs.msstore_enabled }}') -or
-    -not $releaseWorkflow.Contains('msstore:${msstore}]') -or -not $releaseWorkflow.Contains('check?.state')) {
-    throw 'Pre-release must verify the checked PR version and channel selection.'
+# Execute the workflow entry/status scripts: release owns its checks and channel
+# selection, while pre-merge always validates both channels.
+function Get-WorkflowGitHubScript([string] $Job, [string] $StepName) {
+    $step = [regex]::Match($Job, "(?ms)^    - name: $([regex]::Escape($StepName))\r?\n.*?(?=^    - name:|\z)").Value
+    $script = [regex]::Match($step, '(?ms)^        script: \|\r?\n(.*)\z')
+    if (-not $script.Success) { throw "Missing GitHub script: $StepName" }
+    return [regex]::Replace($script.Groups[1].Value, '(?m)^          ', '').TrimEnd()
 }
+@{
+    Release = Get-WorkflowGitHubScript (Get-WorkflowJob 'prepare-metadata' $releaseWorkflow) 'Validate release PR'
+    Status = Get-WorkflowGitHubScript $summary 'Update PR status'
+} | ConvertTo-Json -Compress | & node -e @'
+const fs = require('fs'), assert = require('node:assert/strict');
+const scripts = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+const head = 'a'.repeat(40), base = 'b'.repeat(40), merge = 'c'.repeat(40);
+const context = {repo:{owner:'owner',repo:'repo'},payload:{inputs:{pr_number:'39'},repository:{full_name:'owner/repo',html_url:'https://github.com/owner/repo'}},runId:1};
+function pr(store=false) {
+  return {merged:true,state:'open',base:{ref:'main',sha:base},head:{ref:'dev',sha:head,repo:{full_name:'owner/repo'}},
+    merge_commit_sha:merge,body:'Release notes',labels:[{name:'version:build'},...(store ? [{name:'channel:msstore'}] : [])]};
+}
+async function release(value, statuses=[], main=merge, input='39') {
+  const outputs = {}; let reads = 0;
+  const github = {rest:{pulls:{get:async()=>({data:value})},git:{getRef:async()=>({data:{object:{sha:main}}})},
+    repos:{getCombinedStatusForRef:async()=>{reads++; return {data:{statuses}};}}}};
+  await new AsyncFunction('github','context','core',scripts.Release)(github,
+    {...context,payload:{...context.payload,inputs:{pr_number:input}}},{setOutput:(key,value)=>{outputs[key]=value;}});
+  assert.equal(reads,0,'Release must not consult a different workflow status.');
+  return outputs;
+}
+async function status(value) {
+  const values = {'needs.validate-pr.outputs.head_sha':head,'needs.validate-pr.outputs.base_sha':base,
+    'needs.validate-pr.outputs.version_label':'version:build','context.payload.inputs.pr_number':'39'};
+  const source = scripts.Status.replace(/\$\{\{\s*(.*?)\s*\}\}/g,(_,key)=>{
+    assert.ok(Object.hasOwn(values,key),`Unexpected workflow expression: ${key}`); return values[key];
+  });
+  let written, failed = false;
+  const github = {rest:{pulls:{get:async()=>({data:value})},repos:{createCommitStatus:async value=>{written=value;}}}};
+  const process = {env:{REPORT_JOB_STATUS:'success',JOB_RESULTS:JSON.stringify({tests:{result:'success'}}),UI_OUTCOME:'Passed'}};
+  await new AsyncFunction('github','context','core','process',source)(github,context,{setFailed:()=>{failed=true;}},process);
+  assert.ok(written,'Pre-merge must still report its own result.');
+  assert.equal(failed,written.state !== 'success');
+  return written;
+}
+(async()=>{
+  for (const store of [false,true]) {
+    for (const prior of [[],[{context:'pre-merge-check',state:'failure'}],
+      [{context:'pre-merge-check',state:'success',description:`[PR #39 | version:build | msstore:${!store}] passed`}]]) {
+      const outputs = await release(pr(store),prior);
+      assert.equal(outputs.msstore_enabled,String(store));
+      assert.equal(outputs.increment,'build'); assert.equal(outputs.merge_sha,merge);
+      assert.deepEqual(JSON.parse(outputs.selection_labels),pr(store).labels.map(x=>x.name).sort());
+    }
+    const written = await status(pr(store));
+    assert.equal(written.state,'success','Changing a release channel must not invalidate dual-channel pre-merge checks.');
+    assert.equal(written.sha,head); assert.equal(written.context,'pre-merge-check');
+  }
+  for (const input of ['0','bad','1.5']) await assert.rejects(()=>release(pr(),[],merge,input),/positive PR/);
+  for (const edit of [p=>p.merged=false,p=>p.base.ref='dev',p=>p.head.ref='feature',p=>p.head.repo.full_name='fork/repo']) {
+    const value=pr(); edit(value); await assert.rejects(()=>release(value),/merged same-repository/);
+  }
+  for (const labels of [[],[{name:'version:build'},{name:'version:minor'}]]) {
+    const value=pr(); value.labels=labels; await assert.rejects(()=>release(value),/exactly one version label/);
+  }
+  await assert.rejects(()=>release(pr(),[],base),/main has advanced/);
+  for (const edit of [p=>p.state='closed',p=>p.head.sha=merge,p=>p.base.sha=merge,p=>p.labels=[{name:'version:minor'}]]) {
+    const value=pr(); edit(value); assert.equal((await status(value)).state,'failure','Pre-merge must reject a changed PR snapshot/version.');
+  }
+})().catch(error=>{console.error(error);process.exitCode=1;});
+'@
+if ($LASTEXITCODE -ne 0) { throw 'Independent release entry and pre-merge status contracts failed.' }
+Write-Host '[OK] Release ignores prior pre-merge statuses and selects its own channels; PR/version/source guards remain required.'
 Assert-JobNeeds 'sync-versions' @('prepare-metadata', 'package-exe', 'summarize-tests') $releaseWorkflow
 Assert-JobNeeds 'draft-release' @('prepare-metadata', 'package-exe', 'summarize-tests', 'sync-versions') $releaseWorkflow
 Assert-JobNeeds 'draft-msstore' @('prepare-metadata', 'package-msix', 'summarize-tests', 'sync-versions') $releaseWorkflow

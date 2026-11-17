@@ -27,7 +27,7 @@ The shared real UI suite also registers library organization and effect-preset m
 
 Shared stages use the same display names in both entry workflows, including `Build Release` and `Test Summary`. All run blocks default to PowerShell (`pwsh`) on both Windows and Ubuntu, including package barriers and summaries.
 
-1. Validate the PR and freeze its source SHA/version/channel selection. Build the complete Release solution once with Visual Studio MSBuild and the solution's Any CPU mappings, including both test hosts.
+1. Validate the PR and freeze its source SHA/version. Pre-release also freezes its own channel selection. Build the complete Release solution once with Visual Studio MSBuild and the solution's Any CPU mappings, including both test hosts.
 2. Run `package-exe` and `package-msix` independently against that build, alongside the shared project tests. EXE uses Inno Setup 6.7.1; MSIX publishes isolated self-contained outputs without changing EXE binaries. `packages-ready` requires every selected package to succeed for the final summary; it does not gate channel acceptance.
 3. The eight shared project test jobs each run once after the Release build, in parallel with packaging; they do not wait for `packages-ready`. Artifact Tests consumes the build output without checking out source; expected translations and mappings are embedded in the test assembly. `tests-passed` (`Tests Passed`) exports all eight outcomes as `project_results` JSON before checking them, without checkout, artifact downloads or reruns. Summary reads this output instead of depending directly on the eight jobs, and still validates the raw reports. Each channel acceptance call waits for its own package and `tests-passed`, without waiting for the other package; failed, cancelled, skipped or missing project results block installation.
 4. `test-exe-acceptance` and `test-msix-acceptance` call the same `package-acceptance.yml` template. Each call starts independent Smoke and UI Acceptance jobs without a dependency between them, giving four parallel jobs on separate fresh GitHub-hosted Windows VMs. Each job checks out the same frozen source, downloads/verifies the matching build and package, installs its own copy and uninstalls it, retaining its own reports.
@@ -50,9 +50,9 @@ The MSIX runner reuses an installed x64 VC AppX framework. Only a disposable hos
 
 ## PR and release rules
 
-Pre-merge accepts feature/fix branches into `dev`, and `dev` into `main`, only within this repository. `dev → main` requires exactly one of `version:major`, `version:minor`, `version:build`, `version:revision`. It verifies the current merge snapshot and rechecks PR head/base/version/channel before reporting success. Changes require a new manual check.
+Pre-merge accepts feature/fix branches into `dev`, and `dev` into `main`, only within this repository. `dev → main` requires exactly one of `version:major`, `version:minor`, `version:build`, `version:revision`. It verifies the current merge snapshot and rechecks PR head/base/version before reporting success. Changes to those values require a new manual check. It always validates both package channels; changing `channel:msstore` does not affect its result.
 
-Pre-release accepts only the latest merged same-repository `dev → main` PR. Its head must have a successful matching Pre-merge status for the same PR, version label and Store channel choice; `main` must still point to its merge commit. Channel/version/plugin label changes during the run block version writes/drafts. Existing successful statuses from the earlier workflow format must be refreshed.
+Pre-release accepts only the latest merged same-repository `dev → main` PR with exactly one version label; `main` must still point to its merge commit. It runs its own complete acceptance and does not read or require a Pre-merge workflow status. `channel:msstore` selects the channels for this release when it starts. Channel/version/plugin label changes during this release run still block version writes/drafts.
 
 Product labels increment the corresponding component of four-part `AssemblyVersion` and reset components to its right. `update-plugins` and `update-plugin-ui/playerweb/scrsaver/ml/shaders` retain the product version, use existing plugin package/tag conventions and skip product-version synchronization. A selected Store channel still ships the complete MSIX for plugin updates.
 
@@ -64,7 +64,7 @@ Version synchronization writes the version fields only on `main`, creates its bu
 
 ## Separate release drafts
 
-Pre-release selects all Store operations using the checked PR's exact `channel:msstore` label, not a Git tag. Without it, Partner Center validation, MSIX packaging/installed acceptance and the Store draft job are skipped; no Store credentials are required. The two draft jobs share the acceptance/version-sync barrier and have no cross-channel dependency. Selected package/acceptance failures still block that common barrier.
+Pre-release selects all Store operations using the merged PR's exact `channel:msstore` label at the start of this release, not a Git tag. Without it, Partner Center validation, MSIX packaging/installed acceptance and the Store draft job are skipped; no Store credentials are required. The two draft jobs share the acceptance/version-sync barrier and have no cross-channel dependency. Selected package/acceptance failures still block that common barrier.
 
 GitHub retains the existing EXE/plugin release tag and update assets. No additional MSIX-only GitHub Release is created, so existing clients' release selection remains unchanged. Drafts are not public and are not automatically marked latest.
 
@@ -86,7 +86,7 @@ Both package channels also require all four `HardwareAcceleration` UI cases in e
 
 Closed, merged, or fork PR inputs are rejected without altering prior check status. For a valid open PR, the workflow sets `pre-merge-check: pending` on its head SHA. Before setting success/failure, it rechecks the PR commit, base, and version label. The status belongs to the PR commit, not the branch selected in the dispatch form. See the [GitHub commit status API](https://docs.github.com/en/rest/commits/statuses).
 
-After a new PR commit, rerun manually: success on an earlier SHA does not satisfy the new commit's required check. Label changes neither start runs nor invalidate existing success on the same SHA, so rerun manually after changing labels too. The release entry point checks labels again.
+After a new PR commit, rerun manually: success on an earlier SHA does not satisfy the new commit's required check. Label changes do not start runs; rerun Pre-merge after changing the version label. Release channel/plugin labels are selected independently by Pre-release and do not require rerunning Pre-merge.
 
 Changes to the PR, target commit, or version choice during a run prevent success. A manually cancelled run may leave a pending status; rerun it before merging.
 

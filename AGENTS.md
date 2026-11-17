@@ -40,6 +40,8 @@ Use Visual Studio MSBuild on `src/VirtualPaper.sln` with `Configuration=Release`
 
 ## Workflow boundaries
 
+`manual-package.yml` is an independent manual packaging entry: select a source branch and EXE/MSIX/Both, build Release once and upload packages with their source SHA. It performs no project test suites, installed acceptance, PR status writes, version synchronization or publishing. MSIX uses the existing isolated signed test identity and public certificate, not Store credentials.
+
 Pre-merge and Pre-release are independent: release performs its own complete acceptance without consulting a prior Pre-merge status. Pre-merge always tests both package channels; release-channel labels apply only to the release run that reads them.
 
 [Pre-merge Check](.github/workflows/pre-merge-check.yml) and [Pre-release](.github/workflows/pre-release.yml) are both `workflow_dispatch` only. Local testing does not dispatch them, update PR status, synchronize product versions or create releases.

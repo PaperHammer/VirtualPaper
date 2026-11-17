@@ -1,5 +1,5 @@
 # Called by validate-test-workflow.ps1 after loading its workflow/job helpers.
-foreach ($text in @($workflow, $releaseWorkflow, $acceptanceWorkflow)) {
+foreach ($text in @($workflow, $releaseWorkflow, $acceptanceWorkflow, $manualPackageWorkflow)) {
     if ($text -notmatch '(?m)^defaults:\r?\n  run:\r?\n    shell: pwsh\s*$') {
         throw 'All workflow PowerShell run blocks, including Ubuntu gates/summaries, require the pwsh default.'
     }
@@ -241,13 +241,13 @@ foreach ($artifact in @('installer', 'ui-operation', 'msix-smoke', 'msix-ui')) {
         throw 'Both raw smoke/UI uploads remain required, including when the extended UI run fails.'
     }
 }
-foreach ($text in @($workflow, $releaseWorkflow, $acceptanceWorkflow, $action)) {
+foreach ($text in @($workflow, $releaseWorkflow, $acceptanceWorkflow, $manualPackageWorkflow, $action)) {
     foreach ($upload in [regex]::Matches($text, '(?ms)uses: actions/upload-artifact@[^\s]+\r?\n.*?(?=^ {2,4}- |^  [\w-]+:|\z)')) {
         if ($upload.Value -notmatch '(?m)^\s+overwrite:\s*true\s*$') { throw 'Artifact uploads must allow retry.' }
     }
 }
 $workflowFiles = @(Get-ChildItem "$repositoryRoot/.github/workflows" -File | Where-Object Extension -In @('.yml', '.yaml') | ForEach-Object Name | Sort-Object)
-if (($workflowFiles -join ',') -ne 'package-acceptance.yml,pre-merge-check.yml,pre-release.yml') { throw 'Keep two manual entry points and one reusable channel acceptance workflow.' }
+if (($workflowFiles -join ',') -ne 'manual-package.yml,package-acceptance.yml,pre-merge-check.yml,pre-release.yml') { throw 'Keep three manual entry points and one reusable channel acceptance workflow.' }
 if ($releaseWorkflow -match 'force-with-lease|reset --hard') { throw 'Release synchronization must not force-push or discard branch history.' }
 if (-not $action.Contains('-RequireCompleteExecution:')) { throw 'Project gates must reject skipped tests.' }
 $summary = Get-WorkflowJob 'summarize-tests'
@@ -432,6 +432,72 @@ for (const [stage, packageId] of [['Sync','package-exe'],['GitHubDraft','package
 '@
 if ($LASTEXITCODE -ne 0) { throw 'Release channel selection or independent draft conditions failed.' }
 Write-Host '[OK] Store-only stages follow the exact PR label; both draft channels run independently after their required gates.'
+$manualJob = Get-WorkflowJob 'package' $manualPackageWorkflow
+function Get-ManualPackageStep([string] $Name) {
+    $match = [regex]::Match($manualJob, "(?ms)^    - name: $([regex]::Escape($Name))\r?\n.*?(?=^    - name:|\z)")
+    if (-not $match.Success) { throw "Missing manual packaging step: $Name" }
+    return $match.Value
+}
+if ($manualPackageWorkflow -notmatch '(?m)^  workflow_dispatch:' -or
+    $manualPackageWorkflow -match '(?m)^  (push|pull_request|pull_request_target|workflow_run|schedule|workflow_call):' -or
+    $manualPackageWorkflow -notmatch '(?m)^permissions:\r?\n  contents: read\s*$' -or
+    $manualPackageWorkflow -match 'secrets\.|pr_number|channel:msstore|continue-on-error:|contents: write|statuses: write' -or
+    @( [regex]::Matches($manualPackageWorkflow, '(?m)^  [\w-]+:\r?\n    name:') ).Count -ne 1 -or
+    -not $manualJob.Contains('msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /restore /m') -or
+    -not $manualJob.Contains('ref: refs/heads/${{ inputs.source_branch }}') -or
+    -not $manualJob.Contains('persist-credentials: false') -or -not $manualJob.Contains('git rev-parse HEAD')) {
+    throw 'Manual packaging must use one Release build of the selected branch without PR/release credentials or writes.'
+}
+foreach ($channel in @('exe','msix')) {
+    $step = Get-ManualPackageStep "Package $($channel.ToUpperInvariant())"
+    $scriptName = if ($channel -eq 'exe') { 'New-CIExePackage.ps1' } else { 'New-CIMsixPackage.ps1' }
+    if (-not $step.Contains('SOURCE_SHA: ${{ steps.source.outputs.sha }}') -or
+        -not $step.Contains($scriptName + ' -SourceSha $env:SOURCE_SHA') -or
+        $step -match '\s-Store\b') {
+        throw 'Manual packages must reuse the existing scripts and checked-out SHA; MSIX remains a signed sideload test package.'
+    }
+}
+$manualValidation = [regex]::Match((Get-ManualPackageStep 'Validate package inputs'), '(?ms)^      run: \|\r?\n(.*)\z').Groups[1].Value
+$manualValidation = [scriptblock]::Create([regex]::Replace($manualValidation, '(?m)^        ', ''))
+$oldBranch = $env:SOURCE_BRANCH; $oldFormat = $env:PACKAGE_FORMAT
+try {
+    foreach ($format in @('Both','EXE','MSIX')) {
+        $env:SOURCE_BRANCH = 'feature/example'; $env:PACKAGE_FORMAT = $format
+        & $manualValidation
+    }
+    foreach ($invalid in @(@('dev','invalid'), @('','Both'), @('../main','EXE'), @('bad branch','MSIX'))) {
+        $env:SOURCE_BRANCH = $invalid[0]; $env:PACKAGE_FORMAT = $invalid[1]
+        $rejected = $false
+        try { & $manualValidation } catch { $rejected = $true }
+        if (-not $rejected) { throw 'Manual packaging accepted an invalid branch or format.' }
+    }
+} finally { $env:SOURCE_BRANCH = $oldBranch; $env:PACKAGE_FORMAT = $oldFormat }
+@{
+    Exe = Get-ReleaseCondition (Get-ManualPackageStep 'Package EXE') 6
+    Msix = Get-ReleaseCondition (Get-ManualPackageStep 'Package MSIX') 6
+    ExeUpload = Get-ReleaseCondition (Get-ManualPackageStep 'Upload package-exe') 6
+    MsixUpload = Get-ReleaseCondition (Get-ManualPackageStep 'Upload package-msix') 6
+} | ConvertTo-Json -Compress | & node -e @'
+const fs = require('fs'), assert = require('node:assert/strict');
+const conditions = JSON.parse(fs.readFileSync(0, 'utf8').replace(/^\uFEFF/, ''));
+function evaluate(name, format, build='success', exe='success', msix='success', cancelled=false) {
+  return new Function('inputs','steps','cancelled','always',`return (${conditions[name]});`)(
+    {package_format:format},{build:{outcome:build},exe:{outcome:exe},msix:{outcome:msix}},()=>cancelled,()=>true);
+}
+for (const format of ['EXE','MSIX','Both']) {
+  assert.equal(evaluate('Exe',format),format !== 'MSIX');
+  assert.equal(evaluate('Msix',format),format !== 'EXE');
+  assert.equal(evaluate('Msix',format,'success','failure'),format !== 'EXE','EXE failure must not block a selected MSIX.');
+  for (const build of ['failure','skipped','cancelled']) assert.equal(evaluate('Msix',format,build),false);
+  assert.equal(evaluate('Msix',format,'success','success','success',true),false);
+}
+for (const outcome of ['success','failure','skipped','cancelled']) {
+  assert.equal(evaluate('ExeUpload','Both','success',outcome),outcome === 'success');
+  assert.equal(evaluate('MsixUpload','Both','success','success',outcome),outcome === 'success');
+}
+'@
+if ($LASTEXITCODE -ne 0) { throw 'Manual package selection/upload conditions failed.' }
+Write-Host '[OK] Manual branch packaging selects EXE/MSIX/Both, rejects invalid inputs and uploads only successfully generated packages.'
 $sync = Get-WorkflowJob 'sync-versions' $releaseWorkflow
 if ($sync.IndexOf('Assert-ReleaseTagAvailable') -lt 0 -or $sync.IndexOf('Assert-ReleaseTagAvailable') -gt $sync.IndexOf('Sync-ReleaseVersion')) { throw 'Check release conflicts before synchronizing versions.' }
 $localRunner = Get-Content "$repositoryRoot/test/Run-Tests.ps1" -Raw

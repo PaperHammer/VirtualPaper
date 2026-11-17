@@ -486,6 +486,8 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 ## 安装冒烟与独立 UI 验收
 
+仅需安装包而不执行验收时，使用 [Manual Package](../.github/workflows/README.zh-CN.md#手动分支打包)。它构建所选分支并上传 EXE/MSIX；打包成功不代表已通过测试或安装验收。
+
 Pre-merge 与 Pre-release 各自执行验收，发布不依赖之前的 Pre-merge 状态。Pre-merge 始终测试 EXE 和 MSIX；发布渠道由 Pre-release 开始时已合并 PR 的标签决定。契约执行实际工作流脚本，覆盖先前检查缺失、失败及渠道不同的情况，同时继续拒绝非法 PR、版本标签和源码快照。
 
 CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`，与本地/Web 脚本的 Node.js 设置独立。版本及摘要校验说明见[工作流指南](../.github/workflows/README.zh-CN.md)。

@@ -10,6 +10,7 @@ $repositoryRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $workflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/pre-merge-check.yml') -Raw
 $releaseWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/pre-release.yml') -Raw
 $acceptanceWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/package-acceptance.yml') -Raw
+$manualPackageWorkflow = Get-Content -LiteralPath (Join-Path $repositoryRoot '.github/workflows/manual-package.yml') -Raw
 $action = Get-Content -LiteralPath (Join-Path $repositoryRoot 'test/actions/run-project/action.yml') -Raw
 $solution = Get-Content -LiteralPath (Join-Path $repositoryRoot 'src/VirtualPaper.sln') -Raw
 $installerRunner = Get-Content -LiteralPath (Join-Path $repositoryRoot 'test/Run-InstallerTests.ps1') -Raw

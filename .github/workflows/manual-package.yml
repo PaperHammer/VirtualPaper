@@ -1,0 +1,135 @@
+name: Manual Package
+run-name: "[Manual] Package | ${{ inputs.source_branch }} | ${{ inputs.package_format }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        description: 'Source branch in this repository'
+        required: true
+        default: dev
+        type: string
+      package_format:
+        description: 'Packages to build'
+        required: true
+        default: Both
+        type: choice
+        options:
+        - Both
+        - EXE
+        - MSIX
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: pwsh
+
+jobs:
+  package:
+    name: Build and package
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+    - name: Validate package inputs
+      env:
+        SOURCE_BRANCH: ${{ inputs.source_branch }}
+        PACKAGE_FORMAT: ${{ inputs.package_format }}
+      run: |
+        if ($env:PACKAGE_FORMAT -cnotin @('Both', 'EXE', 'MSIX')) { throw 'Select Both, EXE or MSIX.' }
+        if ([string]::IsNullOrWhiteSpace($env:SOURCE_BRANCH)) { throw 'Enter a source branch name.' }
+        git check-ref-format "refs/heads/$env:SOURCE_BRANCH"
+        if ($LASTEXITCODE -ne 0) { throw 'Enter a valid source branch name, such as dev or feature/example.' }
+
+    - name: Check out source branch
+      uses: actions/checkout@v4
+      with:
+        ref: refs/heads/${{ inputs.source_branch }}
+        persist-credentials: false
+
+    - name: Record source snapshot
+      id: source
+      env:
+        SOURCE_BRANCH: ${{ inputs.source_branch }}
+      run: |
+        $sha = git rev-parse HEAD
+        if ($LASTEXITCODE -ne 0 -or $sha -cnotmatch '^[0-9a-f]{40}$') { throw 'Could not resolve the checked-out source commit.' }
+        "sha=$sha" >> $env:GITHUB_OUTPUT
+        "Source branch: $env:SOURCE_BRANCH" >> $env:GITHUB_STEP_SUMMARY
+        "Source commit: $sha" >> $env:GITHUB_STEP_SUMMARY
+
+    - name: Set up .NET
+      uses: actions/setup-dotnet@v6.1.0
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Set up MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Cache NuGet packages
+      uses: actions/cache@v6.1.0
+      with:
+        path: ~/.nuget/packages
+        key: nuget-manual-package-${{ runner.os }}-${{ hashFiles('src/**/*.csproj', 'test/**/*.csproj', 'src/**/*.props', 'global.json', 'packaging/msix/*.props', 'packaging/msix/*.wapproj', '.github/scripts/Build-Msix.ps1') }}
+        restore-keys: |
+          nuget-manual-package-${{ runner.os }}-
+          nuget-msix-${{ runner.os }}-
+          nuget-${{ runner.os }}-
+
+    - name: Build Release solution
+      id: build
+      run: msbuild src/VirtualPaper.sln /t:Build /p:Configuration=Release /p:Platform="Any CPU" /restore /m
+
+    - name: Install Inno Setup 6.7.1
+      if: inputs.package_format == 'EXE' || inputs.package_format == 'Both'
+      run: choco install innosetup --version=6.7.1 --no-progress -y
+
+    - name: Package EXE
+      id: exe
+      if: inputs.package_format == 'EXE' || inputs.package_format == 'Both'
+      env:
+        SOURCE_SHA: ${{ steps.source.outputs.sha }}
+      run: ./.github/scripts/New-CIExePackage.ps1 -SourceSha $env:SOURCE_SHA
+
+    - name: Upload package-exe
+      if: always() && steps.exe.outcome == 'success'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: package-exe
+        path: dist/exe/
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Package MSIX
+      id: msix
+      if: |
+        !cancelled() && steps.build.outcome == 'success' &&
+        (inputs.package_format == 'MSIX' || inputs.package_format == 'Both')
+      env:
+        SOURCE_SHA: ${{ steps.source.outputs.sha }}
+      run: ./.github/scripts/New-CIMsixPackage.ps1 -SourceSha $env:SOURCE_SHA
+
+    - name: Upload package-msix
+      if: always() && steps.msix.outcome == 'success'
+      uses: actions/upload-artifact@v7.0.2
+      with:
+        overwrite: true
+        name: package-msix
+        path: |
+          dist/msix/*.msix
+          dist/msix/package.json
+          dist/msix/acceptance.cer
+        if-no-files-found: error
+        retention-days: 30
+
+    - name: Summarize packages
+      if: always()
+      env:
+        EXE_OUTCOME: ${{ steps.exe.outcome }}
+        MSIX_OUTCOME: ${{ steps.msix.outcome }}
+      run: |
+        "EXE packaging: $env:EXE_OUTCOME" >> $env:GITHUB_STEP_SUMMARY
+        "MSIX packaging: $env:MSIX_OUTCOME" >> $env:GITHUB_STEP_SUMMARY
+        'Download packages from the artifacts attached to this run. MSIX uses an isolated test identity and the included public acceptance.cer for sideloading.' >> $env:GITHUB_STEP_SUMMARY

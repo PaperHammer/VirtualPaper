@@ -2,12 +2,23 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-两个主入口均仅通过 `workflow_dispatch` 手动运行；`package-acceptance.yml` 仅接受 `workflow_call` 调用。推送、修改标签及合并不会自动触发。输入 PR 决定固定源码 SHA，Run workflow 选择的分支决定工作流定义；新定义应先进入默认分支。
+三个主入口均仅通过 `workflow_dispatch` 手动运行；`package-acceptance.yml` 仅接受 `workflow_call` 调用。推送、修改标签及合并不会自动触发。输入 PR 或源码分支决定源码，Run workflow 选择的分支决定工作流定义；新定义应先进入默认分支。
 
 | 工作流 | 输入 | 打包渠道 |
 | --- | --- | --- |
 | Pre-merge Check | 未合并的同仓 PR；可选 ML 集成测试 | 始终 EXE + MSIX |
 | Pre-release | 已合并的 `dev → main` PR | 始终 EXE；PR 有 `channel:msstore` 时增加 MSIX |
+| Manual Package | 源码分支；EXE、MSIX 或 Both | 仅打包所选格式，不执行验收或发布 |
+
+## 手动分支打包
+
+打开 **Actions → Manual Package → Run workflow**，填写 `source_branch`（默认 `dev`），通过 `package_format` 选择 `EXE`、`MSIX` 或 `Both`。工作流只检出一次源码分支，记录实际 SHA，构建 Release 解决方案后上传 `package-exe` / `package-msix`，产物保留 30 天。两种格式共用构建；EXE 打包失败不会阻止已选择的 MSIX 继续执行。每份产物均包含记录源码 SHA、版本和哈希的 `package.json`。产品版本沿用源码分支，不递增版本号。
+
+MSIX 复用已签名的 CI 侧载包：每次运行采用独立测试身份及 `1.0.0.0` 包版本，附带公开的 `acceptance.cer`，供测试机器建立证书信任；产品版本单独记录。下次运行会使用新身份，因此这些包不用于商店提交或跨版本升级。只上传公钥证书，签名私钥由打包脚本删除。
+
+目标机器还需安装 `Microsoft.VCLibs.140.00.UWPDesktop`，版本至少为 `14.0.30704.0`，与现有 MSIX 验收入口的前提一致。
+
+此工作流只构建、打包，无需 PR、标签、发布凭据或 Partner Center 配置；不运行项目测试或安装／UI 验收、不回写 PR 状态、不同步版本、不创建 tag 或发布草稿，保留打包脚本自带的载荷校验。工作流成功仅表示产物生成，不代表通过验收。源码分支需包含当前 .NET 10 解决方案及打包脚本。
 
 ## 构建和验收
 

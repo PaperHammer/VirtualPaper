@@ -486,6 +486,8 @@ The default suite does not validate WebView rendering quality, multi-monitor lay
 
 ## Installer smoke and independent UI acceptance
 
+For packages without running acceptance, use [Manual Package](../.github/workflows/README.md#manual-branch-packages). It builds the selected branch and uploads EXE/MSIX artifacts; a successful packaging run does not establish test or installation acceptance.
+
 Pre-merge and Pre-release each run their own acceptance. Release does not depend on a previous Pre-merge status. Pre-merge always tests EXE and MSIX; the merged PR's labels select the release channels when Pre-release starts. Contracts execute the real workflow scripts with absent, failed and differently selected prior checks, and still reject invalid PRs, version labels and source snapshots.
 
 CI SDK setup, NuGet cache and artifact upload/download actions use a bundled Node.js 24 runtime and require Actions Runner `2.327.1` or later; this is independent of local/Web script Node.js settings. Transfer version and digest-check details are documented in the [workflow guide](../.github/workflows/README.md).

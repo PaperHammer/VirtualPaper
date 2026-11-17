@@ -29,7 +29,7 @@ foreach ($file in @('src/VirtualPaper.UI/Package.appxmanifest', 'packaging/msix/
 [xml]$packageProject = Get-Content -LiteralPath (Join-Path $root 'packaging/msix/VirtualPaper.Package.wapproj') -Raw
 $packageMinimum = $packageProject.SelectSingleNode('//*[local-name()="TargetPlatformMinVersion"]')
 Require ($null -ne $packageMinimum -and $packageMinimum.InnerText -ceq $windowsVersion) 'MSIX packaging must preserve the application Windows minimum.'
-foreach ($file in @('.github/workflows/pre-merge-check.yml', '.github/workflows/pre-release.yml',
+foreach ($file in @('.github/workflows/pre-merge-check.yml', '.github/workflows/pre-release.yml', '.github/workflows/manual-package.yml',
     '.github/workflows/package-acceptance.yml', 'test/actions/run-project/action.yml')) {
     $workflow = Get-Content -LiteralPath (Join-Path $root $file) -Raw
     $versions = [regex]::Matches($workflow, '(?m)^\s+dotnet-version:\s*([^\r\n]+)')

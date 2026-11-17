@@ -2,12 +2,23 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-Both entry workflows are manual `workflow_dispatch` only; `package-acceptance.yml` accepts only `workflow_call`. Pushing, editing labels and merging do not dispatch them. The selected PR fixes the tested source; the Run workflow branch selects the workflow definition. Deploy workflow changes to the default branch before using its manual entry.
+All three entry workflows are manual `workflow_dispatch` only; `package-acceptance.yml` accepts only `workflow_call`. Pushing, editing labels and merging do not dispatch them. The selected PR or source branch fixes the source; the Run workflow branch selects the workflow definition. Deploy workflow changes to the default branch before using its manual entry.
 
 | Workflow | Input | Channels |
 | --- | --- | --- |
 | Pre-merge Check | Open same-repository PR number; optional ML integration | Always EXE and MSIX |
 | Pre-release | Merged `dev → main` PR number | Always EXE; also MSIX when PR has `channel:msstore` |
+| Manual Package | Source branch; EXE, MSIX or Both | Selected formats only; no acceptance or release |
+
+## Manual branch packages
+
+Open **Actions → Manual Package → Run workflow**, enter `source_branch` (default `dev`) and choose `package_format`: `EXE`, `MSIX` or `Both`. The workflow checks out that branch once, records its exact SHA, builds the Release solution and uploads `package-exe` / `package-msix` artifacts for 30 days. Both formats share the build; a failed EXE package does not prevent the selected MSIX from running. Each artifact includes `package.json` with its source SHA, version and hashes. Product versions come from the source branch without a version bump.
+
+MSIX reuses the signed CI sideload package: each run has an isolated test identity and package version `1.0.0.0`, with a public `acceptance.cer` included for certificate trust on the test machine. The product version is recorded separately. A later run uses a new identity; these are not Store submissions or cross-version upgrade packages. Only the public certificate is uploaded; the private signing key is deleted by the packaging script.
+
+The target machine also needs `Microsoft.VCLibs.140.00.UWPDesktop` version `14.0.30704.0` or newer, matching the existing MSIX acceptance prerequisite.
+
+This workflow builds and packages only. It needs no PR, labels, release credentials or Partner Center configuration, and does not execute project test suites or installed/UI acceptance, write PR statuses, synchronize versions, create tags or publish drafts. The packaging scripts retain their payload checks. Its success establishes package creation, not acceptance. The source branch must contain the current .NET 10 solution and packaging scripts.
 
 ## Build and acceptance
 

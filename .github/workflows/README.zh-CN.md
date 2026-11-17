@@ -27,7 +27,7 @@ EXE／MSIX 安装版扩展 UI 报告声称通过时，要求每个已选宿主�
 
 两个主入口中相同阶段使用一致的显示名称，包括 `Build Release` 和 `Test Summary`。 Windows 和 Ubuntu 的 run 块均默认使用 PowerShell（`pwsh`），包括打包门禁和汇总。
 
-1. 校验 PR，固定源码 SHA、版本和渠道选择；使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。
+1. 校验 PR，固定源码 SHA 和版本；Pre-release 另行固定本次发布的渠道选择。使用 Visual Studio MSBuild 与解决方案 Any CPU 映射，完整构建一次 Release，包含两个测试宿主。
 2. `package-exe`、`package-msix` 与项目测试并行，消费同一构建。EXE 使用 Inno Setup 6.7.1，MSIX 在独立目录发布自包含程序，不能改变 EXE 输出。`packages-ready` 在最终汇总时要求选中的包全部生成成功，不再阻挡各渠道验收。
 3. Release 构建完成后，八组共享项目测试各运行一次，与打包并行，不等待 `packages-ready`。Artifact Tests 仅消费构建产物，不检出源码；预期文案和映射已嵌入测试程序集。`tests-passed`（Tests Passed）先以 `project_results` JSON 输出八组任务结果，再判定是否全部通过，不检出源码、下载产物或重复测试。Summary 读取该输出，不再直接依赖八组任务，仍校验原始报告。各渠道验收只等待自己的包和 `tests-passed`，不等待另一种包；项目测试失败、取消、跳过或结果缺失时不开始安装。
 4. `test-exe-acceptance`、`test-msix-acceptance` 调用同一个 `package-acceptance.yml` 模板，每路启动互无依赖的 Smoke、UI Acceptance 两个 job，共四个 job 并行使用独立的全新 GitHub-hosted Windows VM。每个 job 自行检出同一固定源码、下载并核验对应构建与安装包、安装及卸载，分别保留报告。
@@ -50,9 +50,9 @@ MSIX 入口复用已有 x64 VC AppX 框架；仅可丢弃的 GitHub-hosted CI �
 
 ## PR 和版本规则
 
-Pre-merge 支持同仓功能/修复分支进入 `dev`，以及 `dev → main`。后者必须恰好有一个 `version:major`、`version:minor`、`version:build`、`version:revision`。运行前验证合并快照，回写成功前再次核对 PR head/base/版本/商店标签；变化后需手动重跑。
+Pre-merge 支持同仓功能/修复分支进入 `dev`，以及 `dev → main`。后者必须恰好有一个 `version:major`、`version:minor`、`version:build`、`version:revision`。运行前验证合并快照，回写成功前再次核对 PR head/base/版本；这些值变化后需手动重跑。它始终验收两种安装包，修改 `channel:msstore` 不影响检查结果。
 
-Pre-release 仅接受最新合并的同仓 `dev → main` PR。其 head 必须有对应 PR、版本标签及商店渠道选择的成功检查，且 `main` 仍指向该合并提交。运行期间修改渠道、版本或插件标签会阻止版本写入和草稿。旧格式的成功状态需要重新运行 Pre-merge 更新。
+Pre-release 仅接受最新合并的同仓 `dev → main` PR，必须恰好有一个版本标签，且 `main` 仍指向该合并提交。发布流程自行执行完整验收，不读取或要求 Pre-merge 的工作流状态。`channel:msstore` 在本次发布开始时决定发布渠道；本次发布运行期间修改渠道、版本或插件标签，仍会阻止版本写入和草稿。
 
 四个版本标签递增产品 `AssemblyVersion` 对应位置并将右侧归零。`update-plugins` 或 `update-plugin-ui/playerweb/scrsaver/ml/shaders` 保留产品版本及既有插件包/tag 兼容格式，跳过产品版本同步；选择商店渠道时仍生成完整 MSIX。
 
@@ -64,7 +64,7 @@ Store 包版本独立于 `AssemblyVersion`：`2611R02` 映射为 `1.2611.2.0`。
 
 ## 分开的发布草稿
 
-Pre-release 中全部商店操作由已检查 PR 的精确 `channel:msstore` 标签控制，不读取 Git tag。未带此标签时，跳过 Partner Center 校验、MSIX 打包／安装验收及 Store draft job，无需商店凭据。两路草稿共享验收／版本同步门禁，彼此没有依赖；已选渠道的打包／验收失败仍阻止共同门禁通过。
+Pre-release 中全部商店操作由本次发布开始时已合并 PR 的精确 `channel:msstore` 标签控制，不读取 Git tag。未带此标签时，跳过 Partner Center 校验、MSIX 打包／安装验收及 Store draft job，无需商店凭据。两路草稿共享验收／版本同步门禁，彼此没有依赖；已选渠道的打包／验收失败仍阻止共同门禁通过。
 
 GitHub 保留原 EXE/插件的发布 tag 和更新资产，不额外创建 MSIX 专属 GitHub Release，保持现有客户端更新选择逻辑。草稿不会自动公开或标为 latest。
 
@@ -86,7 +86,7 @@ dotnet test src/VirtualPaper.ML.Test/VirtualPaper.ML.Test.csproj --configuration
 
 已关闭、已合并或 fork PR 的输入会被拒绝，且不改变之前的检查状态。对于有效的未合并 PR，工作流在其 head SHA 上设置 `pre-merge-check: pending`。写入成功或失败之前，会再次核验 PR 提交、目标和版本标签。状态属于 PR 提交，而非手动运行表单所选分支。参阅 [GitHub commit status API](https://docs.github.com/en/rest/commits/statuses)。
 
-PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提交的必需检查。修改标签既不会触发运行，也不会使同一 SHA 上已有的成功状态失效，因此修改标签后同样需要手动重跑。发布入口还会再次核验标签。
+PR 有新提交后需要手动重跑：旧 SHA 的成功状态不能满足新提交的必需检查。修改标签不会触发运行；修改版本标签后应重跑 Pre-merge。发布渠道和插件标签由 Pre-release 独立选择，修改它们无需重跑 Pre-merge。
 
 运行过程中修改 PR、目标提交或版本选择，会阻止检查成功。手动取消可能留下 pending 状态，合并前需重新运行。
 

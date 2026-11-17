@@ -19,7 +19,6 @@ defaults:
 
 permissions:
   contents: write
-  statuses: read
   pull-requests: read
 
 env:
@@ -63,11 +62,6 @@ jobs:
           const msstore = pr.labels.some(label => label.name === 'channel:msstore');
           core.setOutput('msstore_enabled', msstore.toString());
           core.setOutput('selection_labels', JSON.stringify(pr.labels.map(label => label.name).filter(name => name.startsWith('version:') || name.startsWith('update-plugin') || name === 'channel:msstore').sort()));
-          const { data: checks } = await github.rest.repos.getCombinedStatusForRef({ ...context.repo, ref: pr.head.sha });
-          const check = checks.statuses.find(status => status.context === 'pre-merge-check');
-          if (check?.state !== 'success' || !check.description?.startsWith(`[PR #${number} | ${selected[0]} | msstore:${msstore}] `)) {
-            throw new Error('The merged PR head must have a successful manual pre-merge-check status for this PR and version label.');
-          }
           const { data: main } = await github.rest.git.getRef({ ...context.repo, ref: 'heads/main' });
           if (main.object.sha !== pr.merge_commit_sha) throw new Error('main has advanced. Publish the latest merged PR, or retry only the failed jobs of the original run.');
           core.setOutput('merge_sha', pr.merge_commit_sha);

@@ -486,6 +486,8 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 ## 安装冒烟与独立 UI 验收
 
+Pre-merge 与 Pre-release 各自执行验收，发布不依赖之前的 Pre-merge 状态。Pre-merge 始终测试 EXE 和 MSIX；发布渠道由 Pre-release 开始时已合并 PR 的标签决定。契约执行实际工作流脚本，覆盖先前检查缺失、失败及渠道不同的情况，同时继续拒绝非法 PR、版本标签和源码快照。
+
 CI SDK 配置、NuGet 缓存及产物上传/下载 action 内置 Node.js 24，要求 Actions Runner 至少 `2.327.1`，与本地/Web 脚本的 Node.js 设置独立。版本及摘要校验说明见[工作流指南](../.github/workflows/README.zh-CN.md)。
 
 共享 Release 构建完成后，CI 同时运行所选渠道打包及八组共享项目测试，项目测试不再等待 `packages-ready`。`tests-passed` 只汇总八组结果，不检出、下载或重跑；失败、取消、跳过及结果缺失均不能通过。`test-exe-acceptance`、`test-msix-acceptance` 各自在自己的包和 `tests-passed` 通过后调用 `package-acceptance.yml`，不等待另一种包；`packages-ready` 仍由最终汇总强制校验。每路启动独立的 `smoke`、`ui` 两个 job，共四台全新 GitHub-hosted Windows VM 并行运行，冒烟和 UI 互无依赖。每个 job 消费相同的既有渠道产物并核对源码 SHA／哈希，自行安装、配置和卸载；冒烟或其清理失败仍阻止整体验收，独立 UI 可继续完成并保留诊断报告。选中渠道的原始冒烟/UI 报告仍必须齐全（每渠道两份）。同一 Windows 桌面上的两个 runner 进程不满足隔离要求。本地完整入口仍先完成冒烟并卸载，再运行独立 Release UI。

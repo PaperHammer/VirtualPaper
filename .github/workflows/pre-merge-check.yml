@@ -38,7 +38,6 @@ jobs:
       head_sha: ${{ steps.pr.outputs.head_sha }}
       test_sha: ${{ steps.pr.outputs.test_sha }}
       base_sha: ${{ steps.pr.outputs.base_sha }}
-      msstore_enabled: ${{ steps.pr.outputs.msstore_enabled }}
       version_label: ${{ steps.pr.outputs.version_label }}
     steps:
     - name: Check PR rules and snapshot
@@ -50,7 +49,6 @@ jobs:
           if (!Number.isSafeInteger(number) || number <= 0) throw new Error('Enter a positive PR number.');
           const { data: pr } = await github.rest.pulls.get({ ...context.repo, pull_number: number });
           core.setOutput('head_sha', pr.head.sha);
-          core.setOutput('msstore_enabled', pr.labels.some(label => label.name === 'channel:msstore').toString());
           const status = state => github.rest.repos.createCommitStatus({
             ...context.repo, sha: pr.head.sha, context: 'pre-merge-check', state,
             description: state === 'pending' ? 'Manual pre-merge checks are running' : 'PR policy validation failed',
@@ -485,15 +483,14 @@ jobs:
           const head = '${{ needs.validate-pr.outputs.head_sha }}';
           const selected = pr.labels.map(label => label.name).filter(name =>
             ['version:major', 'version:minor', 'version:build', 'version:revision'].includes(name));
-          if (pr.labels.some(label => label.name === 'channel:msstore') !== ('${{ needs.validate-pr.outputs.msstore_enabled }}' === 'true') ||
-              pr.state !== 'open' || pr.head.sha !== head ||
+          if (pr.state !== 'open' || pr.head.sha !== head ||
               pr.base.sha !== '${{ needs.validate-pr.outputs.base_sha }}' ||
               (pr.base.ref === 'main' && (pr.head.ref !== 'dev' || selected.length !== 1 || selected[0] !== '${{ needs.validate-pr.outputs.version_label }}')) ||
               !((pr.base.ref === 'main' && pr.head.ref === 'dev') || (pr.base.ref === 'dev' && !['main', 'dev'].includes(pr.head.ref)))) {
             state = 'failure';
             description = 'PR changed during this run; manually rerun Pre-merge Check';
           }
-          const marker = pr.base.ref === 'main' ? `PR #${context.payload.inputs.pr_number} | ${{ needs.validate-pr.outputs.version_label }} | msstore:${{ needs.validate-pr.outputs.msstore_enabled }}` : `PR #${context.payload.inputs.pr_number}`;
+          const marker = pr.base.ref === 'main' ? `PR #${context.payload.inputs.pr_number} | ${{ needs.validate-pr.outputs.version_label }}` : `PR #${context.payload.inputs.pr_number}`;
           description = `[${marker}] ${description}`;
           await github.rest.repos.createCommitStatus({
             ...context.repo, sha: head, state, description,

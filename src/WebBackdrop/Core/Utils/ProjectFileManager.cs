@@ -25,11 +25,13 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
             string projectFolder,
             Action<string> addToManifest,
             Action<string> removeFromManifest,
-            Action<string, string> renameInManifest) {
+            Action<string, string> renameInManifest,
+            object? manifestSyncRoot = null) {
 
             _addToManifest = addToManifest;
             _removeFromManifest = removeFromManifest;
             _renameInManifest = renameInManifest;
+            _manifestSyncRoot = manifestSyncRoot ?? new object();
 
             ProjectSystem = new ProjectSystemManager(projectFolder);
             ProjectSystem.Changed += OnProjectChanged;
@@ -130,37 +132,36 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         private void ApplyProjectChange(ProjectChangedEvent e) {
             if (ShouldIgnoreChange(e)) return;
 
-            // “另存为”等写入的新文件不自动登记进 manifest
-            if (e.Type == ProjectChangeType.Created && TryConsumeIgnoredCreated(e.Path)) return;
+            lock (_manifestSyncRoot) {
+                // “另存为”等写入的新文件不自动登记进 manifest
+                if (e.Type == ProjectChangeType.Created && TryConsumeIgnoredCreated(e.Path)) return;
 
-            switch (e.Type) {
-                case ProjectChangeType.Created:
-                    _addToManifest(e.Path);
-                    _pendingExternalChanges[e.Path] = FileChangeType.Created;
-                    break;
+                switch (e.Type) {
+                    case ProjectChangeType.Created:
+                        if (!Path.Exists(e.Path)) return;
+                        _addToManifest(e.Path);
+                        _pendingExternalChanges[e.Path] = FileChangeType.Created;
+                        break;
 
-                case ProjectChangeType.Deleted:
-                    // “写临时文件 + File.Move 覆盖”的原子保存可能被 watcher 报成目标文件的 Deleted；
-                    // 文件实际仍在磁盘时按覆盖处理：不移除 manifest 条目、不触发 Changed 事件
-                    //（否则文件树会把它从列表移除，但 manifest 里还保留着条目）。
-                    if (File.Exists(e.Path)) return;
+                    case ProjectChangeType.Deleted:
+                        // 回退或原子替换完成后，忽略已过期的删除事件。
+                        if (Path.Exists(e.Path)) return;
+                        _removeFromManifest(e.Path);
+                        _pendingExternalChanges[e.Path] = FileChangeType.Deleted;
+                        break;
 
-                    _removeFromManifest(e.Path);
-                    _pendingExternalChanges[e.Path] = FileChangeType.Deleted;
-                    break;
+                    case ProjectChangeType.Renamed:
+                        if (!Path.Exists(e.Path)) return;
+                        if (e.OldPath != null) _renameInManifest(e.OldPath, e.Path);
+                        _pendingExternalChanges[e.Path] = FileChangeType.Renamed;
+                        break;
 
-                case ProjectChangeType.Renamed:
-                    if (e.OldPath != null) {
-                        _renameInManifest(e.OldPath, e.Path);
-                    }
-                    _pendingExternalChanges[e.Path] = FileChangeType.Renamed;
-                    break;
-
-                case ProjectChangeType.Modified:
-                case ProjectChangeType.Reloaded:
-                case ProjectChangeType.Conflict:
-                    _pendingExternalChanges[e.Path] = FileChangeType.Changed;
-                    break;
+                    case ProjectChangeType.Modified:
+                    case ProjectChangeType.Reloaded:
+                    case ProjectChangeType.Conflict:
+                        _pendingExternalChanges[e.Path] = FileChangeType.Changed;
+                        break;
+                }
             }
 
             Changed?.Invoke(e);
@@ -222,6 +223,7 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
         private readonly Action<string> _addToManifest;
         private readonly Action<string> _removeFromManifest;
         private readonly Action<string, string> _renameInManifest;
+        private readonly object _manifestSyncRoot;
         private readonly ConcurrentDictionary<string, FileChangeType> _pendingExternalChanges = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _ignoreNextCreated = new(StringComparer.OrdinalIgnoreCase);
         private readonly object _changeLock = new();

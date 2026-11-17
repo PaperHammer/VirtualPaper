@@ -29,6 +29,7 @@ public class ProjectFileManagerTests {
     [TestMethod]
     public void Created_AddsManifestTracksExternalChangeAndRaisesEvent() {
         string path = Path.Combine(_testRoot, "created.txt");
+        File.WriteAllText(path, "created");
 
         Raise(ProjectChangeType.Created, path);
 
@@ -71,6 +72,8 @@ public class ProjectFileManagerTests {
 
         // Completed copies are explicitly registered by their owner; ordinary later edits remain visible.
         string existingFile = Path.Combine(published, "app.js");
+        Directory.CreateDirectory(published);
+        File.WriteAllText(existingFile, "published");
         Raise(ProjectChangeType.Created, existingFile);
         CollectionAssert.AreEqual(new[] { existingFile }, _added);
         Assert.HasCount(1, _changes);
@@ -82,6 +85,8 @@ public class ProjectFileManagerTests {
     [DataRow("vp-import-0123456789abcdef0123456789abcdef")]
     public void DirectoryCopyStaging_DoesNotIgnoreSimilarUserDirectoryNames(string folder) {
         string path = Path.Combine(_testRoot, folder, "app.js");
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        File.WriteAllText(path, "user content");
         Raise(ProjectChangeType.Created, path);
 
         CollectionAssert.AreEqual(new[] { path }, _added);
@@ -93,6 +98,7 @@ public class ProjectFileManagerTests {
     [TestMethod]
     public void IgnoreNextCreated_IsConsumedExactlyOnce() {
         string path = Path.Combine(_testRoot, "save-as.txt");
+        File.WriteAllText(path, "saved");
         _manager.IgnoreNextCreated(path);
 
         Raise(ProjectChangeType.Created, path);
@@ -124,6 +130,7 @@ public class ProjectFileManagerTests {
     public void Renamed_UpdatesManifestAndTracksDestination() {
         string oldPath = Path.Combine(_testRoot, "old.txt");
         string newPath = Path.Combine(_testRoot, "new.txt");
+        File.WriteAllText(newPath, "renamed");
 
         _manager.OnProjectChanged(new ProjectChangedEvent {
             Type = ProjectChangeType.Renamed,
@@ -134,6 +141,31 @@ public class ProjectFileManagerTests {
         CollectionAssert.AreEqual(new[] { (oldPath, newPath) }, _renamed);
         Assert.IsTrue(_manager.TryConsumeExternalChange(newPath, out FileChangeType type));
         Assert.AreEqual(FileChangeType.Renamed, type);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void RolledBackChange_IgnoresLateCreateDeleteAndRenameEvents(bool folder) {
+        string original = Path.Combine(_testRoot, "original"), destination = Path.Combine(_testRoot, "destination");
+        if (folder) Directory.CreateDirectory(original);
+        else File.WriteAllText(original, "restored bytes");
+
+        Raise(ProjectChangeType.Created, destination);
+        Raise(ProjectChangeType.Deleted, original);
+        _manager.OnProjectChanged(new ProjectChangedEvent { Type = ProjectChangeType.Renamed, OldPath = original, Path = destination });
+
+        Assert.IsEmpty(_added);
+        Assert.IsEmpty(_removed);
+        Assert.IsEmpty(_renamed);
+        Assert.IsEmpty(_changes);
+        Assert.IsFalse(_manager.TryConsumeExternalChange(original, out _));
+        Assert.IsFalse(_manager.TryConsumeExternalChange(destination, out _));
+        if (folder) Directory.Move(original, destination);
+        else File.Move(original, destination);
+        _manager.OnProjectChanged(new ProjectChangedEvent { Type = ProjectChangeType.Renamed, OldPath = original, Path = destination });
+        CollectionAssert.AreEqual(new[] { (original, destination) }, _renamed);
+        Assert.HasCount(1, _changes);
     }
 
     [TestMethod]

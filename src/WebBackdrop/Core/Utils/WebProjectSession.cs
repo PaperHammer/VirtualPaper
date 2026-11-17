@@ -21,7 +21,8 @@ namespace Workloads.Creation.WebBackdrop.Core.Utils {
                 DesignFileUtil.ProjectFolder,
                 addToManifest: path => DesignFileUtil.AddManifestPath(path),
                 removeFromManifest: DesignFileUtil.RemoveManifestPath,
-                renameInManifest: DesignFileUtil.RenameManifestPath);
+                renameInManifest: DesignFileUtil.RenameManifestPath,
+                manifestSyncRoot: DesignFileUtil.ManifestSyncRoot);
 
             FileManager.Start();
         }

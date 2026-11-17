@@ -599,12 +599,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             if (string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) return;
 
             try {
-                if (item.Type == WebFileItemType.File) {
-                    File.Move(oldPath, newPath);
-                }
-                else {
-                    Directory.Move(oldPath, newPath);
-                }
+                MoveItemWithManifest(item, oldPath, newPath);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebFileTreeViewModel>()
@@ -612,7 +607,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 return;
             }
 
-            _designFileUtil?.RenameManifestPath(oldPath, newPath);
             RefreshManifestSnapshot();
 
             RebindItemPath(item, newPath, item.Parent);
@@ -662,20 +656,9 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             try {
                 // Load before changing the manifest so lazy loading cannot replace the moved node.
                 EnsureChildrenLoaded(target);
-                if (source.Type == WebFileItemType.File) {
-                    if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
-                        File.Move(source.FilePath, destinationPath);
-                    }
-                    else {
-                        File.Copy(source.FilePath, destinationPath);
-                    }
-                }
-                else if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
-                    Directory.Move(source.FilePath, destinationPath);
-                }
-                else {
-                    CopyImportedDirectory(source.FilePath, destinationPath);
-                }
+                if (_clipboardOperation == WebFileTreeClipboardOperation.Cut)
+                    MoveItemWithManifest(source, source.FilePath, destinationPath);
+                else CopyItemWithManifest(source, destinationPath);
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebFileTreeViewModel>()
@@ -683,9 +666,8 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 return false;
             }
 
+            RefreshManifestSnapshot();
             if (_clipboardOperation == WebFileTreeClipboardOperation.Cut) {
-                _designFileUtil?.RenameManifestPath(source.FilePath, destinationPath);
-                RefreshManifestSnapshot();
 
                 var oldParent = source.Parent;
                 RebindItemPath(source, destinationPath, target);
@@ -696,9 +678,6 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                 ClearClipboard();
             }
             else {
-                _designFileUtil?.AddManifestPathRecursive(destinationPath);
-                RefreshManifestSnapshot();
-
                 AddItem(target, BuildItem(destinationPath, source.Type, target));
             }
 
@@ -897,8 +876,11 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
                     var oldPath = item.FilePath;
                     var newPath = FileUtil.NextAvailablePath(Path.Combine(destinationFolderPath, item.FileName));
                     if (!string.Equals(oldPath, newPath, StringComparison.OrdinalIgnoreCase)) {
-                        if (!MoveOnDisk(item, oldPath, newPath)) continue;
-                        _designFileUtil?.RenameManifestPath(oldPath, newPath);
+                        try { MoveItemWithManifest(item, oldPath, newPath); }
+                        catch (Exception ex) {
+                            ArcLog.GetLogger<WebFileTreeViewModel>().Error($"Failed to move: {oldPath} -> {newPath}", ex);
+                            continue;
+                        }
                         RebindItemPath(item, newPath, targetFolder);
                     }
                 }
@@ -916,13 +898,13 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             // 原生拖拽可能已把它们挂到落点集合（甚至文件条目下），
             // 统一放回原父集合，避免被挂载到文件下或遗留在非法位置。
             foreach (var item in allItems) {
-                if (validItems.Contains(item)) continue;
+                if (result.Contains(item)) continue;
 
                 target?.Children.Remove(item);
                 AddItem(item.Parent, item);
             }
 
-            RefreshManifestSnapshot();
+            if (result.Count > 0) RefreshManifestSnapshot();
 
             if (targetFolder != null) {
                 targetFolder.IsExpanded = true;
@@ -956,20 +938,67 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
         /// </summary>
         public bool CanDragItem(WebFileItem item) => CanMove(item, null);
 
-        private static bool MoveOnDisk(WebFileItem item, string oldPath, string newPath) {
-            try {
-                if (item.Type == WebFileItemType.File) {
-                    File.Move(oldPath, newPath);
+        private void MoveItemWithManifest(WebFileItem item, string oldPath, string newPath) {
+            var design = _designFileUtil;
+            if (design == null) { MoveOnDisk(item, oldPath, newPath); return; }
+            // Watcher callbacks must validate the filesystem after this commit/rollback finishes.
+            lock (design.ManifestSyncRoot) {
+                MoveOnDisk(item, oldPath, newPath);
+                try {
+                    design.RenameManifestPath(oldPath, newPath);
                 }
-                else {
-                    Directory.Move(oldPath, newPath);
+                catch (Exception failure) {
+                    // Never overwrite a path another process may have recreated during the move.
+                    try { MoveOnDisk(item, newPath, oldPath); }
+                    catch (Exception rollback) {
+                        throw new AggregateException($"Could not restore {oldPath}. The moved item is retained at: {newPath}", failure, rollback);
+                    }
+                    throw;
                 }
-
-                return true;
             }
-            catch (Exception ex) {
-                ArcLog.GetLogger<WebFileTreeViewModel>().Error($"Failed to move file: {oldPath} -> {newPath}", ex);
-                return false;
+        }
+
+        private static void MoveOnDisk(WebFileItem item, string oldPath, string newPath) {
+            if (item.Type == WebFileItemType.File) File.Move(oldPath, newPath);
+            else Directory.Move(oldPath, newPath);
+        }
+
+        private void CopyItemWithManifest(WebFileItem source, string destinationPath) {
+            if (source.Type == WebFileItemType.Folder) CopyImportedDirectory(source.FilePath, destinationPath);
+            else CopyImportedFile(source.FilePath, destinationPath);
+            var design = _designFileUtil;
+            if (design == null) return;
+            lock (design.ManifestSyncRoot) {
+                try {
+                    design.AddManifestPathRecursive(destinationPath);
+                }
+                catch (Exception failure) {
+                    // The destination was created by this completed copy; source data stays untouched.
+                    try {
+                        if (source.Type == WebFileItemType.Folder) Directory.Delete(destinationPath, recursive: true);
+                        else File.Delete(destinationPath);
+                    }
+                    catch (Exception rollback) {
+                        throw new AggregateException($"Could not remove the unregistered copy retained at: {destinationPath}", failure, rollback);
+                    }
+                    throw;
+                }
+            }
+        }
+
+        private static void CopyImportedFile(string source, string destination) {
+            string temporary = Path.Combine(Path.GetDirectoryName(destination)!, $".{Guid.NewGuid():N}.tmp");
+            try {
+                File.Copy(source, temporary, overwrite: false);
+                var attributes = File.GetAttributes(temporary);
+                if ((attributes & FileAttributes.ReadOnly) != 0) File.SetAttributes(temporary, attributes & ~FileAttributes.ReadOnly);
+                File.Move(temporary, destination);
+            }
+            finally {
+                if (File.Exists(temporary)) {
+                    try { File.Delete(temporary); }
+                    catch (Exception cleanup) { ArcLog.GetLogger<WebFileTreeViewModel>().Warn($"Copy staging file retained at {temporary}: {cleanup.Message}"); }
+                }
             }
         }
 

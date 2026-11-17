@@ -18,6 +18,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         public string ProjectName => Path.GetFileNameWithoutExtension(ProjectFilePath);
         public string EntryFilePath => Path.Combine(ProjectFolder, GetManifestFilePathByRole("entry") ?? _projectData?.File ?? "index.html");
         public bool IsSaveFromInit { get; internal set; }
+        internal object ManifestSyncRoot => _manifestLock;
 
         private WpWebProjectData? _projectData;
 
@@ -164,16 +165,19 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
                 var manifest = CreateEditableManifest();
                 if (manifest["files"] is not JsonArray files) return;
 
+                bool changed = false;
                 foreach (var item in files.OfType<JsonObject>()) {
                     var itemPath = item["path"]?.GetValue<string>();
                     if (IsSameManifestPath(itemPath, oldRelativePath)) {
                         item["path"] = newRelativePath;
+                        changed = true;
                     }
                     else if (IsManifestChildPath(itemPath, oldRelativePath)) {
                         item["path"] = newRelativePath + itemPath![oldRelativePath.Length..];
+                        changed = true;
                     }
                 }
-                SaveManifest(manifest);
+                if (changed) SaveManifest(manifest);
             }
         }
 
@@ -288,7 +292,16 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         // Only a successful SaveManifest publishes edits; readers keep the previous snapshot on failure.
-        private JsonObject CreateEditableManifest() => (JsonObject)LoadOrCreateManifest().DeepClone();
+        private JsonObject CreateEditableManifest() {
+            var manifest = LoadOrCreateManifest();
+            EnsureManifestCanBeSaved();
+            return (JsonObject)manifest.DeepClone();
+        }
+
+        private void EnsureManifestCanBeSaved() {
+            if (_parseFailed) throw new InvalidDataException(
+                string.Format(LanguageUtil.GetI18n("WebBackdrop_CannotSaveCorruptProject"), ProjectFilePath));
+        }
 
         private JsonObject LoadOrCreateManifest() {
             if (_manifestCache != null) return _manifestCache;
@@ -332,13 +345,7 @@ namespace Workloads.Creation.WebBackdrop.Models.SerializableData {
         }
 
         private void SaveManifest(JsonObject manifest) {
-            // 解析失败时禁止保存，避免覆盖可能被恢复的数据
-            if (_parseFailed) {
-                GlobalMessageUtil.ShowError(
-                    string.Format(LanguageUtil.GetI18n("WebBackdrop_CannotSaveCorruptProject"), ProjectFilePath),
-                    key: "VpwSaveBlocked");
-                return;
-            }
+            EnsureManifestCanBeSaved();
 
             // 保存前自动去重：按 path 保留首次出现的条目
             if (manifest["files"] is JsonArray files) {

@@ -113,7 +113,7 @@ public class WebDesignAndExportTests {
         string asset = Path.Combine(projectFolder, "asset.txt");
         File.WriteAllText(asset, "asset");
 
-        util.AddManifestPath(asset);
+        Assert.ThrowsExactly<InvalidDataException>(() => util.AddManifestPath(asset));
 
         Assert.AreEqual(corruptJson, File.ReadAllText(projectFile));
     }

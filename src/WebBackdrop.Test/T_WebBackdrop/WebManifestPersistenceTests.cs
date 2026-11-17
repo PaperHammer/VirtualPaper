@@ -101,7 +101,7 @@ public class WebManifestPersistenceTests {
         string added = Path.Combine(_root, "added.js");
         File.WriteAllText(added, "preserve this source");
 
-        damaged.AddManifestPath(added);
+        Assert.ThrowsExactly<InvalidDataException>(() => damaged.AddManifestPath(added));
 
         Assert.AreEqual(content, File.ReadAllText(damaged.ProjectFilePath));
         Assert.IsEmpty(damaged.GetManifestItems());
@@ -148,6 +148,18 @@ public class WebManifestPersistenceTests {
             WebDesignFileUtil.Create(_design.ProjectFilePath).GetManifestItems().ToArray());
         Assert.IsTrue(JsonNode.Parse(File.ReadAllText(_design.ProjectFilePath))!["custom"]!["preserve"]!.GetValue<bool>());
         AssertNoTemporaryFiles();
+    }
+
+    [TestMethod]
+    public void RepeatedRename_AlreadyCommitted_DoesNotAttemptAnotherWrite() {
+        string destination = Path.Combine(_root, "renamed-assets");
+        _design.RenameManifestPath(_assets, destination);
+        byte[] committed = File.ReadAllBytes(_design.ProjectFilePath);
+        using (var locked = new FileStream(_design.ProjectFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            _design.RenameManifestPath(_assets, destination);
+        CollectionAssert.AreEqual(committed, File.ReadAllBytes(_design.ProjectFilePath));
+        Assert.Contains("renamed-assets/nested/keep.js", _design.GetManifestItems().Select(item => item.Path).ToArray());
+        AssertPersistedInventory();
     }
 
     private void AssertNoTemporaryFiles() => Assert.IsEmpty(Directory.GetFiles(_root, ".*.tmp", SearchOption.AllDirectories));

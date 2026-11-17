@@ -129,8 +129,8 @@ namespace Workloads.Creation.StaticImg.Views.Components {
                 return;
             }
             if (_session.IsDrawingUnavailable) return;
-            ArcLog.GetLogger<InkCanvas>().Fatal(e.Message);
-            GlobalMessageUtil.ShowError(message: e.Message);
+            ArcLog.GetLogger<InkCanvas>().Fatal(e.ToString());
+            GlobalMessageUtil.ShowException(e);
             await _viewModel.SaveAsync(true);
         }
 

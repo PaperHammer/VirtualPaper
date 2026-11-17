@@ -47,7 +47,7 @@ internal sealed class GlobalMessageBatch : IDisposable {
     internal static IEnumerable<(ArcWindow? Window, GlobalMsgInfo[] Messages)> Group(IReadOnlyList<Entry> entries) =>
         entries.GroupBy(entry => (entry.Window, entry.Message.Severity))
             .Select(group => (group.Key.Window, group.Select(entry => entry.Message)
-                .DistinctBy(message => message.Message, StringComparer.Ordinal).ToArray()));
+                .DistinctBy(message => (message.Message, message.TechnicalDetails)).ToArray()));
 
     public void Dispose() {
         Entry[] messages;

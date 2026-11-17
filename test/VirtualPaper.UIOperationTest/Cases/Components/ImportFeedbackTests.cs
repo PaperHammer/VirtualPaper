@@ -185,9 +185,11 @@ internal static class ImportFeedbackTests {
         Check(list.ItemsPanelRoot is ItemsStackPanel, "Batch details lost list virtualization");
         Check(list.ContainerFromIndex(paths.Length - 1) == null, "Batch details eagerly realized the entire long list");
         list.ScrollIntoView(list.Items[^1]);
-        await context.WaitAsync(() => list.ContainerFromIndex(paths.Length - 1) is ListViewItem, "Scroll to the last error");
-        var last = FeedbackTestWindow.Descendants<TextBlock>((ListViewItem)list.ContainerFromIndex(paths.Length - 1)).Single();
-        Check(last.Text == messages[^1] && last.IsTextSelectionEnabled, "Long error text cannot be inspected/copied");
+        await context.WaitAsync(() => list.ContainerFromIndex(paths.Length - 1) is ListViewItem item
+            && Equals(item.Content, messages[^1])
+            && FeedbackTestWindow.Descendants<TextBlock>(item).Any(text =>
+                text.Text == messages[^1] && text.IsTextSelectionEnabled && text.ActualHeight > 0),
+            "Bind and render the last selectable error text");
         nint owner = WinRT.Interop.WindowNative.GetWindowHandle(window);
         await Task.Run(() => {
             var root = System.Windows.Automation.AutomationElement.FromHandle(owner);

@@ -486,6 +486,8 @@ The default suite does not validate WebView rendering quality, multi-monitor lay
 
 ## Installer smoke and independent UI acceptance
 
+Before real UI execution on a disposable GitHub-hosted Windows VM, `CIUiDisplay.ps1` prepares a 1920×1080 session display when needed and records its original and observed dimensions in `environment.json`. Unsupported modes produce a failed diagnostic report. Local and self-hosted displays are never changed, and an unavailable desktop remains an explicit skip. Native picker helpers bind to the owned dialog HWND, wait through UIA provider replacement and require the native dialog to close after one submission. `logs/UIOperation/native-picker.txt` records selection and closure; cases still verify the actual saved files and content. Virtualized list checks wait for the expected item text to bind and render before inspecting it.
+
 For packages without running acceptance, use [Manual Package](../.github/workflows/README.md#manual-branch-packages). It builds the selected branch and uploads EXE/MSIX artifacts; a successful packaging run does not establish test or installation acceptance.
 
 Pre-merge and Pre-release each run their own acceptance. Release does not depend on a previous Pre-merge status. Pre-merge always tests EXE and MSIX; the merged PR's labels select the release channels when Pre-release starts. Contracts execute the real workflow scripts with absent, failed and differently selected prior checks, and still reject invalid PRs, version labels and source snapshots.

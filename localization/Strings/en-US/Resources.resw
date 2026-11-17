@@ -1776,16 +1776,16 @@ The following words cannot be used as usernames:
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Spaces: 8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Ln {0}, Col {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Ln {0}, Col {1} ({2}{3} selected)</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Failed to open file: {0}&#x0A;The file may be corrupted or unreadable.&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Unable to open the file: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>Cannot save file: {0}&#x0A;The file failed to load and may be corrupted. Please close and reopen it.</value></data>
-  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Failed to save file: {0}&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Unable to save the file: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>Failed to save all files. Please check for errors and try again.</value></data>
   <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>Project folder not found. Please check your project settings.</value></data>
   <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>The file &quot;{0}&quot; was modified on disk while it has unsaved changes.&#x0A;&#x0A;Reload the disk version and discard your editor changes?</value></data>
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>File Conflict</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Reload from Disk</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Keep My Changes</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Failed to reload file: {0}&#x0A;The file may be corrupted or unreadable.&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Unable to reload the file: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>Failed to save project files. Import aborted.</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>Failed to save project files. Export aborted.</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>Wallpaper library panel is not available.</value></data>
@@ -1947,7 +1947,7 @@ The following words cannot be used as usernames:
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Unsaved intelligent results</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Remind me before closing results that have not been exported or added to the library. Unfinished tasks always require confirmation.</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Remind about unsaved intelligent results</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Could not save a project copy. Choose an empty folder outside the current project. The original files have not been changed.&#x0A;{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Unable to save a project copy. Choose an empty folder outside the current project.&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>Favorites only</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Favorites and tags</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>Done</value></data>
@@ -2208,4 +2208,18 @@ If it still doesn't work, shut down and restart or reboot the system.(Doesn't wo
   <data name="Messages_BatchSummary" xml:space="preserve"><value>{0} messages from this operation. View details for more information.</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Wallpapers imported: {0}.</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Import canceled. Wallpapers imported: {0}.</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>Unable to complete this action. Try again, or restart Virtual Paper if the problem continues.</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>Can't find the file or folder. It may have been moved or deleted. Select it again.</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>Access to this location was denied. Check its permissions or choose another folder.</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>The file is in use. Close it in other apps and try again.</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>There isn't enough free space. Free up space or choose another drive, then try again.</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>The file is damaged or its format is unsupported. Choose another file or restore a saved copy.</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>The file path is too long. Move the file to a shorter path and try again.</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>Unable to access the file. Check that its location is available and try again.</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>Unable to connect. Check your internet connection and try again.</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>The operation took too long. Try again.</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>The operation was canceled.</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>Unable to display the wallpaper on the desktop. Restart Windows Explorer or your computer, then try again.</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>The selected display is no longer connected. Reconnect it or choose another display.</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>A wallpaper playback component is missing. Reinstall Virtual Paper and try again.</value></data>
 </root>

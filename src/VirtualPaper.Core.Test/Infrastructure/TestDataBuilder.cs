@@ -30,8 +30,7 @@ namespace VirtualPaper.Core.Test.Infrastructure {
             mock.Setup(d => d.RType).Returns(rtype);
             mock.Setup(d => d.ThumbnailPath).Returns(string.Empty);
             mock.Setup(d => d.WpEffectFilePathUsing).Returns(string.Empty);
-            mock.Setup(d => d.Arrangement)
-                .Returns(WallpaperArrangement.Per);
+            mock.SetupProperty(d => d.Arrangement, WallpaperArrangement.Per);
             return mock;
         }
 

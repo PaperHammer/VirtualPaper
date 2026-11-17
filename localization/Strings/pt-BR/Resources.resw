@@ -1757,13 +1757,10 @@ Comprimento: de 0 a 100 caracteres.</value>
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Espaços: 8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Lin. {0}, col. {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Lin. {0}, col. {1} ({2}{3} selecionados)</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Não foi possível abrir o arquivo: {0}
-Ele pode estar corrompido ou ilegível.
-{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Não foi possível abrir o arquivo: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>Não é possível salvar o arquivo: {0}
 O carregamento falhou e ele pode estar corrompido. Feche e abra novamente.</value></data>
-  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Falha ao salvar arquivo: {0}
-{1}</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Não foi possível salvar o arquivo: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>Não foi possível salvar todos os arquivos. Verifique os erros e tente novamente.</value></data>
   <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>Pasta do projeto não encontrada. Verifique as configurações do projeto.</value></data>
   <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>O arquivo “{0}” foi modificado no disco e tem alterações não salvas.
@@ -1772,9 +1769,7 @@ Recarregar a versão do disco e descartar as alterações do editor?</value></da
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>Conflito de arquivo</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Recarregar do disco</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Manter minhas alterações</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Não foi possível recarregar o arquivo: {0}
-Ele pode estar corrompido ou ilegível.
-{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Não foi possível recarregar o arquivo: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>Não foi possível salvar os arquivos do projeto. Importação cancelada.</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>Não foi possível salvar os arquivos do projeto. Exportação cancelada.</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>O painel da biblioteca não está disponível.</value></data>
@@ -1939,8 +1934,7 @@ Deseja recuperar?</value></data>
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Resultados de IA não salvos</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Avisa antes de fechar resultados não exportados nem adicionados à biblioteca. Tarefas inacabadas sempre exigem confirmação.</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Lembrar sobre resultados de IA não salvos</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Não foi possível salvar uma cópia do projeto. Escolha uma pasta vazia fora do projeto atual. Os arquivos originais não foram alterados.
-{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Não foi possível salvar uma cópia do projeto. Escolha uma pasta vazia fora do projeto atual.&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>Apenas favoritos</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Favoritos e tags</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>Concluído</value></data>
@@ -2201,4 +2195,18 @@ Se não funcionar, reinicie o Windows. Algumas versões de prévia do Windows 10
   <data name="Messages_BatchSummary" xml:space="preserve"><value>{0} mensagens desta operação. Consulte os detalhes para obter mais informações.</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Papéis de parede importados: {0}.</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Importação cancelada. Papéis de parede importados: {0}.</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>Não foi possível concluir esta ação. Tente novamente ou reinicie o Virtual Paper se o problema persistir.</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>O arquivo ou a pasta não foi encontrado. Ele pode ter sido movido ou excluído. Selecione-o novamente.</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>O acesso a este local foi negado. Verifique as permissões ou escolha outra pasta.</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>O arquivo está em uso. Feche-o em outros aplicativos e tente novamente.</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>Não há espaço livre suficiente. Libere espaço ou escolha outra unidade e tente novamente.</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>O arquivo está danificado ou o formato não é compatível. Escolha outro arquivo ou restaure uma cópia salva.</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>O caminho do arquivo é muito longo. Mova o arquivo para um local com um caminho mais curto e tente novamente.</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>Não foi possível acessar o arquivo. Verifique se o local está disponível e tente novamente.</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>Não foi possível conectar. Verifique a conexão de rede e tente novamente.</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>O tempo limite da operação foi excedido. Tente novamente.</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>A operação foi cancelada.</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>Não foi possível exibir o papel de parede na área de trabalho. Reinicie o Explorador de Arquivos ou o computador e tente novamente.</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>O monitor selecionado não está mais conectado. Reconecte-o ou escolha outro monitor.</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>Está faltando um componente de reprodução de papéis de parede. Reinstale o Virtual Paper e tente novamente.</value></data>
 </root>

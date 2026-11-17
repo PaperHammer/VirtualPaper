@@ -168,13 +168,38 @@ namespace VirtualPaper.Common.Utils.Files {
             var tempPath = Path.Combine(directory, $".{Path.GetRandomFileName()}.tmp");
             try {
                 await File.WriteAllTextAsync(tempPath, content, encoding);
-                if (useFileReplace && File.Exists(filePath)) File.Replace(tempPath, filePath, null);
+                if (useFileReplace && File.Exists(filePath)) ReplaceFileWithBackup(tempPath, filePath);
                 else File.Move(tempPath, filePath, overwrite: true);
             }
             finally {
                 if (File.Exists(tempPath)) {
                     File.Delete(tempPath);
                 }
+            }
+        }
+
+        internal static void ReplaceFileWithBackup(string temporary, string destination,
+            Action<string, string, string>? replace = null) {
+            string backup = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(destination))!, $".{Path.GetRandomFileName()}.bak");
+            try {
+                // ReplaceFile can fail after renaming the original (Win32 error 1177).
+                if (replace == null) File.Replace(temporary, destination, backup);
+                else replace(temporary, destination, backup);
+            }
+            catch (Exception failure) {
+                if (File.Exists(backup) && !File.Exists(destination)) {
+                    try { File.Move(backup, destination); }
+                    catch (Exception recovery) {
+                        throw new AggregateException($"Could not restore the original file. Its backup is retained at: {backup}", failure, recovery);
+                    }
+                }
+                throw;
+            }
+
+            // Publication succeeded. A cleanup failure must not report a failed save.
+            try { File.Delete(backup); }
+            catch (Exception cleanup) {
+                ArcLog.GetLogger(typeof(FileUtil)).Warn($"File saved; backup retained at {backup}: {cleanup.Message}");
             }
         }
 

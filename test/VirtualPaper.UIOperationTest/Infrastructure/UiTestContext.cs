@@ -71,8 +71,16 @@ internal sealed class UiTestContext : IDisposable {
         double scale = _page?.XamlRoot?.RasterizationScale ?? 1;
         var size = new Windows.Graphics.SizeInt32((int)Math.Ceiling(width * scale), (int)Math.Ceiling(height * scale));
         _window.AppWindow.Resize(size);
-        await WaitAsync(() => _window.AppWindow.Size.Width == size.Width && _window.AppWindow.Size.Height == size.Height,
-            "Resize owned layout window");
+        try {
+            await WaitAsync(() => _window.AppWindow.Size.Width == size.Width && _window.AppWindow.Size.Height == size.Height,
+                "Resize owned layout window");
+        }
+        catch (TimeoutException ex) {
+            Evidence["ResizeFailure"] = new { RequestedWidth = size.Width, RequestedHeight = size.Height,
+                ActualWidth = _window.AppWindow.Size.Width, ActualHeight = _window.AppWindow.Size.Height, Scale = scale };
+            throw new TimeoutException($"Layout window requested {size.Width}x{size.Height}, actual " +
+                $"{_window.AppWindow.Size.Width}x{_window.AppWindow.Size.Height} (scale={scale}).", ex);
+        }
         await WaitForLayoutAsync();
     }
 

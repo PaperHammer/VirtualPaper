@@ -218,9 +218,9 @@ internal static class ApplicationUi {
         return result;
     }
 
-    public static void ClickPointerElement(nint ownerWindow, AutomationElement element) {
+    public static void ClickPointerElement(nint ownerWindow, AutomationElement element, Action? afterInput = null) {
         using var foreground = Foreground(ownerWindow);
-        ClickPointer(ownerWindow, element, 0x0002, 0x0004);
+        ClickPointer(ownerWindow, element, 0x0002, 0x0004, afterInput);
     }
 
     public static void MovePointerOverOwnedWindow(nint ownerWindow) {

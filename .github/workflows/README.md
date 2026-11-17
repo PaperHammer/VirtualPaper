@@ -22,6 +22,8 @@ This workflow builds and packages only. It needs no PR, labels, release credenti
 
 ## Build and acceptance
 
+Installed UI runners prepare a 1920×1080 session display only on disposable GitHub-hosted Windows VMs, retaining before/after evidence. Display preparation failures produce failed reports; local/self-hosted display settings and desktop eligibility rules remain unchanged. Picker submission/closure diagnostics and realized-list binding waits are described in the [testing guide](../../test/README.md#installer-smoke-and-independent-ui-acceptance).
+
 Coverage is reported by authored product module. Canonical reports from all seven regular project suites are merged by normalized source path and line number, taking the union of hits and counting each source line once. Missing or malformed reports still block the gate. This covers instrumented product source; installed UI, script contracts and uncollected processes remain separate checks.
 
 The shared build and test jobs use .NET 10. EXE setup provisions the x64 Desktop and ASP.NET Core runtimes for both fresh installation and silent upgrades; MSIX publishes a serviced, self-contained .NET 10 runtime for each process. Existing installer names, update routing and package identities remain unchanged.

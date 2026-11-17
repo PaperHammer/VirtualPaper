@@ -1757,13 +1757,10 @@
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Пробелы: 8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Стр. {0}, стлб. {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Стр. {0}, стлб. {1} (выбрано: {2}{3})</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Не удалось открыть файл: {0}
-Возможно, файл повреждён или недоступен для чтения.
-{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Не удалось открыть файл: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>Не удаётся сохранить файл: {0}
 Файл не загрузился и может быть повреждён. Закройте и откройте его снова.</value></data>
-  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Не удалось сохранить файл: {0}
-{1}</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Не удалось сохранить файл: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>Не удалось сохранить все файлы. Проверьте ошибки и повторите попытку.</value></data>
   <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>Папка проекта не найдена. Проверьте настройки проекта.</value></data>
   <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>Файл «{0}» изменён на диске, но содержит несохранённые правки.
@@ -1772,9 +1769,7 @@
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>Конфликт файла</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Загрузить с диска</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Сохранить мои правки</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Не удалось перезагрузить файл: {0}
-Возможно, файл повреждён или недоступен для чтения.
-{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Не удалось повторно загрузить файл: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>Не удалось сохранить файлы проекта. Импорт отменён.</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>Не удалось сохранить файлы проекта. Экспорт отменён.</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>Панель библиотеки обоев недоступна.</value></data>
@@ -1939,8 +1934,7 @@
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Несохранённые результаты ИИ</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Напоминать перед закрытием результатов, не экспортированных и не добавленных в библиотеку. Для незавершённых задач подтверждение требуется всегда.</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Напоминать о несохранённых результатах ИИ</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Не удалось сохранить копию проекта. Выберите пустую папку за пределами текущего проекта. Исходные файлы не изменены.
-{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Не удалось сохранить копию проекта. Выберите пустую папку вне текущего проекта.&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>Только избранное</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Избранное и теги</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>Готово</value></data>
@@ -2201,4 +2195,18 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Messages_BatchSummary" xml:space="preserve"><value>Сообщений об этой операции: {0}. Дополнительная информация доступна в подробностях.</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Импортировано обоев: {0}.</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Импорт отменён. Импортировано обоев: {0}.</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>Не удалось выполнить действие. Повторите попытку. Если проблема сохраняется, перезапустите Virtual Paper.</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>Файл или папка не найдены. Возможно, они были перемещены или удалены. Выберите их заново.</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>Доступ к этому расположению запрещён. Проверьте разрешения или выберите другую папку.</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>Файл используется. Закройте его в других приложениях и повторите попытку.</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>Недостаточно свободного места. Освободите место или выберите другой диск и повторите попытку.</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>Файл повреждён или его формат не поддерживается. Выберите другой файл или восстановите сохранённую копию.</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>Путь к файлу слишком длинный. Переместите файл в расположение с более коротким путём и повторите попытку.</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>Не удалось получить доступ к файлу. Убедитесь, что его расположение доступно, и повторите попытку.</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>Не удалось подключиться. Проверьте подключение к сети и повторите попытку.</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>Время ожидания операции истекло. Повторите попытку.</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>Операция отменена.</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>Не удалось отобразить обои на рабочем столе. Перезапустите Проводник Windows или компьютер и повторите попытку.</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>Выбранный монитор больше не подключён. Подключите его снова или выберите другой монитор.</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>Отсутствует компонент воспроизведения обоев. Переустановите Virtual Paper и повторите попытку.</value></data>
 </root>

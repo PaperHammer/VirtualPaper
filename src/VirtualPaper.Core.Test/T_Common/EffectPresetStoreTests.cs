@@ -345,4 +345,54 @@ public class EffectPresetStoreTests {
         await _store.SaveAsync(original with { Name = "Changed" });
         Assert.AreEqual("Changed", (await new EffectPresetStore(_path).LoadAsync()).Single(item => !item.IsBuiltIn).Name);
     }
+
+    [TestMethod]
+    public async Task FailedDelete_KeepsEveryPresetAndCanBeRetried() {
+        var removed = New("Remove later");
+        var retained = New("Keep");
+        await _store.SaveAsync(removed);
+        await _store.SaveAsync(retained);
+        byte[] before = await File.ReadAllBytesAsync(_path);
+        Exception? failure = null;
+        using (var reader = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read)) {
+            try { await _store.DeleteAsync(removed.Id); }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException) { failure = exception; }
+        }
+
+        Assert.IsNotNull(failure, "A reader denying delete sharing must prevent replacement.");
+        CollectionAssert.AreEqual(before, await File.ReadAllBytesAsync(_path));
+        Assert.IsEmpty(Directory.GetFiles(_root, ".*.tmp"));
+        var unchanged = (await new EffectPresetStore(_path).LoadAsync()).Where(item => !item.IsBuiltIn).ToArray();
+        CollectionAssert.AreEquivalent(new[] { removed.Id, retained.Id }, unchanged.Select(item => item.Id).ToArray());
+
+        await new EffectPresetStore(_path).DeleteAsync(removed.Id).WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.AreEqual(retained.Id, (await _store.LoadAsync()).Single(item => !item.IsBuiltIn).Id);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task ReadFailure_DuringMutation_ReleasesGateAndKeepsCatalog(bool delete) {
+        var original = New("Original");
+        await _store.SaveAsync(original);
+        byte[] before = await File.ReadAllBytesAsync(_path);
+        string independentPath = Path.Combine(_root, "independent.json");
+        var independent = New("Independent");
+        using (var locked = new FileStream(_path, FileMode.Open, FileAccess.Read, FileShare.None)) {
+            await Assert.ThrowsExactlyAsync<IOException>(() => (delete
+                ? _store.DeleteAsync(original.Id)
+                : _store.SaveAsync(original with { Name = "Changed" })).WaitAsync(TimeSpan.FromSeconds(3)));
+            // The gate is shared by all store instances, including different catalogs.
+            await new EffectPresetStore(independentPath).SaveAsync(independent).WaitAsync(TimeSpan.FromSeconds(3));
+        }
+
+        CollectionAssert.AreEqual(before, await File.ReadAllBytesAsync(_path));
+        Assert.AreEqual(independent.Id, (await new EffectPresetStore(independentPath).LoadAsync()).Single(item => !item.IsBuiltIn).Id);
+        Assert.IsEmpty(Directory.GetFiles(_root, ".*.tmp"));
+        if (delete) await _store.DeleteAsync(original.Id);
+        else await _store.SaveAsync(original with { Name = "Changed" });
+        var users = (await new EffectPresetStore(_path).LoadAsync()).Where(item => !item.IsBuiltIn).ToArray();
+        if (delete) Assert.IsEmpty(users);
+        else Assert.AreEqual("Changed", users.Single().Name);
+    }
 }

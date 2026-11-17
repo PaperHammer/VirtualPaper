@@ -1757,13 +1757,10 @@
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>スペース：8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>行 {0}、列 {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>行 {0}、列 {1}（{2}{3} 選択中）</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>ファイルを開けませんでした：{0}
-破損しているか、読み取りできない可能性があります。
-{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>ファイルを開けません：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>ファイルを保存できません：{0}
 読み込みに失敗し、破損している可能性があります。閉じてから開き直してください。</value></data>
-  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>ファイルを保存できませんでした：{0}
-{1}</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>ファイルを保存できません：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>一部のファイルを保存できませんでした。エラーを確認して再試行してください。</value></data>
   <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>プロジェクトフォルダーが見つかりません。プロジェクト設定を確認してください。</value></data>
   <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>未保存の変更があるファイル「{0}」がディスク上で変更されました。
@@ -1772,9 +1769,7 @@
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>ファイルの競合</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>ディスクから再読み込み</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>編集中の変更を保持</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>ファイルを再読み込みできませんでした：{0}
-破損しているか、読み取りできない可能性があります。
-{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>ファイルを再読み込みできません：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>プロジェクトを保存できないため、インポートを中止しました。</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>プロジェクトを保存できないため、エクスポートを中止しました。</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>壁紙ライブラリパネルを利用できません。</value></data>
@@ -1939,8 +1934,7 @@
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>未保存の AI 処理結果</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>未エクスポートかつライブラリ未追加の結果がある場合、閉じる前に通知します。未完了のタスクは常に確認します。</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>未保存の AI 結果を通知</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>プロジェクトのコピーを保存できませんでした。現在のプロジェクトの外にある空のフォルダーを選択してください。元のファイルは変更されていません。
-{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>プロジェクトのコピーを保存できません。現在のプロジェクトの外にある空のフォルダーを選択してください。&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>お気に入りのみ</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>お気に入りとタグ</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>完了</value></data>
@@ -2201,4 +2195,18 @@ https://github.com/PaperHammer/VirtualPaper/releases</value></data>
   <data name="Messages_BatchSummary" xml:space="preserve"><value>この操作には {0} 件の通知があります。詳細をご確認ください。</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>壁紙を {0} 件インポートしました。</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>インポートをキャンセルしました。インポートした壁紙: {0} 件。</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>操作を完了できませんでした。もう一度お試しください。問題が続く場合は Virtual Paper を再起動してください。</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>ファイルまたはフォルダーが見つかりません。移動または削除された可能性があります。選択し直してください。</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>この場所にアクセスできません。アクセス権限を確認するか、別のフォルダーを選択してください。</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>ファイルは使用中です。他のアプリで閉じてから、もう一度お試しください。</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>空き容量が不足しています。空き容量を増やすか、別のドライブを選択してから、もう一度お試しください。</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>ファイルが破損しているか、対応していない形式です。別のファイルを選択するか、保存済みのコピーを復元してください。</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>ファイルのパスが長すぎます。短いパスの場所に移動してから、もう一度お試しください。</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>ファイルにアクセスできません。保存場所が利用可能か確認してから、もう一度お試しください。</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>接続できません。ネットワーク接続を確認してから、もう一度お試しください。</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>操作がタイムアウトしました。もう一度お試しください。</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>操作はキャンセルされました。</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>デスクトップに壁紙を表示できません。エクスプローラーまたはパソコンを再起動してから、もう一度お試しください。</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>選択したディスプレイが接続されていません。再接続するか、別のディスプレイを選択してください。</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>壁紙の再生に必要なコンポーネントがありません。Virtual Paper を再インストールしてから、もう一度お試しください。</value></data>
 </root>

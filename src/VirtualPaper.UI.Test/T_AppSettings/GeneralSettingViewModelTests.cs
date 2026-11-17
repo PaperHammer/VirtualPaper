@@ -18,7 +18,7 @@ using VirtualPaper.UIComponent.Utils;
 
 namespace VirtualPaper.UI.Test.T_AppSettings {
     [TestClass]
-    public class GeneralSettingViewModelTests {
+    public partial class GeneralSettingViewModelTests {
         private Mock<IAppUpdaterClient> _appUpdater = null!;
         private Mock<IUserSettingsClient> _userSettingsClient = null!;
         private Mock<IWallpaperControlClient> _wpControlClient = null!;

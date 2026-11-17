@@ -1757,13 +1757,10 @@ Longueur : 0 à 100 caractères.</value>
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Espaces : 8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Lig. {0}, col. {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Lig. {0}, col. {1} ({2}{3} sélectionnés)</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Impossible d'ouvrir le fichier : {0}
-Il est peut-être endommagé ou illisible.
-{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Impossible d’ouvrir le fichier : {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>Impossible d'enregistrer le fichier : {0}
 Son chargement a échoué. Il est peut-être endommagé. Fermez-le puis rouvrez-le.</value></data>
-  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Échec de l'enregistrement du fichier : {0}
-{1}</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Impossible d’enregistrer le fichier : {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>Impossible d'enregistrer tous les fichiers. Vérifiez les erreurs et réessayez.</value></data>
   <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>Dossier du projet introuvable. Vérifiez les paramètres du projet.</value></data>
   <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>Le fichier « {0} » a été modifié sur le disque alors que des modifications ne sont pas enregistrées.
@@ -1772,9 +1769,7 @@ Recharger la version du disque et abandonner vos modifications ?</value></data>
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>Conflit de fichier</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Recharger depuis le disque</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Conserver mes modifications</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Impossible de recharger le fichier : {0}
-Il est peut-être endommagé ou illisible.
-{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Impossible de recharger le fichier : {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>Impossible d'enregistrer les fichiers du projet. Importation annulée.</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>Impossible d'enregistrer les fichiers du projet. Exportation annulée.</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>Le panneau de bibliothèque est indisponible.</value></data>
@@ -1939,8 +1934,7 @@ Les récupérer ?</value></data>
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Résultats IA non conservés</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Avertit avant de fermer des résultats ni exportés ni ajoutés à la bibliothèque. Les tâches inachevées exigent toujours une confirmation.</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>Rappeler les résultats IA non conservés</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Impossible d'enregistrer une copie du projet. Choisissez un dossier vide en dehors du projet actuel. Les fichiers d'origine sont intacts.
-{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Impossible d’enregistrer une copie du projet. Choisissez un dossier vide en dehors du projet actuel.&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>Favoris uniquement</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Favoris et étiquettes</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>Terminé</value></data>
@@ -2201,4 +2195,18 @@ Si le problème persiste, redémarrez Windows. Certaines préversions de Windows
   <data name="Messages_BatchSummary" xml:space="preserve"><value>{0} messages pour cette opération. Consultez les détails pour en savoir plus.</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Fonds d’écran importés : {0}.</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Importation annulée. Fonds d’écran importés : {0}.</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>Impossible de terminer cette action. Réessayez ou redémarrez Virtual Paper si le problème persiste.</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>Le fichier ou le dossier est introuvable. Il a peut-être été déplacé ou supprimé. Sélectionnez-le à nouveau.</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>L’accès à cet emplacement a été refusé. Vérifiez les autorisations ou choisissez un autre dossier.</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>Le fichier est en cours d’utilisation. Fermez-le dans les autres applications, puis réessayez.</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>L’espace disponible est insuffisant. Libérez de l’espace ou choisissez un autre lecteur, puis réessayez.</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>Le fichier est endommagé ou son format n’est pas pris en charge. Choisissez un autre fichier ou restaurez une copie enregistrée.</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>Le chemin du fichier est trop long. Déplacez le fichier vers un emplacement au chemin plus court, puis réessayez.</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>Impossible d’accéder au fichier. Vérifiez que son emplacement est disponible, puis réessayez.</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>Connexion impossible. Vérifiez votre connexion réseau, puis réessayez.</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>Le délai de l’opération a été dépassé. Réessayez.</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>L’opération a été annulée.</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>Impossible d’afficher le fond d’écran sur le bureau. Redémarrez l’Explorateur Windows ou votre ordinateur, puis réessayez.</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>L’écran sélectionné n’est plus connecté. Reconnectez-le ou choisissez un autre écran.</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>Un composant de lecture des fonds d’écran est manquant. Réinstallez Virtual Paper, puis réessayez.</value></data>
 </root>

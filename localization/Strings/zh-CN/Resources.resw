@@ -1776,7 +1776,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>空格: 8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>行 {0}，列 {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>行 {0}，列 {1}（已选择 {2}{3} 个字符）</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>无法打开文件：{0}&#x0A;文件可能已损坏或无法读取。&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>无法打开文件：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>无法保存文件：{0}&#x0A;文件加载失败且可能已损坏，请关闭后重新打开。</value></data>
   <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>无法保存文件：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>无法保存所有文件，请检查错误后重试。</value></data>
@@ -1785,7 +1785,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>文件冲突</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>从磁盘重新加载</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>保留我的更改</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>无法重新加载文件：{0}&#x0A;文件可能已损坏或无法读取。&#x0A;{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>无法重新加载文件：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>无法保存项目文件，导入已中止。</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>无法保存项目文件，导出已中止。</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>壁纸库面板不可用。</value></data>
@@ -1947,7 +1947,7 @@ Scale-down：尺寸与 None 或 Contain 中的一中方式相同，取决于哪�
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>智能任务未保存结果提醒</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>关闭时提醒尚未导出或入库的结果。未完成的任务始终需要确认。</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>提醒未保存的智能任务结果</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>无法另存项目。请选择当前项目之外的空文件夹，原项目文件未被修改。&#x0A;{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>无法另存项目副本。请选择当前项目之外的空文件夹。&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>仅看收藏</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>收藏与标签</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>完成</value></data>
@@ -2208,4 +2208,18 @@ Windows 资源管理器在过去 30 秒内重新启动两次！这可能是 Virt
   <data name="Messages_BatchSummary" xml:space="preserve"><value>本次操作有 {0} 条提示，请查看详情。</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>本次已导入 {0} 项壁纸。</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>导入已取消，本次已导入 {0} 项壁纸。</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>无法完成此操作。请重试；若问题持续出现，请重新启动 Virtual Paper。</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>找不到文件或文件夹，可能已被移动或删除。请重新选择。</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>无法访问此位置。请检查访问权限，或选择其他文件夹。</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>文件正在使用中。请在其他应用中关闭该文件后重试。</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>可用空间不足。请释放空间或选择其他磁盘后重试。</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>文件已损坏或格式不受支持。请选择其他文件，或恢复已保存的副本。</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>文件路径过长。请将文件移至路径较短的位置后重试。</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>无法访问文件。请确认文件所在位置可用后重试。</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>无法连接。请检查网络连接后重试。</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>操作超时，请重试。</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>操作已取消。</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>无法在桌面上显示壁纸。请重新启动 Windows 资源管理器或计算机后重试。</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>所选显示器已断开连接。请重新连接，或选择其他显示器。</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>缺少壁纸播放组件。请重新安装 Virtual Paper 后重试。</value></data>
 </root>

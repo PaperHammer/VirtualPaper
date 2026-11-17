@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.Json.Serialization.Metadata;
+using VirtualPaper.Common.Utils.Files;
 using static VirtualPaper.Common.Errors;
 
 namespace VirtualPaper.Common.Utils.Storage {
@@ -23,13 +24,18 @@ namespace VirtualPaper.Common.Utils.Storage {
 
         public static void Save<T>(string filePath, T data, JsonSerializerContext context) {
             try {
-                string? directoryPath = Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(directoryPath)) {
-                    Directory.CreateDirectory(directoryPath);
+                var (destination, temporary) = PrepareSave(filePath);
+                try {
+                    JsonSerializerOptions combinedStoreOptions = new(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                    using (FileStream stream = new(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)) {
+                        JsonSerializer.Serialize(stream, data, combinedStoreOptions);
+                    }
+                    if (File.Exists(destination)) FileUtil.ReplaceFileWithBackup(temporary, destination);
+                    else File.Move(temporary, destination, overwrite: true);
                 }
-                JsonSerializerOptions combinedStoreOptions = new(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
-                using FileStream stream = File.Create(filePath);
-                JsonSerializer.Serialize(stream, data, combinedStoreOptions);
+                finally {
+                    if (File.Exists(temporary)) File.Delete(temporary);
+                }
             }
             catch (Exception ex) {
                 throw new FileAccessException(filePath, "write json", ex);
@@ -56,25 +62,36 @@ namespace VirtualPaper.Common.Utils.Storage {
 
         public static async Task SaveAsync<T>(string filePath, T data, JsonSerializerContext context, params JsonConverter[]? converters) {
             try {
-                string? directoryPath = Path.GetDirectoryName(filePath);
-                if (!string.IsNullOrEmpty(directoryPath)) {
-                    Directory.CreateDirectory(directoryPath);
-                }
-
-                JsonSerializerOptions combinedStoreOptions = new(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
-
-                if (converters != null) {
-                    foreach (var converter in converters) {
-                        combinedStoreOptions.Converters.Add(converter);
+                var (destination, temporary) = PrepareSave(filePath);
+                try {
+                    JsonSerializerOptions combinedStoreOptions = new(_optionsStore) { TypeInfoResolver = JsonTypeInfoResolver.Combine(context) };
+                    if (converters != null) {
+                        foreach (var converter in converters) {
+                            combinedStoreOptions.Converters.Add(converter);
+                        }
                     }
+                    await using (FileStream stream = new(temporary, FileMode.CreateNew, FileAccess.Write,
+                        FileShare.None, 4096, FileOptions.Asynchronous)) {
+                        await JsonSerializer.SerializeAsync(stream, data, combinedStoreOptions);
+                    }
+                    if (File.Exists(destination)) FileUtil.ReplaceFileWithBackup(temporary, destination);
+                    else File.Move(temporary, destination, overwrite: true);
                 }
-
-                using FileStream stream = File.Create(filePath);
-                await JsonSerializer.SerializeAsync(stream, data, combinedStoreOptions);
+                finally {
+                    if (File.Exists(temporary)) File.Delete(temporary);
+                }
             }
             catch (Exception ex) {
-                throw new FileAccessException(filePath, "read json", ex);
+                throw new FileAccessException(filePath, "write json", ex);
             }
+        }
+
+        private static (string Destination, string Temporary) PrepareSave(string filePath) {
+            string destination = Path.GetFullPath(filePath);
+            string directory = Path.GetDirectoryName(destination)!;
+            Directory.CreateDirectory(directory);
+            // Stay on the same volume and publish only a completely serialized file.
+            return (destination, Path.Combine(directory, $".{Path.GetRandomFileName()}.tmp"));
         }
 
         private static readonly JsonSerializerOptions _optionsLoad = new() {

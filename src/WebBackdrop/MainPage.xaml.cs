@@ -165,7 +165,7 @@ namespace Workloads.Creation.WebBackdrop {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<MainPage>().Error(ex);
-                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_SaveAsFailed"), ex.Message));
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_SaveAsFailed"), GlobalMessageUtil.GetExceptionMessage(ex)));
             }
             finally {
                 webEditor.IsEnabled = true;

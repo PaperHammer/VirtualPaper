@@ -36,6 +36,7 @@ if ($DataRoot) {
 }
 if ($Suite -eq 'Extended' -and -not $PSBoundParameters.ContainsKey('TimeoutSeconds')) { $TimeoutSeconds = 900 }
 . (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
+. (Join-Path $PSScriptRoot 'CIUiDisplay.ps1')
 $projectPath = Join-Path $PSScriptRoot 'VirtualPaper.UIOperationTest/VirtualPaper.UIOperationTest.csproj'
 $repositoryRoot = Split-Path -Parent $PSScriptRoot
 $reportFullPath = [IO.Path]::GetFullPath($ReportPath)
@@ -51,6 +52,15 @@ if (-not $environment.Available) {
     Write-Output "Report: $reportFullPath"
     Write-Output "Artifacts: $artifactPath"
     exit 0
+}
+try {
+    $environment = Initialize-CIUIOperationDisplay $environment
+    $environment | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $artifactPath 'environment.json') -Encoding utf8
+}
+catch {
+    New-UIOperationFailureReport $_.Exception.Message $environment $null |
+        ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $reportFullPath -Encoding utf8
+    throw
 }
 if (-not $NoBuild) {
     $msbuild = Get-Command msbuild.exe -ErrorAction SilentlyContinue

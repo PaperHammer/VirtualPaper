@@ -504,7 +504,7 @@ namespace VirtualPaper.Cores.AppUpdate.Specific {
                 var result = await ExecutePendingUpdateAsync(progress, token);
                 if (!result.Success) {
                     System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                        progressWindow?.ShowError(result.ErrorMessage ?? "Unknown error");
+                        progressWindow?.ShowError(LanguageManager.Instance["UserError_Unexpected"]);
                     });
                 }
                 else {

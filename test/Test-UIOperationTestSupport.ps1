@@ -1,5 +1,6 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'UIOperationTestSupport.ps1')
+. (Join-Path $PSScriptRoot 'CIUiDisplay.ps1')
 
 function Assert-Equal($Actual, $Expected, $Message) {
     if ($Actual -cne $Expected) { throw "$Message (expected=$Expected, actual=$Actual)" }
@@ -34,6 +35,44 @@ function New-PassReport {
 }
 
 Assert-Equal (Resolve-UIOperationEnvironment ([pscustomobject](New-DesktopState))).Available $true 'Interactive virtual display should be supported'
+$originalActions = $env:GITHUB_ACTIONS; $originalRunner = $env:RUNNER_ENVIRONMENT
+try {
+    $smallState = New-DesktopState
+    $smallState.DisplayWidth = 1024; $smallState.DisplayHeight = 768
+    $small = Resolve-UIOperationEnvironment ([pscustomobject]$smallState)
+    $large = Resolve-UIOperationEnvironment ([pscustomobject](New-DesktopState))
+    $unexpected = { throw 'This environment must not modify or reprobe the desktop.' }
+    foreach ($runner in @(@('', ''), @('true', 'self-hosted'), @('false', 'github-hosted'))) {
+        $env:GITHUB_ACTIONS = $runner[0]; $env:RUNNER_ENVIRONMENT = $runner[1]
+        Assert-Equal (Initialize-CIUIOperationDisplay $small $unexpected $unexpected) $small 'Local/self-hosted display stays unchanged'
+    }
+    $env:GITHUB_ACTIONS = 'true'; $env:RUNNER_ENVIRONMENT = 'github-hosted'
+    Assert-Equal (Initialize-CIUIOperationDisplay $large $unexpected $unexpected) $large 'A sufficiently large CI display stays unchanged'
+    $unavailable = (New-SkipReport).Environment
+    Assert-Equal (Initialize-CIUIOperationDisplay $unavailable $unexpected $unexpected) $unavailable 'Unavailable input desktop is never changed'
+    $calls = [Collections.Generic.List[string]]::new()
+    $updated = Initialize-CIUIOperationDisplay $small { param($width, $height) $calls.Add("${width}x${height}") } { $large }
+    Assert-Equal ($calls -join ',') '1920x1080' 'CI configures its disposable display exactly once'
+    Assert-Equal $updated.Checks.DisplayWidth 1920 'The prepared resolution comes from a fresh probe'
+    Assert-Equal $updated.OriginalDisplay.DisplayWidth 1024 'Retain the original display in diagnostic evidence'
+    $rejected = $false
+    try { $null = Initialize-CIUIOperationDisplay $small { throw 'Unsupported display mode' } $unexpected } catch { $rejected = $true }
+    Assert-Equal $rejected $true 'Unsupported display preparation fails instead of passing UI'
+    $rejected = $false
+    try { $null = Initialize-CIUIOperationDisplay $small {} { $small } } catch { $rejected = $true }
+    Assert-Equal $rejected $true 'A no-op display change cannot pass preparation'
+}
+finally { $env:GITHUB_ACTIONS = $originalActions; $env:RUNNER_ENVIRONMENT = $originalRunner }
+# Compile the actual interop declaration and check its ABI without calling user32.
+$displayAst = (Get-Command Set-CIUIOperationResolution).ScriptBlock.Ast
+$displaySource = $displayAst.Find({ param($node)
+    $node -is [System.Management.Automation.Language.StringConstantExpressionAst] -and $node.Value.StartsWith('using System;')
+}, $true).Value
+if (-not ('VirtualPaper.CIUiDisplay' -as [type])) { Add-Type -TypeDefinition $displaySource }
+$modeType = [VirtualPaper.CIUiDisplay].GetNestedType('DisplayMode', [Reflection.BindingFlags]::NonPublic)
+Assert-Equal ([Runtime.InteropServices.Marshal]::SizeOf([type]$modeType)) 220 'DEVMODEW public structure size'
+Assert-Equal ([Runtime.InteropServices.Marshal]::OffsetOf($modeType, 'Width').ToInt32()) 172 'DEVMODEW width offset'
+Assert-Equal ([Runtime.InteropServices.Marshal]::OffsetOf($modeType, 'Height').ToInt32()) 176 'DEVMODEW height offset'
 foreach ($change in @(
     @('Windows', $false, 'WindowsRequired'), @('UserInteractive', $false, 'NoInteractiveDesktop'),
     @('SessionId', 0, 'NoInteractiveDesktop'), @('SessionActive', $false, 'NoInteractiveDesktop'),
@@ -93,7 +132,8 @@ Assert-Rejected $null 'Missing report must fail'
 $runnerAst = [System.Management.Automation.Language.Parser]::ParseFile("$PSScriptRoot/Run-UIOperationTests.ps1", [ref]$null, [ref]$null)
 $handler = $runnerAst.Find({ param($node)
     $node -is [System.Management.Automation.Language.CatchClauseAst] -and
-        $node.Body.Extent.Text.Contains('New-UIOperationFailureReport')
+        $node.Body.Extent.Text.Contains('New-UIOperationFailureReport') -and
+        $node.Body.Extent.Text.Contains('$process.HasExited')
 }, $true).Body.Extent.Text
 $failureHandler = [scriptblock]::Create($handler.Substring(1, $handler.Length - 2))
 $reportFullPath = Join-Path ([IO.Path]::GetTempPath()) "VirtualPaper.UIHostFailure-$([guid]::NewGuid().ToString('N')).json"
@@ -112,6 +152,21 @@ try {
         Assert-Rejected $failure 'Host failures must still block strict local acceptance'
         Remove-Item -LiteralPath $reportFullPath
     }
+    $setupHandler = $runnerAst.Find({ param($node)
+        $node -is [System.Management.Automation.Language.CatchClauseAst] -and
+            $node.Body.Extent.Text.Contains('New-UIOperationFailureReport') -and
+            -not $node.Body.Extent.Text.Contains('$process.HasExited')
+    }, $true).Body.Extent.Text
+    $setupFailureHandler = [scriptblock]::Create($setupHandler.Substring(1, $setupHandler.Length - 2))
+    $rejected = $false
+    try { try { throw 'Fixture display preparation failure' } catch { & $setupFailureHandler } } catch { $rejected = $true }
+    Assert-Equal $rejected $true 'Display preparation failure must still throw after writing its report'
+    $failure = Get-Content -LiteralPath $reportFullPath -Raw | ConvertFrom-Json
+    Assert-Equal $failure.Error 'Fixture display preparation failure' 'Preserve the display preparation error'
+    Assert-Equal $failure.HostExitCode $null 'Do not invent an exit code for an unstarted host'
+    Assert-Equal (Get-UIOperationReportOutcome $failure -AllowFailure) 'Failed' 'Display preparation cannot become a passing/skipped UI result'
+    Assert-Rejected $failure 'Display preparation failure blocks strict local acceptance'
+    Remove-Item -LiteralPath $reportFullPath
     foreach ($original in @((New-PassReport | ConvertTo-Json -Depth 8), '{invalid report')) {
         [IO.File]::WriteAllText($reportFullPath, $original)
         try { try { throw 'Failure after an existing report' } catch { & $failureHandler } } catch { }

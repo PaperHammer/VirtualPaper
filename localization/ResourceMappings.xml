@@ -80,6 +80,7 @@
   <Resource Target="Core" Name="AppUpdater_Close_BackToUpdate" Source="Core_AppUpdater_Close_BackToUpdate" />
   <Resource Target="Core" Name="AppUpdater_UpdateReady_Title" Source="Core_AppUpdater_UpdateReady_Title" />
   <Resource Target="Core" Name="Common_TextGotIt" Source="Core_Common_TextGotIt" />
+  <Resource Target="Core" Name="UserError_Unexpected" Source="UserError_Unexpected" />
   <Resource Target="Common" Name="Message" Source="Common_FileAccess_Message" />
   <Resource Target="Common" Name="Read" Source="Common_FileAccess_Read" />
   <Resource Target="Common" Name="Write" Source="Common_FileAccess_Write" />

@@ -40,7 +40,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                     OnPropertyChanged();
                 }
                 catch (Exception ex) {
-                    GlobalMessageUtil.ShowError(ex.Message);
+                    GlobalMessageUtil.ShowException(ex);
                     ArcLog.GetLogger<CropTool>().Error(ex);
                 }
                 finally {
@@ -285,7 +285,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 }
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowError(ex.Message);
+                GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<CropTool>().Error(ex);
             }
         }
@@ -300,7 +300,7 @@ namespace Workloads.Creation.StaticImg.Models.Specific {
                 return true;
             }
             catch (Exception ex) {
-                GlobalMessageUtil.ShowError(ex.Message);
+                GlobalMessageUtil.ShowException(ex);
                 ArcLog.GetLogger<CropTool>().Error(ex);
                 return false;
             }

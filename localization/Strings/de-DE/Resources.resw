@@ -1757,13 +1757,10 @@ Länge: 0–100 Zeichen.</value>
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>Leerzeichen: 8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>Zeile {0}, Spalte {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>Zeile {0}, Spalte {1} ({2}{3} ausgewählt)</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Datei konnte nicht geöffnet werden: {0}
-Sie ist möglicherweise beschädigt oder nicht lesbar.
-{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>Die Datei kann nicht geöffnet werden: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>Datei kann nicht gespeichert werden: {0}
 Sie konnte nicht geladen werden und ist möglicherweise beschädigt. Bitte schließen und erneut öffnen.</value></data>
-  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Datei konnte nicht gespeichert werden: {0}
-{1}</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>Die Datei kann nicht gespeichert werden: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>Nicht alle Dateien konnten gespeichert werden. Fehler prüfen und erneut versuchen.</value></data>
   <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>Projektordner nicht gefunden. Bitte die Projekteinstellungen prüfen.</value></data>
   <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>Die Datei „{0}“ wurde auf dem Datenträger geändert und enthält ungespeicherte Änderungen.
@@ -1772,9 +1769,7 @@ Datenträgerversion neu laden und Änderungen im Editor verwerfen?</value></data
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>Dateikonflikt</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>Vom Datenträger neu laden</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>Meine Änderungen behalten</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Datei konnte nicht neu geladen werden: {0}
-Sie ist möglicherweise beschädigt oder nicht lesbar.
-{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>Die Datei kann nicht neu geladen werden: {0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>Projektdateien konnten nicht gespeichert werden. Import abgebrochen.</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>Projektdateien konnten nicht gespeichert werden. Export abgebrochen.</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>Die Hintergrundbildbibliothek ist nicht verfügbar.</value></data>
@@ -1939,8 +1934,7 @@ Wiederherstellen?</value></data>
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>Ungesicherte KI-Ergebnisse</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>Erinnert beim Schließen an Ergebnisse, die weder exportiert noch in der Bibliothek sind. Unfertige Aufgaben erfordern immer eine Bestätigung.</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>An ungesicherte KI-Ergebnisse erinnern</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Projektkopie konnte nicht gespeichert werden. Wählen Sie einen leeren Ordner außerhalb des aktuellen Projekts. Die Originaldateien wurden nicht geändert.
-{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>Eine Projektkopie konnte nicht gespeichert werden. Wählen Sie einen leeren Ordner außerhalb des aktuellen Projekts.&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>Nur Favoriten</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>Favoriten und Tags</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>Fertig</value></data>
@@ -2201,4 +2195,18 @@ Falls nötig Windows neu starten. In einigen Windows-10-Vorabversionen funktioni
   <data name="Messages_BatchSummary" xml:space="preserve"><value>{0} Meldungen zu diesem Vorgang. Weitere Informationen finden Sie in den Details.</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>Importierte Hintergrundbilder: {0}.</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>Import abgebrochen. Importierte Hintergrundbilder: {0}.</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>Die Aktion konnte nicht abgeschlossen werden. Versuchen Sie es erneut. Starten Sie Virtual Paper neu, falls das Problem weiterhin besteht.</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>Die Datei oder der Ordner wurde nicht gefunden. Möglicherweise wurde das Element verschoben oder gelöscht. Wählen Sie es erneut aus.</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>Der Zugriff auf diesen Speicherort wurde verweigert. Prüfen Sie die Berechtigungen oder wählen Sie einen anderen Ordner.</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>Die Datei wird verwendet. Schließen Sie sie in anderen Apps und versuchen Sie es erneut.</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>Es ist nicht genügend Speicherplatz verfügbar. Geben Sie Speicherplatz frei oder wählen Sie ein anderes Laufwerk und versuchen Sie es erneut.</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>Die Datei ist beschädigt oder das Format wird nicht unterstützt. Wählen Sie eine andere Datei oder stellen Sie eine gespeicherte Kopie wieder her.</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>Der Dateipfad ist zu lang. Verschieben Sie die Datei an einen Ort mit kürzerem Pfad und versuchen Sie es erneut.</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>Auf die Datei kann nicht zugegriffen werden. Prüfen Sie, ob der Speicherort verfügbar ist, und versuchen Sie es erneut.</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>Es konnte keine Verbindung hergestellt werden. Prüfen Sie die Netzwerkverbindung und versuchen Sie es erneut.</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>Die Zeit für den Vorgang wurde überschritten. Versuchen Sie es erneut.</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>Der Vorgang wurde abgebrochen.</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>Das Hintergrundbild kann nicht auf dem Desktop angezeigt werden. Starten Sie den Windows-Explorer oder den Computer neu und versuchen Sie es erneut.</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>Der ausgewählte Bildschirm ist nicht mehr verbunden. Schließen Sie ihn erneut an oder wählen Sie einen anderen Bildschirm.</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>Eine Komponente zur Hintergrundwiedergabe fehlt. Installieren Sie Virtual Paper erneut und versuchen Sie es noch einmal.</value></data>
 </root>

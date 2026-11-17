@@ -503,7 +503,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
             catch (Exception ex) {
                 openFile.SetLoadFailed();
                 ArcLog.GetLogger<WebEditor>().Error($"Failed to reload file: {filePath}", ex);
-                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedReloadFile"), filePath, ex.Message));
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedReloadFile"), filePath, GlobalMessageUtil.GetExceptionMessage(ex)));
             }
         }
 
@@ -550,7 +550,7 @@ namespace Workloads.Creation.WebBackdrop.Views.Components {
                 catch (Exception ex) {
                     openFile.SetLoadFailed();
                     ArcLog.GetLogger<WebEditor>().Error($"Failed to reload conflicted file: {filePath}", ex);
-                    GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedReloadFile"), filePath, ex.Message));
+                    GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedReloadFile"), filePath, GlobalMessageUtil.GetExceptionMessage(ex)));
                 }
             }
             else {

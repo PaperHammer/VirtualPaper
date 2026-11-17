@@ -10,6 +10,7 @@ using VirtualPaper.UIComponent.Templates;
 using VirtualPaper.UIComponent.Dialogs;
 using VirtualPaper.UIComponent.Others;
 using VirtualPaper.Common.Logging;
+using VirtualPaper.Common.Utils;
 
 namespace VirtualPaper.UIComponent.Utils {
     /// <summary>
@@ -18,7 +19,7 @@ namespace VirtualPaper.UIComponent.Utils {
     public static class GlobalMessageUtil {
         /// <summary>
         /// 同一次异步操作按消息级别汇总；嵌套调用共享结果，结束后恢复正常提示。
-        /// 带操作按钮、自动关闭及显式替换的状态消息仍立即显示。
+        /// 带业务操作按钮、自动关闭及显式替换的状态消息仍立即显示。
         /// </summary>
         public static IDisposable BeginBatch() => GlobalMessageBatch.Begin(PublishBatch);
 
@@ -28,28 +29,31 @@ namespace VirtualPaper.UIComponent.Utils {
                     AddMsg(window, messages[0]);
                     continue;
                 }
-                var details = messages.Select(message => message.Message).ToArray();
+                var details = messages.Select(message => message.TechnicalDetails == null
+                    ? message.Message : message.Message + "\n\n" + message.TechnicalDetails).ToArray();
                 AddMsg(window, new GlobalMsgInfo(null, false,
                     string.Format(LanguageUtil.GetI18n("Messages_BatchSummary"), details.Length), null,
-                    messages[0].Severity, LanguageUtil.GetI18n("Text_Details"), async () => {
-                        try {
-                            var owner = window ?? ArcWindowManager.MainWindow;
-                            var dialog = new ArcContentDialog {
-                                Title = LanguageUtil.GetI18n("Text_Details"),
-                                Content = new MessageSummaryView(details),
-                                PrimaryButtonText = LanguageUtil.GetI18n("Text_Close"),
-                                DefaultButton = ContentDialogButton.Primary,
-                                DialogWidth = 720,
-                                XamlRoot = owner.Content.XamlRoot,
-                                RequestedTheme = owner.ContentHost.AppRoot.RequestedTheme
-                            };
-                            await dialog.ShowAsync();
-                        }
-                        catch (Exception ex) {
-                            ArcLog.GetLogger<MessageSummaryView>().Error(ex);
-                            ShowException(ex, arcWindow: window);
-                        }
-                    }));
+                    messages[0].Severity, LanguageUtil.GetI18n("Text_Details"), () => ShowMessageDetails(window, details)));
+            }
+        }
+
+        private static async void ShowMessageDetails(ArcWindow? window, System.Collections.Generic.IReadOnlyList<string> details) {
+            try {
+                var owner = window ?? ArcWindowManager.MainWindow;
+                var dialog = new ArcContentDialog {
+                    Title = LanguageUtil.GetI18n("Text_Details"),
+                    Content = new MessageSummaryView(details),
+                    PrimaryButtonText = LanguageUtil.GetI18n("Text_Close"),
+                    DefaultButton = ContentDialogButton.Primary,
+                    DialogWidth = 720,
+                    XamlRoot = owner.Content.XamlRoot,
+                    RequestedTheme = owner.ContentHost.AppRoot.RequestedTheme
+                };
+                await dialog.ShowAsync();
+            }
+            catch (Exception ex) {
+                ArcLog.GetLogger<MessageSummaryView>().Error(ex);
+                ShowError(GetExceptionMessage(ex), arcWindow: window);
             }
         }
 
@@ -61,8 +65,9 @@ namespace VirtualPaper.UIComponent.Utils {
             bool aggregate = true) {
             if (!Constants.IsTestMode)
                 arcWindow ??= ArcWindowManager.GetArcWindow(new(ArcWindowKey.Main));
-            // Action messages and explicit replacement updates retain their existing behavior.
-            if (aggregate && !isAllowDuplication && !replaceExisting && globalMsgInfo.ActionCommand == null
+            // Error details can be grouped; other action messages retain immediate delivery.
+            if (aggregate && !isAllowDuplication && !replaceExisting
+                && (globalMsgInfo.ActionCommand == null || globalMsgInfo.TechnicalDetails != null)
                 && GlobalMessageBatch.TryAdd(new(arcWindow, globalMsgInfo))) return;
 
             if (Constants.IsTestMode || arcWindow == null) return;
@@ -194,13 +199,40 @@ namespace VirtualPaper.UIComponent.Utils {
             AddMsg(arcWindow, new GlobalMsgInfo(key, isNeedLocalizer, message, extraMsg, InfoBarSeverity.Error));
         }
 
+        /// <summary>显示用户提示，并将独立保存的技术信息放入详情。</summary>
+        public static void ShowErrorWithDetails(string message, string? technicalDetails, ArcWindow? arcWindow = null,
+            string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
+            if (string.IsNullOrWhiteSpace(technicalDetails)) {
+                ShowError(message, arcWindow, key, isNeedLocalizer, extraMsg);
+                return;
+            }
+            ShowDetailedError(isNeedLocalizer ? LanguageUtil.GetI18n(message) : message, technicalDetails, arcWindow, key, extraMsg);
+        }
+
         /// <summary>
         /// 显示异常信息
         /// </summary>
         public static void ShowException(Exception ex, ArcWindow? arcWindow = null, string? key = null, bool isNeedLocalizer = false, string? extraMsg = null) {
-            var message = isNeedLocalizer ? LanguageUtil.GetI18n(ex.Message) : ex.Message;
-            AddMsg(arcWindow, new GlobalMsgInfo(key, false, message, extraMsg, InfoBarSeverity.Error));
+            string resourceKey = UserErrorMessage.GetResourceKey(ex);
+            string message = isNeedLocalizer ? LanguageUtil.GetI18n(ex.Message) : LanguageUtil.GetI18n(resourceKey);
+            if (resourceKey == "UserError_Canceled") {
+                AddMsg(arcWindow, new GlobalMsgInfo(key, false, message, extraMsg, InfoBarSeverity.Informational));
+                return;
+            }
+
+            // Keep a text snapshot rather than retaining the exception and its object graph.
+            ShowDetailedError(message, ex.ToString(), arcWindow, key, extraMsg);
         }
+
+        private static void ShowDetailedError(string message, string details, ArcWindow? arcWindow, string? key, string? extraMsg) {
+            AddMsg(arcWindow, new GlobalMsgInfo(key, false, message, extraMsg, InfoBarSeverity.Error,
+                LanguageUtil.GetI18n("Text_Details"), () => ShowMessageDetails(arcWindow, [message + extraMsg, details])) {
+                TechnicalDetails = details
+            });
+        }
+
+        public static string GetExceptionMessage(Exception exception) =>
+            LanguageUtil.GetI18n(UserErrorMessage.GetResourceKey(exception));
 
         public static void ShowCanceled(ArcWindow? arcWindow = null) {
             AddMsg(arcWindow, new GlobalMsgInfo(
@@ -326,6 +358,7 @@ namespace VirtualPaper.UIComponent.Utils {
         public string? Key => _key;
 
         public string Message { get; set; }
+        public string? TechnicalDetails { get; internal set; }
         public InfoBarSeverity Severity { get; set; }
         public string? ActionText { get; }
         public ICommand? ActionCommand { get; }

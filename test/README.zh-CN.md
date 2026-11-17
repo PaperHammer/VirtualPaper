@@ -486,6 +486,8 @@ Core 元数据测试覆盖基本/运行 JSON 的相对路径、整个壁纸目�
 
 ## 安装冒烟与独立 UI 验收
 
+在一次性的 GitHub-hosted Windows VM 执行真实 UI 前，`CIUiDisplay.ps1` 按需准备 1920×1080 会话显示区域，在 `environment.json` 中记录原始及调整后尺寸；不支持该模式时生成失败诊断报告。本机和自托管机器不会修改显示设置，桌面不可用仍明确跳过。原生选择器绑定属于测试 UI 的弹窗 HWND，等待 UIA 提供程序替换完成，提交一次后必须确认原生弹窗关闭；`logs/UIOperation/native-picker.txt` 记录选择和关闭过程，用例继续校验实际保存的文件及内容。虚拟列表等待目标文本绑定并完成布局后再检查。
+
 仅需安装包而不执行验收时，使用 [Manual Package](../.github/workflows/README.zh-CN.md#手动分支打包)。它构建所选分支并上传 EXE/MSIX；打包成功不代表已通过测试或安装验收。
 
 Pre-merge 与 Pre-release 各自执行验收，发布不依赖之前的 Pre-merge 状态。Pre-merge 始终测试 EXE 和 MSIX；发布渠道由 Pre-release 开始时已合并 PR 的标签决定。契约执行实际工作流脚本，覆盖先前检查缺失、失败及渠道不同的情况，同时继续拒绝非法 PR、版本标签和源码快照。

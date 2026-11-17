@@ -82,7 +82,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
-                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedOpenFile"), filePath, ex.Message));
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedOpenFile"), filePath, GlobalMessageUtil.GetExceptionMessage(ex)));
             }
         }
 
@@ -199,7 +199,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
-                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedSaveFile"), file.FilePath, ex.Message));
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedSaveFile"), file.FilePath, GlobalMessageUtil.GetExceptionMessage(ex)));
                 return false;
             }
         }
@@ -234,7 +234,7 @@ namespace Workloads.Creation.WebBackdrop.ViewModels {
             }
             catch (Exception ex) {
                 ArcLog.GetLogger<WebEditorViewModel>().Error(ex);
-                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedSaveFile"), newPath, ex.Message));
+                GlobalMessageUtil.ShowError(string.Format(LanguageUtil.GetI18n("WebBackdrop_FailedSaveFile"), newPath, GlobalMessageUtil.GetExceptionMessage(ex)));
                 return false;
             }
         }

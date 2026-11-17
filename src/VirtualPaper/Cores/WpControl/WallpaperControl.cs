@@ -103,11 +103,7 @@ namespace VirtualPaper.Cores.WpControl {
 
             var tmp = _wallpapers.ToList();
             if (tmp.Count > 0) {
-                tmp.ForEach(x => {
-                    _wallpapers.RemoveAll(w => w.Monitor!.DeviceId == x.Monitor!.DeviceId);
-                    x.Close();
-                });
-                tmp.Clear();
+                foreach (var instance in tmp) ReleasePlayer(instance, close: true);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                 ArcLog.GetLogger<WallpaperControl>().Info("Closed all wallpapers");
@@ -120,17 +116,14 @@ namespace VirtualPaper.Cores.WpControl {
                 return;
             }
 
-            int idx = _monitorManager.Monitors.FindIndex(monitor);
-            _monitorManager.Monitors[idx].ThumbnailPath = string.Empty;
+            int idx = _monitorManager.Monitors.FindIndex(item => item.DeviceId == monitor.DeviceId);
+            if (idx >= 0) _monitorManager.Monitors[idx].ThumbnailPath = string.Empty;
 
             var toClose = _wallpapers
-                .Where(x => x.Monitor!.DeviceId == monitor.DeviceId)
+                .Where(x => x.Monitor?.DeviceId == monitor.DeviceId)
                 .ToList();
             if (toClose.Count > 0) {
-                toClose.ForEach(x => {
-                    _wallpapers.RemoveAll(x => x.Monitor!.DeviceId == monitor.DeviceId);
-                    x.Close();
-                });
+                foreach (var instance in toClose) ReleasePlayer(instance, close: true);
                 WallpaperChanged?.Invoke(this, EventArgs.Empty);
 
                 ArcLog.GetLogger<WallpaperControl>().Info("Closed wallpaper at _monitor: " + monitor.DeviceId);
@@ -240,6 +233,8 @@ namespace VirtualPaper.Cores.WpControl {
             Grpc_SetWallpaperResponse response = new() {
                 IsFinished = true
             };
+            // 本次操作是否已经成功加入过至少一个播放器
+            bool startedAnyPlayer = false;
 
             try {
                 ArcLog.GetLogger<WallpaperControl>().Info($"Setting wallpaper: {data.FilePath}");
@@ -282,7 +277,6 @@ namespace VirtualPaper.Cores.WpControl {
                 }
                 #endregion
 
-                bool isStarted = false;
                 if (isFromPreview) {
                     if (!File.Exists(data.WpEffectFilePathUsing)) {
                         throw new FileNotFoundException("Preview effect configuration is missing.", data.WpEffectFilePathUsing);
@@ -306,93 +300,68 @@ namespace VirtualPaper.Cores.WpControl {
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 break;
                             }
-                            runningInstance?.Close();
-
                             data.Arrangement = WallpaperArrangement.Per;
                             IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor);
                             CloseWallpaper(instance.Monitor);
-                            isStarted = await instance.ShowAsync(token);
-
-                            if (!isStarted || !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
-                                isStarted = false;
-                                instance.Close();
+                            if (!await TryStartPlayerAsync(instance,
+                                () => TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor), token)) {
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
                                 ArcLog.GetLogger<WallpaperControl>().Error("Failed to set wallpaper as child of WorkerW");
 
                                 response.IsFinished = false;
                             }
                             else {
-                                instance.Closing += ClosingEvent;
-                                _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
+                                startedAnyPlayer = true;
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
-                                _wallpapers.Add(instance);
                             }
                         }
                         break;
                     case WallpaperArrangement.Expand: {
-                            var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.RType == data.RType && x.Data.Arrangement == WallpaperArrangement.Expand);
+                            var runningInstance = _wallpapers.Find(x => x.Monitor?.DeviceId == monitor.DeviceId && x.Data.RType == data.RType && x.Data.Arrangement == WallpaperArrangement.Expand);
                             if (runningInstance != null) {
                                 runningInstance.Update(data);
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
                                 break;
                             }
-                            runningInstance?.Close();
-
                             data.Arrangement = WallpaperArrangement.Expand;
                             IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, monitor);
                             CloseAllWallpapers();
-                            isStarted = await instance.ShowAsync(token);
-
-                            if (!isStarted || !TrySetWallpaperSpanMonitor(instance.ProcWindowHandle)) {
-                                isStarted = false;
-                                instance.Close();
+                            if (!await TryStartPlayerAsync(instance,
+                                () => TrySetWallpaperSpanMonitor(instance.ProcWindowHandle), token)) {
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
                                 ArcLog.GetLogger<WallpaperControl>().Error("Failed to set wallpaper as child of WorkerW");
 
                                 response.IsFinished = false;
                             }
                             else {
-                                instance.Closing += ClosingEvent;
-                                _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
+                                startedAnyPlayer = true;
                                 _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
-                                _wallpapers.Add(instance);
                             }
                         }
                         break;
                     case WallpaperArrangement.Duplicate: {
                             CloseAllWallpapers();
-                            foreach (var item in _monitorManager.Monitors) {
-                                var runningInstance = _wallpapers.Find(x => x.Monitor.DeviceId == monitor.DeviceId && x.Data.RType == data.RType && x.Data.Arrangement == WallpaperArrangement.Duplicate);
-                                if (runningInstance != null) {
-                                    runningInstance.Update(data);
-                                    _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
-                                    break;
-                                }
-                                runningInstance?.Close();
-
-                                data.Arrangement = WallpaperArrangement.Duplicate;
+                            data.Arrangement = WallpaperArrangement.Duplicate;
+                            for (int i = 0; i < _monitorManager.Monitors.Count; i++) {
+                                var item = _monitorManager.Monitors[i];
                                 IWpPlayer instance = _wallpaperFactory.CreatePlayer(data, item);
-                                isStarted = await instance.ShowAsync(token);
-
-                                if (!isStarted || !TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor)) {
-                                    isStarted = false;
-                                    instance.Close();
-                                    _monitorManager.UpdateTargetMonitorThu(monitorIdx, string.Empty);
+                                if (!await TryStartPlayerAsync(instance,
+                                    () => TrySetWallpaperPerMonitor(instance.ProcWindowHandle, instance.Monitor), token)) {
+                                    _monitorManager.UpdateTargetMonitorThu(i, string.Empty);
                                     ArcLog.GetLogger<WallpaperControl>().Error("Failed to set wallpaper as child of WorkerW");
 
                                     response.IsFinished = false;
                                 }
                                 else {
-                                    instance.Closing += ClosingEvent;
-                                    _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
-                                    _monitorManager.UpdateTargetMonitorThu(monitorIdx, data.ThumbnailPath);
-                                    _wallpapers.Add(instance);
+                                    startedAnyPlayer = true;
+                                    _monitorManager.UpdateTargetMonitorThu(i, data.ThumbnailPath);
                                 }
                             }
                         }
                         break;
                 }
-                if (response.IsFinished) {
+                // 多屏情况下可能出现“部分成功、整体失败”，后面需要据此保存实际布局
+                if (response.IsFinished || startedAnyPlayer) {
                     WallpaperChanged?.Invoke(this, EventArgs.Empty);
                 }
             }
@@ -403,6 +372,7 @@ namespace VirtualPaper.Cores.WpControl {
                     WallpaperError?.Invoke(this, new WallpaperPluginNotFoundException(ex.Message));
                 else
                     WallpaperError?.Invoke(this, ex);
+                if (startedAnyPlayer) WallpaperChanged?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex) {
                 response.IsFinished = false;
@@ -909,14 +879,49 @@ namespace VirtualPaper.Cores.WpControl {
             return success;
         }
 
-        private void ClosingEvent(object? s, EventArgs e) {
-            if (s is not IWpPlayer instance) return;
+        private async Task<bool> TryStartPlayerAsync(IWpPlayer instance, Func<bool> attach, CancellationToken token) {
+            // 记录实例是否已经走到加入集合这一步
+            bool registered = false;
+            try {
+                if (!await instance.ShowAsync(token) || !attach()) return false;
+                instance.Closing += ClosingEvent;
+                _jobService.AddProcess(instance.Proc.Id, PluginName.PlayerWeb);
+                _wallpapers.Add(instance);
+                registered = true;
+                return true;
+            }
+            finally {
+                if (!registered) ReleasePlayer(instance, close: true);
+            }
+        }
 
-            var pid = instance.Proc.Id;
+        private void ReleasePlayer(IWpPlayer instance, bool close = false) {
             instance.Closing -= ClosingEvent;
-            instance.Closing = null;
-            _wallpapers.RemoveAll(x => x.Monitor!.DeviceId == instance.Monitor!.DeviceId);
-            _jobService.StopPlugin(pid);
+            // A delayed callback must not remove a replacement with the same wallpaper or monitor.
+            bool tracked = _wallpapers.RemoveAll(player => ReferenceEquals(player, instance)) > 0;
+            if (!tracked && !close) return;
+
+            int? pid = null;
+            try {
+                // Close may dispose the Process object before registration cleanup runs.
+                if (tracked) pid = instance.Proc.Id;
+            }
+            catch (Exception ex) { ArcLog.GetLogger<WallpaperControl>().Error(ex); }
+
+            try {
+                if (close) instance.Close();
+            }
+            catch (Exception ex) { ArcLog.GetLogger<WallpaperControl>().Error(ex); }
+            finally {
+                try {
+                    if (pid.HasValue) _jobService.StopPlugin(pid.Value);
+                }
+                catch (Exception ex) { ArcLog.GetLogger<WallpaperControl>().Error(ex); }
+            }
+        }
+
+        private void ClosingEvent(object? s, EventArgs e) {
+            if (s is IWpPlayer instance) ReleasePlayer(instance);
         }
 
         private void SetupDesktop_WallpaperChanged(object? sender, EventArgs e) {

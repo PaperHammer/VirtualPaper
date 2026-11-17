@@ -184,7 +184,11 @@ namespace VirtualPaper.Core.Test.T_Common {
             var exception = await Assert.ThrowsAsync<FileAccessException>(
                 () => JsonSaver.SaveAsync(path, new TestSettings(), TestSettingsContext.Default));
 
-            Assert.IsInstanceOfType<IOException>(exception.InnerException);
+            Assert.IsTrue(exception.InnerException is IOException or UnauthorizedAccessException);
+            Assert.AreEqual("write json", exception.Operation);
+            using var reader = new StreamReader(lockStream, leaveOpen: true);
+            Assert.AreEqual("{}", await reader.ReadToEndAsync());
+            Assert.IsEmpty(Directory.GetFiles(_tempDir, ".*.tmp"));
         }
 
         // ── 自动创建目录 ─────────────────────────────────────────────

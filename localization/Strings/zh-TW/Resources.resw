@@ -1776,13 +1776,10 @@ Scale-down：尺寸與 None 或 Contain 中的一中方式相同，取決於哪�
   <data name="WebBackdrop_Spaces8" xml:space="preserve"><value>空格: 8</value></data>
   <data name="WebBackdrop_CursorPosition" xml:space="preserve"><value>行 {0}，列 {1}</value></data>
   <data name="WebBackdrop_CursorPositionSelected" xml:space="preserve"><value>行 {0}，列 {1}（已選擇 {2}{3} 個字元）</value></data>
-  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>無法開啟檔案：{0}
-檔案可能已損壞或無法讀取。
-{1}</value></data>
+  <data name="WebBackdrop_FailedOpenFile" xml:space="preserve"><value>無法開啟檔案：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_CannotSaveLoadFailed" xml:space="preserve"><value>無法儲存檔案：{0}
 檔案載入失敗且可能已損壞，請關閉後重新開啟。</value></data>
-  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>無法儲存檔案：{0}
-{1}</value></data>
+  <data name="WebBackdrop_FailedSaveFile" xml:space="preserve"><value>無法儲存檔案：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_FailedSaveAll" xml:space="preserve"><value>無法儲存所有檔案，請檢查錯誤後重試。</value></data>
   <data name="WebBackdrop_ProjectFolderNotFound" xml:space="preserve"><value>找不到項目資料夾，請檢查項目設定。</value></data>
   <data name="WebBackdrop_FileConflictMessage" xml:space="preserve"><value>檔案“{0}”在存在未儲存變更時被磁盤上的其他程式修改。
@@ -1791,9 +1788,7 @@ Scale-down：尺寸與 None 或 Contain 中的一中方式相同，取決於哪�
   <data name="WebBackdrop_FileConflictTitle" xml:space="preserve"><value>檔案沖突</value></data>
   <data name="WebBackdrop_ReloadFromDisk" xml:space="preserve"><value>從磁盤重新載入</value></data>
   <data name="WebBackdrop_KeepMyChanges" xml:space="preserve"><value>保留我的變更</value></data>
-  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>無法重新載入檔案：{0}
-檔案可能已損壞或無法讀取。
-{1}</value></data>
+  <data name="WebBackdrop_FailedReloadFile" xml:space="preserve"><value>無法重新載入檔案：{0}&#x0A;{1}</value></data>
   <data name="WebBackdrop_ImportSaveFailed" xml:space="preserve"><value>無法儲存項目檔案，匯入已中止。</value></data>
   <data name="WebBackdrop_ExportSaveFailed" xml:space="preserve"><value>無法儲存項目檔案，匯出已中止。</value></data>
   <data name="WebBackdrop_LibraryUnavailable" xml:space="preserve"><value>桌布庫面板不可用。</value></data>
@@ -1958,8 +1953,7 @@ Scale-down：尺寸與 None 或 Contain 中的一中方式相同，取決於哪�
   <data name="Settings_General_IntelligentResultReminder" xml:space="preserve"><value>智慧工作未儲存結果提醒</value></data>
   <data name="Settings_General_IntelligentResultReminder_Description" xml:space="preserve"><value>關閉時提醒尚未匯出或入庫的結果。未完成的工作始終需要確認。</value></data>
   <data name="Settings_General_IntelligentResultReminder_AutomationName" xml:space="preserve"><value>提醒未儲存的智慧工作結果</value></data>
-  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>無法另存項目。請選擇當前項目之外的空資料夾，原項目檔案未被修改。
-{0}</value></data>
+  <data name="WebBackdrop_SaveAsFailed" xml:space="preserve"><value>無法另存專案副本。請選取目前專案以外的空資料夾。&#x0A;{0}</value></data>
   <data name="WpLib_Favorites" xml:space="preserve"><value>僅看收藏</value></data>
   <data name="WpLib_OrganizeLabel" xml:space="preserve"><value>收藏與標籤</value></data>
   <data name="WpLib_FinishSelection" xml:space="preserve"><value>完成</value></data>
@@ -2220,4 +2214,18 @@ Windows 資源管理器在過去 30 秒內重新啟動兩次！這可能是 Virt
   <data name="Messages_BatchSummary" xml:space="preserve"><value>本次操作有 {0} 則提示，請查看詳細資訊。</value></data>
   <data name="WpLib_ImportCompletedSummary" xml:space="preserve"><value>本次已匯入 {0} 項桌布。</value></data>
   <data name="WpLib_ImportCanceledSummary" xml:space="preserve"><value>匯入已取消，本次已匯入 {0} 項桌布。</value></data>
+  <data name="UserError_Unexpected" xml:space="preserve"><value>無法完成此操作。請重試；若問題持續發生，請重新啟動 Virtual Paper。</value></data>
+  <data name="UserError_NotFound" xml:space="preserve"><value>找不到檔案或資料夾，可能已被移動或刪除。請重新選取。</value></data>
+  <data name="UserError_AccessDenied" xml:space="preserve"><value>無法存取此位置。請檢查存取權限，或選取其他資料夾。</value></data>
+  <data name="UserError_FileBusy" xml:space="preserve"><value>檔案正在使用中。請在其他應用程式中關閉該檔案後重試。</value></data>
+  <data name="UserError_StorageFull" xml:space="preserve"><value>可用空間不足。請釋放空間或選取其他磁碟後重試。</value></data>
+  <data name="UserError_InvalidData" xml:space="preserve"><value>檔案已損毀或格式不受支援。請選取其他檔案，或還原已儲存的副本。</value></data>
+  <data name="UserError_PathTooLong" xml:space="preserve"><value>檔案路徑過長。請將檔案移至路徑較短的位置後重試。</value></data>
+  <data name="UserError_FileAccess" xml:space="preserve"><value>無法存取檔案。請確認檔案所在位置可用後重試。</value></data>
+  <data name="UserError_Network" xml:space="preserve"><value>無法連線。請檢查網路連線後重試。</value></data>
+  <data name="UserError_Timeout" xml:space="preserve"><value>操作逾時，請重試。</value></data>
+  <data name="UserError_Canceled" xml:space="preserve"><value>操作已取消。</value></data>
+  <data name="UserError_DesktopUnavailable" xml:space="preserve"><value>無法在桌面上顯示桌布。請重新啟動 Windows 檔案總管或電腦後重試。</value></data>
+  <data name="UserError_DisplayMissing" xml:space="preserve"><value>所選螢幕已中斷連線。請重新連接，或選取其他螢幕。</value></data>
+  <data name="UserError_ComponentMissing" xml:space="preserve"><value>缺少桌布播放元件。請重新安裝 Virtual Paper 後重試。</value></data>
 </root>

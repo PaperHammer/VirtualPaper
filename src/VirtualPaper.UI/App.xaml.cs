@@ -221,11 +221,11 @@ namespace VirtualPaper.UI {
                 File.Delete(noticePath);
 
                 if (notice != null && !string.IsNullOrEmpty(notice.MessageKey)) {
-                    VirtualPaper.UIComponent.Utils.GlobalMessageUtil.ShowError(
+                    VirtualPaper.UIComponent.Utils.GlobalMessageUtil.ShowErrorWithDetails(
                         notice.MessageKey,
+                        notice.ExceptionMessage,
                         isNeedLocalizer: true,
-                        key: "UpdateFailedNotice",
-                        extraMsg: string.IsNullOrEmpty(notice.ExceptionMessage) ? null : notice.ExceptionMessage);
+                        key: "UpdateFailedNotice");
                 }
             }
             catch (Exception ex) {

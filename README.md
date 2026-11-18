@@ -153,18 +153,20 @@ The detail crops show the same region at the same display size, without addition
 ## Download
 
 <p>
-  <a href="https://github.com/PaperHammer/VirtualPaper/releases/latest"><img src="resources/readme/download.svg" alt="Download for Windows" width="246" height="48" /></a>
+  <a href="https://apps.microsoft.com/detail/9PNNND6CC1J0"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Download from Microsoft Store" width="176" height="48" /></a>
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="https://github.com/PaperHammer/VirtualPaper/releases/latest"><img src="resources/readme/download.svg" alt="Download the Windows EXE installer" width="176" height="48" /></a>
 </p>
 
 **Windows 10 version 2004 (build 19041) or later · Windows 11 · x64**
 
-1. Download the installer above, install, and open VirtualPaper.
+1. Install VirtualPaper from Microsoft Store or with the EXE installer above, then open the app.
 2. Add an image, video, animated image, or Web wallpaper to your library.
 3. Preview it, apply it to your desktop, and adjust its effects.
 
 See the [user guide](https://github.com/PaperHammer/VirtualPaper/wiki) for more help getting started.
 
-The installer checks for the **.NET 10 Desktop Runtime** and **ASP.NET Core 10 Runtime** (used by Web previews), and downloads them when needed. The **Microsoft Edge WebView2 Runtime** is also required. The Microsoft Store package includes its .NET dependencies.
+The EXE installer checks for the **.NET 10 Desktop Runtime** and **ASP.NET Core 10 Runtime** (used by Web previews), and downloads them when needed. The **Microsoft Edge WebView2 Runtime** is also required. The Microsoft Store package includes its .NET dependencies.
 
 > [!NOTE]
 > See the [release notes](https://github.com/PaperHammer/VirtualPaper/releases) for the features available in each version.
